@@ -1,0 +1,225 @@
+
+<% layout('./layoutes/boilerplate.ejs') -%>
+<script>
+  const mapToken = "<%=process.env.MAP_TOKEN%>"
+  const allData = <%- JSON.stringify(providerData)%>;
+  window.EXISTING_DAYS = <%- JSON.stringify(typeof existingDays !== "undefined" ? existingDays : []) %>;
+</script>
+<body>
+  <main class="page">
+    <section class="layout">
+
+      <!-- LEFT COLUMN -->
+      <div class="col left">
+
+        <!-- PROFILE (height auto, width 600) -->
+        <section class="cardin profile-card" id="profileCard">
+          <div class="profile-grid">
+
+            <!-- Image 250x375 -->
+            <div class="profile-img" id="profileImg">
+              <img
+                src=<%=providerData.personImage[0].path %>
+                alt="Profile"
+              />
+            </div>
+
+            <!-- Info -->
+            <div class="profile-info" id="profileInfo">
+              <h1 class="name" id="pName"><%=providerData.company  %></h1>
+              <div class="service" id="pService">owner:- <%=providerData.owner.name  %></div>
+
+              <!-- Contacts (name/address/phone) -->
+              <div class="info-grid" id="pContacts">
+                <div class="info-item">
+                  <span class="label">Phone</span>
+                  <span class="value" id="pPhone">+91 <%=providerData.owner.username %> , <%=providerData.phoneNO%></span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Address</span>
+                  <span class="value" id="pAddress"><%=providerData.location %></span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Location</span>
+                  <span class="value" id="pLocation">India</span>
+                </div>
+              </div>
+               <div class="actions">
+                <%if (currUser && providerData.owner._id.equals(currUser._id)){%>
+                <form action="/provider/<%=providerData._id  %>/edit">
+                <button class="btn primary" id="updateBtn">Update</button>
+                </form>
+                <%}%>
+                <button class="btn ghost" id="shareBtn">Share</button>
+              </div>           
+            </div>
+
+          </div>
+        </section>
+        <section class="cardin profile-card" id="profileCard">
+          <div class="info-item">
+                  <span class="label">discription</span>
+                  <span class="value" id="pLocation"><%=providerData.discription%></span>
+                </div>
+        </section>
+        
+
+        <!-- REVIEWS BELOW PROFILE (left) -->
+        <section class="cardin reviews-card" id="reviewsSection">
+          <div class="head">
+            <div>
+              <h2>Review & Rating</h2>
+              <p class="muted">Submit your rating and review. It will appear below.</p>
+            </div>
+
+            <div class="sort">
+              <label class="muted small">Sort</label>
+              <select id="sortReviews">
+                <option value="latest">Latest</option>
+                <option value="highest">Highest</option>
+                <option value="lowest">Lowest</option>
+              </select>
+            </div>
+          </div>
+
+          
+
+          <!-- Separate place to create review -->
+          <form class="review-form" id="reviewForm" action="/<%= providerData._id %>/reviews" method="POST" novalidate class="needs-validation">
+            <div class="row">
+              <div class="field">
+                <label>Rating</label>
+                <select id="rRating" required name="review[ratings]">
+                  <option value="5">5 - Excellent</option>
+                  <option value="4">4 - Good</option>
+                  <option value="3">3 - Average</option>
+                  <option value="2">2 - Poor</option>
+                  <option value="1">1 - Bad</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Review</label>
+              <textarea id="rText" rows="3" placeholder="Write your review..." required  name="review[comment]"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn primary">Add review</button>
+              <button class="btn ghost danger" type="button" id="clearReviews">Clear</button>
+            </div>
+          </form>
+
+          <div class="divider"></div>
+
+          <!-- Show reviews -->
+<div class="reviews">
+  <div class="reviews-header">
+    <h2>Reviews</h2>
+    <p class="reviews-subtitle">What people are saying</p>
+  </div>
+
+  <div class="reviews-list">
+    <% for (let review of providerData.review){%>
+    <!-- Review Card -->
+    <div class="review-card">
+      <div class="review-top">
+        <div class="review-user">
+          <div class="avatar">RK</div>
+          <div class="user-meta">
+            <div class="user-name">@<%=review.author.name%></div>
+            <div class="user-sub">Verified customer</div>
+          </div>
+        </div>
+
+        <!-- Rating (change data-rating="1..5") -->
+        <div class="rating" data-rating="<%=review.ratings%>" aria-label="4 out of 5 stars">
+          <span class="star">★</span>
+          <span class="star">★</span>
+          <span class="star">★</span>
+          <span class="star">★</span>
+          <span class="star">★</span>
+        </div>
+      </div>
+
+      <p class="review-comment">
+        <%=review.comment%>
+      </p>
+      <form action="/provider/<%=providerData._id%>/review/<%= review._id %>?_method=DELETE" method="POST">
+        <button class="btn btn-sm btn-danger" style="color: red;"><i class="fa-solid fa-trash"></i></button>
+      </form>
+    </div>
+    <%}%>
+  </div>
+</div>
+ 
+
+        </section>
+
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="col right">
+
+ <!-- CALENDAR (height auto, width 600) -->
+  <!-- views/shedule.ejs (HTML) -->
+  <div class="cal-wrap" id="calWrap" data-id="<%= providerData._id %>">
+    <div class="cal-topbar">
+      <div class="cal-title">
+        <div class="cal-h1">Shedule</div>
+        <div class="cal-h2" id="monthLabel">—</div>
+      </div>
+
+      <div class="cal-nav">
+        <button class="btn ghost" id="prevBtn" type="button">◀</button>
+        <button class="btn ghost" id="todayBtn" type="button">Current</button>
+        <button class="btn ghost" id="nextBtn" type="button">▶</button>
+      </div>
+    </div>
+
+    <div class="cal-legend">
+      <span class="dot free"></span><span>Free</span>
+      <span class="dot busy"></span><span>Busy</span>
+      <span class="small">Click a day to toggle</span>
+    </div>
+
+    <div class="months" id="months"></div>
+
+    <!-- FORM POST to /shedule/:id -->
+    <form id="scheduleForm" method="POST" action="/shedule/<%= providerData._id %>">
+      <input type="hidden" name="daysJson" id="daysJson" value="" />
+      <div class="cal-actions">
+        <button class="btn primary" id="submitBtn" type="submit">Submit</button>
+      </div>
+    </form>
+  </div>
+        <!-- MAP below profile but on RIGHT (below calendar) -->
+        <section class="cardin map-card" id="mapSection">
+          <div class="head">
+            <div>
+              <h2>Map</h2>
+              <p class="muted">See me on map</p>
+            </div>
+            
+          </div>
+
+          <div class="map-box" id="mapBox">
+            <div class="map-overlay">
+              <div class="map mb-3 mt-3" >
+              <div id="map"> 
+
+              </div>
+              </div> 
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+    </section>
+  </main>
+
+ <script src="/js/map.js"></script>
+ <script src="/js/profile.js"></script>
+</body>
+

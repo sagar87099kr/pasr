@@ -1,0 +1,79 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+<body>
+<div class="all-cutomer-details" style="margin-top: 50px;">
+        <h3> If you find this (*) symbol in form this means it is compulsory to fill.</h3>
+<form method="POST" action="/become/provider" novalidate class="needs-validation" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label for="exampleInputEmail1" class="form-label" >Enter Your Company name*</label>
+      <input type="text" class="form-control" id="exampleInputEmail1"  required="True" name="provider[company]" placeholder="pasr pvt ltd">
+      <div class="invalid-feedback">You need to write your name</div>
+    </div>
+    <div class="mb-3">
+      <label for="exampleInputEmail1" class="form-label" >Year of experience*</label>
+      <input type="number" class="form-control" id="exampleInputEmail1"  required="True" name="provider[experience]" placeholder="3">
+      <div class="invalid-feedback">It will help customer to choose you.</div>
+    </div>
+    <div class="mb-3">
+      <label for="exampleInputEmail1" class="form-label" >Enter Your Company location*</label>
+      <input type="text" class="form-control" id="exampleInputEmail1"  required="True" name="provider[location]" placeholder="Doranda Dhanwar Giridih">
+      <div class="invalid-feedback">You need to enter your company location.</div>
+    </div>
+    <div class="mb-3">
+      <label for="exampleInputEmail1" class="form-label" > add additional phone number. If possible.</label>
+      <input type="number" class="form-control" id="exampleInputEmail1"  required="True" name="provider[phoneNO]" placeholder="9876543210">
+      <div class="invalid-feedback">You need to enter your company location.</div>
+    </div>
+    <hr>
+    <br>
+    <h4> Select the service you want to give service * </h4>
+    <select class="form-select" aria-label="Default select example" required name="provider[categories]">
+    <option value="" disabled selected> Select the category in which you want to give service </option>
+    <option value="Farming Vehicles" ><i class="fa-solid fa-tractor"></i>Farming Vehicles</option>
+    <option value="Four Wheelers" ><i class="fa-solid fa-car-side"></i>Four Wheelers</option>
+    <option value="HMV (Bus)" ><i class="fa-solid fa-bus"></i>HMV (Bus)</option>
+    <option value="Three Wheelers" ><i class="fa-solid fa-car"></i>Three Wheelers</option>
+    <option value="Caterings" ><i class="fa-solid fa-utensils"></i>Caterings</option>
+    <option value="Filming" ><i class="fa-regular fa-camera"></i>Filming</option>
+    <option value="Decoration" ><i class="fa-brands fa-42-group"></i>Decoration</option>
+    <option value="DJ and Tent" ><i class="fa-solid fa-music"></i>DJ and Tent</option>
+    <option value="Band Party" >Band Party</option>
+    <option value="Heavy Equipments" ><i class="fa-brands fa-cc-jcb"></i>Heavy Equipments</option>
+  </select>
+  <hr>
+  <div>
+  <h5> Give a image of your's with your service so that customer can choose according to their need.* </h5>
+  <img src="/images/person_car.png" alt="image of a person" style="width: 400px;  height: 300px;">
+  <input type="file"  name="provider[personImage]" required>
+  <div class="invalid-feedback">It is nacessary field you need to upload your image with your service.</div>
+  </div>
+  <hr>
+  <br>
+  <div>
+  <h5> Aadhar_card front side photo*</h5>
+  <img src="/images/aadhar image.jpeg" alt="aadhar card front image" style="width: 400px;  height: 300px; ">
+  <input type="file" name="provider[personImage]" required>
+  <div class="invalid-feedback">It is required beacuse it will help our team to verify you easily.</div>
+  </div>
+  <hr>
+  <div>
+  <h5>Aadhar_card back side photo*</h5>
+  <img src="/images/aadhar image b.png" alt="aadhar card back image" style="width: 400px;  height: 300px;" >
+  <input type="file" name="provider[personImage]" required>
+  <div class="invalid-feedback">It is required beacuse it will help our team to verify you easily.</div>
+  </div>
+  <hr>
+  <div>
+  <h5> Driving licence photo is mendetory for only those who belongs to the category like four-wheelers, three-wheelers, HMV(bus), farming-vehicles, heavy-equipments</h5>
+  <img src="/images/driving licence.png" alt="licence image" style="width: 400px;  height: 300px;" >
+  <input type="file" name="provider[personImage]">
+  </div>
+  
+  <hr>
+  <div class="mb-3 form-check">
+      <input type="checkbox" class="form-check-input" id="exampleCheck1" required>
+      <label class="form-check-label" for="exampleCheck1"><b>I hereby declare that the information provided by me is true, correct, and complete to the best of my knowledge and belief. I understand that any false or misleading information may lead to the rejection of my Login.</b></label>
+    </div>
+    <button  class="btn btn-primary">Submit</button> 
+</form>
+</div>
+</body>

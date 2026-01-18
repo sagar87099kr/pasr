@@ -1,0 +1,192 @@
+
+  <style>
+    * { box-sizing: border-box; }
+    body{
+      display: flex;
+      flex-direction: row-reverse;
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:#f6f7fb;
+      padding:24px;
+      display:flex;
+      justify-content:center;
+    }
+
+    .profile-card{
+      width:100%;
+      height: auto;
+      max-width:520px;
+      background:#fff;
+      border:1px solid #e9e9ef;
+      border-radius:16px;
+      padding:18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.06);
+    }
+
+    .card-top{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+    }
+
+    .name{
+      font-size:18px;
+      font-weight:700;
+      color:#111827;
+      margin:0;
+      line-height:1.2;
+      word-break:break-word;
+    }
+
+    .sub{
+      font-size:13px;
+      color:#6b7280;
+      margin:0;
+    }
+
+    .badge{
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      border:1px solid;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .badge .dot{
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      display:inline-block;
+    }
+
+    /* Verified states */
+    .badge.true{
+      color:#065f46;
+      background:#ecfdf5;
+      border-color:#a7f3d0;
+    }
+    .badge.verified .dot{ background:#10b981; }
+
+    .badge.false{
+      color:#991b1b;
+      background:#fef2f2;
+      border-color:#fecaca;
+    }
+    .badge.not-verified .dot{ background:#ef4444; }
+
+    .details{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid #eeeef6;
+      border-radius:12px;
+      background:#fbfbff;
+    }
+
+    .label{
+      width:120px;
+      flex:0 0 120px;
+      font-size:12px;
+      color:#6b7280;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:.03em;
+    }
+
+    .value{
+      font-size:14px;
+      color:#111827;
+      font-weight:600;
+      word-break:break-word;
+      min-width:0;
+    }
+
+    @media (max-width: 420px){
+      .row{ flex-direction:column; }
+      .label{ width:auto; flex:0 0 auto; }
+    }
+    .badge-button{
+      color:#065f46;
+      background:#ecfdf5;
+      border-color:#a7f3d0; 
+    }
+  </style>
+<body>
+<%for (customer of customers){%>
+  <section class="profile-card">
+    <div class="card-top">
+      <div class="title">
+        <p class="name"><%=customer.name%></p>
+        <p class="sub">Customer / Provider Profile</p>
+      </div>
+
+      <!-- Change class to: "badge verified" OR "badge not-verified" -->
+      <span class="badge <%=customer.verified%>">
+        <span class="dot"></span>
+        verification: <%=customer.verified%>
+      </span>
+    </div>
+
+    <div class="details">
+      <div class="row">
+        <div class="label">Number</div>
+        <div class="value"><%=customer.username%></div>
+      </div>
+
+      <div class="row">
+        <div class="label">Email</div>
+        <div class="value"><%=customer.emailAddress%></div>
+      </div>
+
+      <div class="row">
+        <div class="label">Address</div>
+        <div class="value"><%=customer.address%></div>
+      </div>
+
+      <div class="row">
+        <div class="label">Pincode</div>
+        <div class="value"><%=customer.pincode%></div>
+      </div>
+    </div>
+    <div class="action">
+    <span class="#">
+        <span class="dot"></span>
+<% if (!(customer.verified === true)){%>
+    <form method="POST" action="/<%=customer._id%>/verifycustomer?_method=PUT" >
+    <!-- Hidden input field to send the value 'true' -->
+    <input type="hidden" name="customer[verified]" value="true">
+    
+    <!-- Button to submit the form -->
+    <button class="badge true" style="margin: 20px;">Verify</button>
+</form>
+ <form method="POST" action="/<%=customer._id%>/verifyfail?_method=DELETE">
+    <button class="badge false" style="margin-top: 2px;">Delete customer</button>
+</form>
+<%}%>
+      </span>
+      </div>
+  </section>
+<%}%>
+</body>
+
+

@@ -1,0 +1,15 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+<body>
+    <h3> Login here </h3> <br>
+    <form action="/alreadyLogin" method="POST" novalidate class="needs-validation">
+  <div class="mb-3">
+    <label for="exampleInputEmail1" class="form-label">Enter your mobile no</label>
+    <input type="number" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" required="True" name="username">
+  </div>
+  <div class="mb-3">
+    <label for="exampleInputPassword1" class="form-label">Password</label>
+    <input type="password" class="form-control" id="exampleInputPassword1" required="True" name = "password">
+  </div>
+  <button class="btn btn-primary">Submit</button>
+</form>
+</body>

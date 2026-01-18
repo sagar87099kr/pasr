@@ -1,0 +1,59 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+<body>
+</head>
+
+<body>
+
+  <section class="top-panel">
+    <h1>Find Providers Near You (Food stall and caterings) </h1>
+
+    <p class="note">
+      <b>NOTE:</b> We only provide verified (as much as possible) provider details. Please confirm pricing, availability,
+      and service quality directly with the provider before booking.
+    </p>
+
+    <div class="range-row">
+      <div class="range-head">
+        <p class="range-label">Select range (1 to 10 km)</p>
+        <div class="range-pill">Selected: <span id="kmValue">5</span> km</div>
+      </div>
+
+      <input id="rangeKm" type="range" min="1" max="10" step="1" value="5" />
+    </div>
+  </section>
+
+  <!-- Optional section below just to show spacing (you can remove it) -->
+  <div class="content">
+    <div class="placeholder">
+      <%for (let provider of allProvider){%> 
+  <div class="info">
+<a class="search-card" href="/provider/<%= provider._id %>/profile">
+  <div class="search-avatar">
+    <img src="<%=provider.personImage[0].path %>" alt="Provider photo">
+  </div>
+
+  <div class="search-info">
+    <h3 class="search-name"><%= provider.owner.name %></h3>
+    <p class="search-address"><%= provider.location %></p>
+  </div>
+
+  <span class="search-action">View</span>
+</a>
+</div>
+<%}%>
+    </div>
+  </div>
+
+  <script>
+    const range = document.getElementById("rangeKm");
+    const kmValue = document.getElementById("kmValue");
+
+    function updateValue() {
+      kmValue.textContent = range.value;
+    }
+
+    range.addEventListener("input", updateValue);
+    updateValue();
+  </script>
+
+</body>

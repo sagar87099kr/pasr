@@ -1,0 +1,281 @@
+
+<% layout('./layoutes/boilerplate.ejs') -%>
+
+<body class="body">
+    <div class="icons-wrap">
+  <button class="scroll-btn left" type="button" aria-label="Scroll left">‹</button>
+
+  <div class="icons" id="iconsRow">
+    <!-- your icon-element blocks -->
+  </div>
+
+  <button class="scroll-btn right" type="button" aria-label="Scroll right">›</button>
+</div>
+
+    <div class="icons">
+        <div class="icon-element">
+        <a href="/farm"><i class="fa-solid fa-tractor"></i></a>
+        <p>farming</p>
+        </div>
+        <div class="icon-element">
+        <a href="/car"><i class="fa-solid fa-car"></i></a>
+        <p>four weelers</p>
+        </div>
+        <div class="icon-element">
+        <a href="/bus"><i class="fa-solid fa-bus"></i></a>
+        <p>Bus HMV</p>
+        </div>
+        <div class="icon-element">
+        <a href="/three-weelers"><!-- Solid (filled) Riksha / Auto-rickshaw icon (SVG) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="28" height="28" class="riksha-solid" aria-label="Riksha icon" role="img">
+  <!-- top / cabin -->
+  <path fill="currentColor" d="M18 18h15c3 0 5 2 5 5v10H13v-7c0-5 2-8 5-8z"/>
+  <!-- body -->
+  <path fill="currentColor" d="M10 33h36c3 0 5-2 6-5l2-7c1-3 3-5 7-5h3v18c0 4-3 6-6 6H10v-7z"/>
+  <!-- wheels (3) -->
+  <circle cx="18" cy="46" r="6" fill="currentColor"/>
+  <circle cx="32" cy="46" r="6" fill="currentColor"/>
+  <circle cx="46" cy="46" r="6" fill="currentColor"/>
+  <!-- wheel holes (optional) -->
+  <circle cx="18" cy="46" r="2.2" fill="#fff" opacity="0.9"/>
+  <circle cx="32" cy="46" r="2.2" fill="#fff" opacity="0.9"/>
+  <circle cx="46" cy="46" r="2.2" fill="#fff" opacity="0.9"/>
+</svg>
+
+<style>
+  .riksha-solid{
+    color:#222;           /* icon color */
+    vertical-align: middle;
+  }
+</style>
+</a>
+        <p>three-weelers</p>
+        </div>
+        <div class="icon-element">
+        <a href="/caterings"><i class="fa-solid fa-bowl-food"></i></a>
+        <p>Food </p>
+        </div>
+        <div class="icon-element">
+        <a href="/filming"><i class="fa-solid fa-camera"></i></a>
+        <p>Filming</p>
+        </div>
+        <div class="icon-element">
+        <a href="/decor"><!-- Tree Decorator (Tree + Roller) - Solid SVG -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="28" height="28"
+     class="tree-decorator" aria-label="Tree decorator" role="img">
+  <!-- Tree -->
+  <path fill="currentColor" d="M24 10c-6 0-11 5-11 11 0 5 3 9 8 10-2 7-1 12 3 15h18c5-4 6-10 4-18 5-2 8-6 8-11 0-6-5-11-11-11-3 0-6 1-8 3-2-2-5-3-8-3z"/>
+  <!-- Trunk -->
+  <path fill="currentColor" d="M29 46h6v10c0 2-2 4-4 4h-2v-14z"/>
+
+  <!-- Roller -->
+  <path fill="currentColor" d="M42 18h12c2 0 4 2 4 4v4c0 2-2 4-4 4H42c-2 0-4-2-4-4v-4c0-2 2-4 4-4z"/>
+  <!-- Handle -->
+  <path fill="currentColor" d="M38 26h-5c-2 0-4 2-4 4v10c0 1-1 2-2 2h-5v5h7c3 0 5-2 5-5V30h4v-4z"/>
+</svg>
+
+<style>
+  .tree-decorator{ color:#222; vertical-align:middle; }
+</style>
+</a>
+        <p>Decoration</p>
+        </div>
+        <div class="icon-element">
+        <a href="/djdecor"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="28" height="28"
+     class="icon" aria-label="DJ" role="img">
+  <!-- Speaker body -->
+  <path fill="currentColor" d="M14 8h20c2.2 0 4 1.8 4 4v40c0 2.2-1.8 4-4 4H14c-2.2 0-4-1.8-4-4V12c0-2.2 1.8-4 4-4z"/>
+  <!-- Big speaker -->
+  <circle cx="24" cy="36" r="10" fill="#fff" opacity="0.9"/>
+  <circle cx="24" cy="36" r="4" fill="currentColor" opacity="0.9"/>
+  <!-- Small speaker -->
+  <circle cx="24" cy="18" r="5" fill="#fff" opacity="0.9"/>
+  <circle cx="24" cy="18" r="2" fill="currentColor" opacity="0.9"/>
+  <!-- Equalizer bars -->
+  <path fill="currentColor" d="M44 40c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2h-2c-1.1 0-2-.9-2-2V40z"/>
+  <path fill="currentColor" d="M52 32c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2v20c0 1.1-.9 2-2 2h-2c-1.1 0-2-.9-2-2V32z"/>
+  <path fill="currentColor" d="M36 28c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2v24c0 1.1-.9 2-2 2h-2c-1.1 0-2-.9-2-2V28z"/>
+</svg>
+
+<style>
+  .icon{ color:#222; vertical-align:middle; }
+</style>
+</a>
+        <p>DJ-Tent</p>
+        </div>
+        <div class="icon-element">
+        <a href="/bandparty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="28" height="28"
+     class="icon" aria-label="Party" role="img">
+  <!-- Popper cone -->
+  <path fill="currentColor" d="M14 44l18-18 18 18-18 18c-1.6 1.6-4.2 1.6-5.7 0L14 49.7c-1.6-1.6-1.6-4.2 0-5.7z"/>
+  <!-- Confetti burst -->
+  <circle cx="44" cy="14" r="3" fill="currentColor"/>
+  <circle cx="54" cy="20" r="2.5" fill="currentColor"/>
+  <circle cx="36" cy="10" r="2.5" fill="currentColor"/>
+  <path fill="currentColor" d="M28 6c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2v6c0 1.1-.9 2-2 2h-2c-1.1 0-2-.9-2-2V6z"/>
+  <path fill="currentColor" d="M56 30c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2v2c0 1.1-.9 2-2 2h-2c-1.1 0-2-.9-2-2v-2z"/>
+  <!-- Streamers -->
+  <path fill="#fff" opacity="0.9" d="M26 34c5-2 10-2 15 0-2 4-6 7-8 10-3-3-5-6-7-10z"/>
+</svg>
+
+<style>
+  .icon{ color:#222; vertical-align:middle; }
+</style>
+</a>
+        <p>Band party</p>
+        </div>
+        <div class="icon-element">
+        <a href="/heavy"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="28" height="28"
+     class="icon" aria-label="Heavy equipment" role="img">
+  <!-- Tracks -->
+  <path fill="currentColor" d="M10 44h30c6 0 10 4 10 8s-4 8-10 8H14c-6 0-10-4-10-8 0-4 3-8 6-8z"/>
+  <circle cx="16" cy="52" r="3" fill="#fff" opacity="0.9"/>
+  <circle cx="24" cy="52" r="3" fill="#fff" opacity="0.9"/>
+  <circle cx="32" cy="52" r="3" fill="#fff" opacity="0.9"/>
+  <circle cx="40" cy="52" r="3" fill="#fff" opacity="0.9"/>
+
+  <!-- Body -->
+  <path fill="currentColor" d="M16 30h22c3 0 6 3 6 6v8H12v-8c0-4 2-6 4-6z"/>
+  <!-- Cabin -->
+  <path fill="currentColor" d="M22 18h12c3 0 5 2 5 5v7H20v-8c0-2 1-4 2-4z"/>
+  <path fill="#fff" opacity="0.9" d="M24 22h10v8H24z"/>
+
+  <!-- Arm -->
+  <path fill="currentColor" d="M40 22h6c2 0 3 1 4 3l6 14c.6 1.4-.2 3-1.7 3H50c-1.1 0-2.1-.7-2.5-1.7l-5.3-13H40v-4z"/>
+  <!-- Boom -->
+  <path fill="currentColor" d="M36 26h10v4H36c-1.1 0-2-.9-2-2s.9-2 2-2z"/>
+  <!-- Bucket -->
+  <path fill="currentColor" d="M54 42h4c1.1 0 2 .9 2 2v3c0 2.2-1.8 4-4 4h-5c-1.1 0-2-.9-2-2v-2c0-2.8 2.2-5 5-5z"/>
+</svg>
+
+<style>
+  .icon{ color:#222; vertical-align:middle; }
+</style>
+</a>
+        <p>Heavy equipments</p>
+        </div>
+    </div>
+<div class="contain">
+    <form action="/farm" method="GET">
+        <a href="/farm" class="btn ">
+            <div class="cardtd" >
+                    <img src="images/fram tractor.jpeg" class="cardtd-img-top" alt="Tractor image" style="height: 22rem;">
+                <div class="cardtd-body">
+                    <h5 class="cardtd-title">Farming_vehicles</h5>
+                <p class="cardtd-text">Farming vehicles are machines used to simplify agricultural work like plowing, planting, and harvesting. They save time, increase productivity, and reduce manual effort. Common types includetractors, harvesters, plows, and seed drills .</p>
+                </div>
+            </div>
+        </a>
+    </form>
+    <form action="/car" method="GET">
+    <a href="/car" class="btn ">
+    <div class="cardtd" >
+            <img src="images/four wheeler .jpg" class="cardtd-img-top" alt="Thar image" style="height: 22rem;">
+        <div class="cardtd-body">
+            <h5 class="cardtd-title">Four-Wheelers</h5>
+        <p class="cardtd-text"> For booking purposes, cars are available in different types based on comfort, size, and use:
+            Hatchback, Sedan, Luxury Car, Electric Car . These are generly for less then ten people. pelase choose them according to your use.</p>
+            
+        </div>
+    </div>
+    </a>
+    </form>
+
+    <form action="/bus" method="GET">
+    <a href="/bus" class="btn ">
+    <div class="cardtd" >
+            <img src="images/bus .jpg" class="cardtd-img-top" alt="..." style="height: 22rem;">
+        <div class="cardtd-body">
+            <h5 class="cardtd-title">HMV (bus)</h5>
+        <p class="cardtd-text">HMV (Heavy Motor Vehicle) buses are large vehicles designed to carry many passengers over long or short distances. They are used for public transport, tourism, and school services.</p>
+        
+        </div>
+    </div>
+    </a>
+    </form>
+
+    <form action="/three-weelers" method="GET">
+    <a href="/three-weelers" class="btn ">
+    <div class="cardtd" >
+            <img src="images/passanger tampu.jpg" class="cardtd-img-top" alt="three-wheelers imge" style="height: 22rem;">
+        <div class="cardtd-body">
+            <h5 class="cardtd-title">Three wheelers</h5>
+        <p class="cardtd-text">Some quick example text to build on the card title and make up the bulk of the cards content. It is generly for short distance tour and less then five people can travel at a time.</p>
+        </div>
+    </div>
+    </a>
+    </form>
+
+    <form action="/caterings" method="GET">
+    <a href="/caterings" class="btn ">
+    <div class="cardtd" >
+            <img src="images/chef .jpg" class="cardtd-img-top" alt="..." style="height: 22rem;">
+        <div class="cardtd-body">
+            <h5 class="cardtd-title">Caterings</h5>
+        <p class="cardtd-text">Catering services provide food and beverages for events like weddings, parties, and corporate functions. They handle preparation, delivery, and service, ensuring guests are well-served.</p>
+        </div>
+    </div>
+    </a>
+    </form>
+    <form action="/filming" method="GET">
+    <a href="/filming" class="btn ">
+    <div class="cardtd" >
+            <img src="images/cemera.jpg" class="cardtd-img-top" alt="..." style="height: 22rem;">
+        <div class="cardtd-body">
+            <h5 class="cardtd-title">Filming</h5>
+        <p class="cardtd-text">Filming involves recording videos or movies using cameras for entertainment, education, or advertising. It includes stages like scripting, shooting, and editing to create visual content.</p>
+        </div>
+    </div>
+    </a>
+    </form>
+    <form action="/decor" method="GET">
+    <a href="/decor" class="btn ">
+    <div class="cardtd" >
+            <img src="images/decor.jpeg" class="cardtd-img-top" alt="..." style="height: 22rem;">
+        <div class="cardtd-body">
+            <h5 class="cardtd-title">Decoration</h5>
+        <p class="cardtd-text">Decoration involves designing and arranging spaces to make them attractive for events or everyday use. It includes flowers, lighting, furniture, and themes so that everything look beautful.</p>
+            
+        </div>
+    </div>
+    </a>
+    </form>
+
+    <form action="/djdecor" method="GET">
+        <a href="/djdecor" class="btn ">
+        <div class="cardtd" >
+
+                <img src="images/DJ for party.jpeg" class="cardtd-img-top" alt="..." style="height: 22rem;">
+            <div class="cardtd-body">
+                <h5 class="cardtd-title">DJ and Tent </h5>
+            <p class="cardtd-text">Party organizers plan and manage events like birthdays, weddings, and corporate parties. They handle themes, decorations, catering, and entertainment to ensure a smooth celebration.</p>
+            </div>
+        </div>
+        </a>
+    </form>
+     <form action="/bandparty" method="GET">
+        <a href="/bandparty" class="btn ">
+        <div class="cardtd" >
+
+                <img src="images/band party.jpg" class="cardtd-img-top" alt="Band Party photo" style="height: 22rem;">
+            <div class="cardtd-body">
+                <h5 class="cardtd-title">Band Party </h5>
+            <p class="cardtd-text">A band party in India features lively music, colorful uniforms, drums, trumpets, and dancing rhythms, often seen at weddings, festivals, and celebrations, creating a joyful and energetic atmosphere.</p>
+            </div>
+        </div>
+        </a>
+    </form>
+    <form action="/heavy" method="GET">
+        <a href="/heavy" class="btn ">
+            <div class="cardtd" >
+                    <img src="images/construction.jpg" class="cardtd-img-top" alt="JCB Image" style="height: 22rem;">
+                <div class="cardtd-body">
+                    <h5 class="cardtd-title"> Heavy Equipments</h5>
+                <p class="cardtd-text">Heavy equipment refers to large machinery used in construction, mining, and industrial work. They perform tasks like lifting, digging, and transporting materials efficiently.</p>
+                </div>
+            </div>
+        </a>
+    </form>
+</div>
+</body>
+
