@@ -1,9 +1,11 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
 
   <style>
     * { box-sizing: border-box; }
     body{
       display: flex;
       flex-direction: row-reverse;
+      flex-wrap: wrap;
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background:#f6f7fb;
@@ -143,7 +145,7 @@
       <!-- Change class to: "badge verified" OR "badge not-verified" -->
       <span class="badge <%=customer.verified%>">
         <span class="dot"></span>
-        verification: <%=customer.verified%>
+        verification: <%=customer.verified%> by <%=customer.verifedBy%>
       </span>
     </div>
 
@@ -165,17 +167,22 @@
 
       <div class="row">
         <div class="label">Pincode</div>
-        <div class="value"><%=customer.pincode%></div>
+        <div class="value"><%=customer.pincode%> Joined at:<%=customer.createdAt%></div>
       </div>
     </div>
     <div class="action">
     <span class="#">
         <span class="dot"></span>
 <% if (!(customer.verified === true)){%>
-    <form method="POST" action="/<%=customer._id%>/verifycustomer?_method=PUT" >
-    <!-- Hidden input field to send the value 'true' -->
+    <form method="POST" action="/<%=customer._id%>/verifycustomer?_method=PUT" novalidate class="needs-validation">
+      <div class="mb-3">
+      <label for="exampleInputEmail1" class="form-label" >Enter Your name.</label>
+      <input type="text" class="form-control" id="exampleInputEmail1"  required="True" name="customer[verifedBy]" placeholder="Admin">
+      <div class="invalid-feedback">It is compulsory to write.</div>
+    </div>
+     
+     <!-- Hidden input field to send the value 'true' -->
     <input type="hidden" name="customer[verified]" value="true">
-    
     <!-- Button to submit the form -->
     <button class="badge true" style="margin: 20px;">Verify</button>
 </form>
@@ -187,6 +194,7 @@
       </div>
   </section>
 <%}%>
+<script src="/js/script.js"></script>
 </body>
 
 

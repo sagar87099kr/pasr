@@ -65,7 +65,14 @@ module.exports.isVerifiedCustomer = async (req, res, next) => {
     next(err);
   }
 };
-
+module.exports.isadmin = async(req,res,next)=>{
+    let customer = await Customer.find();
+    if (res.locals.currUser.username!==8709956547 && customer.username !== 8709956547){
+        req.flash("danger", "Only admin have access of this route");
+        return res.redirect(`/home`);
+    }
+    next();
+}
 module.exports.validateprovider = (req,res,next)=>{
     let {error} = providerSchema.validate(req.body);
     if (error) {

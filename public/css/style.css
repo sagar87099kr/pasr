@@ -273,180 +273,6 @@
   }
   .icon-element p{ font-size: 12px; }
 }
-/* cards in home page */
-/* =========================
-   BEAUTIFUL CARDTD GRID (CSS ONLY)
-   For your classes: .contain .cardtd .cardtd-img-top .cardtd-body .cardtd-title .cardtd-text
-   ========================= */
-
-:root{
-  --bg: #f6f7fb;
-  --surface: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-
-  --border: rgba(15, 23, 42, 0.10);
-  --shadow: 0 14px 40px rgba(15, 23, 42, 0.10);
-  --shadow2: 0 18px 55px rgba(15, 23, 42, 0.14);
-
-  --radius: 22px;
-}
-
-/* Grid container */
-.contain{
-  width: min(1100px, calc(100% - 28px));
-  margin: 16px auto 44px;
-
-  display: grid;
-  gap: 16px;
-
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-.contain form{ margin: 0; }
-.contain a.btn{
-  padding: 0 !important;
-  border: 0 !important;
-  display: block;
-  text-decoration: none !important;
-}
-
-/* Card */
-.cardtd{
-  position: relative;
-  height: auto;
-
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-
-  box-shadow: var(--shadow);
-  transform: translateZ(0);
-
-  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-}
-
-.cardtd:hover{
-  transform: translateY(-4px);
-  box-shadow: var(--shadow2);
-  border-color: rgba(15, 23, 42, 0.14);
-}
-
-/* Image */
-.cardtd-img-top{
-  width: 100%;
-  height: 230px !important; /* overrides your inline height for better responsiveness */
-  object-fit: cover;
-  display: block;
-
-  filter: saturate(1.07) contrast(1.03);
-  transform: scale(1.001);
-  transition: transform .35s ease;
-}
-
-.cardtd:hover .cardtd-img-top{
-  transform: scale(1.04);
-}
-
-/* Gradient overlay for premium look */
-.cardtd::before{
-  content:"";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(to bottom, rgba(2,6,23,0.00) 35%, rgba(2,6,23,0.16) 100%);
-  opacity: .8;
-}
-
-/* Body */
-.cardtd-body{
-  position: relative;
-  z-index: 1;
-
-  padding: 14px 14px 16px;
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(6px);
-
-  /* separates text area nicely from image */
-  border-top: 1px solid rgba(15, 23, 42, 0.06);
-}
-
-/* Title */
-.cardtd-title{
-  margin: 0 0 8px;
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: 0.2px;
-  color: var(--text);
-}
-
-/* Description (clamped for clean UI) */
-.cardtd-text{
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.45;
-
-  display: -webkit-box;
- 
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Click/tap feedback */
-.contain a.btn:active .cardtd{
-  transform: scale(0.99);
-}
-
-/* Make it look good on small mobile */
-@media (max-width: 480px){
-  .contain{
-    gap: 14px;
-    margin-top: 12px;
-  }
-  .cardtd-img-top{
-    height: 210px !important;
-  }
-  .cardtd-title{
-    font-size: 17px;
-  }
-  .cardtd-text{
-    font-size: 13px;
-    -webkit-line-clamp: 5;
-  }
-}
-
-/* Tablet */
-@media (min-width: 640px){
-  .contain{
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-  }
-  .cardtd-img-top{
-    height: 240px !important;
-  }
-}
-
-/* Desktop */
-@media (min-width: 992px){
-  .contain{
-    width: 1000px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
-  }
-  .cardtd-img-top{
-    height: 250px !important;
-  }
-}
-
-/* Accessibility focus ring */
-.contain a.btn:focus-visible{
-  outline: 3px solid rgba(96,165,250,0.45);
-  outline-offset: 6px;
-  border-radius: var(--radius);
-}
 
 
 /* footer of the all pages */
@@ -669,4 +495,178 @@ hr{
   outline: 3px solid rgba(96,165,250,0.5);
   outline-offset: 3px;
   border-radius: 14px;
+}
+/* cards in home page */
+/* =========================
+   BEAUTIFUL CARDTD GRID (CSS ONLY)
+   For your classes: .contain .cardtd .cardtd-img-top .cardtd-body .cardtd-title .cardtd-text
+   ========================= */
+
+:root{
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+
+  --border: rgba(15, 23, 42, 0.10);
+  --shadow: 0 14px 40px rgba(15, 23, 42, 0.10);
+  --shadow2: 0 18px 55px rgba(15, 23, 42, 0.14);
+
+  --radius: 22px;
+}
+
+/* Grid container */
+.contain{
+  width: min(1100px, calc(100% - 28px));
+  margin: 16px auto 44px;
+
+  display: grid;
+  gap: 16px;
+
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.contain form{ margin: 0; }
+.contain a.btn{
+  padding: 0 !important;
+  border: 0 !important;
+  display: block;
+  text-decoration: none !important;
+}
+
+/* Card */
+.cardtd{
+  position: relative;
+  height: auto;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+
+  box-shadow: var(--shadow);
+  transform: translateZ(0);
+
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.cardtd:hover{
+  transform: translateY(-4px);
+  box-shadow: var(--shadow2);
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+/* Image */
+.cardtd-img-top{
+  width: 100%;
+  height: 230px !important; /* overrides your inline height for better responsiveness */
+  object-fit: cover;
+  display: block;
+
+  filter: saturate(1.07) contrast(1.03);
+  transform: scale(1.001);
+  transition: transform .35s ease;
+}
+
+.cardtd:hover .cardtd-img-top{
+  transform: scale(1.04);
+}
+
+/* Gradient overlay for premium look */
+.cardtd::before{
+  content:"";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(2,6,23,0.00) 35%, rgba(2,6,23,0.16) 100%);
+  opacity: .8;
+}
+
+/* Body */
+.cardtd-body{
+  position: relative;
+  z-index: 1;
+
+  padding: 14px 14px 16px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(6px);
+
+  /* separates text area nicely from image */
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+/* Title */
+.cardtd-title{
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  color: var(--text);
+}
+
+/* Description (clamped for clean UI) */
+.cardtd-text{
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+
+  display: -webkit-box;
+ 
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Click/tap feedback */
+.contain a.btn:active .cardtd{
+  transform: scale(0.99);
+}
+
+/* Make it look good on small mobile */
+@media (max-width: 480px){
+  .contain{
+    gap: 14px;
+    margin-top: 12px;
+  }
+  .cardtd-img-top{
+    height: 210px !important;
+  }
+  .cardtd-title{
+    font-size: 17px;
+  }
+  .cardtd-text{
+    font-size: 13px;
+    -webkit-line-clamp: 5;
+  
+}
+
+/* Tablet */
+@media (min-width: 640px){
+  .contain{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .cardtd-img-top{
+    height: 240px !important;
+  }
+}
+
+/* Desktop */
+@media (min-width: 992px){
+  .contain{
+    width: 1000px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+  .cardtd-img-top{
+    height: 250px !important;
+  }
+}
+
+/* Accessibility focus ring */
+.contain a.btn:focus-visible{
+  outline: 3px solid rgba(96,165,250,0.45);
+  outline-offset: 6px;
+  border-radius: var(--radius);
 }

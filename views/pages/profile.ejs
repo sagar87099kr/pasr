@@ -6,7 +6,7 @@
   window.EXISTING_DAYS = <%- JSON.stringify(typeof existingDays !== "undefined" ? existingDays : []) %>;
 </script>
 <body>
-  <main class="page">
+  <!-- <main class="page"> -->
     <section class="layout">
 
       <!-- LEFT COLUMN -->
@@ -26,7 +26,7 @@
 
             <!-- Info -->
             <div class="profile-info" id="profileInfo">
-              <h1 class="name" id="pName"><%=providerData.company  %></h1>
+              <h1 class="name" id="pName"><%=providerData.company %></h1>
               <div class="service" id="pService">owner:- <%=providerData.owner.name  %></div>
 
               <!-- Contacts (name/address/phone) -->
@@ -50,8 +50,11 @@
                 <button class="btn primary" id="updateBtn">Update</button>
                 </form>
                 <%}%>
-                <button class="btn ghost" id="shareBtn">Share</button>
-              </div>           
+                
+              </div> 
+              <div class="value" >
+              serviced:-<%=providerData.experience%> years 
+               </div>          
             </div>
 
           </div>
@@ -203,13 +206,11 @@
             
           </div>
 
-          <div class="map-box" id="mapBox">
-            <div class="map-overlay">
+          <div class="map-box" >
+            
               <div class="map mb-3 mt-3" >
-              <div id="map"> 
-
-              </div>
-              </div> 
+              <div id="map"></div>
+            
             </div>
           </div>
         </section>
@@ -217,8 +218,8 @@
       </div>
 
     </section>
-  </main>
-
+  <!-- </main> -->
+<!-- <script src="/js/script.js"></script> -->
  <script src="/js/map.js"></script>
  <script src="/js/profile.js"></script>
 </body>

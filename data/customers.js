@@ -52,6 +52,13 @@ const customerSchema= new Schema({
      type: Boolean,
      default: false
      },
+    verifedBy:{
+      type:String,
+      default:"none",
+      trim:true,
+      maxlength:60,
+      minlength:3,
+    },
   createdAt: { 
     type: Date,
     default: Date.now

@@ -69,16 +69,34 @@ const providerSchema= new Schema({
      type: Boolean,
      default: false
      },
+  verifedBy:{
+    type:String,
+    default:"none",
+    trim:true,
+    maxlength:60,
+    minlength:3,
+    },
   phoneNO:{
     type:Number,
     trim:true, 
     default:"",
   },
-
+  price: {
+      type: [Number],
+      required: true
+    },
+  Image:{
+      type : Array,
+    },
+  hideListing:{
+     type: Boolean,
+     default: false
+     },
   createdAt: { 
     type: Date,
     default: Date.now
   }
+
 });
  
 const Provider = mongoose.model("Provider", providerSchema )

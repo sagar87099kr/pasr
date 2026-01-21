@@ -22,7 +22,7 @@ const { connect } = require("http2");
 const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
-const {isLogedin, saveRedirectUrl, isOwner , validateprovider,validatecustomer,validatereview,isReviewAuthor,isVerifiedCustomer } = require("./middeleware.js");
+const {isLogedin, saveRedirectUrl, isOwner, validateprovider,validatecustomer,validatereview,isReviewAuthor,isVerifiedCustomer, isadmin } = require("./middeleware.js");
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const { error } = require("console");
 require('dotenv').config();
@@ -81,67 +81,13 @@ app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 // step 1
-passport.use(
-  new LocalStrategy(async (username, password, done) => {
-    try {
-      // 1️⃣ Check Customer
-      let customer = await Customer.findOne({ username });
-      if (customer) {
-        const result = await customer.authenticate(password);
-        if (result.user) {
-          return done(null, {
-            id: customer._id,
-            role: "customer"
-          });
-        }
-        return done(null, false, { message: "Invalid password" });
-      }
-
-      // 2️⃣ Check Provider
-      let provider = await Provider.findOne({ username });
-      if (provider) {
-        const result = await provider.authenticate(password);
-        if (result.user) {
-          return done(null, {
-            id: provider._id,
-            role: "provider"
-          });
-        }
-        return done(null, false, { message: "Invalid password" });
-      }
-
-      return done(null, false, { message: "User not found" });
-    } catch (err) {
-      return done(err);
-    }
-  })
-);
+passport.use(new LocalStrategy(Customer.authenticate()));
 
 // step 2
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
+passport.serializeUser(Customer.serializeUser() );
 
 // step 3
-passport.deserializeUser(async (data, done) => {
-  try {
-    if (data.role === "customer") {
-      const customer = await Customer.findById(data.id);
-      return done(null, customer);
-    }
-
-    if (data.role === "provider") {
-      const provider = await Provider.findById(data.id);
-      return done(null, provider);
-    }
-
-    done(null, false);
-  } catch (err) {
-    done(err);
-  }
-});
-
-
+passport.deserializeUser(Customer.deserializeUser());
 
 app.use((req,res, next)=>{
     res.locals.success = req.flash("success");
@@ -154,6 +100,9 @@ app.use((req,res, next)=>{
 app.get("/help", (req,res)=>{
     res.render("pages/help.ejs");
 });
+app.get("/privacy", (req,res)=>{
+  res.render("pages/privacy.ejs")
+})
 
 // terms and condition route  
 app.get("/T&C", (req,res)=>{
@@ -393,20 +342,15 @@ app.get("/alreadyLogin", (req,res)=>{
 app.post(
   "/alreadyLogin",
   saveRedirectUrl,
-  passport.authenticate("local", {
-    failureRedirect: "/alreadyLogin",
-    failureFlash: "You have entered wrong password or number",
+  passport.authenticate("local",{
+    failureRedirect:"/alreadyLogin",
+    failureFlash : "MobileNO or password is not correct",
   }),
-  async(req, res) => {
-    req.flash("success", 
-        "Welcome to Pasr. Your login is successful");
-    if (req.user.role === "provider") {
-        let redirectUrl = res.locals.redirectUrl || "/home";
-        return res.redirect(redirectUrl);
-    }
-    let redirectUrl = res.locals.redirectUrl || "/home";
-    res.redirect(redirectUrl);
+  async(req,res)=>{
+    req.flash("success", "Welcome back to PaSr. Your login is successfull");
+    res.redirect("/home");
   }
+  
 );
 
 app.get("/logout", (req, res, next)=>{
@@ -491,53 +435,50 @@ app.get("/user",isLogedin ,saveRedirectUrl, wrapAsync(async(req, res)=>{
     res.render("pages/provider_profile.ejs")
 }));
 // these are verification route for customers 
-app.get("/customer/verify",async(req,res)=>{
+app.get("/customer/verify",isLogedin, isadmin, async(req,res)=>{
   let customers = await Customer.find();
   res.render("pages/userverification.ejs",{customers});
 });
 // set value true
-app.put("/:id/verifycustomer", async(req,res)=>{
+app.put("/:id/verifycustomer",isLogedin, isadmin, async(req,res)=>{
   let{id}= req.params;
-  const {verified} = req.body.customer;
+  const {verified,verifedBy} = req.body.customer;
   console.log(verified)
-  await Customer.findByIdAndUpdate(id,{verified});
-  console.log("customer is verifed")
-
+  await Customer.findByIdAndUpdate(id,{verified, verifedBy});
+  console.log("customer is verifed");
 });
 // we anything suspicious delete customer from database
-app.delete("/:id/verifyfail", async(req,res)=>{
+app.delete("/:id/verifyfail",isLogedin,isadmin, async(req,res)=>{
   let{id}= req.params;
   await Customer.findByIdAndDelete(id);
   console.log("customer is deleted");
 
-})
+});
 // these are verification route for provider listing
-app.get ("/provider/verify", async(req,res)=>{
+app.get ("/provider/verify",isLogedin,isadmin, async(req,res)=>{
    let providers = await Provider.find().populate("owner");
   res.render("pages/providerverify.ejs",{providers});
 });
-app.put("/:id/verifyprovider",async(req,res)=>{
+app.put("/:id/verifyprovider",isLogedin,isadmin, async(req,res)=>{
   let{id}= req.params;
-  const {verified} = req.body.provider;
+  const {verified,verifedBy} = req.body.provider;
   console.log(verified)
-  await Provider.findByIdAndUpdate(id,{verified});
+  await Provider.findByIdAndUpdate(id,{verified, verifedBy});
   console.log("provider is verifed");
 });
-app.delete("/:id/verifyfail",async(req,res)=>{
+app.delete("/:id/verifyfail",isLogedin, isadmin, async(req,res)=>{
   let{id}= req.params;
   await Provider.findByIdAndDelete(id);
   console.log("provider detail is deleted");
 })
 app.use( (req,res,next) => {
     next(new ExpressError(404, "Page not found!"));
-
 });
 app.use((err,req,res,next) => {
     let{statusCode = Number(err.statusCode)||500, message = "Something Went wrong!"} = err;
     res.status(statusCode).render("pages/error.ejs", {message});
     
-})
-
+});
 app.listen(8080 ,(req, res)=>{
     console.log("listening to port 8080");
 });
