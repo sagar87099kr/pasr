@@ -15,10 +15,10 @@ const upload = multer( {storage} );
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/expressError.js");
 const { wrap } = require("module");
-const session = require("express-session");
 const cookie = require("express-session/session/cookie.js");
-const MongoStore = require('connect-mongo').default;
 const { connect } = require("http2");
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
 const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
@@ -31,9 +31,11 @@ const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 const Shedule = require("./data/clander.js");
 const { customerSchema } = require("./schema.js");
 
-const MON_URL = "mongodb://127.0.0.1:27017/pasr"
-// const dbUrl = process.env.ATLAS_DB;
-
+// const MON_URL = "mongodb://127.0.0.1:27017/pasr"
+const dbUrl = process.env.ATLAS_DB_URL;
+if (!dbUrl) {
+  throw new Error("ATLAS_DB is missing in your .env file");
+}
 main()
 .then(() => {
     console.log("connected to databases");
@@ -42,7 +44,7 @@ main()
 });
 
 async function main() {
-    await mongoose.connect(MON_URL)   
+    await mongoose.connect(dbUrl)   
 };
 
 app.set("view engine", "ejs");
@@ -52,30 +54,50 @@ app.use(express.urlencoded({extended:true}));
 app.use(methodOverride("_method"));
 app.engine("ejs", ejsMate);
 app.use(express.json());
-// const store = MongoStore.create({
-//   mogoUrl: process.env.ATLAS_DB,
-//   crypto:{
-//     secret:"mysupersecretcode"
-//   },
-//   touchAfter: 24 * 3600,
-// })
-// store.on("error",()=>{
-//   console.log("ERROR IN MONGO SESSION STORE", error);
-// })
-const sessionOptions = {
-  // store,
-  secret:process.env.SECRET,
-  resave: false,
-  saveUninitialized: true,
-  cookie:{
-    expires: Date.now() + 14 * 24 * 60 * 60 * 1000,
-    maxAge: 14 * 24 * 60 * 60 * 1000,
-    httpOnly: true
-  }
-};
+const store = MongoStore.create({
+  mongoUrl: dbUrl,
+  crypto: {
+    secret: process.env.SECRET, // encrypt session in DB
+  },
+  touchAfter: 7*24 * 3600, // reduce DB writes
+});
+store.on("error", (err) => {
+  console.log("SESSION STORE ERROR:", err);
+});
+app.use(
+  session({
+    // store,
+    name: "pasr.sid",
+    secret: process.env.SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+    },
+  })
+);
 
 
-app.use(session(sessionOptions));
+// app.use(session(sessionOptions));
+
+// app.use(
+//   session({
+//     store: new FileStore({
+//       path: "./sessions",
+//       retries: 1,
+//       ttl: 14 * 24 * 60 * 60, // seconds
+//     }),
+//     secret: process.env.SECRET,
+//     resave: false,
+//     saveUninitialized: false,
+//     cookie: {
+//       httpOnly: true,
+//       expires: Date.now() + 14 * 24 * 60 * 60 * 1000,
+//       maxAge: 14 * 24 * 60 * 60 * 1000,
+//     },
+//   })
+// );
 app.use(flash());
 
 app.use(passport.initialize());
