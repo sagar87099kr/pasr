@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: pasr
+    env: node
+    plan: standard
+    buildCommand: npm install
+    startCommand: node app.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20.9.0
