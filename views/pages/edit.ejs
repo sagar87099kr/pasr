@@ -1,48 +1,98 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
-<body>
-  <div>
-<form  action="/update/<%=data._id%>?_method=PUT"  method="POST" novalidate class="needs-validation">
-  <div class="mb-3 rows-8">
-      <label for="exampleInputEmail1" class="form-label" >write about your discription</label>
-      <textarea type="number" class="form-control" id="exampleInputEmail1"  required="True" name="provider[discription]" ><%= data.discription%></textarea>
-      <div class="invalid-feedback">It will help customer to know you.</div>
-    </div>
-    <div class="mb-3" >
-      <label for="exampleInputEmail1" class="form-label" >Change Your Company name*</label>
-      <input type="text" class="form-control" id="exampleInputEmail1"  required="True" name="provider[company]" value="<%= data.company%>">
-      <div class="invalid-feedback">You need to write your name.</div>
-    </div>
-    <div class="mb-3">
-      <label for="exampleInputEmail1" class="form-label" >Year of experience</label>
-      <input type="number" class="form-control" id="exampleInputEmail1"  required="True" name="provider[experience]" value="<%= data.experience%>">
-      <div class="invalid-feedback">It will help customer to choose you.</div>
-    </div>
-    <div class="mb-3">
-      <label for="exampleInputEmail1" class="form-label" >Change Your Company location*</label>
-      <input type="text" class="form-control" id="exampleInputEmail1"  required="True" name="provider[location]" value="<%= data.location%>">
-      <div class="invalid-feedback">You need to enter your company location.</div>
-    </div>
-    <hr>
-    <br>
-    <h4> Select the service you want to give service * </h4>
-    <select class="form-select" aria-label="Default select example" required name="provider[categories]" value="<%= data.categories%>">
-    <option value="" disabled selected> Select the category in which you want to give service </option>
-    <option value="Farming Vehicles" ><i class="fa-solid fa-tractor"></i>Farming Vehicles</option>
-    <option value="Four Wheelers" ><i class="fa-solid fa-car-side"></i>Four Wheelers</option>
-    <option value="HMV (Bus)" ><i class="fa-solid fa-bus"></i>HMV (Bus)</option>
-    <option value="Three Wheelers" ><i class="fa-solid fa-car"></i>Three Wheelers</option>
-    <option value="Caterings" ><i class="fa-solid fa-utensils"></i>Caterings</option>
-    <option value="Filming" ><i class="fa-regular fa-camera"></i>Filming</option>
-    <option value="Decoration" ><i class="fa-brands fa-42-group"></i>Decoration</option>
-    <option value="DJ and Tent" ><i class="fa-solid fa-music"></i>DJ and Tent</option>
-    <option value="Band Party" >Band Party</option>
-    <option value="Heavy Equipments" ><i class="fa-brands fa-cc-jcb"></i>Heavy Equipments</option>
-  </select>
-  <hr>
-  <div>
-  <button class="btn btn-success"> Confirm Update</button>
-  </div>
-</form>
-</div>
 
-</body>
+  <body>
+    <div>
+      <form action="/update/<%=data._id%>?_method=PUT" method="POST" novalidate class="needs-validation">
+        <div class="mb-3 rows-8">
+          <label for="exampleInputEmail1" class="form-label">write about your discription</label>
+          <textarea type="number" class="form-control" id="exampleInputEmail1" required="True"
+            name="provider[discription]"><%= data.discription%></textarea>
+          <div class="invalid-feedback">It will help customer to know you.</div>
+        </div>
+        <div class="mb-3">
+          <label for="exampleInputEmail1" class="form-label">Change Your Company name*</label>
+          <input type="text" class="form-control" id="exampleInputEmail1" required="True" name="provider[company]"
+            value="<%= data.company%>">
+          <div class="invalid-feedback">You need to write your name.</div>
+        </div>
+        <div class="mb-3">
+          <label for="exampleInputEmail1" class="form-label">Year of experience</label>
+          <input type="number" class="form-control" id="exampleInputEmail1" required="True" name="provider[experience]"
+            value="<%= data.experience%>">
+          <div class="invalid-feedback">It will help customer to choose you.</div>
+        </div>
+        <div class="mb-3">
+          <label for="locationInput" class="form-label">Change Your Company location*</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="locationInput" required="True" name="provider[location]"
+              value="<%= data.location%>">
+            <button class="btn btn-outline-secondary" type="button" id="getLocationBtn" title="Use Current Location">
+              <i class="fa-solid fa-location-crosshairs"></i> Get Location
+            </button>
+          </div>
+          <div class="invalid-feedback">You need to enter your company location.</div>
+        </div>
+
+        <script>
+          document.getElementById('getLocationBtn').addEventListener('click', () => {
+            const btn = document.getElementById('getLocationBtn');
+            const input = document.getElementById('locationInput');
+
+            if (!navigator.geolocation) {
+              alert("Geolocation is not supported by your browser");
+              return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Locating...';
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+              const { latitude, longitude } = position.coords;
+              try {
+                const res = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
+                const data = await res.json();
+                if (data.address) {
+                  input.value = data.address;
+                } else {
+                  alert("Could not find address for this location.");
+                }
+              } catch (err) {
+                console.error(err);
+                alert("Failed to fetch address.");
+              } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+              }
+            }, (err) => {
+              console.error(err);
+              alert("Unable to retrieve your location.");
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+            });
+          });
+        </script>
+        <hr>
+        <br>
+        <h4> Select the service you want to give service * </h4>
+        <select class="form-select" aria-label="Default select example" required name="provider[categories]"
+          value="<%= data.categories%>">
+          <option value="" disabled selected> Select the category in which you want to give service </option>
+          <option value="Farming Vehicles"><i class="fa-solid fa-tractor"></i>Farming Vehicles</option>
+          <option value="Four Wheelers"><i class="fa-solid fa-car-side"></i>Four Wheelers</option>
+          <option value="HMV (Bus)"><i class="fa-solid fa-bus"></i>HMV (Bus)</option>
+          <option value="Three Wheelers"><i class="fa-solid fa-car"></i>Three Wheelers</option>
+          <option value="Caterings"><i class="fa-solid fa-utensils"></i>Caterings</option>
+          <option value="Filming"><i class="fa-regular fa-camera"></i>Filming</option>
+          <option value="Decoration"><i class="fa-brands fa-42-group"></i>Decoration</option>
+          <option value="DJ and Tent"><i class="fa-solid fa-music"></i>DJ and Tent</option>
+          <option value="Band Party">Band Party</option>
+          <option value="Heavy Equipments"><i class="fa-brands fa-cc-jcb"></i>Heavy Equipments</option>
+        </select>
+        <hr>
+        <div>
+          <button class="btn btn-success"> Confirm Update</button>
+        </div>
+      </form>
+    </div>
+
+  </body>

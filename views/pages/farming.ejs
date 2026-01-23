@@ -48,11 +48,26 @@
     const range = document.getElementById("rangeKm");
     const kmValue = document.getElementById("kmValue");
 
+    // Initialize from URL param if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialRange = urlParams.get('range');
+    if (initialRange) {
+        range.value = initialRange;
+    }
+
     function updateValue() {
       kmValue.textContent = range.value;
     }
 
     range.addEventListener("input", updateValue);
+    
+    // Reload on change
+    range.addEventListener("change", () => {
+        const url = new URL(window.location.href);
+        url.searchParams.set("range", range.value);
+        window.location.href = url.toString();
+    });
+
     updateValue();
   </script>
 

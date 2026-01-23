@@ -1,57 +1,58 @@
-const mongoose= require("mongoose");
+const mongoose = require("mongoose");
 const review = require("./review");
 const clander = require("./clander");
 const { array, required } = require("joi");
 const Schema = mongoose.Schema;
 
-const providerSchema= new Schema({
-  categories:{
-    type:String,
+const providerSchema = new Schema({
+  categories: {
+    type: String,
     required: true,
   },
-  personImage:{
-      type : Array,
-      required:true,
-    },
-   
-  discription:{
-    type:String,
+  personImage: {
+    type: Array,
+    required: true,
+  },
+
+  discription: {
+    type: String,
     maxlength: 200,
-    default:"",
+    default: "",
 
   },
-  experience:{
-    type:Number,
-    trim:true,
-    default:1,
-    required:true
-    
-  },
-  company:{
-    type:String,
-    maxlength:50,
-    required:true,
+  experience: {
+    type: Number,
+    trim: true,
+    default: 1,
+    required: true
 
   },
-  location:{
-    type:String,
-    required:true,
+  company: {
+    type: String,
+    maxlength: 50,
+    required: true,
+
+  },
+  location: {
+    type: String,
+    required: true,
 
   },
   owner: {
-    type:Schema.Types.ObjectId,
-    required: true,
-    ref:"Customer",
-  },
-  calendar: { 
     type: Schema.Types.ObjectId,
-     ref: "Shedule",
-      default: null },
+    required: true,
+    ref: "Customer",
+  },
+  calendar: {
+    type: Schema.Types.ObjectId,
+    ref: "Shedule",
+    default: null
+  },
 
-  review:[
+  review: [
     {
-      type:Schema.Types.ObjectId,
-      ref:"Review"
+      type: Schema.Types.ObjectId,
+      ref: "Review"
     }
   ],
   geometry: {
@@ -66,39 +67,40 @@ const providerSchema= new Schema({
     }
   },
   verified: {
-     type: Boolean,
-     default: false
-     },
-  verifedBy:{
-    type:String,
-    default:"none",
-    trim:true,
-    maxlength:60,
-    minlength:3,
-    },
-  phoneNO:{
-    type:Number,
-    trim:true, 
-    default:"",
+    type: Boolean,
+    default: false
+  },
+  verifedBy: {
+    type: String,
+    default: "none",
+    trim: true,
+    maxlength: 60,
+    minlength: 3,
+  },
+  phoneNO: {
+    type: Number,
+    trim: true,
+    default: "",
   },
   price: {
-      type: [Number],
-      required: true
-    },
-  Image:{
-      type : Array,
-    },
-  hideListing:{
-     type: Boolean,
-     default: false
-     },
-  createdAt: { 
+    type: [Number],
+    required: true
+  },
+  Image: {
+    type: Array,
+  },
+  hideListing: {
+    type: Boolean,
+    default: false
+  },
+  createdAt: {
     type: Date,
     default: Date.now
   }
 
 });
- 
-const Provider = mongoose.model("Provider", providerSchema )
+
+providerSchema.index({ geometry: '2dsphere' });
+const Provider = mongoose.model("Provider", providerSchema)
 module.exports = Provider;
 

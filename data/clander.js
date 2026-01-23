@@ -1,10 +1,10 @@
-const mongoose= require("mongoose");
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const daySchema = Schema(
   {
     date: { type: String, required: true }, // "YYYY-MM-DD"
-    status: { type: String, enum: ["free", "busy"], required: true },
+    status: { type: String, enum: ["free", "busy"], required: true }
   },
   { _id: false }
 );

@@ -19,12 +19,12 @@ const todayBtn = document.getElementById("todayBtn");
 const scheduleForm = document.getElementById("scheduleForm");
 const daysJsonInput = document.getElementById("daysJson");
 
-const DOW = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+const DOW = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-function pad2(n){ return String(n).padStart(2,"0"); }
-function toISODate(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
-function monthName(d){ return d.toLocaleString(undefined, { month:"long" }); }
-function startOfMonth(y, m){ return new Date(y, m, 1); }
+function pad2(n) { return String(n).padStart(2, "0"); }
+function toISODate(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function monthName(d) { return d.toLocaleString(undefined, { month: "long" }); }
+function startOfMonth(y, m) { return new Date(y, m, 1); }
 
 // Months: ALL 2026
 const months = Array.from({ length: 12 }, (_, i) => startOfMonth(2026, i));
@@ -37,10 +37,10 @@ let currentIndex = (now.getFullYear() === 2026) ? now.getMonth() : 0;
 let scheduleMap = Object.create(null);
 
 // Initialize all days in 2026 as FREE
-function initAllFree(){
-  for (const m of months){
+function initAllFree() {
+  for (const m of months) {
     const last = new Date(m.getFullYear(), m.getMonth() + 1, 0);
-    for (let day=1; day<=last.getDate(); day++){
+    for (let day = 1; day <= last.getDate(); day++) {
       const d = new Date(m.getFullYear(), m.getMonth(), day);
       scheduleMap[toISODate(d)] = "free";
     }
@@ -48,29 +48,29 @@ function initAllFree(){
 }
 
 // Overlay saved data from server (so everyone sees same schedule)
-function overlayExistingDays(existing){
+function overlayExistingDays(existing) {
   if (!Array.isArray(existing)) return;
-  for (const e of existing){
+  for (const e of existing) {
     const date = String(e?.date || "");
     const status = String(e?.status || "free");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-    if (!["free","busy"].includes(status)) continue;
+    if (!["free", "busy"].includes(status)) continue;
     if (scheduleMap[date] !== undefined) scheduleMap[date] = status;
   }
 }
 
-function render(){
+function render() {
   monthsEl.innerHTML = "";
   const m = months[currentIndex];
   monthsEl.appendChild(renderMonth(m));
 
-  monthLabel.textContent = `${monthName(m)} ${m.getFullYear()} (${currentIndex+1}/12)`;
+  monthLabel.textContent = `${monthName(m)} ${m.getFullYear()} (${currentIndex + 1}/12)`;
 
   prevBtn.disabled = currentIndex === 0;
   nextBtn.disabled = currentIndex === 11;
 }
 
-function renderMonth(m){
+function renderMonth(m) {
   const monthBox = document.createElement("div");
   monthBox.className = "month";
 
@@ -84,7 +84,7 @@ function renderMonth(m){
 
   const dow = document.createElement("div");
   dow.className = "dow";
-  for (const x of DOW){
+  for (const x of DOW) {
     const d = document.createElement("div");
     d.textContent = x;
     dow.appendChild(d);
@@ -99,13 +99,13 @@ function renderMonth(m){
   const leading = first.getDay();
   const totalDays = last.getDate();
 
-  for (let i=0; i<leading; i++){
+  for (let i = 0; i < leading; i++) {
     const blank = document.createElement("div");
     blank.className = "day muted";
     grid.appendChild(blank);
   }
 
-  for (let day=1; day<=totalDays; day++){
+  for (let day = 1; day <= totalDays; day++) {
     const d = new Date(m.getFullYear(), m.getMonth(), day);
     const key = toISODate(d);
     const status = scheduleMap[key] || "free";
@@ -117,8 +117,10 @@ function renderMonth(m){
     btn.dataset.date = key;
 
     btn.addEventListener("click", () => {
-      scheduleMap[key] = (scheduleMap[key] === "busy") ? "free" : "busy";
-      render();
+      if (window.IS_OWNER) {
+        scheduleMap[key] = (scheduleMap[key] === "busy") ? "free" : "busy";
+        render();
+      }
     });
 
     grid.appendChild(btn);
@@ -130,10 +132,10 @@ function renderMonth(m){
 
 // Slider controls
 prevBtn.addEventListener("click", () => {
-  if (currentIndex > 0){ currentIndex--; render(); }
+  if (currentIndex > 0) { currentIndex--; render(); }
 });
 nextBtn.addEventListener("click", () => {
-  if (currentIndex < 11){ currentIndex++; render(); }
+  if (currentIndex < 11) { currentIndex++; render(); }
 });
 todayBtn.addEventListener("click", () => {
   currentIndex = (now.getFullYear() === 2026) ? now.getMonth() : 0;
@@ -141,10 +143,12 @@ todayBtn.addEventListener("click", () => {
 });
 
 // Submit form -> send JSON
-scheduleForm.addEventListener("submit", () => {
-  const days = Object.entries(scheduleMap).map(([date, status]) => ({ date, status }));
-  daysJsonInput.value = JSON.stringify(days);
-});
+if (scheduleForm) {
+  scheduleForm.addEventListener("submit", () => {
+    const days = Object.entries(scheduleMap).map(([date, status]) => ({ date, status }));
+    daysJsonInput.value = JSON.stringify(days);
+  });
+}
 
 // Init
 initAllFree();

@@ -1,190 +1,294 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
 
   <style>
-    * { box-sizing: border-box; }
-    body{
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
       display: flex;
       flex-direction: row-reverse;
       flex-wrap: wrap;
-      margin:0;
+      margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:#f6f7fb;
-      padding:24px;
-      display:flex;
-      justify-content:center;
+      background: #f6f7fb;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
     }
 
-    .profile-card{
-      width:100%;
+    .profile-card {
+      width: 100%;
       height: auto;
-      max-width:520px;
-      background:#fff;
-      border:1px solid #e9e9ef;
-      border-radius:16px;
-      padding:18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.06);
+      max-width: 520px;
+      background: #fff;
+      border: 1px solid #e9e9ef;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .06);
     }
 
-    .card-top{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:14px;
+    .card-top {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
-    .title{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      min-width:0;
+    .title {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
     }
 
-    .name{
-      font-size:18px;
-      font-weight:700;
-      color:#111827;
-      margin:0;
-      line-height:1.2;
-      word-break:break-word;
+    .name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111827;
+      margin: 0;
+      line-height: 1.2;
+      word-break: break-word;
     }
 
-    .sub{
-      font-size:13px;
-      color:#6b7280;
-      margin:0;
+    .sub {
+      font-size: 13px;
+      color: #6b7280;
+      margin: 0;
     }
 
-    .badge{
-      flex:0 0 auto;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:700;
-      border:1px solid;
-      user-select:none;
-      white-space:nowrap;
+    .badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid;
+      user-select: none;
+      white-space: nowrap;
     }
-    .badge .dot{
-      width:8px;
-      height:8px;
-      border-radius:50%;
-      display:inline-block;
+
+    .badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
     }
 
     /* Verified states */
-    .badge.true{
-      color:#065f46;
-      background:#ecfdf5;
-      border-color:#a7f3d0;
+    .badge.true {
+      color: #065f46;
+      background: #ecfdf5;
+      border-color: #a7f3d0;
     }
-    .badge.verified .dot{ background:#10b981; }
 
-    .badge.false{
-      color:#991b1b;
-      background:#fef2f2;
-      border-color:#fecaca;
+    .badge.verified .dot {
+      background: #10b981;
     }
-    .badge.not-verified .dot{ background:#ef4444; }
 
-    .details{
-      display:grid;
+    .badge.false {
+      color: #991b1b;
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    .badge.not-verified .dot {
+      background: #ef4444;
+    }
+
+    .details {
+      display: grid;
       grid-template-columns: 1fr;
-      gap:10px;
+      gap: 10px;
     }
 
-    .row{
-      display:flex;
-      gap:10px;
-      padding:10px 12px;
-      border:1px solid #eeeef6;
-      border-radius:12px;
-      background:#fbfbff;
+    .row {
+      display: flex;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #eeeef6;
+      border-radius: 12px;
+      background: #fbfbff;
     }
 
-    .label{
-      width:120px;
-      flex:0 0 120px;
-      font-size:12px;
-      color:#6b7280;
-      font-weight:600;
-      text-transform:uppercase;
-      letter-spacing:.03em;
+    .label {
+      width: 120px;
+      flex: 0 0 120px;
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .03em;
     }
 
-    .value{
-      font-size:14px;
-      color:#111827;
-      font-weight:600;
-      word-break:break-word;
-      min-width:0;
+    .value {
+      font-size: 14px;
+      color: #111827;
+      font-weight: 600;
+      word-break: break-word;
+      min-width: 0;
     }
 
-    @media (max-width: 420px){
-      .row{ flex-direction:column; }
-      .label{ width:auto; flex:0 0 auto; }
+    @media (max-width: 420px) {
+      .row {
+        flex-direction: column;
+      }
+
+      .label {
+        width: auto;
+        flex: 0 0 auto;
+      }
     }
-    .badge-button{
-      color:#065f46;
-      background:#ecfdf5;
-      border-color:#a7f3d0; 
+
+    .badge-button {
+      color: #065f46;
+      background: #ecfdf5;
+      border-color: #a7f3d0;
     }
   </style>
-<body>
 
-  <section class="profile-card ">
-    <div class="card-top">
-      <div class="title">
-        <p class="name">Name</p>
-        <p class="sub">Customer / Provider Profile</p>
+  <body>
+
+    <section class="profile-card ">
+      <div class="card-top">
+        <div class="title">
+          <p class="name">Name</p>
+          <p class="sub">Customer / Provider Profile</p>
+        </div>
+
+        <!-- Change class to: "badge verified" OR "badge not-verified" -->
+        <span class="badge <%=currUser.verified%>">
+          <span class="dot"></span>
+          verification status: <%=currUser.verified%>
+        </span>
       </div>
 
-      <!-- Change class to: "badge verified" OR "badge not-verified" -->
-      <span class="badge <%=currUser.verified%>">
-        <span class="dot"></span>
-        verification status: <%=currUser.verified%>
-      </span>
-    </div>
+      <div class="details">
+        <div class="row">
+          <div class="label">Number</div>
+          <div class="value">
+            <%=currUser.username%>
+          </div>
+        </div>
 
-    <div class="details">
-      <div class="row">
-        <div class="label">Number</div>
-        <div class="value"><%=currUser.username%></div>
+        <div class="row">
+          <div class="label">Email</div>
+          <div class="value">
+            <%=currUser.emailAddress%>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label">Address</div>
+          <div class="value">
+            <%=currUser.address%>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label">Pincode</div>
+          <div class="value">
+            <%=currUser.pincode%>
+          </div>
+        </div>
       </div>
+      <hr style="margin: 20px 0;">
+      <h3>Update Location</h3>
+      <form action="/customer/update/<%= currUser._id %>?_method=PUT" method="POST">
+        <div class="mb-3">
+          <label for="addressInput" class="form-label"> Change Your location</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="addressInput" required="True" name="customer[address]"
+              value="<%= currUser.address%>">
+            <button class="btn btn-outline-secondary" type="button" id="getLocationBtn" title="Use Current Location">
+              <i class="fa-solid fa-location-crosshairs"></i> Get Location
+            </button>
+          </div>
+          <div class="invalid-feedback">You need to enter your location.</div>
+        </div>
+        <div class="mb-3">
+          <label for="exampleInputpincode" class="form-label"> Enter your pincode</label>
+          <input type="text" class="form-control" id="exampleInputpincode" required="True" name="customer[pincode]"
+            value="<%= currUser.pincode%>">
+          <div class="invalid-feedback">You need to enter your pincode.</div>
+        </div>
+        <button class="btn btn-primary">Update Location</button>
+      </form>
+    </section>
 
-      <div class="row">
-        <div class="label">Email</div>
-        <div class="value"><%=currUser.emailAddress%></div>
-      </div>
+    <script>
+      document.getElementById('getLocationBtn').addEventListener('click', () => {
+        const btn = document.getElementById('getLocationBtn');
+        const input = document.getElementById('addressInput');
 
-      <div class="row">
-        <div class="label">Address</div>
-        <div class="value"><%=currUser.address%></div>
-      </div>
+        if (!navigator.geolocation) {
+          alert("Geolocation is not supported by your browser");
+          return;
+        }
 
-      <div class="row">
-        <div class="label">Pincode</div>
-        <div class="value"><%=currUser.pincode%></div>
-      </div>
-    </div>
-    <!-- <form action=""></form>
-     <div class="mb-3">
-      <label for="exampleInputEmail1" class="form-label"> Change Your location</label>
-      <input type="text" class="form-control" id="exampleInputEmail1"  required="True" name="customer[address]" value="<%= currUser.address%>">
-      <div class="invalid-feedback">You need to enter your location.</div>
-    </div>
-    <div class="mb-3">
-      <label for="exampleInputEmail1" class="form-label"> Enter your pincode</label>
-      <input type="text" class="form-control" id="exampleInputEmail1"  required="True" name="customer[address]" value="<%= currUser.pincode%>">
-      <div class="invalid-feedback">You need to enter your location.</div>
-    </div>
-    </form> -->
-  </section>
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Locating...';
 
-</body>
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const res = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
+            const data = await res.json();
+            if (data.address) {
+              input.value = data.address;
+            } else {
+              alert("Could not find address for this location.");
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Failed to fetch address.");
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+          }
+        }, (err) => {
+          console.error(err);
+          alert("Unable to retrieve your location.");
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+        });
+      });
+    </script>
 
+    <% if (listings && listings.length> 0) { %>
+      <section class="profile-card" style="margin-top: 20px;">
+        <div class="card-top">
+          <div class="title">
+            <p class="name">My Listings</p>
+            <p class="sub">Manage your services</p>
+          </div>
+        </div>
+        <div class="details">
+          <% listings.forEach(listing=> { %>
+            <div class="row" style="align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <img src="<%= listing.personImage[0].path %>" alt="Service Image"
+                  style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;">
+                <div>
+                  <div class="value">
+                    <%= listing.company %>
+                  </div>
+                  <div class="sub">
+                    <%= listing.categories %>
+                  </div>
+                </div>
+              </div>
+              <a href="/provider/<%= listing._id %>/profile" class="badge-button badge" style="text-decoration: none;">
+                View
+              </a>
+            </div>
+            <% }) %>
+        </div>
+      </section>
+      <% } %>
 
-
+  </body>

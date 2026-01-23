@@ -1,12 +1,13 @@
-
 <% layout('./layoutes/boilerplate.ejs') -%>
-<script>
-  const mapToken = "<%=process.env.MAP_TOKEN%>"
-  const allData = <%- JSON.stringify(providerData)%>;
-  window.EXISTING_DAYS = <%- JSON.stringify(typeof existingDays !== "undefined" ? existingDays : []) %>;
-</script>
-<body>
-  <!-- <main class="page"> -->
+  <script>
+    window.mapToken = "<%= mapToken %>";
+    window.allData = <%- JSON.stringify(providerData) %>;
+    window.EXISTING_DAYS = <%- JSON.stringify(typeof existingDays !== "undefined" ? existingDays : []) %>;
+    window.IS_OWNER = <%= (currUser && providerData.owner._id.toString() === currUser._id.toString()) ? 'true' : 'false' %>;
+  </script>
+
+  <body>
+    <!-- <main class="page"> -->
     <section class="layout">
 
       <!-- LEFT COLUMN -->
@@ -17,55 +18,117 @@
           <div class="profile-grid">
 
             <!-- Image 250x375 -->
-            <div class="profile-img" id="profileImg">
-              <img
-                src=<%=providerData.personImage[0].path %>
-                alt="Profile"
+            <div class="profile-img" id="profileImg" style="position: relative;">
+              <img src=<%=providerData.personImage[0].path %>
+              alt="Profile"
               />
+              <button class="btn-share" id="shareBtn" type="button" title="Share Profile">
+                <i class="fa-solid fa-share-nodes"></i>
+              </button>
             </div>
+
+            <style>
+              .btn-share {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: rgba(255, 255, 255, 0.9);
+                border: none;
+                border-radius: 50%;
+                width: 36px;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                transition: transform 0.2s, background 0.2s;
+                z-index: 10;
+                color: #333;
+                font-size: 16px;
+              }
+
+              .btn-share:hover {
+                transform: scale(1.1);
+                background: #fff;
+                color: #2563eb;
+              }
+            </style>
+
+            <script>
+              document.addEventListener("DOMContentLoaded", () => {
+                const shareBtn = document.getElementById('shareBtn');
+                if (shareBtn) {
+                  shareBtn.addEventListener('click', async () => {
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({
+                          title: '<%=providerData.company%>',
+                          text: 'Check out this service provider on PaSr!',
+                          url: window.location.href
+                        });
+                      } catch (err) {
+                        console.log('Error sharing:', err);
+                      }
+                    } else {
+                      navigator.clipboard.writeText(window.location.href);
+                      alert('Profile link copied to clipboard!');
+                    }
+                  });
+                }
+              });
+            </script>
 
             <!-- Info -->
             <div class="profile-info" id="profileInfo">
-              <h1 class="name" id="pName"><%=providerData.company %></h1>
-              <div class="service" id="pService">owner:- <%=providerData.owner.name  %></div>
+              <h1 class="name" id="pName">
+                <%=providerData.company %>
+              </h1>
+              <div class="service" id="pService">owner:- <%=providerData.owner.name %>
+              </div>
 
               <!-- Contacts (name/address/phone) -->
               <div class="info-grid" id="pContacts">
                 <div class="info-item">
                   <span class="label">Phone</span>
-                  <span class="value" id="pPhone">+91 <%=providerData.owner.username %> , <%=providerData.phoneNO%></span>
+                  <span class="value" id="pPhone">+91 <%=providerData.owner.username %> , <%=providerData.phoneNO%>
+                  </span>
                 </div>
                 <div class="info-item">
                   <span class="label">Address</span>
-                  <span class="value" id="pAddress"><%=providerData.location %></span>
+                  <span class="value" id="pAddress">
+                    <%=providerData.location %>
+                  </span>
                 </div>
                 <div class="info-item">
                   <span class="label">Location</span>
                   <span class="value" id="pLocation">India</span>
                 </div>
               </div>
-               <div class="actions">
+              <div class="actions">
                 <%if (currUser && providerData.owner._id.equals(currUser._id)){%>
-                <form action="/provider/<%=providerData._id  %>/edit">
-                <button class="btn primary" id="updateBtn">Update</button>
-                </form>
-                <%}%>
-                
-              </div> 
-              <div class="value" >
-              serviced:-<%=providerData.experience%> years 
-               </div>          
+                  <form action="/provider/<%=providerData._id  %>/edit">
+                    <button class="btn primary" id="updateBtn">Update</button>
+                  </form>
+                  <%}%>
+
+              </div>
+              <div class="value">
+                serviced:-<%=providerData.experience%> years
+              </div>
             </div>
 
           </div>
         </section>
         <section class="cardin profile-card" id="profileCard">
           <div class="info-item">
-                  <span class="label">discription</span>
-                  <span class="value" id="pLocation"><%=providerData.discription%></span>
-                </div>
+            <span class="label">discription</span>
+            <span class="value" id="pLocation">
+              <%=providerData.discription%>
+            </span>
+          </div>
         </section>
-        
+
 
         <!-- REVIEWS BELOW PROFILE (left) -->
         <section class="cardin reviews-card" id="reviewsSection">
@@ -85,10 +148,11 @@
             </div>
           </div>
 
-          
+
 
           <!-- Separate place to create review -->
-          <form class="review-form" id="reviewForm" action="/<%= providerData._id %>/reviews" method="POST" novalidate class="needs-validation">
+          <form class="review-form" id="reviewForm" action="/<%= providerData._id %>/reviews" method="POST" novalidate
+            class="needs-validation">
             <div class="row">
               <div class="field">
                 <label>Rating</label>
@@ -104,7 +168,8 @@
 
             <div class="field">
               <label>Review</label>
-              <textarea id="rText" rows="3" placeholder="Write your review..." required  name="review[comment]"></textarea>
+              <textarea id="rText" rows="3" placeholder="Write your review..." required
+                name="review[comment]"></textarea>
             </div>
 
             <div class="form-actions">
@@ -116,46 +181,47 @@
           <div class="divider"></div>
 
           <!-- Show reviews -->
-<div class="reviews">
-  <div class="reviews-header">
-    <h2>Reviews</h2>
-    <p class="reviews-subtitle">What people are saying</p>
-  </div>
+          <div class="reviews">
+            <div class="reviews-header">
+              <h2>Reviews</h2>
+              <p class="reviews-subtitle">What people are saying</p>
+            </div>
 
-  <div class="reviews-list">
-    <% for (let review of providerData.review){%>
-    <!-- Review Card -->
-    <div class="review-card">
-      <div class="review-top">
-        <div class="review-user">
-          <div class="avatar">RK</div>
-          <div class="user-meta">
-            <div class="user-name">@<%=review.author.name%></div>
-            <div class="user-sub">Verified customer</div>
+            <div class="reviews-list">
+              <% for (let review of providerData.review){%>
+                <!-- Review Card -->
+                <div class="review-card">
+                  <div class="review-top">
+                    <div class="review-user">
+                      <div class="avatar">RK</div>
+                      <div class="user-meta">
+                        <div class="user-name">@<%=review.author.name%>
+                        </div>
+                        <div class="user-sub">Verified customer</div>
+                      </div>
+                    </div>
+
+                    <!-- Rating (change data-rating="1..5") -->
+                    <div class="rating" data-rating="<%=review.ratings%>" aria-label="4 out of 5 stars">
+                      <span class="star">★</span>
+                      <span class="star">★</span>
+                      <span class="star">★</span>
+                      <span class="star">★</span>
+                      <span class="star">★</span>
+                    </div>
+                  </div>
+
+                  <p class="review-comment">
+                    <%=review.comment%>
+                  </p>
+                  <form action="/provider/<%=providerData._id%>/review/<%= review._id %>?_method=DELETE" method="POST">
+                    <button class="btn btn-sm btn-danger" style="color: red;"><i class="fa-solid fa-trash"></i></button>
+                  </form>
+                </div>
+                <%}%>
+            </div>
           </div>
-        </div>
 
-        <!-- Rating (change data-rating="1..5") -->
-        <div class="rating" data-rating="<%=review.ratings%>" aria-label="4 out of 5 stars">
-          <span class="star">★</span>
-          <span class="star">★</span>
-          <span class="star">★</span>
-          <span class="star">★</span>
-          <span class="star">★</span>
-        </div>
-      </div>
-
-      <p class="review-comment">
-        <%=review.comment%>
-      </p>
-      <form action="/provider/<%=providerData._id%>/review/<%= review._id %>?_method=DELETE" method="POST">
-        <button class="btn btn-sm btn-danger" style="color: red;"><i class="fa-solid fa-trash"></i></button>
-      </form>
-    </div>
-    <%}%>
-  </div>
-</div>
- 
 
         </section>
 
@@ -164,38 +230,40 @@
       <!-- RIGHT COLUMN -->
       <div class="col right">
 
- <!-- CALENDAR (height auto, width 600) -->
-  <!-- views/shedule.ejs (HTML) -->
-  <div class="cal-wrap" id="calWrap" data-id="<%= providerData._id %>">
-    <div class="cal-topbar">
-      <div class="cal-title">
-        <div class="cal-h1">Shedule</div>
-        <div class="cal-h2" id="monthLabel">—</div>
-      </div>
+        <!-- CALENDAR (height auto, width 600) -->
+        <!-- views/shedule.ejs (HTML) -->
+        <div class="cal-wrap" id="calWrap" data-id="<%= providerData._id %>">
+          <div class="cal-topbar">
+            <div class="cal-title">
+              <div class="cal-h1">Shedule</div>
+              <div class="cal-h2" id="monthLabel">—</div>
+            </div>
 
-      <div class="cal-nav">
-        <button class="btn ghost" id="prevBtn" type="button">◀</button>
-        <button class="btn ghost" id="todayBtn" type="button">Current</button>
-        <button class="btn ghost" id="nextBtn" type="button">▶</button>
-      </div>
-    </div>
+            <div class="cal-nav">
+              <button class="btn ghost" id="prevBtn" type="button">◀</button>
+              <button class="btn ghost" id="todayBtn" type="button">Current</button>
+              <button class="btn ghost" id="nextBtn" type="button">▶</button>
+            </div>
+          </div>
 
-    <div class="cal-legend">
-      <span class="dot free"></span><span>Free</span>
-      <span class="dot busy"></span><span>Busy</span>
-      <span class="small">Click a day to toggle</span>
-    </div>
+          <div class="cal-legend">
+            <span class="dot free"></span><span>Free</span>
+            <span class="dot busy"></span><span>Busy</span>
+            <span class="small">Click a day to toggle</span>
+          </div>
 
-    <div class="months" id="months"></div>
+          <div class="months" id="months"></div>
 
-    <!-- FORM POST to /shedule/:id -->
-    <form id="scheduleForm" method="POST" action="/shedule/<%= providerData._id %>">
-      <input type="hidden" name="daysJson" id="daysJson" value="" />
-      <div class="cal-actions">
-        <button class="btn primary" id="submitBtn" type="submit">Submit</button>
-      </div>
-    </form>
-  </div>
+          <!-- FORM POST to /shedule/:id -->
+          <% if (currUser && providerData.owner._id.equals(currUser._id)) { %>
+            <form id="scheduleForm" method="POST" action="/shedule/<%= providerData._id %>">
+              <input type="hidden" name="daysJson" id="daysJson" value="" />
+              <div class="cal-actions">
+                <button class="btn primary" id="submitBtn" type="submit">Submit</button>
+              </div>
+            </form>
+            <% } %>
+        </div>
         <!-- MAP below profile but on RIGHT (below calendar) -->
         <section class="cardin map-card" id="mapSection">
           <div class="head">
@@ -203,14 +271,14 @@
               <h2>Map</h2>
               <p class="muted">See me on map</p>
             </div>
-            
+
           </div>
 
-          <div class="map-box" >
-            
-              <div class="map mb-3 mt-3" >
+          <div class="map-box">
+
+            <div class="map mb-3 mt-3">
               <div id="map"></div>
-            
+
             </div>
           </div>
         </section>
@@ -218,9 +286,8 @@
       </div>
 
     </section>
-  <!-- </main> -->
-<!-- <script src="/js/script.js"></script> -->
- <script src="/js/map.js"></script>
- <script src="/js/profile.js"></script>
-</body>
-
+    <!-- </main> -->
+    <!-- <script src="/js/script.js"></script> -->
+    <script src="/js/map.js"></script>
+    <script src="/js/profile.js"></script>
+  </body>

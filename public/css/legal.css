@@ -1,0 +1,117 @@
+/* Legal Pages Styling */
+.legal-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #334155;
+    line-height: 1.7;
+}
+
+.legal-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 10px;
+    text-align: center;
+    letter-spacing: -0.02em;
+}
+
+.legal-subtitle {
+    font-size: 1.1rem;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 40px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 20px;
+}
+
+.legal-section {
+    margin-bottom: 30px;
+}
+
+.legal-section h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    border-left: 4px solid #3b82f6;
+    padding-left: 12px;
+}
+
+.legal-section h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.legal-text {
+    margin-bottom: 15px;
+    text-align: justify;
+}
+
+.legal-list {
+    list-style-type: disc;
+    padding-left: 25px;
+    margin-bottom: 15px;
+}
+
+.legal-list li {
+    margin-bottom: 8px;
+}
+
+/* Form section in T&C */
+.agreement-form {
+    margin-top: 50px;
+    padding: 25px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.agreement-text {
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 20px;
+}
+
+.form-check-label {
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.btn-agree {
+    margin-top: 15px;
+    padding: 10px 30px;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.note {
+    font-size: 0.9rem;
+    background: #fff7ed;
+    border-left: 4px solid #f97316;
+    padding: 15px;
+    color: #9a3412;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .legal-container {
+        padding: 20px;
+        margin: 20px 10px;
+    }
+
+    .legal-title {
+        font-size: 2rem;
+    }
+}
