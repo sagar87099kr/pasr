@@ -2,7 +2,10 @@
 
   <body>
     <div>
-      <form action="/update/<%=data._id%>?_method=PUT" method="POST" novalidate class="needs-validation">
+      <div class="mb-3">
+        <span class="text-danger notranslate">Please fill details in English / कृपया अंग्रेजी में भरें</span>
+      </div>
+      <form action="/update/<%=data._id%>?_method=PUT" method="POST" novalidate class="needs-validation notranslate">
         <div class="mb-3 rows-8">
           <label for="exampleInputEmail1" class="form-label">write about your discription</label>
           <textarea type="number" class="form-control" id="exampleInputEmail1" required="True"

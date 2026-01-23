@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,19 +10,113 @@
 <link rel="stylesheet" href="/css/style.css">
 <link rel="stylesheet" href="/css/profile.css">
 <link rel="stylesheet" href="/css/insidecate.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+    integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.17.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.17.0/mapbox-gl.js"></script>
 <link rel="icon" href="images/icon.jpeg">
+
 <body>
     <%- include("../includes/navbar.ejs") %>
 
-    <div class="contain">
-        <%- include("../includes/flash.ejs") %>
-    <%- body  %></div>
-    <%- include("../includes/footer.ejs") %>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script>
-    <script src="./js/script.js"></script>
+        <div class="contain">
+            <%- include("../includes/flash.ejs") %>
+                <%- body %>
+        </div>
+        <%- include("../includes/footer.ejs") %>
+            <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+                integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+                crossorigin="anonymous"></script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"
+                integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y"
+                crossorigin="anonymous"></script>
+            <script src="./js/script.js"></script>
+            <!-- Google Translate Widget (Hidden) -->
+            <div id="google_translate_element" style="display:none"></div>
+
+            <!-- Language Selection Modal -->
+            <div class="modal fade" id="languageModal" tabindex="-1" aria-labelledby="languageModalLabel"
+                aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="languageModalLabel">Select Language / भाषा चुनें</h5>
+                        </div>
+                        <div class="modal-body">
+                            <p>Do you want to view this website in Hindi?</p>
+                            <p>क्या आप इस वेबसाइट को हिंदी में देखना चाहते हैं?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="btnEnglish">No, English (नहीं,
+                                अंग्रेजी)</button>
+                            <button type="button" class="btn btn-success" id="btnHindi">Yes, Hindi (हाँ, हिंदी)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script type="text/javascript">
+                function googleTranslateElementInit() {
+                    new google.translate.TranslateElement({
+                        pageLanguage: 'en',
+                        includedLanguages: 'en,hi',
+                        autoDisplay: false
+                    }, 'google_translate_element');
+                }
+
+                // Custom Language Logic
+                document.addEventListener('DOMContentLoaded', function () {
+                    const langPref = localStorage.getItem('languagePreference');
+                    const modalElement = document.getElementById('languageModal');
+                    const languageModal = new bootstrap.Modal(modalElement);
+
+                    if (!langPref) {
+                        // Show modal on first visit if no preference
+                        languageModal.show();
+                    } else if (langPref === 'hi') {
+                        // If preference is Hindi, try to trigger translation
+                        triggerHindiTranslation();
+                    }
+
+                    document.getElementById('btnHindi').addEventListener('click', function () {
+                        localStorage.setItem('languagePreference', 'hi');
+                        languageModal.hide();
+                        triggerHindiTranslation();
+                    });
+
+                    document.getElementById('btnEnglish').addEventListener('click', function () {
+                        localStorage.setItem('languagePreference', 'en');
+                        languageModal.hide();
+                        // Ensure we are in English (reload if needed or just do nothing if already en)
+                        // If Google Translate cookie exists, we might need to clear it or set it to en.
+                        // For simple usage, just reloading or doing nothing is often enough if we haven't translated yet.
+                        // To be safe, we can force a reload if we detect translation might be active, but typically 'en' is default.
+                    });
+
+                    function triggerHindiTranslation() {
+                        // We need to wait for the Google Translate frame to load
+                        const checkInterval = setInterval(function () {
+                            const select = document.querySelector('.goog-te-combo');
+                            if (select) {
+                                clearInterval(checkInterval);
+                                select.value = 'hi';
+                                select.dispatchEvent(new Event('change'));
+                            }
+                        }, 500);
+
+                        // Styles to hide the top bar if it appears
+                        const style = document.createElement('style');
+                        style.innerHTML = `
+            body { top: 0 !important; } 
+            .goog-te-banner-frame { display: none !important; }
+          `;
+                        document.head.appendChild(style);
+                    }
+                });
+            </script>
+            <script type="text/javascript"
+                src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
+
 </html>

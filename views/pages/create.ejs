@@ -3,7 +3,11 @@
   <body>
     <div class="all-cutomer-details" style="margin-top: 50px;">
       <h3> If you find this (*) symbol in form this means it is compulsory to fill.</h3>
-      <form method="POST" action="/become/provider" novalidate class="needs-validation" enctype="multipart/form-data">
+      <div class="mb-3">
+        <span class="text-danger notranslate">Please fill details in English / कृपया अंग्रेजी में भरें</span>
+      </div>
+      <form method="POST" action="/become/provider" novalidate class="needs-validation notranslate"
+        enctype="multipart/form-data">
         <div class="mb-3">
           <label for="exampleInputEmail1" class="form-label">Enter Your Company name*</label>
           <input type="text" class="form-control" id="exampleInputEmail1" required="True" name="provider[company]"

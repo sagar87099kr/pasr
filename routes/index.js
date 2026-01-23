@@ -61,4 +61,9 @@ router.get("/get-address", async (req, res) => {
     }
 });
 
+// Redirect root to home
+router.get("/", (req, res) => {
+    res.redirect("/home");
+});
+
 module.exports = router;
