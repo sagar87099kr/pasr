@@ -35,27 +35,6 @@
             <!-- Google Translate Widget (Hidden) -->
             <div id="google_translate_element" style="display:none"></div>
 
-            <!-- Language Selection Modal -->
-            <div class="modal fade" id="languageModal" tabindex="-1" aria-labelledby="languageModalLabel"
-                aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="languageModalLabel">Select Language / भाषा चुनें</h5>
-                        </div>
-                        <div class="modal-body">
-                            <p>Do you want to view this website in Hindi?</p>
-                            <p>क्या आप इस वेबसाइट को हिंदी में देखना चाहते हैं?</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" id="btnEnglish">No, English (नहीं,
-                                अंग्रेजी)</button>
-                            <button type="button" class="btn btn-success" id="btnHindi">Yes, Hindi (हाँ, हिंदी)</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <script type="text/javascript">
                 function googleTranslateElementInit() {
                     new google.translate.TranslateElement({
@@ -68,31 +47,29 @@
                 // Custom Language Logic
                 document.addEventListener('DOMContentLoaded', function () {
                     const langPref = localStorage.getItem('languagePreference');
-                    const modalElement = document.getElementById('languageModal');
-                    const languageModal = new bootstrap.Modal(modalElement);
+                    const languageSwitch = document.getElementById('languageSwitch');
 
-                    if (!langPref) {
-                        // Show modal on first visit if no preference
-                        languageModal.show();
-                    } else if (langPref === 'hi') {
-                        // If preference is Hindi, try to trigger translation
-                        triggerHindiTranslation();
+                    if (languageSwitch) {
+                        // Set initial state based on preference
+                        if (langPref === 'hi') {
+                            languageSwitch.checked = true;
+                            triggerHindiTranslation();
+                        } else {
+                            languageSwitch.checked = false;
+                        }
+
+                        // Listen for changes
+                        languageSwitch.addEventListener('change', function () {
+                            if (this.checked) {
+                                localStorage.setItem('languagePreference', 'hi');
+                                triggerHindiTranslation();
+                            } else {
+                                localStorage.setItem('languagePreference', 'en');
+                                // clear changes by reloading or resetting
+                                window.location.reload();
+                            }
+                        });
                     }
-
-                    document.getElementById('btnHindi').addEventListener('click', function () {
-                        localStorage.setItem('languagePreference', 'hi');
-                        languageModal.hide();
-                        triggerHindiTranslation();
-                    });
-
-                    document.getElementById('btnEnglish').addEventListener('click', function () {
-                        localStorage.setItem('languagePreference', 'en');
-                        languageModal.hide();
-                        // Ensure we are in English (reload if needed or just do nothing if already en)
-                        // If Google Translate cookie exists, we might need to clear it or set it to en.
-                        // For simple usage, just reloading or doing nothing is often enough if we haven't translated yet.
-                        // To be safe, we can force a reload if we detect translation might be active, but typically 'en' is default.
-                    });
 
                     function triggerHindiTranslation() {
                         // We need to wait for the Google Translate frame to load
