@@ -1,74 +1,89 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
-<body>
-</head>
 
-<body>
+  <body>
+    </head>
 
-  <section class="top-panel">
-    <h1>Find Providers Near You (Four weelers)</h1>
+    <body>
 
-    <p class="note">
-      <b>NOTE:</b> We only provide verified (as much as possible) provider details. Please confirm pricing, availability,
-      and service quality directly with the provider before booking.
-    </p>
+      <section class="top-panel">
+        <h1>Find Providers Near You (Four weelers)</h1>
 
-    <div class="range-row">
-      <div class="range-head">
-        <p class="range-label">Select range (1 to 10 km)</p>
-        <div class="range-pill">Selected: <span id="kmValue">5</span> km</div>
+        <p class="note">
+          <b>NOTE:</b> We only provide verified (as much as possible) provider details. Please confirm pricing,
+          availability,
+          and service quality directly with the provider before booking.
+        </p>
+
+        <div class="range-row">
+          <div class="range-head">
+            <p class="range-label">Select range (1 to 10 km)</p>
+            <div class="range-pill">Selected: <span id="kmValue">5</span> km</div>
+          </div>
+
+          <input id="rangeKm" type="range" min="1" max="10" step="1" value="5" />
+        </div>
+      </section>
+
+      <!-- Optional section below just to show spacing (you can remove it) -->
+      <div class="content">
+        <div class="placeholder">
+          <% if (allProvider && allProvider.length> 0) { %>
+            <%for (let provider of allProvider){%>
+              <div class="info">
+                <a class="search-card" href="/provider/<%= provider._id %>/profile">
+                  <div class="search-avatar">
+                    <img src="<%=provider.personImage[0].path %>" alt="Provider photo">
+                  </div>
+
+                  <div class="search-info">
+                    <h3 class="search-name">
+                      <%= provider.owner.name %>
+                    </h3>
+                    <p class="search-address">
+                      <%= provider.location %>
+                    </p>
+                  </div>
+
+                  <span class="search-action">View</span>
+                </a>
+              </div>
+              <%}%>
+                <% } else { %>
+                  <div style="text-align: center; margin-top: 2rem; color: #666;">
+                    <i class="fa-solid fa-face-frown fa-3x mb-3"></i>
+                    <h3>No Providers Found Nearby</h3>
+                    <p>We couldn't find any providers within the selected range (1-10km).</p>
+                    <p>We will reach you soon!</p>
+                  </div>
+                  <% } %>
+        </div>
       </div>
 
-      <input id="rangeKm" type="range" min="1" max="10" step="1" value="5" />
-    </div>
-  </section>
+      <script>
+        const range = document.getElementById("rangeKm");
+        const kmValue = document.getElementById("kmValue");
 
-  <!-- Optional section below just to show spacing (you can remove it) -->
-  <div class="content">
-    <div class="placeholder">
-      <%for (let provider of allProvider){%> 
-  <div class="info">
-<a class="search-card" href="/provider/<%= provider._id %>/profile">
-  <div class="search-avatar">
-    <img src="<%=provider.personImage[0].path %>" alt="Provider photo">
-  </div>
+        // Initialize from URL param if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialRange = urlParams.get('range');
+        if (initialRange) {
+          range.value = initialRange;
+        }
 
-  <div class="search-info">
-    <h3 class="search-name"><%= provider.owner.name %></h3>
-    <p class="search-address"><%= provider.location %></p>
-  </div>
+        function updateValue() {
+          kmValue.textContent = range.value;
+        }
 
-  <span class="search-action">View</span>
-</a>
-</div>
-<%}%>
-    </div>
-  </div>
+        range.addEventListener("input", updateValue);
 
-  <script>
-    const range = document.getElementById("rangeKm");
-    const kmValue = document.getElementById("kmValue");
+        // Reload on change
+        range.addEventListener("change", () => {
+          const url = new URL(window.location.href);
+          url.searchParams.set("range", range.value);
+          window.location.href = url.toString();
+        });
 
-    // Initialize from URL param if present
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialRange = urlParams.get('range');
-    if (initialRange) {
-        range.value = initialRange;
-    }
+        updateValue();
+      </script>
 
-    function updateValue() {
-      kmValue.textContent = range.value;
-    }
-
-    range.addEventListener("input", updateValue);
-    
-    // Reload on change
-    range.addEventListener("change", () => {
-        const url = new URL(window.location.href);
-        url.searchParams.set("range", range.value);
-        window.location.href = url.toString();
-    });
-
-    updateValue();
-  </script>
-
-</body>
+    </body>

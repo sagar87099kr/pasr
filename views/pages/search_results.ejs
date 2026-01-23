@@ -1,0 +1,79 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+
+    <head>
+        <link rel="stylesheet" href="/css/insidecate.css">
+        <style>
+            .search-header {
+                padding: 2rem 1rem;
+                text-align: center;
+            }
+
+            .search-query {
+                color: #28a745;
+                font-weight: bold;
+            }
+
+            .no-results {
+                text-align: center;
+                padding: 3rem;
+                font-size: 1.2rem;
+                color: #666;
+            }
+        </style>
+    </head>
+
+    <body>
+        <section class="search-header">
+            <h1>Search Results</h1>
+            <% if (query) { %>
+                <p>Showing results for: <span class="search-query">"<%= query %>"</span></p>
+                <% } %>
+        </section>
+
+        <div class="content">
+            <% if (providers && providers.length> 0) { %>
+                <div class="placeholder">
+                    <% for (let provider of providers) { %>
+                        <div class="info">
+                            <a class="search-card" href="/provider/<%= provider._id %>/profile">
+                                <div class="search-avatar">
+                                    <% if(provider.personImage && provider.personImage.length> 0) { %>
+                                        <img src="<%= provider.personImage[0].path %>" alt="Provider photo">
+                                        <% } else { %>
+                                            <img src="https://via.placeholder.com/150" alt="No image">
+                                            <% } %>
+                                </div>
+
+                                <div class="search-info">
+                                    <h3 class="search-name">
+                                        <%= provider.company %>
+                                    </h3>
+                                    <p class="search-address"><i class="fa-solid fa-location-dot"></i>
+                                        <%= provider.location %>
+                                    </p>
+                                    <% if(provider.phoneNO) { %>
+                                        <p class="search-phone"><i class="fa-solid fa-phone"></i>
+                                            <%= provider.phoneNO %>
+                                        </p>
+                                        <% } %>
+                                            <% if(provider.categories) { %>
+                                                <p class="search-category"><small>
+                                                        <%= provider.categories %>
+                                                    </small></p>
+                                                <% } %>
+                                </div>
+
+                                <span class="search-action">View</span>
+                            </a>
+                        </div>
+                        <% } %>
+                </div>
+                <% } else { %>
+                    <div class="no-results">
+                        <i class="fa-solid fa-magnifying-glass fa-2x mb-3"></i>
+                        <p>No providers found matching your search.</p>
+                        <a href="/home" class="btn btn-primary mt-3">Go Home</a>
+                    </div>
+                    <% } %>
+        </div>
+    </body>

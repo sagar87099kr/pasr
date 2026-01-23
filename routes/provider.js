@@ -12,6 +12,35 @@ const { storage } = require("../cloud_con.js");
 const upload = multer({ storage });
 
 // this will redirect into farmer page
+router.get("/search", isLogedin, wrapAsync(async (req, res) => {
+    const { q } = req.query;
+    let query = q || "";
+    let filter = {};
+
+    if (query) {
+        const isNumber = /^\d+$/.test(query);
+        if (isNumber) {
+            // Exact match for phone number or partial match if you prefer (but phoneNO is Number type)
+            // Since phoneNO is Number, we can only do exact match easily or need aggregation for partial
+            // Let's do exact match for now as planned
+            filter = { phoneNO: parseInt(query) };
+        } else {
+            const regex = new RegExp(query, 'i'); // case-insensitive regex
+            filter = {
+                $or: [
+                    { company: regex },
+                    { categories: regex },
+                    { location: regex }
+                ]
+            };
+        }
+    }
+
+    const providers = await Provider.find(filter).populate("owner");
+    res.render("pages/search_results.ejs", { providers, query });
+}));
+
+// this will redirect into farmer page
 router.get("/farm", isLogedin, findNearbyProviders("Farming Vehicles"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/farming.ejs", { allProvider });
