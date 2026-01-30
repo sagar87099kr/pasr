@@ -4,14 +4,18 @@ const ExpressError = require("./utils/expressError.js");
 const Review = require("./data/review.js");
 const Customer = require("./data/customers.js");
 
+
+
 module.exports.isLogedin = (req, res, next) => {
     if (!req.isAuthenticated()) {
+
         req.session.redirectUrl = req.originalUrl;
         req.flash("danger", "You must be login to see all services.");
         return res.redirect("/alreadyLogin");
     }
     next();
 }
+
 
 module.exports.saveRedirectUrl = (req, res, next) => {
     if (req.session.redirectUrl) {
@@ -33,10 +37,41 @@ module.exports.isOwner = async (req, res, next) => {
             req.flash("danger", "Provider not found");
             return res.redirect("/home");
         }
-        if (res.locals.currUser && !provider.owner._id.equals(res.locals.currUser._id)) {
+        // Fix: provider.owner is an ObjectId (not populated), so we compare directly
+        if (res.locals.currUser && !provider.owner.equals(res.locals.currUser._id)) {
             req.flash("danger", "You are not the Owner.");
             return res.redirect(`/provider/${id}/profile`);
         }
+        next();
+    } catch (e) {
+        next(e);
+    }
+}
+
+module.exports.isProductOwner = async (req, res, next) => {
+    try {
+        let { id } = req.params;
+        const mongoose = require('mongoose');
+        const Product = require("./data/product.js");
+
+        if (!mongoose.isValidObjectId(id)) {
+            req.flash("danger", "Invalid Product ID");
+            return res.redirect("/localMarket");
+        }
+
+        let product = await Product.findById(id);
+        if (!product) {
+            req.flash("danger", "Product not found");
+            return res.redirect("/localMarket");
+        }
+
+        console.log("Checking ownership. Product Owner:", product.owner, "Current User:", res.locals.currUser._id);
+        if (res.locals.currUser && !product.owner.equals(res.locals.currUser._id)) {
+            console.log("Ownership mismatch");
+            req.flash("danger", "You are not the owner of this product.");
+            return res.redirect(`/products/${id}`);
+        }
+
         next();
     } catch (e) {
         next(e);
@@ -78,8 +113,10 @@ module.exports.isVerifiedCustomer = async (req, res, next) => {
     }
 };
 module.exports.isadmin = async (req, res, next) => {
-    let customer = await Customer.find();
-    if (res.locals.currUser.username !== 8709956547 && customer.username !== 8709956547) {
+    // Check if current user exists and their username matches the admin number
+    // Using string comparison "8709956547" to be safe
+    const admins = ["8709956547", "9608812817", "7091212569", "7046699074",];
+    if (!res.locals.currUser || !admins.includes(String(res.locals.currUser.username))) {
         req.flash("danger", "Only admin have access of this route");
         return res.redirect(`/home`);
     }

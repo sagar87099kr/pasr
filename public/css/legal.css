@@ -1,117 +1,164 @@
-/* Legal Pages Styling */
-.legal-container {
-    max-width: 900px;
-    margin: 40px auto;
-    padding: 30px;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    color: #334155;
-    line-height: 1.7;
+:root {
+    --primary-color: #0f172a;
+    --text-main: #334155;
+    --text-heading: #0f172a;
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --radius-lg: 12px;
 }
 
+body {
+    background-color: var(--bg-color);
+    font-family: 'Outfit', sans-serif;
+    line-height: 1.6;
+    color: var(--text-main);
+}
+
+.legal-container {
+    max-width: 800px;
+    margin: 40px auto;
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+/* Header */
 .legal-title {
-    font-size: 2.5rem;
+    font-size: 32px;
     font-weight: 800;
-    color: #1e293b;
-    margin-bottom: 10px;
+    color: var(--text-heading);
+    margin-bottom: 8px;
     text-align: center;
     letter-spacing: -0.02em;
 }
 
 .legal-subtitle {
-    font-size: 1.1rem;
-    color: #64748b;
     text-align: center;
+    color: #64748b;
+    font-size: 16px;
     margin-bottom: 40px;
-    border-bottom: 1px solid #e2e8f0;
     padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
 }
 
+/* Content */
 .legal-section {
-    margin-bottom: 30px;
+    margin-bottom: 32px;
 }
 
 .legal-section h2 {
-    font-size: 1.5rem;
+    font-size: 20px;
     font-weight: 700;
-    color: #0f172a;
-    margin-top: 30px;
-    margin-bottom: 15px;
-    border-left: 4px solid #3b82f6;
-    padding-left: 12px;
+    color: var(--text-heading);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
 }
 
 .legal-section h3 {
-    font-size: 1.2rem;
+    font-size: 16px;
     font-weight: 600;
-    color: #1e293b;
-    margin-top: 20px;
-    margin-bottom: 10px;
+    color: var(--text-heading);
+    margin: 20px 0 10px;
 }
 
 .legal-text {
-    margin-bottom: 15px;
+    font-size: 15px;
+    color: var(--text-main);
+    margin-bottom: 12px;
     text-align: justify;
 }
 
 .legal-list {
-    list-style-type: disc;
-    padding-left: 25px;
-    margin-bottom: 15px;
+    padding-left: 20px;
+    margin-bottom: 16px;
 }
 
 .legal-list li {
     margin-bottom: 8px;
+    font-size: 15px;
 }
 
-/* Form section in T&C */
-.agreement-form {
-    margin-top: 50px;
-    padding: 25px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+/* Scroll Box for Nested Policy */
+.privacy-scroll-box {
+    background: #f1f5f9;
+    padding: 24px;
     border-radius: 8px;
-    text-align: center;
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    font-size: 14px;
+    margin-top: 16px;
+}
+
+.privacy-scroll-box h3,
+.privacy-scroll-box h4 {
+    margin-top: 16px;
+    color: var(--text-heading);
+}
+
+/* Form Agreement */
+.agreement-form {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-color);
+    background: #f8fafc;
+    padding: 24px;
+    border-radius: 8px;
 }
 
 .agreement-text {
-    font-weight: 600;
-    color: #0f172a;
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.chk-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
     margin-bottom: 20px;
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.form-check-input {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
 }
 
 .form-check-label {
-    font-weight: 500;
-    margin-left: 8px;
-}
-
-.btn-agree {
-    margin-top: 15px;
-    padding: 10px 30px;
+    font-size: 15px;
     font-weight: 600;
+    color: var(--text-heading);
+    cursor: pointer;
+}
+
+.continue-btn {
+    font-weight: 600;
+    padding: 12px;
+    font-size: 16px;
     border-radius: 8px;
-    transition: all 0.2s;
 }
 
-.note {
-    font-size: 0.9rem;
-    background: #fff7ed;
-    border-left: 4px solid #f97316;
-    padding: 15px;
-    color: #9a3412;
-    margin: 20px 0;
-    border-radius: 4px;
-}
-
-@media (max-width: 768px) {
+/* Responsive */
+@media (max-width: 600px) {
     .legal-container {
-        padding: 20px;
+        padding: 24px 16px;
         margin: 20px 10px;
     }
 
     .legal-title {
-        font-size: 2rem;
+        font-size: 24px;
     }
 }

@@ -1,0 +1,185 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <link rel="stylesheet" href="/css/localMarket.css">
+
+    <!-- Floating Action Button for Sellers -->
+    <a href="/product/seller" class="fab-sell" title="Sell Item">
+        <i class="fa-solid fa-plus"></i>
+    </a>
+
+    <!-- Header Section -->
+    <div class="market-header">
+        <div class="container">
+            <h2 class="market-title">
+                <i class="fa-solid fa-store"></i> Local Bazzar
+            </h2>
+            <% if (lat && lng) { %>
+                <span class="location-badge">
+                    <i class="fa-solid fa-location-dot"></i> Near You (<%= range || 10 %>km)
+                </span>
+                <% } %>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- Location Prompt -->
+        <% if (!lat || !lng) { %>
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="location-request-card">
+                        <div class="location-icon-circle">
+                            <i class="fa-solid fa-location-dot fa-2x"></i>
+                        </div>
+                        <h3>Welcome to Local Bazzar</h3>
+                        <p class="text-muted mb-4">Discover fresh products and sellers right in your neighborhood. We
+                            need your location to show you what's nearby.</p>
+                        <button id="getLocationBtn" class="btn btn-locate">
+                            <i class="fa-solid fa-crosshairs"></i> Detect My Location
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <% } else { %>
+
+                <!-- Range Control -->
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="range-control-panel">
+                            <label for="rangeSlider" class="form-label d-flex justify-content-betweenfw-bold mb-2">
+                                <span>Search Radius</span>
+                                <span class="badge bg-secondary"><span id="rangeValue">
+                                        <%= range || 10 %>
+                                    </span> km</span>
+                            </label>
+                            <input type="range" class="form-range" min="1" max="10" step="1" id="rangeSlider"
+                                value="<%= range || 10 %>">
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span>1 km</span>
+                                <span>10 km</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Categories Scroll (Dynamic links preserving query params) -->
+                <% const currentCat=typeof req !=='undefined' && req.query.category ? req.query.category : 'All Items' ;
+                    const makeCatLink=(catName)=> {
+                    let query = new URLSearchParams();
+                    if (lat) query.set('lat', lat);
+                    if (lng) query.set('lng', lng);
+                    if (range) query.set('range', range);
+                    query.set('category', catName);
+                    return `/localMarket?${query.toString()}`;
+                    }
+                    %>
+                    <div class="cat-scroll-wrapper">
+                        <a href="<%= makeCatLink('All Items') %>"
+                            class="cat-pill <%= currentCat === 'All Items' ? 'active' : '' %>">All Items</a>
+                        <a href="<%= makeCatLink('vegetables') %>"
+                            class="cat-pill <%= currentCat === 'vegetables' ? 'active' : '' %>">🥬 Vegetables</a>
+                        <a href="<%= makeCatLink('Fruits') %>"
+                            class="cat-pill <%= currentCat === 'Fruits' ? 'active' : '' %>">🍎 Fruits</a>
+                        <a href="<%= makeCatLink('Dairy products') %>"
+                            class="cat-pill <%= currentCat === 'Dairy products' ? 'active' : '' %>">🥛 Dairy</a>
+                        <a href="<%= makeCatLink('Grains') %>"
+                            class="cat-pill <%= currentCat === 'Grains' ? 'active' : '' %>">🌾 Grains</a>
+                        <a href="<%= makeCatLink('Animals') %>"
+                            class="cat-pill <%= currentCat === 'Animals' ? 'active' : '' %>">🐄 Animals</a>
+                        <a href="<%= makeCatLink('Others') %>"
+                            class="cat-pill <%= currentCat === 'Others' ? 'active' : '' %>">📦 Others</a>
+                    </div>
+
+
+                    <!-- Product Grid -->
+                    <% if (products && products.length> 0) { %>
+                        <div class="market-grid">
+                            <% for (let product of products) { %>
+                                <a href="/products/<%= product._id %>" class="product-card-link">
+                                    <div class="product-card">
+                                        <div class="product-img-wrap">
+                                            <img src="<%= product.productImage[0].url %>"
+                                                alt="<%= product.productName %>">
+                                            <div class="price-tag">
+                                                <%= product.price %>
+                                            </div>
+                                        </div>
+                                        <div class="card-body-custom">
+                                            <h5 class="prod-title">
+                                                <%= product.productName %>
+                                            </h5>
+                                            <p class="prod-desc">
+                                                <i class="fa-solid fa-user"></i>
+                                                <%= product.owner.username %>
+                                            </p>
+                                            <div class="prod-meta">
+                                                <span><i class="fa-solid fa-tag"></i>
+                                                    <%= product.categories %>
+                                                </span>
+                                                <span><i class="fa-solid fa-map-pin"></i>
+                                                    <%= product.location %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                                <% } %>
+                        </div>
+                        <% } else { %>
+                            <!-- Empty State -->
+                            <div class="alert alert-warning text-center mt-4" role="alert" style="border-radius: 12px;">
+                                <i class="fa-solid fa-basket-shopping fa-3x mb-3 text-warning"></i>
+                                <h4>No products found nearby</h4>
+                                <p>We couldn't find any sellers within <%= range || 10 %>km.</p>
+                                <p>Try increasing your search distance or checks back later.</p>
+                            </div>
+                            <% } %>
+
+                                <% } %>
+    </div>
+
+    <script>
+        const btn = document.getElementById('getLocationBtn');
+        if (btn) {
+            btn.addEventListener('click', () => {
+                if (!navigator.geolocation) {
+                    alert("Geolocation is not supported by your browser");
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Finding nearest market...';
+
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const { latitude, longitude } = position.coords;
+                    // Add a small delay for effect
+                    setTimeout(() => {
+                        window.location.href = `/localMarket?lat=${latitude}&lng=${longitude}&range=10`;
+                    }, 800);
+                }, (err) => {
+                    console.error(err);
+                    alert("Unable to retrieve your location. Please check your browser settings or allow location access.");
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Detect My Location';
+                });
+            });
+        }
+
+        const slider = document.getElementById('rangeSlider');
+        const rangeValue = document.getElementById('rangeValue');
+
+        if (slider) {
+            slider.addEventListener('input', (e) => {
+                rangeValue.textContent = e.target.value;
+            });
+
+            slider.addEventListener('change', (e) => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const lat = urlParams.get('lat');
+                const lng = urlParams.get('lng');
+                if (lat && lng) {
+                    window.location.href = `/localMarket?lat=${lat}&lng=${lng}&range=${e.target.value}`;
+                }
+            });
+        }
+    </script>

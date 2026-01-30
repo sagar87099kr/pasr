@@ -1,0 +1,152 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <link rel="stylesheet" href="/css/auth.css">
+
+    <body>
+        <div class="auth-container">
+            <div class="auth-card seller-card">
+                <div class="auth-header">
+                    <h1 class="auth-title">Sell Your Product</h1>
+                    <p class="auth-subtitle">List your items in the Local Bazaar</p>
+                    <div class="badge-info mt-3">
+                        <i class="fa-solid fa-circle-info"></i> Fields marked with (*) are mandatory
+                    </div>
+                    <div class="text-danger small mt-2 notranslate">
+                        Please fill details in English / कृपया अंग्रेजी में भरें
+                    </div>
+                </div>
+
+                <form method="POST" action="/product/seller" novalidate class="needs-validation notranslate"
+                    enctype="multipart/form-data">
+
+                    <!-- Category -->
+                    <div class="form-group">
+                        <label class="form-label">Product Category *</label>
+                        <select class="form-control form-select" required name="product[categories]">
+                            <option value="" disabled selected>Select category...</option>
+                            <option value="vegetables">🥬 Vegetables</option>
+                            <option value="Fruits">🍎 Fruits</option>
+                            <option value="Dairy products">🥛 Dairy products</option>
+                            <option value="Grains">🌾 Grains</option>
+                            <option value="Animals">🐄 Animals</option>
+                            <option value="Others">📦 Others</option>
+                        </select>
+                    </div>
+
+                    <!-- Product Name -->
+                    <div class="form-group">
+                        <label for="productName" class="form-label">Product Name *</label>
+                        <input type="text" class="form-control" id="productName" required name="product[productName]"
+                            placeholder="e.g. Fresh Farm Vegetables">
+                        <div class="invalid-feedback">Please enter the product name.</div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label for="productDescription" class="form-label">Description *</label>
+                        <textarea class="form-control" id="productDescription" required
+                            name="product[productDescription]" rows="3"
+                            placeholder="Describe your product..."></textarea>
+                        <div class="invalid-feedback">Please provide a description.</div>
+                    </div>
+
+                    <!-- Quantity & Price -->
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="quantity" class="form-label">Quantity *</label>
+                            <input type="number" class="form-control" id="quantity" required name="product[quantity]"
+                                placeholder="kg/ltr/units">
+                            <div class="invalid-feedback">Enter the quantity.</div>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label for="price" class="form-label">Price (per unit) *</label>
+                            <input type="number" class="form-control" id="price" required name="product[price]"
+                                placeholder="₹">
+                            <div class="invalid-feedback">Enter the price.</div>
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="form-group">
+                        <label for="locationInput" class="form-label">Location *</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="locationInput" required name="product[location]"
+                                placeholder="City, Area or Village">
+                            <button class="btn-location" type="button" id="getLocationBtn">
+                                <i class="fa-solid fa-location-crosshairs"></i> Get Location
+                            </button>
+                        </div>
+                        <div class="invalid-feedback">Please provide the location.</div>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="form-group mt-4">
+                        <label class="form-label">Product Images *</label>
+                        <div class="p-3 border rounded bg-light text-center">
+                            <img src="/images/localMarket.jpg" alt="example" class="img-fluid rounded mb-3"
+                                style="max-height: 150px; opacity: 0.7;">
+                            <input type="file" name="productImage" multiple required class="form-control">
+                            <div class="form-text mt-2">Upload clear images of your product used for display.</div>
+                        </div>
+                    </div>
+
+                    <!-- Agreement -->
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="confirmCheck" required>
+                        <label class="form-check-label" for="confirmCheck">
+                            <b>I confirm that the above information is correct and accurate.</b>
+                        </label>
+                    </div>
+
+                    <button class="btn-submit">List Product</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Location Script -->
+        <script>
+            document.getElementById('getLocationBtn').addEventListener('click', () => {
+                const btn = document.getElementById('getLocationBtn');
+                const input = document.getElementById('locationInput');
+
+                if (!navigator.geolocation) {
+                    alert("Geolocation is not supported by your browser");
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Locating...';
+
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    try {
+                        const res = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
+                        const data = await res.json();
+                        if (data.address) {
+                            input.value = data.address;
+                        } else {
+                            alert("Could not find address for this location.");
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert("Failed to fetch address.");
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+                    }
+                }, (err) => {
+                    console.error(err);
+
+                    let msg = "Unable to retrieve location.";
+                    if (err.code === 1) msg = "Location permission denied. Please allow access.";
+                    else if (err.code === 2) msg = "Location unavailable. Check your GPS/Network.";
+                    else if (err.code === 3) msg = "Location request timed out.";
+
+                    alert(`${msg}\n(Error: ${err.message})`);
+
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+                });
+            });
+        </script>
+        <script src="/js/script.js"></script>
+    </body>

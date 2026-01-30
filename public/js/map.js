@@ -1,13 +1,21 @@
-// mapToken is already defined in the global scope by profile.ejs
-console.log("Map script running...");
-console.log("Map Token:", mapToken ? "Present" : "Missing");
-
-if (!mapToken) {
-    console.error("Map token is undefined or empty.");
+const debugEl = document.getElementById("map-debug");
+function showMapError(msg) {
+    if (debugEl) {
+        debugEl.style.display = "block";
+        debugEl.innerHTML += `<div><strong>Map Error:</strong> ${msg}</div>`;
+    }
+    console.error("Map Error:", msg);
 }
 
-if (typeof mapboxgl === 'undefined') {
-    console.error("Mapbox GL JS is not loaded. Check script include.");
+// mapToken is already defined in the global scope by profile.ejs
+console.log("Map script running...");
+
+if (!mapToken) {
+    showMapError("Map Token is missing. Please check .env file.");
+} else if (typeof mapboxgl === 'undefined') {
+    showMapError("Mapbox Library not loaded. Check internet connection or adblocker.");
+} else if (!allData || !allData.geometry || !allData.geometry.coordinates) {
+    showMapError("Location coordinates invalid or missing.");
 } else {
     mapboxgl.accessToken = mapToken;
     try {
@@ -17,6 +25,13 @@ if (typeof mapboxgl === 'undefined') {
             center: allData.geometry.coordinates, // starting position [lng, lat]
             zoom: 13 // starting zoom
         });
+
+        // HACK: Trigger resize repeatedly for a few seconds to handle flex layout shifts
+        const resizeMap = () => map.resize();
+        map.on('load', resizeMap);
+        setTimeout(resizeMap, 500);
+        setTimeout(resizeMap, 1000);
+        setTimeout(resizeMap, 2000);
 
         // Add zoom and rotation controls to the map.
         map.addControl(new mapboxgl.NavigationControl());
@@ -35,7 +50,13 @@ if (typeof mapboxgl === 'undefined') {
             .addTo(map);
 
         console.log("Map initialized successfully.");
+
+        // Catch Mapbox-specific errors
+        map.on('error', (e) => {
+            showMapError(`Mapbox Error: ${e.error ? e.error.message : e}`);
+        });
+
     } catch (err) {
-        console.error("Error initializing map:", err);
+        showMapError(`Initialization Failed: ${err.message}`);
     }
 }

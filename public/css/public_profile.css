@@ -1,0 +1,480 @@
+:root {
+    --primary-color: #3b82f6;
+    --primary-hover: #2563eb;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --card-bg: #ffffff;
+    --bg-color: #f3f4f6;
+    --border-color: #e5e7eb;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --radius-lg: 16px;
+    --radius-md: 12px;
+
+    /* Calendar Colors */
+    --free-color: #22c55e;
+    --busy-color: #ef4444;
+}
+
+/* CSS Reset for this page specific elements if needed */
+.pro-cal-wrap *,
+.pro-map-box *,
+.pro-product-container * {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Outfit', sans-serif;
+    color: var(--text-main);
+}
+
+/* Base Layout (Renamed to avoid collisions) */
+.pro-product-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 24px;
+    width: 100% !important;
+}
+
+.pro-main-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.pro-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Sections */
+.pro-card-section {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    position: relative;
+    width: 100%;
+}
+
+/* ====================
+   Profile Showcase
+   ==================== */
+.pro-showcase {
+    display: flex;
+    gap: 24px;
+}
+
+.pro-image-wrapper {
+    flex: 0 0 300px;
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    height: 400px;
+}
+
+.pro-main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.pro-info-header {
+    flex: 1;
+}
+
+.pro-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 8px 0;
+    line-height: 1.2;
+}
+
+.pro-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    background: #f9fafb;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.pro-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.pro-info-box {
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.pro-info-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.pro-info-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+    word-break: break-all;
+}
+
+.pro-btn-share {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s, background 0.2s;
+    z-index: 10;
+    color: #333;
+    font-size: 16px;
+}
+
+.pro-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.pro-btn {
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.pro-btn.primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.pro-btn.primary:hover {
+    background: var(--primary-hover);
+}
+
+.pro-btn.ghost {
+    background: white;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+}
+
+.pro-btn.ghost:hover {
+    background: #f9fafb;
+}
+
+/* Description */
+.pro-heading {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pro-desc-text {
+    font-size: 16px;
+    color: #4b5563;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+/* ====================
+   Calendar (Fully Renamed)
+   ==================== */
+.pro-cal-wrap {
+    width: 100%;
+}
+
+.pro-cal-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.pro-cal-h1 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.pro-cal-h2 {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.pro-cal-nav .pro-btn.ghost {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.pro-cal-legend {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.pro-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+}
+
+.pro-dot.free {
+    background: var(--free-color);
+}
+
+.pro-dot.busy {
+    background: var(--busy-color);
+}
+
+.pro-cal-month {
+    width: 100%;
+}
+
+.pro-cal-dow,
+.pro-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.pro-cal-dow div {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding-bottom: 4px;
+}
+
+/* Calendar Day Hover Effects */
+.pro-cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    background: white;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    /* smooth hover */
+}
+
+.pro-cal-day:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 5;
+    border-color: var(--primary-color);
+}
+
+.pro-cal-day:active {
+    transform: scale(0.95);
+}
+
+.pro-cal-day.free {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #86efac;
+}
+
+.pro-cal-day.busy {
+    background: #fee2e2 !important;
+    color: #b91c1c !important;
+    border-color: #fca5a5 !important;
+}
+
+/* Map Box (Renamed) */
+.pro-map-box {
+    width: 100%;
+    height: 300px;
+    min-height: 300px;
+    /* Force height */
+    flex-shrink: 0;
+    /* Prevent crushing */
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    margin-top: 10px;
+    background-color: #e2e8f0;
+    display: block !important;
+    /* Force display */
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+}
+
+/* Ensure text is visible (color contrast) */
+.pro-info-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937 !important;
+    /* Force Dark Color */
+    word-break: break-all;
+}
+
+/* Reviews */
+.pro-reviews-section {
+    margin-top: 24px;
+}
+
+.pro-review-form {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
+}
+
+.pro-reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pro-review-card {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 16px;
+}
+
+.pro-review-card:last-child {
+    border-bottom: none;
+}
+
+.pro-review-user {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.pro-avatar {
+    width: 36px;
+    height: 36px;
+    background: #e0e7ff;
+    color: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.pro-user-meta .user-name {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.pro-user-meta .rating {
+    font-size: 13px;
+    color: #eab308;
+}
+
+.pro-review-comment {
+    font-size: 15px;
+    color: #4b5563;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .pro-product-container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Flatten the structure to allow reordering across columns */
+    .pro-main-content,
+    .pro-sidebar {
+        display: contents;
+    }
+
+    .pro-showcase {
+        flex-direction: column;
+    }
+
+    .pro-image-wrapper {
+        flex: auto;
+        height: 350px;
+    }
+
+    /* Mobile Order Logic */
+    .pro-wrap-profile {
+        order: 1;
+    }
+
+    .pro-wrap-desc {
+        order: 2;
+    }
+
+    .pro-wrap-sidebar-cal {
+        order: 3;
+    }
+
+    .pro-wrap-sidebar-map {
+        order: 4;
+    }
+
+    .pro-wrap-reviews {
+        order: 5;
+    }
+
+    .pro-card-section {
+        width: 100%;
+        margin-bottom: 24px;
+    }
+}

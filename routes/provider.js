@@ -8,7 +8,7 @@ const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const mapToken = process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 const multer = require("multer");
-const { storage } = require("../cloud_con.js");
+const { storage, cloudinary } = require("../cloud_con.js");
 const upload = multer({ storage });
 
 // this will redirect into farmer page
@@ -72,7 +72,7 @@ router.get("/provider/:id/profile", isLogedin, wrapAsync(async (req, res) => {
     }
 
     const doc = await Shedule.findOne({ listingId: providerData._id }).lean();
-    res.render("pages/profile.ejs", { providerData, currUser: req.user, existingDays: doc?.days || [] });
+    res.render("pages/profile.ejs", { providerData, currUser: req.user, existingDays: doc?.days || [], containerClass: 'page' });
 }));
 
 // this will redirect the paget bus
@@ -213,6 +213,14 @@ router.put("/:id/verifyprovider", isLogedin, isadmin, async (req, res) => {
 
 router.delete("/:id/verifyfail", isLogedin, isadmin, async (req, res) => {
     let { id } = req.params;
+    let provider = await Provider.findById(id);
+
+    if (provider && provider.personImage) {
+        for (let img of provider.personImage) {
+            await cloudinary.uploader.destroy(img.filename);
+        }
+    }
+
     await Provider.findByIdAndDelete(id);
     console.log("provider detail is deleted");
 });

@@ -1,104 +1,138 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
+  <link rel="stylesheet" href="/css/auth.css">
 
   <body>
-
-    <div class="all-cutomer-details" style="margin-top: 50px;">
-      <h3> if you find this (*) symbol in form this means it is compulsory to fill.</h3>
-      <form method="POST" action="/customer/signup" novalidate class="needs-validation">
-        <div class="mb-3">
-          <label for="exampleInputEmail1" class="form-label"> Enter Your Name *</label>
-          <input type="text" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" required="True"
-            name="customer[name]">
-          <div class="invalid-feedback">Please enter your name.</div>
-        </div>
-
-        <div class="mb-3">
-          <label for="exampleInputPassword1" class="form-label">whatsApp number *</label>
-          <input type="number" class="form-control" id="exampleInputPassword1" required="True" name="customer[username]"
-            maxlength="10">
-          <div class="invalid-feedback">Please enter your valid phone number</div>
-        </div>
-        <div class="mb-3">
-          <label for="exampleInputPassword1" class="form-label"> Enter your e-mail Address</label>
-          <input type="email" class="form-control" id="exampleInputPassword1" name="customer[emailAddress]"
-            placeholder="pasr1234@gmail.com">
-          <div class="valid-feedback">This field is not that nacessary but if you want you can fill it.</div>
-        </div>
-        <div class="mb-3">
-          <label for="exampleInputPassword1" class="form-label">Create Password* </label>
-          <input type="password" class="form-control" id="exampleInputPassword1" required="True"
-            name="customer[password]">
-          <div class="invalid-feedback">Create your strong password</div>
-        </div>
-        <div class="mb-3">
-          <label for="exampleInputPassword1" class="form-label">Confirm Password* </label>
-          <input type="password" class="form-control" id="exampleInputPassword1" required="True"
-            name="customer[confirm]">
-          <div class="invalid-feedback">Confirm Password need to same as password</div>
-        </div>
-        <div class="mb-3">
-          <label for="addressInput" class="form-label">Enter your location* </label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="addressInput" required="True" name="customer[address]">
-            <button class="btn btn-outline-secondary" type="button" id="getLocationBtn" title="Use Current Location">
-              <i class="fa-solid fa-location-crosshairs"></i> Get Location
-            </button>
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Create Account</h1>
+          <p class="auth-subtitle">Join PaSr and find the best local services</p>
+          <div class="badge-info mt-3">
+            <i class="fa-solid fa-circle-info"></i> Fields marked with (*) are mandatory
           </div>
-          <div class="invalid-feedback">Please enter location. This will help you to find services.</div>
         </div>
 
-        <script>
-          document.getElementById('getLocationBtn').addEventListener('click', () => {
-            const btn = document.getElementById('getLocationBtn');
-            const input = document.getElementById('addressInput');
+        <form method="POST" action="/customer/signup" novalidate class="needs-validation">
 
-            if (!navigator.geolocation) {
-              alert("Geolocation is not supported by your browser");
-              return;
-            }
+          <!-- Name -->
+          <div class="form-group">
+            <label for="nameInput" class="form-label">Full Name *</label>
+            <input type="text" class="form-control" id="nameInput" required name="customer[name]"
+              placeholder="Enter your full name">
+            <div class="invalid-feedback">Please enter your name.</div>
+          </div>
 
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Locating...';
+          <!-- WhatsApp -->
+          <div class="form-group">
+            <label for="phoneInput" class="form-label">WhatsApp Number *</label>
+            <input type="number" class="form-control" id="phoneInput" required name="customer[username]" maxlength="10"
+              placeholder="e.g. 9876543210">
+            <div class="invalid-feedback">Please enter a valid 10-digit number.</div>
+          </div>
 
-            navigator.geolocation.getCurrentPosition(async (position) => {
-              const { latitude, longitude } = position.coords;
-              try {
-                const res = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
-                const data = await res.json();
-                if (data.address) {
-                  input.value = data.address;
-                } else {
-                  alert("Could not find address for this location.");
-                }
-              } catch (err) {
-                console.error(err);
-                alert("Failed to fetch address.");
-              } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
-              }
-            }, (err) => {
-              console.error(err);
-              alert("Unable to retrieve your location.");
-              btn.disabled = false;
-              btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
-            });
-          });
-        </script>
-        <div class="mb-3">
-          <label for="exampleInputPassword1" class="form-label" placeholder="825412"> Enter the Pincode * </label>
-          <input type="number" class="form-control" id="exampleInputPassword1" name="customer[pincode]" required="True"
-            placeholder="825412">
-          <div class="invalid-feedback">Enter your pincode.</div>
-        </div>
-        <div class="mb-3 form-check">
-          <input type="checkbox" class="form-check-input" id="exampleCheck1 " required>
-          <label class="form-check-label" for="exampleCheck1"><b>I hereby declare that the information provided by me is
-              true, correct, and complete to the best of my knowledge and belief. I understand that any false or
-              misleading information may lead to the rejection of my Login.</b></label>
-        </div>
-        <button class="btn btn-primary">Submit</button>
-      </form>
+          <!-- Email -->
+          <div class="form-group">
+            <label for="emailInput" class="form-label">Email Address</label>
+            <input type="email" class="form-control" id="emailInput" name="customer[emailAddress]"
+              placeholder="you@example.com">
+            <div class="form-text text-muted small mt-1">Optional, but recommended for updates.</div>
+          </div>
+
+          <!-- Password -->
+          <div class="row">
+            <div class="col-md-6 form-group">
+              <label for="passInput" class="form-label">Password *</label>
+              <input type="password" class="form-control" id="passInput" required name="customer[password]"
+                placeholder="Min 4 chars">
+              <div class="invalid-feedback">Create a strong password.</div>
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="confInput" class="form-label">Confirm Password *</label>
+              <input type="password" class="form-control" id="confInput" required name="customer[confirm]"
+                placeholder="Repeat password">
+              <div class="invalid-feedback">Passwords must match.</div>
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div class="form-group">
+            <label for="addressInput" class="form-label">Location *</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="addressInput" required name="customer[address]"
+                placeholder="City, Area or Street">
+              <button class="btn-location" type="button" id="getLocationBtn">
+                <i class="fa-solid fa-location-crosshairs"></i> Get Location
+              </button>
+            </div>
+            <div class="invalid-feedback">Please provide your location.</div>
+          </div>
+
+          <!-- Pincode -->
+          <div class="form-group">
+            <label for="pincodeInput" class="form-label">Pincode *</label>
+            <input type="number" class="form-control" id="pincodeInput" name="customer[pincode]" required
+              placeholder="e.g. 825412">
+            <div class="invalid-feedback">Please enter your pincode.</div>
+          </div>
+
+          <!-- Agreement -->
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="agreeCheck" required>
+            <label class="form-check-label" for="agreeCheck">
+              I hereby declare that the information provided is true and correct. I understand that providing false
+              information may lead to account suspension.
+            </label>
+          </div>
+
+          <button class="btn-submit">Sign Up</button>
+        </form>
+      </div>
     </div>
+
+    <script>
+      document.getElementById('getLocationBtn').addEventListener('click', () => {
+        const btn = document.getElementById('getLocationBtn');
+        const input = document.getElementById('addressInput');
+
+        if (!navigator.geolocation) {
+          alert("Geolocation is not supported by your browser");
+          return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Locating...';
+
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const res = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
+            const data = await res.json();
+            if (data.address) {
+              input.value = data.address;
+            } else {
+              alert("Could not find address for this location.");
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Failed to fetch address.");
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+          }
+        }, (err) => {
+          console.error(err);
+          // Show specific error to help debug
+          let msg = "Unable to retrieve location.";
+          if (err.code === 1) msg = "Location permission denied. Please allow access.";
+          else if (err.code === 2) msg = "Location unavailable. Check your GPS/Network.";
+          else if (err.code === 3) msg = "Location request timed out.";
+
+          alert(`${msg}\n(Error: ${err.message})`);
+
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+        });
+      });
+    </script>
     <script src="/js/script.js"></script>
   </body>

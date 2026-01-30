@@ -1,14 +1,114 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
-<body>
-    <h1 class="bold">If you are facing problem in these terms please follow these videos</h1>
-    <h3>If you have issue on login folow this video:-<a></a> </h3>
-    <h3>How to become a provider:- <a></a></h3>
-    <h3>If your status is showing false what it means:- <a href="#"></a></h3>
-    <h3>If you have entered the all to become a provider still you are no visible:-<a href="#"></a></h3>
-    <h1 class="bold"> For questions or requests relating to privacy, contact:</h1>
+    <link rel="stylesheet" href="/css/help.css">
 
-<p><b>PASR (Perfectly Assured Service and Rentals)</b></p>
-<p>Email:<b style="color: blue;">[pasrsupport22012026@gmail.com]</b></p>
-<p>whatsapp No <i class="fa-brands fa-square-whatsapp"></i>: <b style="color: blue;">[82522 71535] </b> we will able to respond inbetween 8am to 8pm. </p>
-<p>Address: <b style="color: blue;">[Doranda Dhanwar Giridih 825412 Jharkhand]</b></p>
-</body>
+    <body>
+        <div class="help-container">
+            <!-- Header -->
+            <div class="help-header">
+                <h1 class="help-title">Help & Support</h1>
+                <p class="help-subtitle">Find answers to common questions or get in touch with our team.</p>
+            </div>
+
+            <!-- Video Guides / Common Issues -->
+            <div class="faq-section">
+                <h2 class="section-title">Common Questions & Guides</h2>
+                <ul class="faq-list">
+                    <li class="faq-item">
+                        <a href="#" class="faq-link">
+                            <span><i class="fa-solid fa-circle-play faq-icon"></i> Issue with Login?</span>
+                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                        </a>
+                    </li>
+                    <li class="faq-item">
+                        <a href="#" class="faq-link">
+                            <span><i class="fa-solid fa-briefcase faq-icon"></i> How to become a Provider</span>
+                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                        </a>
+                    </li>
+                    <li class="faq-item">
+                        <a href="#" class="faq-link">
+                            <span><i class="fa-solid fa-store faq-icon"></i> How to sell products</span>
+                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                        </a>
+                    </li>
+                    <li class="faq-item">
+                        <a href="#" class="faq-link">
+                            <span><i class="fa-solid fa-triangle-exclamation faq-icon"></i> Why shows "False"
+                                status?</span>
+                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                        </a>
+                    </li>
+                    <li class="faq-item">
+                        <a href="#" class="faq-link">
+                            <span><i class="fa-solid fa-eye-slash faq-icon"></i> Provider profile not visible?</span>
+                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Contact Cards -->
+            <div class="text-center mb-5">
+                <h2 class="section-title" style="margin-bottom: 4px;">Contact Us</h2>
+                <p style="color: var(--text-muted); font-size: 15px;">For help, privacy concerns, or general queries</p>
+            </div>
+
+            <div class="contact-grid">
+                <!-- Email -->
+                <div class="contact-card">
+                    <div class="contact-icon-box">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <div class="contact-label">Email Support</div>
+                    <a href="mailto:pasrsupport22012026@gmail.com" class="contact-value"
+                        style="text-decoration: none; color: inherit;">pasrsupport22012026@gmail.com</a>
+                </div>
+
+                <!-- WhatsApp -->
+                <div class="contact-card">
+                    <div class="contact-icon-box whatsapp-box">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </div>
+                    <div class="contact-label">WhatsApp Support</div>
+                    <a href="https://wa.me/918252271535" target="_blank" class="contact-value"
+                        style="text-decoration: none; color: inherit;">+91 82522 71535</a>
+                    <span class="availability-note">Available 8 AM - 8 PM</span>
+                </div>
+
+                <!-- Address -->
+                <div class="contact-card">
+                    <div class="contact-icon-box address-box">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <div class="contact-label">Office Address</div>
+                    <div class="contact-value address">Doranda Dhanwar,<br>Giridih 825412, Jharkhand</div>
+                </div>
+            </div>
+
+            <!-- Support Section -->
+            <div class="support-section">
+                <h2 class="support-title">Support Us ❤️</h2>
+                <p class="text-muted mb-4">Help us keep PaSr running and improving.</p>
+
+                <div class="qr-box">
+                    <!-- Dynamic UPI QR Code -->
+                    <% const upiId="sagarkumarv71-1@oksbi" ; %>
+                        <% const upiName="PaSr Support" ; %>
+                            <% const upiLink=`upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}`; %>
+
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=<%= encodeURIComponent(upiLink) %>"
+                                    alt="Scan to Pay" class="qr-img">
+
+                                <div class="mt-2">
+                                    <div class="upa-id">
+                                        <%= upiId %>
+                                    </div>
+                                    <br>
+                                    <a href="<%= upiLink %>" class="pay-btn">
+                                        <i class="fa-solid fa-indian-rupee-sign"></i> Pay via UPI App
+                                    </a>
+                                </div>
+                </div>
+            </div>
+        </div>
+    </body>

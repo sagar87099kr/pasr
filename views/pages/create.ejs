@@ -1,136 +1,149 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
+  <link rel="stylesheet" href="/css/auth.css">
 
   <body>
-    <div class="all-cutomer-details" style="margin-top: 50px;">
-      <h3> If you find this (*) symbol in form this means it is compulsory to fill.</h3>
-      <div class="mb-3">
-        <span class="text-danger notranslate">Please fill details in English / कृपया अंग्रेजी में भरें</span>
-      </div>
-      <form method="POST" action="/become/provider" novalidate class="needs-validation notranslate"
-        enctype="multipart/form-data">
-        <div class="mb-3">
-          <label for="exampleInputEmail1" class="form-label">Enter Your Company name*</label>
-          <input type="text" class="form-control" id="exampleInputEmail1" required="True" name="provider[company]"
-            placeholder="pasr pvt ltd">
-          <div class="invalid-feedback">You need to write your name</div>
-        </div>
-        <div class="mb-3">
-          <label for="exampleInputEmail1" class="form-label">Year of experience*</label>
-          <input type="number" class="form-control" id="exampleInputEmail1" required="True" name="provider[experience]"
-            placeholder="3">
-          <div class="invalid-feedback">It will help customer to choose you.</div>
-        </div>
-        <div class="mb-3">
-          <label for="locationInput" class="form-label">Enter Your Company location*</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="locationInput" required="True" name="provider[location]"
-              placeholder="Doranda Dhanwar Giridih">
-            <button class="btn btn-outline-secondary" type="button" id="getLocationBtn" title="Use Current Location">
-              <i class="fa-solid fa-location-crosshairs"></i> Get Location
-            </button>
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Become a Provider</h1>
+          <p class="auth-subtitle">Join our network and grow your business</p>
+          <div class="badge-info mt-3">
+            <i class="fa-solid fa-circle-info"></i> Fields marked with (*) are mandatory
           </div>
-          <div class="invalid-feedback">You need to enter your company location.</div>
+          <div class="text-danger small mt-2 notranslate">
+            Please fill details in English / कृपया अंग्रेजी में भरें
+          </div>
         </div>
 
-        <script>
-          document.getElementById('getLocationBtn').addEventListener('click', () => {
-            const btn = document.getElementById('getLocationBtn');
-            const input = document.getElementById('locationInput');
+        <form method="POST" action="/become/provider" novalidate class="needs-validation notranslate"
+          enctype="multipart/form-data">
 
-            if (!navigator.geolocation) {
-              alert("Geolocation is not supported by your browser");
-              return;
-            }
+          <!-- Company Name -->
+          <div class="form-group">
+            <label for="companyName" class="form-label">Company / Service Name *</label>
+            <input type="text" class="form-control" id="companyName" required name="provider[company]"
+              placeholder="e.g. PaSr Services Pvt Ltd">
+            <div class="invalid-feedback">Please enter your company/service name.</div>
+          </div>
 
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Locating...';
+          <!-- Experience -->
+          <div class="form-group">
+            <label for="experience" class="form-label">Years of Experience *</label>
+            <input type="number" class="form-control" id="experience" required name="provider[experience]"
+              placeholder="e.g. 3">
+            <div class="invalid-feedback">Required to build customer trust.</div>
+          </div>
 
-            navigator.geolocation.getCurrentPosition(async (position) => {
-              const { latitude, longitude } = position.coords;
-              try {
-                const res = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
-                const data = await res.json();
-                if (data.address) {
-                  input.value = data.address;
-                } else {
-                  alert("Could not find address for this location.");
-                }
-              } catch (err) {
-                console.error(err);
-                alert("Failed to fetch address.");
-              } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
-              }
-            }, (err) => {
-              console.error(err);
-              alert("Unable to retrieve your location.");
-              btn.disabled = false;
-              btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
-            });
-          });
-        </script>
-        <div class="mb-3">
-          <label for="exampleInputEmail1" class="form-label"> add additional phone number. If possible.</label>
-          <input type="number" class="form-control" id="exampleInputEmail1" required="True" name="provider[phoneNO]"
-            placeholder="9876543210">
-          <div class="invalid-feedback">You need to enter your company location.</div>
-        </div>
-        <hr>
-        <br>
-        <h4> Select the service you want to give service * </h4>
-        <select class="form-select" aria-label="Default select example" required name="provider[categories]">
-          <option value="" disabled selected> Select the category in which you want to give service </option>
-          <option value="Farming Vehicles"><i class="fa-solid fa-tractor"></i>Farming Vehicles</option>
-          <option value="Four Wheelers"><i class="fa-solid fa-car-side"></i>Four Wheelers</option>
-          <option value="HMV (Bus)"><i class="fa-solid fa-bus"></i>HMV (Bus)</option>
-          <option value="Three Wheelers"><i class="fa-solid fa-car"></i>Three Wheelers</option>
-          <option value="Caterings"><i class="fa-solid fa-utensils"></i>Caterings</option>
-          <option value="Filming"><i class="fa-regular fa-camera"></i>Filming</option>
-          <option value="Decoration"><i class="fa-brands fa-42-group"></i>Decoration</option>
-          <option value="DJ and Tent"><i class="fa-solid fa-music"></i>DJ and Tent</option>
-          <option value="Band Party">Band Party</option>
-          <option value="Heavy Equipments"><i class="fa-brands fa-cc-jcb"></i>Heavy Equipments</option>
-        </select>
-        <hr>
-        <div>
-          <h5> Give a image of your's with your service so that customer can choose according to their need.* </h5>
-          <img src="/images/person_car.png" alt="image of a person" style="width: 400px;  height: 300px;">
-          <input type="file" name="provider[personImage]" required>
-          <div class="invalid-feedback">It is nacessary field you need to upload your image with your service.</div>
-        </div>
-        <hr>
-        <br>
-        <div>
-          <h5> Aadhar_card front side photo*</h5>
-          <img src="/images/aadhar image.jpeg" alt="aadhar card front image" style="width: 400px;  height: 300px; ">
-          <input type="file" name="provider[personImage]" required>
-          <div class="invalid-feedback">It is required beacuse it will help our team to verify you easily.</div>
-        </div>
-        <hr>
-        <div>
-          <h5>Aadhar_card back side photo*</h5>
-          <img src="/images/aadhar image b.png" alt="aadhar card back image" style="width: 400px;  height: 300px;">
-          <input type="file" name="provider[personImage]" required>
-          <div class="invalid-feedback">It is required beacuse it will help our team to verify you easily.</div>
-        </div>
-        <hr>
-        <div>
-          <h5> Driving licence photo is mendetory for only those who belongs to the category like four-wheelers,
-            three-wheelers, HMV(bus), farming-vehicles, heavy-equipments</h5>
-          <img src="/images/driving licence.png" alt="licence image" style="width: 400px;  height: 300px;">
-          <input type="file" name="provider[personImage]">
-        </div>
+          <!-- Location -->
+          <div class="form-group">
+            <label for="locationInput" class="form-label">Company Location *</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="locationInput" required name="provider[location]"
+                placeholder="City, Area or Street">
+              <button class="btn-location" type="button" id="getLocationBtn">
+                <i class="fa-solid fa-location-crosshairs"></i> Get Location
+              </button>
+            </div>
+            <div class="invalid-feedback">Please provide your operational location.</div>
+          </div>
 
-        <hr>
-        <div class="mb-3 form-check">
-          <input type="checkbox" class="form-check-input" id="exampleCheck1" required>
-          <label class="form-check-label" for="exampleCheck1"><b>I hereby declare that the information provided by me is
-              true, correct, and complete to the best of my knowledge and belief. I understand that any false or
-              misleading information may lead to the rejection of my Login.</b></label>
-        </div>
-        <button class="btn btn-primary">Submit</button>
-      </form>
+          <!-- Phone -->
+          <div class="form-group">
+            <label for="phoneInput" class="form-label">Additional Phone Number</label>
+            <input type="number" class="form-control" id="phoneInput" name="provider[phoneNO]"
+              placeholder="e.g. 9876543210 (Optional)">
+            <div class="form-text text-muted small mt-1">Useful as a backup contact.</div>
+          </div>
+
+          <!-- Service Category -->
+          <div class="form-group">
+            <label class="form-label">Service Category *</label>
+            <select class="form-control form-select" required name="provider[categories]">
+              <option value="" disabled selected>Select service type...</option>
+              <option value="Farming Vehicles">🚜 Farming Vehicles</option>
+              <option value="Four Wheelers">🚗 Four Wheelers</option>
+              <option value="HMV (Bus)">🚌 HMV (Bus)</option>
+              <option value="Three Wheelers">🛺 Three Wheelers</option>
+              <option value="Caterings">🍽️ Caterings</option>
+              <option value="Filming">🎥 Filming</option>
+              <option value="Decoration">✨ Decoration</option>
+              <option value="DJ and Tent">🎵 DJ and Tent</option>
+              <option value="Band Party">🎺 Band Party</option>
+              <option value="Home Service provider">🛠️ Home Service Provider</option>
+              <option value="Heavy Equipments">🏗️ Heavy Equipments</option>
+              <option value="Others">🔹 Others</option>
+            </select>
+          </div>
+
+          <!-- Image Upload -->
+          <div class="form-group mt-4">
+            <label class="form-label">Service Image (You with Service) *</label>
+            <div class="p-3 border rounded bg-light text-center">
+              <img src="/images/person_car.png" alt="example" class="img-fluid rounded mb-3"
+                style="max-height: 150px; opacity: 0.7;">
+              <input type="file" name="provider[personImage]" required class="form-control">
+              <div class="form-text mt-2">Upload a photo of you with your vehicle/service setup to build trust.</div>
+            </div>
+          </div>
+
+          <!-- Agreement -->
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="confirmCheck" required>
+            <label class="form-check-label" for="confirmCheck">
+              <b>I confirm that the information provided is correct and represents my actual service.</b>
+            </label>
+          </div>
+
+          <button class="btn-submit">Register as Provider</button>
+        </form>
+      </div>
     </div>
+
+    <!-- Location Script -->
+    <script>
+      document.getElementById('getLocationBtn').addEventListener('click', () => {
+        const btn = document.getElementById('getLocationBtn');
+        const input = document.getElementById('locationInput');
+
+        if (!navigator.geolocation) {
+          alert("Geolocation is not supported by your browser");
+          return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Locating...';
+
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const res = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
+            const data = await res.json();
+            if (data.address) {
+              input.value = data.address;
+            } else {
+              alert("Could not find address for this location.");
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Failed to fetch address.");
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+          }
+        }, (err) => {
+          console.error(err);
+
+          let msg = "Unable to retrieve location.";
+          if (err.code === 1) msg = "Location permission denied. Please allow access.";
+          else if (err.code === 2) msg = "Location unavailable. Check your GPS/Network.";
+          else if (err.code === 3) msg = "Location request timed out.";
+
+          alert(`${msg}\n(Error: ${err.message})`);
+
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+        });
+      });
+    </script>
     <script src="/js/script.js"></script>
   </body>

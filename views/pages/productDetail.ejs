@@ -1,0 +1,209 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <link rel="stylesheet" href="/css/product_detail.css">
+
+    <body>
+        <div class="product-container">
+
+            <!-- LEFT COLUMN: Product Details -->
+            <div class="main-content">
+
+                <!-- Product Main Card -->
+                <section class="card-section">
+                    <div class="product-showcase">
+                        <!-- Image -->
+                        <div class="main-image-wrapper">
+                            <img src="<%= product.productImage[0].url %>" alt="<%= product.productName %>"
+                                class="main-image" />
+                            <button class="btn-share" id="shareBtn" type="button" title="Share Product">
+                                <i class="fa-solid fa-share-nodes"></i>
+                            </button>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="product-info-header">
+                            <h1 class="product-title">
+                                <%= product.productName %>
+                            </h1>
+                            <div class="seller-badge">
+                                <i class="fa-solid fa-store"></i> Sold by <%= product.owner.name %>
+                            </div>
+
+                            <div class="info-grid">
+                                <div class="info-box">
+                                    <span class="info-label">Price</span>
+                                    <span class="info-value">₹<%= product.price %></span>
+                                </div>
+                                <div class="info-box">
+                                    <span class="info-label">Quantity</span>
+                                    <span class="info-value">
+                                        <%= product.quantity %> units
+                                    </span>
+                                </div>
+                                <div class="info-box">
+                                    <span class="info-label">Category</span>
+                                    <span class="info-value">
+                                        <%= product.categories %>
+                                    </span>
+                                </div>
+                                <div class="info-box">
+                                    <span class="info-label">Location</span>
+                                    <span class="info-value">
+                                        <%= product.location %>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Owner Actions -->
+                            <% if (currUser && product.owner._id.toString()===currUser._id.toString()) { %>
+                                <div class="owner-actions">
+                                    <button class="btn btn-warning" onclick="toggleEditForm()">
+                                        <i class="fa-solid fa-edit"></i> Edit
+                                    </button>
+                                    <form method="POST" action="/products/<%= product._id %>/delete?_method=DELETE"
+                                        style="margin: 0;">
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fa-solid fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                                <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Edit Form (Hidden by default) -->
+                    <% if (currUser && product.owner._id.toString()===currUser._id.toString()) { %>
+                        <div id="editForm"
+                            style="display: none; margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 24px;">
+                            <h3 class="section-heading" style="font-size: 18px;">Edit Product Details</h3>
+                            <form method="POST" action="/products/<%= product._id %>/edit?_method=PUT"
+                                class="needs-validation">
+                                <div class="mb-3">
+                                    <label for="productName" class="form-label">Product Name</label>
+                                    <input type="text" class="form-control" id="productName" name="product[productName]"
+                                        value="<%= product.productName %>" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="productDescription" class="form-label">Description</label>
+                                    <textarea class="form-control" id="productDescription"
+                                        name="product[productDescription]"
+                                        rows="3"><%= product.productDescription %></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="price" class="form-label">Price (₹)</label>
+                                        <input type="number" class="form-control" id="price" name="product[price]"
+                                            value="<%= product.price %>" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="quantity" class="form-label">Quantity</label>
+                                        <input type="number" class="form-control" id="quantity" name="product[quantity]"
+                                            value="<%= product.quantity %>" required>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    <button type="button" class="btn btn-secondary"
+                                        onclick="toggleEditForm()">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                        <script>
+                            function toggleEditForm() {
+                                const form = document.getElementById('editForm');
+                                form.style.display = form.style.display === 'none' ? 'block' : 'none';
+                            }
+                        </script>
+                        <% } %>
+                </section>
+
+                <!-- Description -->
+                <section class="card-section">
+                    <h2 class="section-heading">About this Product</h2>
+                    <p class="description-text">
+                        <%= product.productDescription %>
+                    </p>
+                </section>
+
+                <!-- Products Gallery -->
+                <% if (product.productImage && product.productImage.length> 1) { %>
+                    <section class="card-section">
+                        <h2 class="section-heading">Product Gallery</h2>
+                        <div class="gallery-grid">
+                            <% product.productImage.forEach((image, index)=> { %>
+                                <img src="<%= image.url %>" alt="<%= product.productName %> - Image <%= index + 1 %>"
+                                    class="gallery-img">
+                                <% }) %>
+                        </div>
+                    </section>
+                    <% } %>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Contact Sidebar -->
+            <div class="sidebar">
+                <div class="contact-card">
+                    <div class="contact-header">
+                        <div class="seller-avatar">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <p class="seller-name">
+                            <%= product.owner.name %>
+                        </p>
+                        <p style="font-size: 13px; color: #6b7280; margin: 4px 0;">Product Owner</p>
+                    </div>
+
+                    <div class="seller-contact-details">
+                        <div class="contact-row">
+                            <i class="fa-solid fa-phone"></i>
+                            <span>+91 <%= product.owner.username %></span>
+                        </div>
+                        <div class="contact-row">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span>
+                                <%= product.location %>
+                            </span>
+                        </div>
+                    </div>
+
+                    <a href="tel:+91<%= product.owner.username %>" class="btn btn-primary w-100">
+                        <i class="fa-solid fa-phone"></i> Call Seller
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const shareBtn = document.getElementById('shareBtn');
+                if (shareBtn) {
+                    shareBtn.addEventListener('click', async () => {
+                        if (navigator.share) {
+                            try {
+                                await navigator.share({
+                                    title: '<%= product.productName %>',
+                                    text: 'Check out this product on Local Bazzar!',
+                                    url: window.location.href
+                                });
+                            } catch (err) {
+                                console.log('Error sharing:', err);
+                            }
+                        } else {
+                            navigator.clipboard.writeText(window.location.href);
+                            alert('Product link copied to clipboard!');
+                        }
+                    });
+                }
+            });
+
+            // Simple image gallery click to view (optional enhancement)
+            const galleryImages = document.querySelectorAll('.gallery-img');
+            const mainImage = document.querySelector('.main-image');
+
+            galleryImages.forEach(img => {
+                img.addEventListener('click', () => {
+                    mainImage.src = img.src;
+                });
+            });
+        </script>
+    </body>

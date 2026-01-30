@@ -5,7 +5,7 @@
         <h1 class="legal-title">Terms and Conditions</h1>
         <div class="legal-subtitle">Please read carefully before proceeding</div>
 
-        <!-- The text that was labeled T&C at the bottom of the file -->
+        <!-- Introduction -->
         <div class="legal-section">
             <h2>1. Introduction</h2>
             <p class="legal-text">
@@ -16,7 +16,7 @@
             </p>
         </div>
 
-        <!-- The Privacy Policy text that was in the file -->
+        <!-- Privacy Policy Reference -->
         <div class="legal-section">
             <h2>2. Privacy Policy Reference</h2>
             <p class="legal-text">
@@ -24,8 +24,7 @@
                 by reference. The full text of our Privacy Policy is provided below for your review.
             </p>
 
-            <div
-                style="height: 300px; overflow-y: scroll; border: 1px solid #e2e8f0; padding: 15px; background: #f8fafc; border-radius: 8px; margin-top: 15px;">
+            <div class="privacy-scroll-box">
                 <h3>PRIVACY POLICY — PASR</h3>
                 <p><strong>Effective Date:</strong> 21 January 2026</p>
                 <p>This Privacy Policy (“Policy”) describes how PASR (Perfectly Short Service and Rentals) (“PASR,”
@@ -65,16 +64,15 @@
         <div class="agreement-form">
             <p class="agreement-text">
                 I hereby declare that I have carefully read, understood, and agree to abide by the Terms and Conditions
-                of this platform before using any services.
+                of this platform.
             </p>
 
             <form action="/customer/signup" method="GET" class="needs-validation" novalidate>
-                <div class="form-check d-inline-block">
+                <div class="chk-group">
                     <input type="checkbox" class="form-check-input" id="agreeCheck" required>
                     <label class="form-check-label" for="agreeCheck">I agree with the Terms & Conditions</label>
                 </div>
-                <br>
-                <button class="btn btn-dark btn-agree">Continue to Sign Up</button>
+                <button class="btn btn-success w-100 continue-btn">Continue to Sign Up</button>
             </form>
         </div>
     </div>

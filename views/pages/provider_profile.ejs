@@ -1,224 +1,158 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      display: flex;
-      flex-direction: row-reverse;
-      flex-wrap: wrap;
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: #f6f7fb;
-      padding: 24px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .profile-card {
-      width: 100%;
-      height: auto;
-      max-width: 520px;
-      background: #fff;
-      border: 1px solid #e9e9ef;
-      border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, .06);
-    }
-
-    .card-top {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .title {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .name {
-      font-size: 18px;
-      font-weight: 700;
-      color: #111827;
-      margin: 0;
-      line-height: 1.2;
-      word-break: break-word;
-    }
-
-    .sub {
-      font-size: 13px;
-      color: #6b7280;
-      margin: 0;
-    }
-
-    .badge {
-      flex: 0 0 auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      border: 1px solid;
-      user-select: none;
-      white-space: nowrap;
-    }
-
-    .badge .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    /* Verified states */
-    .badge.true {
-      color: #065f46;
-      background: #ecfdf5;
-      border-color: #a7f3d0;
-    }
-
-    .badge.verified .dot {
-      background: #10b981;
-    }
-
-    .badge.false {
-      color: #991b1b;
-      background: #fef2f2;
-      border-color: #fecaca;
-    }
-
-    .badge.not-verified .dot {
-      background: #ef4444;
-    }
-
-    .details {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      padding: 10px 12px;
-      border: 1px solid #eeeef6;
-      border-radius: 12px;
-      background: #fbfbff;
-    }
-
-    .label {
-      width: 120px;
-      flex: 0 0 120px;
-      font-size: 12px;
-      color: #6b7280;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .03em;
-    }
-
-    .value {
-      font-size: 14px;
-      color: #111827;
-      font-weight: 600;
-      word-break: break-word;
-      min-width: 0;
-    }
-
-    @media (max-width: 420px) {
-      .row {
-        flex-direction: column;
-      }
-
-      .label {
-        width: auto;
-        flex: 0 0 auto;
-      }
-    }
-
-    .badge-button {
-      color: #065f46;
-      background: #ecfdf5;
-      border-color: #a7f3d0;
-    }
-  </style>
+  <link rel="stylesheet" href="/css/provider_profile.css">
 
   <body>
+    <div class="profile-container">
 
-    <section class="profile-card ">
-      <div class="card-top">
-        <div class="title">
-          <p class="name">Name</p>
-          <p class="sub">Customer / Provider Profile</p>
+      <!-- User Profile Card -->
+      <section class="profile-card">
+        <div class="card-header">
+          <div class="user-info">
+            <h2>
+              <%= currUser.username %>
+            </h2>
+            <span class="user-type">Customer / Provider Profile</span>
+          </div>
+
+          <span class="status-badge <%= currUser.verified %>">
+            <span class="status-dot"></span>
+            <%= currUser.verified ? 'Verified' : 'Not Verified' %>
+          </span>
         </div>
 
-        <!-- Change class to: "badge verified" OR "badge not-verified" -->
-        <span class="badge <%=currUser.verified%>">
-          <span class="dot"></span>
-          verification status: <%=currUser.verified%>
-        </span>
-      </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Contact Number</span>
+            <span class="info-value">
+              <%= currUser.username %>
+            </span>
+          </div>
 
-      <div class="details">
-        <div class="row">
-          <div class="label">Number</div>
-          <div class="value">
-            <%=currUser.username%>
+          <div class="info-item">
+            <span class="info-label">Email Address</span>
+            <span class="info-value">
+              <%= currUser.emailAddress %>
+            </span>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Current Address</span>
+            <span class="info-value">
+              <%= currUser.address %>
+            </span>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Pincode</span>
+            <span class="info-value">
+              <%= currUser.pincode %>
+            </span>
           </div>
         </div>
 
-        <div class="row">
-          <div class="label">Email</div>
-          <div class="value">
-            <%=currUser.emailAddress%>
-          </div>
-        </div>
+        <!-- Update Location Form -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <i class="fa-solid fa-map-location-dot"></i> Update Location
+          </h3>
 
-        <div class="row">
-          <div class="label">Address</div>
-          <div class="value">
-            <%=currUser.address%>
-          </div>
-        </div>
+          <form action="/customer/update/<%= currUser._id %>?_method=PUT" method="POST">
+            <div class="form-group">
+              <label for="addressInput" class="form-label">Change Your Location</label>
+              <div class="input-group">
+                <input type="text" class="form-control" id="addressInput" required name="customer[address]"
+                  value="<%= currUser.address%>">
+                <button class="btn btn-secondary" type="button" id="getLocationBtn" title="Use Current Location">
+                  <i class="fa-solid fa-location-crosshairs"></i>
+                </button>
+              </div>
+              <div class="invalid-feedback">You need to enter your location.</div>
+            </div>
 
-        <div class="row">
-          <div class="label">Pincode</div>
-          <div class="value">
-            <%=currUser.pincode%>
-          </div>
-        </div>
-      </div>
-      <hr style="margin: 20px 0;">
-      <h3>Update Location</h3>
-      <form action="/customer/update/<%= currUser._id %>?_method=PUT" method="POST">
-        <div class="mb-3">
-          <label for="addressInput" class="form-label"> Change Your location</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="addressInput" required="True" name="customer[address]"
-              value="<%= currUser.address%>">
-            <button class="btn btn-outline-secondary" type="button" id="getLocationBtn" title="Use Current Location">
-              <i class="fa-solid fa-location-crosshairs"></i> Get Location
+            <div class="form-group">
+              <label for="exampleInputpincode" class="form-label">Pincode</label>
+              <input type="text" class="form-control" id="exampleInputpincode" required name="customer[pincode]"
+                value="<%= currUser.pincode%>">
+              <div class="invalid-feedback">You need to enter your pincode.</div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%;">
+              Update Location
             </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Listings Section -->
+      <% if (listings && listings.length> 0) { %>
+        <section class="profile-card">
+          <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
+            <div class="user-info">
+              <h2>My Listings</h2>
+              <span class="user-type">Manage your services</span>
+            </div>
           </div>
-          <div class="invalid-feedback">You need to enter your location.</div>
-        </div>
-        <div class="mb-3">
-          <label for="exampleInputpincode" class="form-label"> Enter your pincode</label>
-          <input type="text" class="form-control" id="exampleInputpincode" required="True" name="customer[pincode]"
-            value="<%= currUser.pincode%>">
-          <div class="invalid-feedback">You need to enter your pincode.</div>
-        </div>
-        <button class="btn btn-primary">Update Location</button>
-      </form>
-    </section>
+
+          <div class="listings-grid">
+            <% listings.forEach(listing=> { %>
+              <div class="listing-card">
+                <div class="listing-info">
+                  <img src="<%= listing.personImage[0].path %>" alt="Service Image" class="listing-img">
+                  <div class="listing-details">
+                    <h4>
+                      <%= listing.company %>
+                    </h4>
+                    <p class="listing-cat">
+                      <%= listing.categories %>
+                    </p>
+                  </div>
+                </div>
+                <a href="/provider/<%= listing._id %>/profile" class="btn btn-view">
+                  View Profile <i class="fa-solid fa-arrow-right"></i>
+                </a>
+              </div>
+              <% }) %>
+          </div>
+        </section>
+        </section>
+        <% } %>
+
+          <!-- Products Section -->
+          <% if (products && products.length> 0) { %>
+            <section class="profile-card">
+              <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
+                <div class="user-info">
+                  <h2>My Products</h2>
+                  <span class="user-type">Manage your products</span>
+                </div>
+              </div>
+
+              <div class="listings-grid">
+                <% products.forEach(product=> { %>
+                  <div class="listing-card">
+                    <div class="listing-info">
+                      <img src="<%= product.productImage[0].url %>" alt="Product Image" class="listing-img">
+                      <div class="listing-details">
+                        <h4>
+                          <%= product.productName %>
+                        </h4>
+                        <p class="listing-cat">
+                          <%= product.categories %>
+                        </p>
+                        <p class="listing-cat" style="color: #6b7280; font-size: 12px;">Qty: <%= product.quantity %>
+                        </p>
+                      </div>
+                    </div>
+                    <a href="/products/<%= product._id %>" class="btn btn-view">
+                      View Product <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                  </div>
+                  <% }) %>
+              </div>
+            </section>
+            <% } %>
+
+    </div>
 
     <script>
       document.getElementById('getLocationBtn').addEventListener('click', () => {
@@ -231,7 +165,8 @@
         }
 
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Locating...';
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
 
         navigator.geolocation.getCurrentPosition(async (position) => {
           const { latitude, longitude } = position.coords;
@@ -248,47 +183,14 @@
             alert("Failed to fetch address.");
           } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+            btn.innerHTML = originalContent;
           }
         }, (err) => {
           console.error(err);
           alert("Unable to retrieve your location.");
           btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+          btn.innerHTML = originalContent;
         });
       });
     </script>
-
-    <% if (listings && listings.length> 0) { %>
-      <section class="profile-card" style="margin-top: 20px;">
-        <div class="card-top">
-          <div class="title">
-            <p class="name">My Listings</p>
-            <p class="sub">Manage your services</p>
-          </div>
-        </div>
-        <div class="details">
-          <% listings.forEach(listing=> { %>
-            <div class="row" style="align-items: center; justify-content: space-between;">
-              <div style="display: flex; gap: 10px; align-items: center;">
-                <img src="<%= listing.personImage[0].path %>" alt="Service Image"
-                  style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;">
-                <div>
-                  <div class="value">
-                    <%= listing.company %>
-                  </div>
-                  <div class="sub">
-                    <%= listing.categories %>
-                  </div>
-                </div>
-              </div>
-              <a href="/provider/<%= listing._id %>/profile" class="badge-button badge" style="text-decoration: none;">
-                View
-              </a>
-            </div>
-            <% }) %>
-        </div>
-      </section>
-      <% } %>
-
   </body>

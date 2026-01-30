@@ -1,7 +1,7 @@
 {
   "name": "pasr",
   "version": "1.0.0",
-  "description": "",
+  "description": "This the project initial all dictionary push",
   "license": "ISC",
   "author": "Sagar Kumar verma",
   "type": "commonjs",
@@ -38,5 +38,17 @@
   },
   "overrides": {
     "cloudinary": "$cloudinary"
-  }
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sagar87099kr/pasr.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/sagar87099kr/pasr/issues"
+  },
+  "homepage": "https://github.com/sagar87099kr/pasr#readme"
 }

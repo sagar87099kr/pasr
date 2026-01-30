@@ -20,22 +20,22 @@ const providerRouter = require("./routes/provider.js");
 const reviewRouter = require("./routes/review.js");
 const scheduleRouter = require("./routes/schedule.js");
 const indexRouter = require("./routes/index.js");
+const localMarketRouter = require("./routes/localMarket.js");
 
 const dbUrl = process.env.ATLAS_DB_URL;
+// const dbUrl = "mongodb://127.0.0.1:27017/pasr";
 if (!dbUrl) {
   throw new Error("ATLAS_DB is missing in your .env file");
 }
 
-main()
+const clientPromise = mongoose.connect(dbUrl)
   .then(() => {
     console.log("connected to databases");
-  }).catch((err) => {
+    return mongoose.connection.getClient();
+  })
+  .catch((err) => {
     console.log(err);
   });
-
-async function main() {
-  await mongoose.connect(dbUrl)
-};
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -44,13 +44,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.engine("ejs", ejsMate);
 app.use(express.json());
+
 const store = MongoStore.create({
-  mongoUrl: dbUrl,
+  clientPromise,
   crypto: {
     secret: process.env.SECRET, // encrypt session in DB
   },
   touchAfter: 7 * 24 * 3600, // reduce DB writes
 });
+
 store.on("error", (err) => {
   console.log("SESSION STORE ERROR:", err);
 });
@@ -90,12 +92,16 @@ app.use((req, res, next) => {
   next();
 });
 
+
+
 // Use Routers
 app.use("/", indexRouter);
+
 app.use("/", userRouter);
 app.use("/", providerRouter);
 app.use("/", reviewRouter);
 app.use("/", scheduleRouter);
+app.use("/", localMarketRouter);
 
 
 app.use((req, res, next) => {

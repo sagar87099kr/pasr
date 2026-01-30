@@ -15,7 +15,10 @@ router.get("/shedule/:id", isLogedin, isOwner, async (req, res) => {
         if (!mongoose.isValidObjectId(id)) return res.status(400).send("Invalid id");
 
         const doc = await Shedule.findOne({ listingId: id }).lean();
-        res.render("shedule", { id, existingDays: doc?.days || [] });
+        // res.render("shedule", { id, existingDays: doc?.days || [] });
+        // Redirect to profile where the calendar is actually implemented
+        res.redirect(`/provider/${id}/profile`);
+
     } catch (err) {
         res.status(500).send(err.message);
     }

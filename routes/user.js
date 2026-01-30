@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Customer = require("../data/customers.js");
 const Provider = require("../data/serviceproviders.js");
+const Product = require("../data/product.js");
 const passport = require("passport");
 const { validatecustomer, saveRedirectUrl, isLogedin, isadmin } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
@@ -97,7 +98,8 @@ router.get("/logout", (req, res, next) => {
 // here i am going to create a new page where people will able to see their profile. 
 router.get("/user", isLogedin, saveRedirectUrl, wrapAsync(async (req, res) => {
     const listings = await Provider.find({ owner: req.user._id });
-    res.render("pages/provider_profile.ejs", { listings });
+    const products = await Product.find({ owner: req.user._id });
+    res.render("pages/provider_profile.ejs", { listings, products });
 }));
 
 // these are verification route for customers 

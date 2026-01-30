@@ -2,342 +2,498 @@
 
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Provider Profile Page</title>
   <style>
-    *{ box-sizing:border-box; }
-    body{
-        display: flex;
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
       flex-wrap: wrap;
       flex-direction: column-reverse;
-      margin:0;
+      margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:#f6f7fb;
-      color:#111827;
-      padding:24px;
+      background: #f6f7fb;
+      color: #111827;
+      padding: 24px;
     }
 
-    .container{
-        display: flex;
+    .container {
+      display: flex;
       flex-direction: row-reverse;
-      max-width:1100px;
-      margin:0 auto;
-      display:grid;
-      gap:18px;
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
     }
 
-    .card{
-      background:#fff;
-      border:1px solid #e9e9ef;
-      border-radius:18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.06);
-      overflow:hidden;
+    .card {
+      background: #fff;
+      border: 1px solid #e9e9ef;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .06);
+      overflow: hidden;
     }
 
-    .header{
-      padding:18px 18px 0 18px;
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:14px;
+    .header {
+      padding: 18px 18px 0 18px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
     }
 
-    .title{
-      min-width:0;
-    }
-    .name{
-      margin:0;
-      font-size:20px;
-      font-weight:800;
-      letter-spacing:.2px;
-      word-break:break-word;
-    }
-    .meta{
-      margin:8px 0 0 0;
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      color:#6b7280;
-      font-size:13px;
-      font-weight:600;
-    }
-    .chip{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid #eeeef6;
-      background:#fbfbff;
-      white-space:nowrap;
+    .title {
+      min-width: 0;
     }
 
-    .badge{
-      flex:0 0 auto;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:9px 12px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:800;
-      border:1px solid;
-      user-select:none;
-      white-space:nowrap;
-    }
-    .dot{
-      width:8px;height:8px;border-radius:50%;
-      display:inline-block;
+    .name {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: .2px;
+      word-break: break-word;
     }
 
-    .true{
-      color:#065f46;
-      background:#ecfdf5;
-      border-color:#a7f3d0;
+    .meta {
+      margin: 8px 0 0 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 600;
     }
-    .verified .dot{ background:#10b981; }
 
-    .false{
-      color:#991b1b;
-      background:#fef2f2;
-      border-color:#fecaca;
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid #eeeef6;
+      background: #fbfbff;
+      white-space: nowrap;
     }
-    .not-verified .dot{ background:#ef4444; }
 
-    .content{
-      padding:18px;
-      display:grid;
+    .badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .true {
+      color: #065f46;
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+    }
+
+    .verified .dot {
+      background: #10b981;
+    }
+
+    .false {
+      color: #991b1b;
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    .not-verified .dot {
+      background: #ef4444;
+    }
+
+    .content {
+      padding: 18px;
+      display: grid;
       grid-template-columns: 1.5fr .8fr;
-      gap:18px;
+      gap: 18px;
     }
 
     /* Gallery */
-    .gallery{
-      display:grid;
-      grid-template-columns: repeat(4, 2fr);
-      gap:10px;
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      /* Bigger photos */
+      gap: 10px;
     }
-    .photo{
+
+    .photo {
       aspect-ratio: 1 / 1;
-      border-radius:14px;
-      border:1px solid #eeeef6;
+      border-radius: 14px;
+      border: 1px solid #eeeef6;
       background: linear-gradient(135deg, #eef2ff, #f8fafc);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:#6b7280;
-      font-weight:800;
-      font-size:14px;
-      overflow:hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6b7280;
+      font-weight: 800;
+      font-size: 14px;
+      overflow: hidden;
     }
-    .photo img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
+
+    .photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     /* Details */
-    .panel{
-      border:1px solid #eeeef6;
-      background:#fbfbff;
-      border-radius:16px;
-      padding:14px;
+    .panel {
+      border: 1px solid #eeeef6;
+      background: #fbfbff;
+      border-radius: 16px;
+      padding: 14px;
     }
 
-    .rows{
-      display:grid;
-      gap:10px;
+    .rows {
+      display: grid;
+      gap: 10px;
     }
 
-    .row{
-      display:flex;
-      gap:10px;
-      padding:10px 12px;
-      border:1px solid #eeeef6;
-      border-radius:12px;
-      background:#fff;
-    }
-    .label{
-      width:140px;
-      flex:0 0 140px;
-      font-size:12px;
-      color:#6b7280;
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.03em;
-    }
-    .value{
-      font-size:14px;
-      font-weight:700;
-      color:#111827;
-      word-break:break-word;
-      min-width:0;
+    .row {
+      display: flex;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #eeeef6;
+      border-radius: 12px;
+      background: #fff;
     }
 
-    .desc{
-      margin-top:12px;
-      padding:12px;
-      border:1px dashed #e5e7eb;
-      background:#fff;
-      border-radius:12px;
-    }
-    .desc h3{
-      margin:0 0 8px 0;
-      font-size:13px;
-      color:#6b7280;
-      text-transform:uppercase;
-      letter-spacing:.03em;
-    }
-    .desc p{
-      margin:0;
-      color:#111827;
-      font-size:14px;
-      line-height:1.5;
-      font-weight:600;
+    .label {
+      width: 140px;
+      flex: 0 0 140px;
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .03em;
     }
 
-    .footer{
-      padding:0 18px 18px 18px;
-      display:flex;
-      justify-content:flex-end;
-      gap:10px;
-    }
-    .btn{
-      border:1px solid #e5e7eb;
-      background:#fff;
-      padding:10px 14px;
-      border-radius:12px;
-      font-weight:800;
-      font-size:13px;
-      cursor:pointer;
-    }
-    .btn.primary{
-      border-color:#111827;
-      background:#111827;
-      color:#fff;
+    .value {
+      font-size: 14px;
+      font-weight: 700;
+      color: #111827;
+      word-break: break-word;
+      min-width: 0;
     }
 
-    @media (max-width: 900px){
-      .content{ grid-template-columns: 1fr; }
-      .gallery{ grid-template-columns: repeat(2, 1fr); }
-      .label{ width:130px; flex:0 0 130px; }
+    .desc {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px dashed #e5e7eb;
+      background: #fff;
+      border-radius: 12px;
     }
-    @media (max-width: 420px){
-      .row{ flex-direction:column; }
-      .label{ width:auto; flex:auto; }
+
+    .desc h3 {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    .desc p {
+      margin: 0;
+      color: #111827;
+      font-size: 14px;
+      line-height: 1.5;
+      font-weight: 600;
+    }
+
+    .footer {
+      padding: 0 18px 18px 18px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn {
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      border-color: #111827;
+      background: #111827;
+      color: #fff;
+    }
+
+    @media (max-width: 900px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .gallery {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .label {
+        width: 130px;
+        flex: 0 0 130px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .row {
+        flex-direction: column;
+      }
+
+      .label {
+        width: auto;
+        flex: auto;
+      }
     }
   </style>
 </head>
+
 <body>
-    <% for (provider of providers){%>
-  <main class="container">
-    <section class="card">
+  <main class="container" style="display: block;"> <!-- Changed to block to allow sections -->
 
-      <div class="header">
-        <div class="title">
-          <h1 class="name"><%=provider.company%></h1>
-          <div class="meta">
-            <span class="chip">Joined at:<%=provider.createdAt%></span>
-            <span class="chip">Category:<%=provider.categories%></span>
-            <span class="chip">Experience: <%=provider.experience%></span>
-            <span class="chip">Phone: <%=provider.owner.username%> , <%=provider.phoneNO%></span>
-          </div>
-        </div>
+    <% const unverifiedProviders=providers.filter(p=> !p.verified).reverse();
+      const verifiedProviders = providers.filter(p => p.verified).reverse();
+      %>
 
-        <!-- Change to: class="badge verified" (true) OR class="badge not-verified" (false) -->
-        <span class="badge <%=provider.verified%>">
-          <span class="dot"></span>
-          Verified: <%=provider.verified%> by <%=provider.verifedBy%>
-        </span>
-      </div>
+      <!-- SECTION 1: PENDING VERIFICATION -->
+      <h2 style="margin: 30px 0 20px; color: #991b1b;">Pending Verification (<%= unverifiedProviders.length %>)</h2>
 
-      <div class="content">
-        <!-- 4 Pictures -->
-        <div>
-          <div class="gallery">
-            <!-- Replace placeholders with <img src="..."> if you have images -->
-            <div class="photo"><img src="<%=provider.personImage[0].path%>" alt="Profile Image"></div>
-            <div class="photo"><img src="<%=provider.personImage[1].path%>" alt="Aadhar Image"></div>
-            <div class="photo"><img src="<%=provider.personImage[2].path%>" alt="Aadhar Image"></div>
-            <% if (!provider.personImage[3]===""){%>
-            <div class="photo"><img src="<%=provider.personImage[3].path%>" alt="Driving licence Image"></div>
-            <% }%>
-            <!-- Example if you have images:
-            <div class="photo"><img src="img1.jpg" alt="Photo 1"></div>
-            -->
-          </div>
+      <% if(unverifiedProviders.length===0) { %>
+        <p style="color: #666;">No pending verifications.</p>
+        <% } %>
 
-          <div class="desc">
-            <h3>Description</h3>
-            <p>
-             <%=provider.discription%>
-            </p>
-          </div>
-        </div>
+          <% for (provider of unverifiedProviders){%>
+            <section class="card" style="margin-bottom: 24px;">
 
-        <!-- Details Panel -->
-        <aside class="panel">
-          <div class="rows">
-            <div class="row">
-              <div class="label">Company Name</div>
-              <div class="value"><%=provider.company%></div>
-            </div>
+              <div class="header">
+                <div class="title">
+                  <h1 class="name">
+                    <%=provider.company%>
+                  </h1>
+                  <div class="meta">
+                    <span class="chip">Joined at:<%=provider.createdAt%></span>
+                    <span class="chip">Category:<%=provider.categories%></span>
+                    <span class="chip">Experience: <%=provider.experience%></span>
+                    <span class="chip">Phone: <%=provider.owner.username%> , <%=provider.phoneNO%></span>
+                  </div>
+                </div>
 
-            <div class="row">
-              <div class="label">Address</div>
-              <div class="value"><%=provider.location%></div>
-            </div>
+                <span class="badge <%=provider.verified%>">
+                  <span class="dot"></span>
+                  Verified: <%=provider.verified%> by <%=provider.verifedBy%>
+                </span>
+              </div>
 
-            <div class="row">
-              <div class="label">Phone</div>
-              <div class="value">+91 <%=provider.owner.username%> , <%=provider.phoneNO%></div>
-            </div>
+              <div class="content">
+                <!-- 4 Pictures -->
+                <div>
+                  <div class="gallery">
+                    <% for(let i=0; i<provider.personImage.length; i++){%>
+                      <div class="photo"><img src="<%=provider.personImage[i].path%>" alt="Profile Image"></div>
+                      <%}%>
+                  </div>
 
-            <div class="row">
-              <div class="label">Category</div>
-              <div class="value"><%=provider.company%></div>
-            </div>
+                  <div class="desc">
+                    <h3>Description</h3>
+                    <p>
+                      <%=provider.discription%>
+                    </p>
+                  </div>
+                </div>
 
-            <div class="row">
-              <div class="label">Experience</div>
-              <div class="value"><%=provider.experience%></div>
-            </div>
+                <!-- Details Panel -->
+                <aside class="panel">
+                  <div class="rows">
+                    <div class="row">
+                      <div class="label">Company Name</div>
+                      <div class="value">
+                        <%=provider.company%>
+                      </div>
+                    </div>
 
-            <div class="row">
-              <div class="label">Verified</div>
-              <div class="value"><%=provider.verified%></div>
-            </div>
-          </div>
-        </aside>
-      </div>
+                    <div class="row">
+                      <div class="label">Address</div>
+                      <div class="value">
+                        <%=provider.location%>
+                      </div>
+                    </div>
 
-      <div class="footer">
-        <% if (!(provider.verified === true)){%>
-    <form method="POST" action="/<%=provider._id%>/verifyprovider?_method=PUT" >
-      <div class="mb-3">
-      <label for="exampleInputEmail1" class="form-label" >Enter Your name.</label>
-      <input type="text" class="form-control" id="exampleInputEmail1"  required="True" name="provider[verifedBy]" placeholder="Admin">
-      <div class="invalid-feedback">It is compulsory to write.</div>
-    </div>
-    <!-- Hidden input field to send the value 'true' -->
-    <input type="hidden" name="provider[verified]" value="true">
-    
-    <!-- Button to submit the form -->
-   <button class="btn primary">verified</button>
-</form>
- <form method="POST" action="/<%=provider._id%>/verifyfail?_method=DELETE">
-    <button class="btn primary">DELETE</button>
-</form>
-<%}%>
-      </div>
+                    <div class="row">
+                      <div class="label">Phone</div>
+                      <div class="value">+91 <%=provider.owner.username%> , <%=provider.phoneNO%>
+                      </div>
+                    </div>
 
-    </section>
-    <%}%>
+                    <div class="row">
+                      <div class="label">Category</div>
+                      <div class="value">
+                        <%=provider.company%>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="label">Experience</div>
+                      <div class="value">
+                        <%=provider.experience%>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="label">Verified</div>
+                      <div class="value">
+                        <%=provider.verified%>
+                      </div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+
+              <div class="footer">
+                <form method="POST" action="/<%=provider._id%>/verifyprovider?_method=PUT">
+                  <div class="mb-3">
+                    <label for="exampleInputEmail1" class="form-label">Enter Your name.</label>
+                    <input type="text" class="form-control" id="exampleInputEmail1" required="True"
+                      name="provider[verifedBy]" placeholder="Admin">
+                    <div class="invalid-feedback">It is compulsory to write.</div>
+                  </div>
+                  <input type="hidden" name="provider[verified]" value="true">
+                  <button class="btn primary">Verify</button>
+                </form>
+                <form method="POST" action="/<%=provider._id%>/verifyfail?_method=DELETE">
+                  <button class="btn primary"
+                    style="background:#ef4444; border-color:#ef4444; color:white; margin-left:10px;">DELETE</button>
+                </form>
+              </div>
+
+            </section>
+            <%}%>
+
+              <!-- SECTION 2: VERIFIED PROVIDERS -->
+              <h2 style="margin: 50px 0 20px; color: #065f46; border-top: 1px solid #eee; padding-top: 20px;">
+                Verified Providers (<%= verifiedProviders.length %>)</h2>
+
+              <% for (provider of verifiedProviders){%>
+                <section class="card" style="margin-bottom: 24px; opacity: 0.9;">
+
+                  <div class="header">
+                    <div class="title">
+                      <h1 class="name">
+                        <%=provider.company%>
+                      </h1>
+                      <div class="meta">
+                        <span class="chip">Joined at:<%=provider.createdAt%></span>
+                        <span class="chip">Category:<%=provider.categories%></span>
+                        <span class="chip">Experience: <%=provider.experience%></span>
+                        <span class="chip">Phone: <%=provider.owner.username%> , <%=provider.phoneNO%></span>
+                      </div>
+                    </div>
+
+                    <span class="badge <%=provider.verified%>">
+                      <span class="dot"></span>
+                      Verified: <%=provider.verified%> by <%=provider.verifedBy%>
+                    </span>
+                  </div>
+
+                  <div class="content">
+                    <!-- 4 Pictures -->
+                    <div>
+                      <div class="gallery">
+                        <% for(let i=0; i<provider.personImage.length; i++){%>
+                          <div class="photo"><img src="<%=provider.personImage[i].path%>" alt="Profile Image"></div>
+                          <%}%>
+                      </div>
+
+                      <div class="desc">
+                        <h3>Description</h3>
+                        <p>
+                          <%=provider.discription%>
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Details Panel -->
+                    <aside class="panel">
+                      <div class="rows">
+                        <div class="row">
+                          <div class="label">Company Name</div>
+                          <div class="value">
+                            <%=provider.company%>
+                          </div>
+                        </div>
+
+                        <div class="row">
+                          <div class="label">Address</div>
+                          <div class="value">
+                            <%=provider.location%>
+                          </div>
+                        </div>
+
+                        <div class="row">
+                          <div class="label">Phone</div>
+                          <div class="value">+91 <%=provider.owner.username%> , <%=provider.phoneNO%>
+                          </div>
+                        </div>
+
+                        <div class="row">
+                          <div class="label">Category</div>
+                          <div class="value">
+                            <%=provider.company%>
+                          </div>
+                        </div>
+
+                        <div class="row">
+                          <div class="label">Experience</div>
+                          <div class="value">
+                            <%=provider.experience%>
+                          </div>
+                        </div>
+
+                        <div class="row">
+                          <div class="label">Verified</div>
+                          <div class="value">
+                            <%=provider.verified%>
+                          </div>
+                        </div>
+                      </div>
+                    </aside>
+                  </div>
+
+                  <!-- No Actions for Verified -->
+                  <div class="footer">
+                    <!-- Protected: Cannot delete verified providers -->
+                  </div>
+
+                </section>
+                <%}%>
+
   </main>
   <script src="/js/script.js"></script>
 
 </body>
+
 </html>

@@ -3,6 +3,9 @@ const router = express.Router();
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const mapToken = process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
+const Product = require("../data/product.js");
+const { isLogedin, isadmin } = require("../middeleware.js");
+const wrapAsync = require("../utils/wrapAsync.js");
 
 // help route
 router.get("/help", (req, res) => {
@@ -60,6 +63,12 @@ router.get("/get-address", async (req, res) => {
         res.status(500).json({ error: "Failed to fetch address" });
     }
 });
+
+// Product Verification Route (Admin Only)
+router.get("/product/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
+    let products = await Product.find().populate("owner");
+    res.render("pages/productVerification.ejs", { products });
+}));
 
 // Redirect root to home
 router.get("/", (req, res) => {
