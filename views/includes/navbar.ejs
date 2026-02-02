@@ -13,14 +13,14 @@
         <ul class="dropdown-menu">
           <li><a class="dropdown-item" href="/user">Profile</a></li>
           <li><a class="dropdown-item" href="#">About us</a> </li>
-          <% if (!locals.currUser){%>
+          <% if (!currUser){%>
             <li><a class="dropdown-item" href="/alreadyLogin">login</a> </li>
             <li><a class="dropdown-item" href="/T&C">SignUp</a> </li>
             <%}%>
               <li>
                 <hr class="dropdown-divider">
               </li>
-              <% if (locals.currUser){%>
+              <% if (currUser){%>
                 <li><a class="dropdown-item" href="/logout" style="color: red;">logOut</a></li>
                 <%}%>
         </ul>
@@ -48,7 +48,7 @@
       aria-label="Search" value="<%= typeof query !== 'undefined' ? query : '' %>" />
     <button class="btn btn-outline-success" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
   </form>
-  <% if (!locals.currUser){%>
+  <% if (!currUser){%>
     <button class="btn btn-outline-success"><a class="dropdown-item" href="/T&C">SignUp</a> </button>
     <%}%>
       <div class="form-check form-switch ms-2 me-2">
@@ -56,3 +56,20 @@
         <label class="form-check-label" for="languageSwitch">Hindi</label>
       </div>
 </nav>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '883296107650724');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=883296107650724&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->

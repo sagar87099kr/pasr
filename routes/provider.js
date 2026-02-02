@@ -11,6 +11,19 @@ const multer = require("multer");
 const { storage, cloudinary } = require("../cloud_con.js");
 const upload = multer({ storage });
 
+// home service
+// Moved to top to ensure priority
+router.get("/homeservice", isLogedin, findNearbyProviders("Home Service"), wrapAsync(async (req, res) => {
+    const { allProvider } = res.locals;
+    res.render("pages/homeService.ejs", { allProvider });
+}));
+// others page call
+// Moved to top to ensure priority
+router.get("/others", isLogedin, findNearbyProviders("Others"), wrapAsync(async (req, res) => {
+    const { allProvider } = res.locals;
+    res.render("pages/others.ejs", { allProvider });
+}));
+
 // this will redirect into farmer page
 router.get("/search", isLogedin, wrapAsync(async (req, res) => {
     const { q } = req.query;
