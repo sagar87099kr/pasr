@@ -1,0 +1,132 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <link rel="stylesheet" href="/css/auth.css">
+
+    <body>
+        <div class="auth-container">
+            <div class="auth-card seller-card">
+                <div class="auth-header">
+                    <h1 class="auth-title">List Your Shop</h1>
+                    <p class="auth-subtitle">Create your digital storefront on PaSr</p>
+                    <div class="badge-info mt-3">
+                        <i class="fa-solid fa-circle-info"></i> Fields marked with (*) are mandatory
+                    </div>
+                    <div class="text-danger small mt-2 notranslate">
+                        Please fill details in English / कृपया अंग्रेजी में भरें
+                    </div>
+                </div>
+
+                <form action="/shops" method="POST" novalidate class="needs-validation notranslate"
+                    enctype="multipart/form-data">
+
+                    <!-- Shop Name -->
+                    <div class="form-group">
+                        <label for="shopName" class="form-label">Shop Name *</label>
+                        <input type="text" name="shop[shopName]" id="shopName" class="form-control"
+                            placeholder="e.g. Fresh Daily Mart" required>
+                        <div class="invalid-feedback">Please provide a shop name.</div>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="form-group">
+                        <label for="category" class="form-label">Category *</label>
+                        <select class="form-control form-select" name="shop[category]" id="category" required>
+                            <option selected disabled value="">Select Category...</option>
+                            <option value="Grocery">🛒 Grocery</option>
+                            <option value="Electronics">🔌 Electronics</option>
+                            <option value="Fashion">👕 Fashion</option>
+                            <option value="Medical">💊 Medical</option>
+                            <option value="Hardware">🛠️ Hardware</option>
+                            <option value="Restaurant">🍽️ Restaurant</option>
+                            <option value="Dhaba">🥘 Dhaba</option>
+                            <option value="Bakery">🍰 Bakery</option>
+                            <option value="Mobile Shop">📱 Mobile Shop</option>
+                            <option value="Stationery">📚 Stationery</option>
+                            <option value="Gift Shop">🎁 Gift Shop</option>
+                            <option value="Salon">💇 Salon</option>
+                            <option value="Others">📦 Others</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a category.</div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="form-group">
+                        <label for="location" class="form-label">Location / Address *</label>
+                        <div class="input-group">
+                            <input type="text" name="shop[location]" id="location" class="form-control"
+                                placeholder="Type address or click 'Get Location'..." required>
+                            <button class="btn-location" type="button" id="getShopLocBtn">
+                                <i class="fa-solid fa-location-crosshairs"></i> Get Location
+                            </button>
+                        </div>
+                        <div class="invalid-feedback">Please provide a location.</div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label for="shopDescription" class="form-label">Description</label>
+                        <textarea name="shop[shopDescription]" id="shopDescription" class="form-control" rows="4"
+                            placeholder="Describe what you sell..."></textarea>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="form-group mt-4">
+                        <label class="form-label">Shop Image (Single Photo) *</label>
+                        <div class="p-3 border rounded bg-light text-center">
+                            <img src="/images/shop_front_example.png" alt="Example Shop Front"
+                                class="img-fluid rounded mb-3" style="max-height: 150px; opacity: 0.9;">
+                            <input type="file" name="shopImage" id="shopImage" class="form-control" required>
+                            <div class="form-text mt-2"><i class="fa-solid fa-lightbulb text-warning"></i> Tip: Upload a
+                                clear photo of your shop front.</div>
+                        </div>
+                        <div class="invalid-feedback">Please upload at least one image.</div>
+                    </div>
+
+                    <button class="btn-submit">
+                        <i class="fa-solid fa-check-circle"></i> List Your Shop
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            const locBtn = document.getElementById('getShopLocBtn');
+            const locInput = document.getElementById('location');
+
+            if (locBtn) {
+                locBtn.addEventListener('click', () => {
+                    if (!navigator.geolocation) {
+                        alert("Geolocation is not supported by your browser");
+                        return;
+                    }
+
+                    const originalText = locBtn.innerHTML;
+                    locBtn.disabled = true;
+                    locBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Fetching...';
+
+                    navigator.geolocation.getCurrentPosition(async (position) => {
+                        const { latitude, longitude } = position.coords;
+                        try {
+                            const response = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
+                            const data = await response.json();
+                            if (data.address) {
+                                locInput.value = data.address;
+                            } else {
+                                alert("Address not found for this location.");
+                            }
+                        } catch (error) {
+                            console.error("Error fetching address:", error);
+                            alert("Failed to fetch address details.");
+                        } finally {
+                            locBtn.disabled = false;
+                            locBtn.innerHTML = originalText;
+                        }
+                    }, (error) => {
+                        console.error("Geolocation error:", error);
+                        alert("Unable to retrieve location. Please check permissions.");
+                        locBtn.disabled = false;
+                        locBtn.innerHTML = originalText;
+                    });
+                });
+            }
+        </script>
+    </body>

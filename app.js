@@ -102,6 +102,7 @@ app.use("/", providerRouter);
 app.use("/", reviewRouter);
 app.use("/", scheduleRouter);
 app.use("/", localMarketRouter);
+app.use("/", require("./routes/shops.js"));
 
 
 app.use((req, res, next) => {

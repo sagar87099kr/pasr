@@ -1,5 +1,5 @@
 const Provider = require("./data/serviceproviders.js");
-const { providerSchema, customerSchema, reviewSchema } = require("./schema.js");
+const { providerSchema, customerSchema, reviewSchema, shopSchema } = require("./schema.js");
 const ExpressError = require("./utils/expressError.js");
 const Review = require("./data/review.js");
 const Customer = require("./data/customers.js");
@@ -144,6 +144,16 @@ module.exports.validatecustomer = (req, res, next) => {
 }
 module.exports.validatereview = (req, res, next) => {
     let { error } = reviewSchema.validate(req.body);
+    if (error) {
+        let errMsg = error.details.map((el) => el.message).join(",");
+        throw new ExpressError(400, errMsg)
+    } else {
+        next();
+    }
+}
+
+module.exports.validateShop = (req, res, next) => {
+    let { error } = shopSchema.validate(req.body);
     if (error) {
         let errMsg = error.details.map((el) => el.message).join(",");
         throw new ExpressError(400, errMsg)

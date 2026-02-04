@@ -1,0 +1,460 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shop Verification Page</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            flex-wrap: wrap;
+            flex-direction: column-reverse;
+            margin: 0;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            background: #f6f7fb;
+            color: #111827;
+            padding: 24px;
+        }
+
+        .container {
+            display: grid;
+            max-width: 1100px;
+            margin: 0 auto;
+            gap: 18px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e9e9ef;
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .06);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .header {
+            padding: 18px 18px 0 18px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .title {
+            min-width: 0;
+        }
+
+        .name {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: .2px;
+            word-break: break-word;
+        }
+
+        .meta {
+            margin: 8px 0 0 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            color: #6b7280;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid #eeeef6;
+            background: #fbfbff;
+            white-space: nowrap;
+        }
+
+        .badge {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .true {
+            color: #065f46;
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+        }
+
+        .verified .dot {
+            background: #10b981;
+        }
+
+        .false {
+            color: #991b1b;
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .not-verified .dot {
+            background: #ef4444;
+        }
+
+        .content {
+            padding: 18px;
+            display: grid;
+            grid-template-columns: 1.5fr .8fr;
+            gap: 18px;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .photo {
+            aspect-ratio: 1 / 1;
+            border-radius: 14px;
+            border: 1px solid #eeeef6;
+            background: linear-gradient(135deg, #eef2ff, #f8fafc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-weight: 800;
+            font-size: 14px;
+            overflow: hidden;
+        }
+
+        .photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .panel {
+            border: 1px solid #eeeef6;
+            background: #fbfbff;
+            border-radius: 16px;
+            padding: 14px;
+        }
+
+        .rows {
+            display: grid;
+            gap: 10px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid #eeeef6;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .label {
+            width: 140px;
+            flex: 0 0 140px;
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+
+        .value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111827;
+            word-break: break-word;
+            min-width: 0;
+        }
+
+        .desc {
+            margin-top: 12px;
+            padding: 12px;
+            border: 1px dashed #e5e7eb;
+            background: #fff;
+            border-radius: 12px;
+        }
+
+        .desc h3 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+
+        .desc p {
+            margin: 0;
+            color: #111827;
+            font-size: 14px;
+            line-height: 1.5;
+            font-weight: 600;
+        }
+
+        .footer {
+            padding: 0 18px 18px 18px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .btn.primary {
+            border-color: #111827;
+            background: #111827;
+            color: #fff;
+        }
+
+        @media (max-width: 900px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .label {
+                width: 130px;
+                flex: 0 0 130px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .row {
+                flex-direction: column;
+            }
+
+            .label {
+                width: auto;
+                flex: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+
+        <% const unverifiedShops=shops.filter(s=> !s.verified).reverse();
+            const verifiedShops = shops.filter(s => s.verified).reverse();
+            %>
+
+            <!-- SECTION 1: PENDING VERIFICATION -->
+            <h2 style="margin: 30px 0 20px; color: #991b1b;">Pending Verification (<%= unverifiedShops.length %>)</h2>
+
+            <% if(unverifiedShops.length===0) { %>
+                <p style="color: #666;">No pending verifications.</p>
+                <% } %>
+
+                    <% for (shop of unverifiedShops){ %>
+                        <section class="card">
+                            <div class="header">
+                                <div class="title">
+                                    <h1 class="name">
+                                        <%= shop.shopName %>
+                                    </h1>
+                                    <div class="meta">
+                                        <span class="chip">Joined at: <%= shop.createdAt ? shop.createdAt.toDateString()
+                                                : 'N/A' %></span>
+                                        <span class="chip">Category: <%= shop.category %></span>
+                                        <span class="chip">Owner: <%= shop.owner ? shop.owner.name : 'Unknown' %></span>
+                                    </div>
+                                </div>
+                                <span class="badge false">
+                                    <span class="dot"></span>
+                                    Owner Phone: <%= shop.owner ? shop.owner.username : 'N/A' %>
+                                </span>
+                            </div>
+
+                            <div class="content">
+                                <div>
+                                    <div class="gallery">
+                                        <% if (shop.shopImage && shop.shopImage.length> 0) { %>
+                                            <% for(let i=0; i<shop.shopImage.length; i++){ %>
+                                                <div class="photo"><img src="<%= shop.shopImage[i].url %>"
+                                                        alt="Shop Image"></div>
+                                                <% } %>
+                                                    <% } else { %>
+                                                        <div class="photo">No Image</div>
+                                                        <% } %>
+                                    </div>
+                                    <div class="desc">
+                                        <h3>Description</h3>
+                                        <p>
+                                            <%= shop.shopDescription %>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <aside class="panel">
+                                    <div class="rows">
+                                        <div class="row">
+                                            <div class="label">Shop Name</div>
+                                            <div class="value">
+                                                <%= shop.shopName %>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="label">Location</div>
+                                            <div class="value">
+                                                <%= shop.location %>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="label">Category</div>
+                                            <div class="value">
+                                                <%= shop.category %>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="label">Owner</div>
+                                            <div class="value">
+                                                <%= shop.owner ? shop.owner.name : 'N/A' %>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="label">Phone</div>
+                                            <div class="value">
+                                                <%= shop.owner ? shop.owner.username : 'N/A' %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </aside>
+                            </div>
+
+                            <div class="footer">
+                                <form method="POST" action="/shops/<%= shop._id %>/verify?_method=PUT">
+                                    <div class="mb-3" style="width: 100%; margin-right: 10px;">
+                                        <label for="adminName" class="form-label"
+                                            style="font-size: 12px; font-weight: bold; margin-bottom: 5px; display: block;">Verified
+                                            By (Admin Name):</label>
+                                        <input type="text" class="form-control" id="adminName" required
+                                            name="verifiedBy" placeholder="Enter Admin Name"
+                                            style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+                                    </div>
+                                    <input type="hidden" name="verified" value="true">
+                                    <button class="btn primary">Verify</button>
+                                </form>
+                                <form method="POST" action="/shops/<%= shop._id %>/verifyfail?_method=DELETE">
+                                    <button class="btn primary"
+                                        style="background:#ef4444; border-color:#ef4444; color:white; margin-left:10px; align-self: flex-end; margin-bottom: 2px;">DELETE</button>
+                                </form>
+                            </div>
+                        </section>
+                        <% } %>
+
+                            <!-- SECTION 2: VERIFIED SHOPS -->
+                            <h2
+                                style="margin: 50px 0 20px; color: #065f46; border-top: 1px solid #eee; padding-top: 20px;">
+                                Verified Shops (<%= verifiedShops.length %>)
+                            </h2>
+
+                            <% for (shop of verifiedShops){ %>
+                                <section class="card" style="opacity: 0.9;">
+                                    <div class="header">
+                                        <div class="title">
+                                            <h1 class="name">
+                                                <%= shop.shopName %>
+                                            </h1>
+                                            <div class="meta">
+                                                <span class="chip">Joined at: <%= shop.createdAt ?
+                                                        shop.createdAt.toDateString() : 'N/A' %></span>
+                                                <span class="chip">Category: <%= shop.category %></span>
+                                                <span class="chip">Owner: <%= shop.owner ? shop.owner.name : 'Unknown'
+                                                        %></span>
+                                            </div>
+                                        </div>
+                                        <span class="badge true">
+                                            <span class="dot"></span>
+                                            Owner Phone: <%= shop.owner ? shop.owner.username : 'N/A' %>
+                                        </span>
+                                    </div>
+
+                                    <div class="content">
+                                        <div>
+                                            <div class="gallery">
+                                                <% if (shop.shopImage && shop.shopImage.length> 0) { %>
+                                                    <% for(let i=0; i<shop.shopImage.length; i++){ %>
+                                                        <div class="photo"><img src="<%= shop.shopImage[i].url %>"
+                                                                alt="Shop Image"></div>
+                                                        <% } %>
+                                                            <% } else { %>
+                                                                <div class="photo">No Image</div>
+                                                                <% } %>
+                                            </div>
+                                            <div class="desc">
+                                                <h3>Description</h3>
+                                                <p>
+                                                    <%= shop.shopDescription %>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <aside class="panel">
+                                            <div class="rows">
+                                                <div class="row">
+                                                    <div class="label">Shop Name</div>
+                                                    <div class="value">
+                                                        <%= shop.shopName %>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="label">Location</div>
+                                                    <div class="value">
+                                                        <%= shop.location %>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="label">Category</div>
+                                                    <div class="value">
+                                                        <%= shop.category %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </aside>
+                                    </div>
+                                </section>
+                                <% } %>
+
+    </main>
+    <script src="/js/script.js"></script>
+</body>
+
+</html>

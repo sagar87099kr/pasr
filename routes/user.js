@@ -118,7 +118,7 @@ router.put("/:id/verifycustomer", isLogedin, isadmin, async (req, res) => {
 });
 
 // we anything suspicious delete customer from database
-router.delete("/:id/verifyfail", isLogedin, isadmin, async (req, res) => {
+router.delete("/customer/:id/verifyfail", isLogedin, isadmin, async (req, res) => {
     let { id } = req.params;
     await Customer.findByIdAndDelete(id);
     console.log("customer is deleted");

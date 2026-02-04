@@ -226,7 +226,8 @@
                         <input type="hidden" name="customer[verified]" value="true">
                         <button class="badge true" style="margin: 20px;">Verify</button>
                       </form>
-                      <form method="POST" action="/<%=customer._id%>/verifyfail?_method=DELETE">
+                      </form>
+                      <form method="POST" action="/customer/<%=customer._id%>/verifyfail?_method=DELETE">
                         <button class="badge false" style="margin-top: 2px;">Delete customer</button>
                       </form>
                       <%}%>

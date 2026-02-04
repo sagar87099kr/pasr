@@ -224,18 +224,36 @@ router.put("/:id/verifyprovider", isLogedin, isadmin, async (req, res) => {
     console.log("provider is verifed");
 });
 
-router.delete("/:id/verifyfail", isLogedin, isadmin, async (req, res) => {
-    let { id } = req.params;
-    let provider = await Provider.findById(id);
+router.delete("/provider/:id/verifyfail", isLogedin, isadmin, wrapAsync(async (req, res) => {
+    try {
+        let { id } = req.params;
+        let provider = await Provider.findById(id);
 
-    if (provider && provider.personImage) {
-        for (let img of provider.personImage) {
-            await cloudinary.uploader.destroy(img.filename);
+        if (provider) {
+            // Delete images from Cloudinary if they exist
+            if (provider.personImage && provider.personImage.length > 0) {
+                for (let img of provider.personImage) {
+                    try {
+                        if (img.filename) {
+                            await cloudinary.uploader.destroy(img.filename);
+                        }
+                    } catch (e) {
+                        console.error("Cloudinary delete error:", e);
+                        // Continue deleting provider even if image delete fails
+                    }
+                }
+            }
+            await Provider.findByIdAndDelete(id);
+            console.log("provider detail is deleted");
+            req.flash("success", "Provider deleted successfully");
+        } else {
+            req.flash("error", "Provider not found");
         }
+    } catch (e) {
+        console.error("Provider delete error:", e);
+        req.flash("error", "Create error deleting provider");
     }
-
-    await Provider.findByIdAndDelete(id);
-    console.log("provider detail is deleted");
-});
+    res.redirect("/provider/verify");
+}));
 
 module.exports = router;

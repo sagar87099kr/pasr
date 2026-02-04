@@ -1,0 +1,337 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <link rel="stylesheet" href="/css/product_detail.css">
+    <!-- Add provider profile styles for the review section compatibility if needed, 
+     but likely product_detail.css + local styles or shared styles are better. 
+     Actually, review section styles in profile.ejs seem to use .cardin, .reviews-card etc. 
+     I should either copy those styles or use a shared css.
+     Let's copy the review specific styles into a <style> block here for now to ensure it works immediately 
+     without touching global css files, or reuse existing if they are global.
+     profile.ejs uses /css/provider_profile.css. I'll include it or extract what's needed.
+     Including both might fight, so I'll extract review styles. 
+-->
+    <style>
+        /* Review styles from provider_profile.css (inferred/adapted) */
+        .reviews-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #e5e7eb;
+            margin-top: 24px;
+        }
+
+        .review-form .field {
+            margin-bottom: 16px;
+        }
+
+        .review-form label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #4b5563;
+        }
+
+        .review-form textarea,
+        .review-form select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+        }
+
+        .review-card {
+            padding: 16px;
+            border-bottom: 1px solid #f3f4f6;
+            margin-bottom: 16px;
+        }
+
+        .review-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .review-user {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: #e0e7ff;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .user-sub {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .rating {
+            color: #f59e0b;
+        }
+
+        .review-comment {
+            color: #4b5563;
+            line-height: 1.5;
+        }
+    </style>
+
+    <body>
+        <div class="product-container">
+            <!-- LEFT COLUMN: Shop Details -->
+            <div class="main-content">
+
+                <!-- Shop Main Card -->
+                <section class="card-section">
+                    <div class="product-showcase">
+                        <!-- Image -->
+                        <div class="main-image-wrapper">
+                            <% if(shop.shopImage && shop.shopImage.length> 0) { %>
+                                <img src="<%= shop.shopImage[0].url %>" alt="<%= shop.shopName %>" class="main-image"
+                                    id="mainImage" />
+                                <% } else { %>
+                                    <div class="main-image"
+                                        style="background:#eee; display:flex; align-items:center; justify-content:center;">
+                                        No Image</div>
+                                    <% } %>
+                                        <button class="btn-share" id="shareBtn" type="button" title="Share Shop">
+                                            <i class="fa-solid fa-share-nodes"></i>
+                                        </button>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="product-info-header">
+                            <h1 class="product-title">
+                                <%= shop.shopName %>
+                            </h1>
+                            <div class="seller-badge">
+                                <i class="fa-solid fa-store"></i> Category: <%= shop.category %>
+                            </div>
+
+                            <div class="info-grid">
+                                <div class="info-box">
+                                    <span class="info-label">Owner</span>
+                                    <span class="info-value">
+                                        <%= shop.owner.name %>
+                                    </span>
+                                </div>
+                                <div class="info-box">
+                                    <span class="info-label">Location</span>
+                                    <span class="info-value">
+                                        <%= shop.location %>
+                                    </span>
+                                </div>
+                                <div class="info-box">
+                                    <span class="info-label">Verified</span>
+                                    <span class="info-value">
+                                        <% if(shop.verified) { %>
+                                            <span style="color:green"><i class="fa-solid fa-check-circle"></i>
+                                                Yes</span>
+                                            <% } else { %>
+                                                <span style="color:red"><i class="fa-solid fa-times-circle"></i>
+                                                    No</span>
+                                                <% } %>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Owner Actions -->
+                            <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                <div class="owner-actions">
+                                    <a href="/shops/<%= shop._id %>/edit" class="btn btn-warning">
+                                        <i class="fa-solid fa-edit"></i> Edit
+                                    </a>
+
+                                </div>
+                                <% } %>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Description -->
+                <section class="card-section">
+                    <h2 class="section-heading">About this Shop</h2>
+                    <p class="description-text">
+                        <%= shop.shopDescription || "No description provided." %>
+                    </p>
+                </section>
+
+                <!-- Gallery (if multiple images - currently max 1 but prepared for future) -->
+                <% if (shop.shopImage && shop.shopImage.length> 1) { %>
+                    <section class="card-section">
+                        <h2 class="section-heading">Shop Gallery</h2>
+                        <div class="gallery-grid">
+                            <% shop.shopImage.forEach((image, index)=> { %>
+                                <img src="<%= image.url %>" alt="Shop Image" class="gallery-img">
+                                <% }) %>
+                        </div>
+                    </section>
+                    <% } %>
+
+                        <!-- REVIEWS SECTION -->
+                        <section class="reviews-card" id="reviewsSection">
+                            <div class="head"
+                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                <div>
+                                    <h2 style="font-size:20px; font-weight:700; margin:0;">Reviews & Ratings</h2>
+                                    <p style="color:#6b7280; font-size:14px; margin:4px 0 0 0;">What customers are
+                                        saying</p>
+                                </div>
+                            </div>
+
+                            <!-- Review Form -->
+                            <form class="review-form" action="/shops/<%= shop._id %>/reviews" method="POST">
+                                <div class="field">
+                                    <label>Rating</label>
+                                    <select required name="review[ratings]">
+                                        <option value="5" selected>5 - Excellent</option>
+                                        <option value="4">4 - Good</option>
+                                        <option value="3">3 - Average</option>
+                                        <option value="2">2 - Poor</option>
+                                        <option value="1">1 - Bad</option>
+                                    </select>
+                                </div>
+
+                                <div class="field">
+                                    <label>Comment</label>
+                                    <textarea rows="3" placeholder="Write your review..." required
+                                        name="review[comment]"></textarea>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button class="btn btn-primary">Submit Review</button>
+                                </div>
+                            </form>
+
+                            <div style="border-top:1px solid #e5e7eb; margin:24px 0;"></div>
+
+                            <!-- Reviews List -->
+                            <div class="reviews-list">
+                                <% if(shop.reviews && shop.reviews.length> 0) { %>
+                                    <% for (let review of shop.reviews){ %>
+                                        <div class="review-card">
+                                            <div class="review-top">
+                                                <div class="review-user">
+                                                    <div class="avatar">
+                                                        <%= review.author.name.charAt(0).toUpperCase() %>
+                                                    </div>
+                                                    <div>
+                                                        <div class="user-name">
+                                                            <%= review.author.name %>
+                                                        </div>
+                                                        <div class="user-sub">
+                                                            <%= review.createdAt ? review.createdAt.toDateString() : ''
+                                                                %>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="rating">
+                                                    <% for(let i=0; i<review.ratings; i++) { %>★<% } %>
+                                                            <span style="color:#ccc; font-size:12px;">(<%=
+                                                                    review.ratings %>/5)</span>
+                                                </div>
+                                            </div>
+                                            <p class="review-comment">
+                                                <%= review.comment %>
+                                            </p>
+
+                                            <% if(currUser && review.author._id.equals(currUser._id)) { %>
+                                                <form
+                                                    action="/shops/<%= shop._id %>/reviews/<%= review._id %>?_method=DELETE"
+                                                    method="POST" style="margin-top:10px;">
+                                                    <button class="btn btn-sm btn-danger"
+                                                        style="padding:4px 8px; font-size:12px;">Delete</button>
+                                                </form>
+                                                <% } %>
+                                        </div>
+                                        <% } %>
+                                            <% } else { %>
+                                                <p class="text-muted text-center py-4">No reviews yet. Be the first to
+                                                    review!</p>
+                                                <% } %>
+                            </div>
+                        </section>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Contact Sidebar -->
+            <div class="sidebar">
+                <div class="contact-card">
+                    <div class="contact-header">
+                        <div class="seller-avatar">
+                            <i class="fa-solid fa-store"></i>
+                        </div>
+                        <p class="seller-name">
+                            <%= shop.owner.name %>
+                        </p>
+                        <p style="font-size: 13px; color: #6b7280; margin: 4px 0;">Shop Owner</p>
+                    </div>
+
+                    <div class="seller-contact-details">
+                        <div class="contact-row">
+                            <i class="fa-solid fa-phone"></i>
+                            <span>
+                                <%= shop.owner.username %>
+                            </span>
+                        </div>
+                        <div class="contact-row">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span>
+                                <%= shop.location %>
+                            </span>
+                        </div>
+                    </div>
+
+                    <a href="tel:<%= shop.owner.username %>" class="btn btn-primary w-100">
+                        <i class="fa-solid fa-phone"></i> Call Owner
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script for gallery/share same as productDetail -->
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const shareBtn = document.getElementById('shareBtn');
+                if (shareBtn) {
+                    shareBtn.addEventListener('click', async () => {
+                        if (navigator.share) {
+                            try {
+                                await navigator.share({
+                                    title: '<%= shop.shopName %>',
+                                    text: 'Check out this shop on Local Bazzar!',
+                                    url: window.location.href
+                                });
+                            } catch (err) { console.log(err); }
+                        } else {
+                            navigator.clipboard.writeText(window.location.href);
+                            alert('Link copied!');
+                        }
+                    });
+                }
+
+                const galleryImages = document.querySelectorAll('.gallery-img');
+                const mainImage = document.getElementById('mainImage');
+                if (mainImage && galleryImages.length > 0) {
+                    galleryImages.forEach(img => {
+                        img.addEventListener('click', () => {
+                            mainImage.src = img.src;
+                        });
+                    });
+                }
+            });
+        </script>
+    </body>

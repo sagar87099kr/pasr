@@ -1,0 +1,200 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <link rel="stylesheet" href="/css/localMarket.css">
+
+    <!-- Floating Action Button for Sellers -->
+    <a href="/shops/new" class="fab-sell" title="Register Shop">
+        <i class="fa-solid fa-plus"></i>
+    </a>
+
+    <!-- Header Section -->
+    <div class="market-header">
+        <div class="container">
+            <h2 class="market-title">
+                <i class="fa-solid fa-store"></i> Local Shops
+            </h2>
+            <% if (lat && lng) { %>
+                <span class="location-badge">
+                    <i class="fa-solid fa-location-dot"></i> Near You (<%= range || 5 %>km)
+                </span>
+                <% } %>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- Location Prompt -->
+        <% if (!lat || !lng) { %>
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="location-request-card">
+                        <div class="location-icon-circle">
+                            <i class="fa-solid fa-map-location-dot fa-2x"></i>
+                        </div>
+                        <h3>Find Nearby Shops</h3>
+                        <p class="text-muted mb-4">Discover local businesses and services in your neighborhood. We
+                            need your location to show you what's nearby.</p>
+                        <button id="getLocationBtn" class="btn btn-locate">
+                            <i class="fa-solid fa-crosshairs"></i> Detect My Location
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <% } else { %>
+
+                <!-- Range Control -->
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="range-control-panel">
+                            <label for="rangeSlider" class="form-label d-flex justify-content-betweenfw-bold mb-2">
+                                <span>Search Radius</span>
+                                <span class="badge bg-secondary"><span id="rangeValue">
+                                        <%= range || 5 %>
+                                    </span> km</span>
+                            </label>
+                            <input type="range" class="form-range" min="1" max="5" step="1" id="rangeSlider"
+                                value="<%= range || 5 %>">
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span>1 km</span>
+                                <span>5 km</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Categories Scroll (Dynamic links preserving query params) -->
+                <% const catIcons={ "Grocery" : "🛒" , "Electronics" : "🔌" , "Fashion" : "👕" , "Medical" : "💊"
+                    , "Hardware" : "🛠️" , "Restaurant" : "🍽️" , "Dhaba" : "🥘" , "Bakery" : "🍰" , "Mobile Shop"
+                    : "📱" , "Stationery" : "📚" , "Gift Shop" : "🎁" , "Salon" : "💇" , "Others" : "📦" }; const
+                    currentCat=typeof req !=='undefined' && req.query.category ? req.query.category : 'All Shops' ;
+                    const makeCatLink=(catName)=> {
+                    let query = new URLSearchParams();
+                    if (lat) query.set('lat', lat);
+                    if (lng) query.set('lng', lng);
+                    if (range) query.set('range', range);
+                    query.set('category', catName);
+                    return `/shops?${query.toString()}`;
+                    }
+                    %>
+                    <div class="cat-scroll-wrapper">
+                        <a href="<%= makeCatLink('All Shops') %>"
+                            class="cat-pill <%= currentCat === 'All Shops' ? 'active' : '' %>">🏪 All Shops</a>
+                        <a href="<%= makeCatLink('Grocery') %>"
+                            class="cat-pill <%= currentCat === 'Grocery' ? 'active' : '' %>">🛒 Grocery</a>
+                        <a href="<%= makeCatLink('Electronics') %>"
+                            class="cat-pill <%= currentCat === 'Electronics' ? 'active' : '' %>">🔌 Electronics</a>
+                        <a href="<%= makeCatLink('Fashion') %>"
+                            class="cat-pill <%= currentCat === 'Fashion' ? 'active' : '' %>">👕 Fashion</a>
+                        <a href="<%= makeCatLink('Medical') %>"
+                            class="cat-pill <%= currentCat === 'Medical' ? 'active' : '' %>">💊 Medical</a>
+                        <a href="<%= makeCatLink('Hardware') %>"
+                            class="cat-pill <%= currentCat === 'Hardware' ? 'active' : '' %>">🛠️ Hardware</a>
+                        <a href="<%= makeCatLink('Restaurant') %>"
+                            class="cat-pill <%= currentCat === 'Restaurant' ? 'active' : '' %>">🍽️ Restaurant</a>
+                        <a href="<%= makeCatLink('Dhaba') %>"
+                            class="cat-pill <%= currentCat === 'Dhaba' ? 'active' : '' %>">🥘 Dhaba</a>
+                        <a href="<%= makeCatLink('Bakery') %>"
+                            class="cat-pill <%= currentCat === 'Bakery' ? 'active' : '' %>">🍰 Bakery</a>
+                        <a href="<%= makeCatLink('Mobile Shop') %>"
+                            class="cat-pill <%= currentCat === 'Mobile Shop' ? 'active' : '' %>">📱 Mobile Shop</a>
+                        <a href="<%= makeCatLink('Stationery') %>"
+                            class="cat-pill <%= currentCat === 'Stationery' ? 'active' : '' %>">📚 Stationery</a>
+                        <a href="<%= makeCatLink('Gift Shop') %>"
+                            class="cat-pill <%= currentCat === 'Gift Shop' ? 'active' : '' %>">🎁 Gift Shop</a>
+                        <a href="<%= makeCatLink('Salon') %>"
+                            class="cat-pill <%= currentCat === 'Salon' ? 'active' : '' %>">💇 Salon</a>
+                        <a href="<%= makeCatLink('Others') %>"
+                            class="cat-pill <%= currentCat === 'Others' ? 'active' : '' %>">📦 Others</a>
+                    </div>
+
+
+                    <!-- Shop Grid -->
+                    <% if (shops && shops.length> 0) { %>
+                        <div class="market-grid">
+                            <% for (let shop of shops) { %>
+                                <a href="/shops/<%= shop._id %>" class="product-card-link">
+                                    <div class="product-card">
+                                        <div class="product-img-wrap">
+                                            <img src="<%= shop.shopImage[0].url %>" alt="<%= shop.shopName %>">
+                                        </div>
+                                        <div class="card-body-custom">
+                                            <h5 class="prod-title">
+                                                <%= shop.shopName %>
+                                            </h5>
+                                            <p class="prod-desc">
+                                                <i class="fa-solid fa-user"></i>
+                                                <%= shop.owner.username %>
+                                            </p>
+                                            <div class="prod-meta">
+                                                <span><i class="fa-solid fa-tag"></i>
+                                                    <%= catIcons[shop.category] || '' %>
+                                                        <%= shop.category %>
+                                                </span>
+                                                <span class="text-truncate" style="max-width: 100px;"><i
+                                                        class="fa-solid fa-map-pin"></i>
+                                                    <%= shop.location %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                                <% } %>
+                        </div>
+                        <% } else { %>
+                            <!-- Empty State -->
+                            <div class="alert alert-warning text-center mt-4" role="alert" style="border-radius: 12px;">
+                                <i class="fa-solid fa-store-slash fa-3x mb-3 text-warning"></i>
+                                <h4>No shops found nearby</h4>
+                                <p>We couldn't find any shops within <%= range || 5 %>km.</p>
+                                <p>Try increasing your search distance or checks back later.</p>
+                            </div>
+                            <% } %>
+
+                                <% } %>
+    </div>
+
+    <script>
+        const btn = document.getElementById('getLocationBtn');
+        if (btn) {
+            btn.addEventListener('click', () => {
+                if (!navigator.geolocation) {
+                    alert("Geolocation is not supported by your browser");
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Finding nearest shops...';
+
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const { latitude, longitude } = position.coords;
+                    // Add a small delay for effect
+                    setTimeout(() => {
+                        window.location.href = `/shops?lat=${latitude}&lng=${longitude}&range=5`;
+                    }, 800);
+                }, (err) => {
+                    console.error(err);
+                    alert("Unable to retrieve your location. Please check your browser settings or allow location access.");
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Detect My Location';
+                });
+            });
+        }
+
+        const slider = document.getElementById('rangeSlider');
+        const rangeValue = document.getElementById('rangeValue');
+
+        if (slider) {
+            slider.addEventListener('input', (e) => {
+                rangeValue.textContent = e.target.value;
+            });
+
+            slider.addEventListener('change', (e) => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const lat = urlParams.get('lat');
+                const lng = urlParams.get('lng');
+                if (lat && lng) {
+                    window.location.href = `/shops?lat=${lat}&lng=${lng}&range=${e.target.value}`;
+                }
+            });
+        }
+    </script>
