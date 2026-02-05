@@ -49,6 +49,11 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Locating...';
 
+            const options = {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0
+            };
             navigator.geolocation.getCurrentPosition(async (position) => {
               const { latitude, longitude } = position.coords;
               try {

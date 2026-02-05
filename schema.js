@@ -17,7 +17,7 @@ module.exports.customerSchema = Joi.object({
         username: Joi.number().required().min(10),
         password: Joi.string().required(),
         confirm: Joi.ref("password"),
-
+        address: Joi.string().required(),
     })
 });
 

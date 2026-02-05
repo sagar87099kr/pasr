@@ -25,12 +25,30 @@ router.get("/customer/signup", (req, res) => {
 // we will take the post request here and save it in our data bases
 router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, next) => {
     try {
-        const { name, username, password } = req.body.customer;
-        // No geometry/address initially
+        const { name, username, password, address } = req.body.customer;
+
+        // Geocode the address to get coordinates
+        const geoData = await geocodingClient.forwardGeocode({
+            query: address,
+            limit: 1
+        }).send();
+
+        // Try to extract pincode from geocoding result
+        let pincode = null;
+        if (geoData.body.features.length > 0) {
+            const context = geoData.body.features[0].context;
+            if (context) {
+                const pinCtx = context.find(c => c.id.startsWith('postcode'));
+                if (pinCtx) pincode = parseInt(pinCtx.text);
+            }
+        }
+
         const newCustomer = new Customer({
             name,
             username,
-            // emailAddress is now optional and removed from form
+            address,
+            pincode, // Computed or null
+            geometry: geoData.body.features[0].geometry
         });
 
         // Register user (this saves to DB)
