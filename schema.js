@@ -15,11 +15,8 @@ module.exports.customerSchema = Joi.object({
     customer: Joi.object({
         name: Joi.string().required().max(100).min(3),
         username: Joi.number().required().min(10),
-        emailAddress: Joi.string().allow(""),
         password: Joi.string().required(),
         confirm: Joi.ref("password"),
-        address: Joi.string().required(),
-        pincode: Joi.number().required(),
 
     })
 });

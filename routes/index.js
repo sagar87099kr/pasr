@@ -4,6 +4,7 @@ const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const mapToken = process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 const Product = require("../data/product.js");
+const Customer = require("../data/customers.js");
 const { isLogedin, isadmin } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 
@@ -26,7 +27,7 @@ router.get("/home", (req, res) => {
 });
 
 // Route to set user location from browser
-router.post("/set-location", (req, res) => {
+router.post("/set-location", async (req, res) => {
     const { latitude, longitude } = req.body;
     if (latitude && longitude) {
         req.session.location = {
@@ -34,6 +35,37 @@ router.post("/set-location", (req, res) => {
             coordinates: [parseFloat(longitude), parseFloat(latitude)]
         };
         console.log("Location updated in session:", req.session.location);
+
+        if (req.user) {
+            try {
+                const response = await geocodingClient.reverseGeocode({
+                    query: [parseFloat(longitude), parseFloat(latitude)],
+                    limit: 1
+                }).send();
+
+                if (response.body.features.length > 0) {
+                    const feature = response.body.features[0];
+                    const address = feature.place_name;
+                    let pincode = null;
+
+                    // Extract pincode from context
+                    if (feature.context) {
+                        const pincodeCtx = feature.context.find(c => c.id.startsWith('postcode'));
+                        if (pincodeCtx) pincode = parseInt(pincodeCtx.text);
+                    }
+
+                    await Customer.findByIdAndUpdate(req.user._id, {
+                        geometry: req.session.location,
+                        address: address,
+                        pincode: pincode
+                    });
+                    console.log("User persisted to DB:", req.user._id);
+                }
+            } catch (e) {
+                console.error("Failed to persist location to DB:", e);
+            }
+        }
+
         res.status(200).json({ message: "Location saved" });
     } else {
         res.status(400).json({ message: "Invalid coordinates" });

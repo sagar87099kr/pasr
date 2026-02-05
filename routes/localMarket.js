@@ -112,8 +112,8 @@ router.get("/products/:id", isLogedin, wrapAsync(async (req, res) => {
 // Update Product
 router.put("/products/:id/edit", isLogedin, isProductOwner, wrapAsync(async (req, res) => {
     let { id } = req.params;
-    const { productName, productDescription, price, quantity } = req.body.product;
-    await Product.findByIdAndUpdate(id, { productName, productDescription, price, quantity });
+    const { productName, productDescription, price, quantity, categories } = req.body.product;
+    await Product.findByIdAndUpdate(id, { productName, productDescription, price, quantity, categories });
 
     req.flash("success", "Product updated successfully");
     res.redirect(`/products/${id}`);

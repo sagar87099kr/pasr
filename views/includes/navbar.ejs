@@ -15,7 +15,7 @@
           <li><a class="dropdown-item" href="#">About us</a> </li>
           <% if (!currUser){%>
             <li><a class="dropdown-item" href="/alreadyLogin">login</a> </li>
-            <li><a class="dropdown-item" href="/T&C">SignUp</a> </li>
+            <li><a class="dropdown-item" href="/customer/signup">SignUp</a> </li>
             <%}%>
               <li>
                 <hr class="dropdown-divider">
@@ -52,7 +52,7 @@
     <button class="btn btn-outline-success" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
   </form>
   <% if (!currUser){%>
-    <button class="btn btn-outline-success"><a class="dropdown-item" href="/T&C">SignUp</a> </button>
+    <button class="btn btn-outline-success"><a class="dropdown-item" href="/customer/signup">SignUp</a> </button>
     <%}%>
       <div class="form-check form-switch ms-2 me-2">
         <input class="form-check-input" type="checkbox" role="switch" id="languageSwitch">

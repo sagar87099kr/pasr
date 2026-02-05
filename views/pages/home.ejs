@@ -274,6 +274,12 @@
             // Location logic remains unchanged
             const askedForLocation = sessionStorage.getItem('askedForLocation');
             if (!askedForLocation && navigator.geolocation) {
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                };
+
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const { latitude, longitude } = position.coords;
@@ -287,7 +293,8 @@
                     (error) => {
                         console.error("Geolocation error:", error);
                         sessionStorage.setItem('askedForLocation', 'true');
-                    }
+                    },
+                    options
                 );
             }
         });

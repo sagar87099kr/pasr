@@ -184,16 +184,19 @@ module.exports.findNearbyProviders = (category) => {
     return async (req, res, next) => {
         try {
             // Priority 1: Session Location (from browser)
-            // Priority 2: User Profile Location (if logged in)
+            // Priority 2: User Profile Location (if logged in and valid)
             let userLocation = req.session.location;
 
-            if (!userLocation && req.user && req.user.geometry) {
+            if (!userLocation && req.user && req.user.geometry && req.user.geometry.coordinates && req.user.geometry.coordinates.length === 2) {
                 userLocation = req.user.geometry;
             }
 
-            if (!userLocation) {
+            // Validate that we have proper coordinates [lon, lat]
+            const hasValidLocation = userLocation && userLocation.coordinates && userLocation.coordinates.length === 2;
+
+            if (!hasValidLocation) {
                 // If no user location, fallback to finding all verified in category
-                console.log("No user geometry found, returning all providers");
+                console.log("No valid user geometry found, returning all providers");
                 const allProvider = await Provider.find({ categories: category, verified: true }).populate("owner");
                 res.locals.allProvider = allProvider;
                 return next();

@@ -152,6 +152,48 @@
             </section>
             <% } %>
 
+              <!-- Shops Section -->
+              <% if (shops && shops.length> 0) { %>
+                <section class="profile-card">
+                  <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
+                    <div class="user-info">
+                      <h2>My Shops</h2>
+                      <span class="user-type">Manage your shops</span>
+                    </div>
+                  </div>
+
+                  <div class="listings-grid">
+                    <% shops.forEach(shop=> { %>
+                      <div class="listing-card">
+                        <div class="listing-info">
+                          <img src="<%= shop.shopImage[0].url %>" alt="Shop Image" class="listing-img">
+                          <div class="listing-details">
+                            <h4>
+                              <%= shop.shopName %>
+                            </h4>
+                            <p class="listing-cat">
+                              <%= shop.category %>
+                            </p>
+                            <p class="listing-cat" style="color: #6b7280; font-size: 12px;">
+                              <%= shop.location %>
+                            </p>
+                          </div>
+                        </div>
+                        <div class="d-flex gap-2 mt-3">
+                          <a href="/shops/<%= shop._id %>" class="btn btn-view flex-grow-1">
+                            View Shop
+                          </a>
+                          <a href="/shops/<%= shop._id %>/edit" class="btn btn-secondary flex-grow-0"
+                            style="padding: 0.5rem 0.8rem;">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                          </a>
+                        </div>
+                      </div>
+                      <% }) %>
+                  </div>
+                </section>
+                <% } %>
+
     </div>
 
     <script>

@@ -25,9 +25,10 @@
                         <label for="category" class="form-label">Category *</label>
                         <select class="form-control form-select" name="shop[category]" id="category" required>
                             <option disabled value="">Select Category...</option>
-                            <% const categories=["Grocery", "Electronics" , "Fashion" , "Medical" , "Hardware"
-                                , "Restaurant" , "Dhaba" , "Bakery" , "Mobile Shop" , "Stationery" , "Gift Shop"
-                                , "Salon" , "Others" ]; %>
+                            <% const categories=["Grocery", "Jewelers" , "Non-Veg" , "General Store" , "Furniture"
+                                , "Seeds & Fertilizers" , "Automobile" , "Electronics" , "Fashion" , "Medical"
+                                , "Hardware" , "Restaurant" , "Dhaba" , "Bakery" , "Mobile Shop" , "Stationery"
+                                , "Printing & Digital" , "Salon" , "Others" ]; %>
                                 <% categories.forEach(cat=> { %>
                                     <option value="<%= cat %>" <%=shop.category===cat ? 'selected' : '' %>><%= cat %>
                                     </option>

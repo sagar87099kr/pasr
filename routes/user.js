@@ -3,6 +3,7 @@ const router = express.Router();
 const Customer = require("../data/customers.js");
 const Provider = require("../data/serviceproviders.js");
 const Product = require("../data/product.js");
+const Shop = require("../data/shops.js");
 const passport = require("passport");
 const { validatecustomer, saveRedirectUrl, isLogedin, isadmin } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
@@ -11,8 +12,9 @@ const mapToken = process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 
 // login route for all 
+// login route for all 
 router.get("/signup", (req, res) => {
-    res.render("pages/signup.ejs");
+    res.redirect("/customer/signup");
 });
 
 // login route for customer.
@@ -22,20 +24,13 @@ router.get("/customer/signup", (req, res) => {
 
 // we will take the post request here and save it in our data bases
 router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, next) => {
-    let coordinate = await geocodingClient.forwardGeocode({
-        query: req.body.customer.address,
-        limit: 1
-    }).send();
     try {
-        const { name, username, password, address, pincode, emailAddress } = req.body.customer;
-        const geometry = coordinate.body.features[0].geometry;
+        const { name, username, password } = req.body.customer;
+        // No geometry/address initially
         const newCustomer = new Customer({
             name,
             username,
-            emailAddress,
-            address,
-            geometry,
-            pincode,
+            // emailAddress is now optional and removed from form
         });
 
         // Register user (this saves to DB)
@@ -99,7 +94,8 @@ router.get("/logout", (req, res, next) => {
 router.get("/user", isLogedin, saveRedirectUrl, wrapAsync(async (req, res) => {
     const listings = await Provider.find({ owner: req.user._id });
     const products = await Product.find({ owner: req.user._id });
-    res.render("pages/provider_profile.ejs", { listings, products });
+    const shops = await Shop.find({ owner: req.user._id });
+    res.render("pages/provider_profile.ejs", { listings, products, shops });
 }));
 
 // these are verification route for customers 

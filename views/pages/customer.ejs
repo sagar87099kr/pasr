@@ -30,14 +30,6 @@
             <div class="invalid-feedback">Please enter a valid 10-digit number.</div>
           </div>
 
-          <!-- Email -->
-          <div class="form-group">
-            <label for="emailInput" class="form-label">Email Address</label>
-            <input type="email" class="form-control" id="emailInput" name="customer[emailAddress]"
-              placeholder="you@example.com">
-            <div class="form-text text-muted small mt-1">Optional, but recommended for updates.</div>
-          </div>
-
           <!-- Password -->
           <div class="row">
             <div class="col-md-6 form-group">
@@ -54,33 +46,11 @@
             </div>
           </div>
 
-          <!-- Location -->
-          <div class="form-group">
-            <label for="addressInput" class="form-label">Location *</label>
-            <div class="input-group">
-              <input type="text" class="form-control" id="addressInput" required name="customer[address]"
-                placeholder="City, Area or Street">
-              <button class="btn-location" type="button" id="getLocationBtn">
-                <i class="fa-solid fa-location-crosshairs"></i> Get Location
-              </button>
-            </div>
-            <div class="invalid-feedback">Please provide your location.</div>
-          </div>
-
-          <!-- Pincode -->
-          <div class="form-group">
-            <label for="pincodeInput" class="form-label">Pincode *</label>
-            <input type="number" class="form-control" id="pincodeInput" name="customer[pincode]" required
-              placeholder="e.g. 825412">
-            <div class="invalid-feedback">Please enter your pincode.</div>
-          </div>
-
           <!-- Agreement -->
           <div class="form-check">
             <input type="checkbox" class="form-check-input" id="agreeCheck" required>
             <label class="form-check-label" for="agreeCheck">
-              I hereby declare that the information provided is true and correct. I understand that providing false
-              information may lead to account suspension.
+              I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
             </label>
           </div>
 
@@ -89,50 +59,46 @@
       </div>
     </div>
 
-    <script>
-      document.getElementById('getLocationBtn').addEventListener('click', () => {
-        const btn = document.getElementById('getLocationBtn');
-        const input = document.getElementById('addressInput');
+    <!-- T&C Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="legal-section">
+              <h6>1. Introduction</h6>
+              <p>Welcome to PASR.IN. These Terms and Conditions (“Terms”) govern your use of our Platform. By accessing,
+                browsing, or using our Platform in any manner, you acknowledge that you have read, understood, and agree
+                to be legally bound by these Terms.</p>
+            </div>
+            <div class="legal-section mt-3">
+              <h6>2. Privacy Policy Reference</h6>
+              <p>Your use of the Platform is also governed by our Privacy Policy. PASR is a discovery and listing
+                platform. We do not render services, guarantee performance, or act as agents except where required by
+                law.</p>
 
-        if (!navigator.geolocation) {
-          alert("Geolocation is not supported by your browser");
-          return;
-        }
+              <h6 class="mt-2">Privacy Policy Highlights</h6>
+              <ul>
+                <li><strong>Collection:</strong> We collect info you submit and auto-collected data like location for
+                  proximity results.</li>
+                <li><strong>Usage:</strong> Providing services, enabling discovery, support, and compliance.</li>
+                <li><strong>Disclosure:</strong> Provider listings are public. We share data with vendors/legal when
+                  required.</li>
+              </ul>
+            </div>
+            <p class="text-muted small mt-3">By clicking "I Agree", you declare that the information provided is true
+              and correct.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Locating...';
 
-        navigator.geolocation.getCurrentPosition(async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            const res = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
-            const data = await res.json();
-            if (data.address) {
-              input.value = data.address;
-            } else {
-              alert("Could not find address for this location.");
-            }
-          } catch (err) {
-            console.error(err);
-            alert("Failed to fetch address.");
-          } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
-          }
-        }, (err) => {
-          console.error(err);
-          // Show specific error to help debug
-          let msg = "Unable to retrieve location.";
-          if (err.code === 1) msg = "Location permission denied. Please allow access.";
-          else if (err.code === 2) msg = "Location unavailable. Check your GPS/Network.";
-          else if (err.code === 3) msg = "Location request timed out.";
-
-          alert(`${msg}\n(Error: ${err.message})`);
-
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
-        });
-      });
-    </script>
     <script src="/js/script.js"></script>
   </body>
