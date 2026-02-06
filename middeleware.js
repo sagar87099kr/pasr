@@ -1,5 +1,5 @@
 const Provider = require("./data/serviceproviders.js");
-const { providerSchema, customerSchema, reviewSchema, shopSchema } = require("./schema.js");
+const { providerSchema, customerSchema, reviewSchema, shopSchema, itemSchema } = require("./schema.js");
 const ExpressError = require("./utils/expressError.js");
 const Review = require("./data/review.js");
 const Customer = require("./data/customers.js");
@@ -115,7 +115,7 @@ module.exports.isVerifiedCustomer = async (req, res, next) => {
 module.exports.isadmin = async (req, res, next) => {
     // Check if current user exists and their username matches the admin number
     // Using string comparison "8709956547" to be safe
-    const admins = ["8709956547", "9608812817", "7091212569", "7046699074",];
+    const admins = ["8709956547", "9608812817", "7091212569", "7046699074", "9304703911"];
     if (!res.locals.currUser || !admins.includes(String(res.locals.currUser.username))) {
         req.flash("danger", "Only admin have access of this route");
         return res.redirect(`/home`);
@@ -161,6 +161,17 @@ module.exports.validateShop = (req, res, next) => {
         next();
     }
 }
+
+module.exports.validateItem = (req, res, next) => {
+    let { error } = itemSchema.validate(req.body);
+    if (error) {
+        let errMsg = error.details.map((el) => el.message).join(",");
+        throw new ExpressError(400, errMsg)
+    } else {
+        next();
+    }
+}
+
 
 module.exports.isReviewAuthor = async (req, res, next) => {
     try {

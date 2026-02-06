@@ -36,3 +36,11 @@ module.exports.shopSchema = Joi.object({
         shopDescription: Joi.string().allow(""),
     }).required()
 });
+
+module.exports.itemSchema = Joi.object({
+    item: Joi.object({
+        name: Joi.string().required(),
+        price: Joi.number().required().min(0),
+        quantity: Joi.number().required().min(0),
+    }).required()
+});

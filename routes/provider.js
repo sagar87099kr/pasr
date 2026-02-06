@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Provider = require("../data/serviceproviders.js");
 const Shedule = require("../data/clander.js");
+const Review = require("../data/review.js");
 const { isLogedin, isVerifiedCustomer, validateprovider, isOwner, isadmin, findNearbyProviders } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
@@ -239,10 +240,16 @@ router.delete("/provider/:id/verifyfail", isLogedin, isadmin, wrapAsync(async (r
                         }
                     } catch (e) {
                         console.error("Cloudinary delete error:", e);
-                        // Continue deleting provider even if image delete fails
                     }
                 }
             }
+
+            // Delete associated reviews
+            if (provider.review && provider.review.length > 0) {
+                await Review.deleteMany({ _id: { $in: provider.review } });
+            }
+
+
             await Provider.findByIdAndDelete(id);
             console.log("provider detail is deleted");
             req.flash("success", "Provider deleted successfully");

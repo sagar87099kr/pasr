@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Shop = require("../data/shops.js");
 const Review = require("../data/review.js");
-const { isLogedin, isOwner, validateShop, isadmin, validatereview, isReviewAuthor } = require("../middeleware.js"); // Using generic middlewares where applicable
+const Item = require("../data/item.js");
+const { isLogedin, isOwner, validateShop, isadmin, validatereview, isReviewAuthor, validateItem } = require("../middeleware.js"); // Using generic middlewares where applicable
 const wrapAsync = require("../utils/wrapAsync.js");
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const mapToken = process.env.MAP_TOKEN;
@@ -173,7 +174,8 @@ router.get("/shops/:id", isLogedin, wrapAsync(async (req, res) => {
             populate: {
                 path: "author"
             }
-        });
+        })
+        .populate("items");
     if (!shop) {
         req.flash("error", "Shop not found");
         return res.redirect("/shops");
@@ -265,6 +267,53 @@ router.delete("/shops/:id", isLogedin, isShopOwner, wrapAsync(async (req, res) =
     await Shop.findByIdAndDelete(id);
     req.flash("success", "Shop deleted successfully");
     res.redirect("/shops");
+}));
+
+
+// Create Item
+router.post("/shops/:id/items", isLogedin, isShopOwner, upload.single("itemImage"), validateItem, wrapAsync(async (req, res) => {
+    console.log("Create Item Route Hit");
+    console.log("Body:", req.body);
+    console.log("File:", req.file);
+
+    const { id } = req.params;
+    const shop = await Shop.findById(id);
+    if (!shop) {
+        req.flash("error", "Shop not found");
+        return res.redirect("/shops");
+    }
+
+    const itemData = req.body.item;
+    const newItem = new Item(itemData);
+
+    if (req.file) {
+        newItem.img = { url: req.file.path, filename: req.file.filename };
+    }
+
+    newItem.shop = shop._id;
+    shop.items.push(newItem);
+
+    await newItem.save();
+    await shop.save();
+
+    req.flash("success", "Your item was added");
+    res.redirect(`/shops/${id}`);
+}));
+
+// Delete Item
+router.delete("/shops/:id/items/:itemId", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
+    const { id, itemId } = req.params;
+    const item = await Item.findById(itemId);
+
+    if (item.img && item.img.filename) {
+        await cloudinary.uploader.destroy(item.img.filename);
+    }
+
+    await Shop.findByIdAndUpdate(id, { $pull: { items: itemId } });
+    await Item.findByIdAndDelete(itemId);
+
+    req.flash("success", "Item deleted successfully");
+    res.redirect(`/shops/${id}`);
 }));
 
 module.exports = router;

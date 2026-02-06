@@ -1,16 +1,7 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
     <link rel="stylesheet" href="/css/product_detail.css">
-    <!-- Add provider profile styles for the review section compatibility if needed, 
-     but likely product_detail.css + local styles or shared styles are better. 
-     Actually, review section styles in profile.ejs seem to use .cardin, .reviews-card etc. 
-     I should either copy those styles or use a shared css.
-     Let's copy the review specific styles into a <style> block here for now to ensure it works immediately 
-     without touching global css files, or reuse existing if they are global.
-     profile.ejs uses /css/provider_profile.css. I'll include it or extract what's needed.
-     Including both might fight, so I'll extract review styles. 
--->
     <style>
-        /* Review styles from provider_profile.css (inferred/adapted) */
+        /* Review styles */
         .reviews-card {
             background: #fff;
             border-radius: 16px;
@@ -87,10 +78,253 @@
             color: #4b5563;
             line-height: 1.5;
         }
+
+        /* Item Modal & Grid Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 12px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .item-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 10px;
+            background: #fff;
+            transition: transform 0.2s;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .item-img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .item-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .item-price {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        .item-qty {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .btn-add-item {
+            background-color: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        .btn-add-item:hover {
+            background-color: #2563eb;
+        }
+
+
+        /* Mobile Call Action */
+        .mobile-call-action {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .mobile-call-action {
+                display: block;
+            }
+        }
+
+        /* Market Style Product Card */
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .items-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .product-img-wrap {
+                height: 120px;
+                /* Smaller image on mobile */
+            }
+
+            .card-body-custom {
+                padding: 10px;
+                /* Compact padding */
+            }
+
+            .prod-title {
+                font-size: 0.9rem;
+            }
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            /* shadow-sm */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #e5e7eb;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+            border-color: #ff9933;
+            /* market-primary */
+        }
+
+        .product-img-wrap {
+            position: relative;
+            height: 160px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+        }
+
+        .product-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-img-wrap img {
+            transform: scale(1.05);
+        }
+
+        .price-tag {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #ff9933, #ff7700);
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 6px 12px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(255, 153, 51, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .card-body-custom {
+            padding: 14px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .prod-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+            color: #1f2937;
+            line-height: 1.3;
+            text-transform: capitalize;
+        }
+
+        .prod-meta {
+            margin-top: auto;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        .item-delete-btn {
+            background: #fee2e2;
+            color: #ef4444;
+            border: none;
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .item-delete-btn:hover {
+            background: #fecaca;
+        }
+
+        /* Override for Shop Profile Page (Single Column) */
+        .shop-profile-container {
+            grid-template-columns: 1fr !important;
+        }
     </style>
 
     <body>
-        <div class="product-container">
+        <div class="product-container shop-profile-container">
             <!-- LEFT COLUMN: Shop Details -->
             <div class="main-content">
 
@@ -134,18 +368,12 @@
                                         <%= shop.location %>
                                     </span>
                                 </div>
-                                <div class="info-box">
-                                    <span class="info-label">Verified</span>
-                                    <span class="info-value">
-                                        <% if(shop.verified) { %>
-                                            <span style="color:green"><i class="fa-solid fa-check-circle"></i>
-                                                Yes</span>
-                                            <% } else { %>
-                                                <span style="color:red"><i class="fa-solid fa-times-circle"></i>
-                                                    No</span>
-                                                <% } %>
+                                <a href="tel:<%= shop.owner.username %>" class="info-box"
+                                    style="text-decoration:none; justify-content:center; align-items:center; background:#eff6ff; border-color:#bfdbfe;">
+                                    <span class="info-value" style="color:#2563eb; font-size:16px;">
+                                        <i class="fa-solid fa-phone"></i> Call Owner
                                     </span>
-                                </div>
+                                </a>
                             </div>
 
                             <!-- Owner Actions -->
@@ -154,7 +382,6 @@
                                     <a href="/shops/<%= shop._id %>/edit" class="btn btn-warning">
                                         <i class="fa-solid fa-edit"></i> Edit
                                     </a>
-
                                 </div>
                                 <% } %>
                         </div>
@@ -167,6 +394,59 @@
                     <p class="description-text">
                         <%= shop.shopDescription || "No description provided." %>
                     </p>
+                </section>
+
+
+
+                <!-- ITEMS SECTION -->
+                <section class="card-section">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2 class="section-heading">Shop Items</h2>
+                        <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                            <button id="addItemBtn" class="btn-add-item"><i class="fa-solid fa-plus"></i> Add
+                                Item</button>
+                            <% } %>
+                    </div>
+
+                    <div class="items-grid">
+                        <% if(shop.items && shop.items.length> 0) { %>
+                            <% shop.items.forEach(item=> { %>
+                                <div class="product-card">
+                                    <div class="product-img-wrap">
+                                        <% if(item.img && item.img.url) { %>
+                                            <img src="<%= item.img.url %>" alt="<%= item.name %>">
+                                            <% } else { %>
+                                                <div
+                                                    style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#999; font-size:12px;">
+                                                    No Image</div>
+                                                <% } %>
+                                                    <div class="price-tag">
+                                                        ₹<%= item.price %>
+                                                    </div>
+                                    </div>
+
+                                    <div class="card-body-custom">
+                                        <h5 class="prod-title">
+                                            <%= item.name %>
+                                        </h5>
+                                        <div class="prod-meta">
+                                            <span>Qty: <%= item.quantity %></span>
+                                        </div>
+
+                                        <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                            <button type="button" class="item-delete-btn"
+                                                onclick="openDeleteConfirm('<%= shop._id %>', '<%= item._id %>')">
+                                                <i class="fa-solid fa-trash"></i> Delete
+                                            </button>
+                                            <% } %>
+                                    </div>
+                                </div>
+                                <% }) %>
+                                    <% } else { %>
+                                        <p style="color:#6b7280; grid-column: 1 / -1; text-align:center;">No items added
+                                            yet.</p>
+                                        <% } %>
+                    </div>
                 </section>
 
                 <!-- Gallery (if multiple images - currently max 1 but prepared for future) -->
@@ -267,37 +547,66 @@
 
             </div>
 
-            <!-- RIGHT COLUMN: Contact Sidebar -->
-            <div class="sidebar">
-                <div class="contact-card">
-                    <div class="contact-header">
-                        <div class="seller-avatar">
-                            <i class="fa-solid fa-store"></i>
-                        </div>
-                        <p class="seller-name">
-                            <%= shop.owner.name %>
-                        </p>
-                        <p style="font-size: 13px; color: #6b7280; margin: 4px 0;">Shop Owner</p>
-                    </div>
 
-                    <div class="seller-contact-details">
-                        <div class="contact-row">
-                            <i class="fa-solid fa-phone"></i>
-                            <span>
-                                <%= shop.owner.username %>
-                            </span>
-                        </div>
-                        <div class="contact-row">
-                            <i class="fa-solid fa-location-dot"></i>
-                            <span>
-                                <%= shop.location %>
-                            </span>
-                        </div>
-                    </div>
+        </div>
 
-                    <a href="tel:<%= shop.owner.username %>" class="btn btn-primary w-100">
-                        <i class="fa-solid fa-phone"></i> Call Owner
-                    </a>
+        <!-- Add Item Modal -->
+        <div id="addItemModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 style="margin-bottom:20px;">Add New Item</h2>
+                <form action="/shops/<%= shop._id %>/items" method="POST" enctype="multipart/form-data"
+                    class="review-form">
+                    <div class="field">
+                        <label>Item Name</label>
+                        <input type="text" name="item[name]" required placeholder="Enter item name"
+                            style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                    </div>
+                    <div class="field">
+                        <label>Price (₹)</label>
+                        <input type="number" name="item[price]" required min="0" placeholder="0"
+                            style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                    </div>
+                    <div class="field">
+                        <label>Quantity</label>
+                        <input type="number" name="item[quantity]" required min="1" placeholder="1"
+                            style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                    </div>
+                    <div class="field">
+                        <label>Item Image</label>
+                        <input type="file" name="itemImage" id="itemImageInput" required
+                            style="width:100%; padding:10px; background:#f9fafb; border:1px solid #d1d5db; border-radius:8px;">
+                    </div>
+                    <button class="btn btn-primary w-100" id="addItemSubmitBtn">Add Item</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteModal" class="modal" style="z-index: 1100;">
+            <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px;">
+                <div style="margin-bottom: 20px;">
+                    <div
+                        style="width: 60px; height: 60px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px;">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </div>
+                    <h3 style="font-size: 20px; font-weight: 700; color: #1f2937; margin-bottom: 8px;">Delete Item?
+                    </h3>
+                    <p style="color: #6b7280; font-size: 15px; line-height: 1.5;">
+                        Are you sure you want to delete this item? This action cannot be undone.
+                    </p>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <button class="btn"
+                        style="background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; width: 100%;"
+                        onclick="closeDeleteModal()">
+                        Cancel
+                    </button>
+                    <form id="deleteForm" method="POST" style="margin:0; width: 100%;">
+                        <button class="btn btn-danger" style="width: 100%; justify-content: center;">
+                            Yes, Delete
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -305,6 +614,33 @@
         <!-- Script for gallery/share same as productDetail -->
         <script>
             document.addEventListener("DOMContentLoaded", () => {
+                // Modal Logic
+                const modal = document.getElementById("addItemModal");
+                const btn = document.getElementById("addItemBtn");
+                const span = document.getElementsByClassName("close")[0];
+
+                if (btn) {
+                    btn.onclick = function () {
+                        modal.style.display = "block";
+                    }
+                }
+
+                if (span) {
+                    span.onclick = function () {
+                        modal.style.display = "none";
+                    }
+                }
+
+                window.onclick = function (event) {
+                    if (event.target == modal) {
+                        modal.style.display = "none";
+                    }
+                    if (event.target == document.getElementById("deleteModal")) {
+                        closeDeleteModal();
+                    }
+                }
+
+                // Existing Logic
                 const shareBtn = document.getElementById('shareBtn');
                 if (shareBtn) {
                     shareBtn.addEventListener('click', async () => {
@@ -333,5 +669,108 @@
                     });
                 }
             });
+
+            // Delete Modal Functions
+            function openDeleteConfirm(shopId, itemId) {
+                const modal = document.getElementById('deleteModal');
+                const form = document.getElementById('deleteForm');
+                form.action = `/shops/${shopId}/items/${itemId}?_method=DELETE`;
+                modal.style.display = "flex"; // Flex to center if we want, or block
+                modal.style.alignItems = "center";
+                modal.style.justifyContent = "center";
+            }
+
+            function closeDeleteModal() {
+                const modal = document.getElementById('deleteModal');
+                modal.style.display = "none";
+            }
+
+            // Image Compression Logic
+            document.getElementById('itemImageInput').addEventListener('change', async function (event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // 500KB limit
+                const MAX_SIZE = 500 * 1024;
+
+                if (file.size <= MAX_SIZE) return;
+
+                const submitBtn = document.getElementById('addItemSubmitBtn');
+                const originalText = submitBtn.innerText;
+                submitBtn.innerText = "Compressing Image...";
+                submitBtn.disabled = true;
+
+                try {
+                    const compressedFile = await compressImage(file, MAX_SIZE);
+
+                    // Replace the file input with compressed file
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(compressedFile);
+                    event.target.files = dataTransfer.files;
+
+                    console.log(`Compressed: ${(compressedFile.size / 1024).toFixed(2)}KB (Original: ${(file.size / 1024).toFixed(2)}KB)`);
+                } catch (err) {
+                    console.error("Compression failed", err);
+                } finally {
+                    submitBtn.innerText = originalText;
+                    submitBtn.disabled = false;
+                }
+            });
+
+            function compressImage(file, maxSize) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.src = event.target.result;
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+
+                            // Initial resize if huge
+                            const MAX_DIMENSION = 1920;
+                            if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+                                if (width > height) {
+                                    height *= MAX_DIMENSION / width;
+                                    width = MAX_DIMENSION;
+                                } else {
+                                    width *= MAX_DIMENSION / height;
+                                    height = MAX_DIMENSION;
+                                }
+                            }
+
+                            canvas.width = width;
+                            canvas.height = height;
+
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            // Recursive compression
+                            let quality = 0.9;
+
+                            function tryCompress() {
+                                canvas.toBlob((blob) => {
+                                    if (blob.size <= maxSize || quality <= 0.1) {
+                                        const newFile = new File([blob], file.name, {
+                                            type: 'image/jpeg',
+                                            lastModified: Date.now(),
+                                        });
+                                        resolve(newFile);
+                                    } else {
+                                        quality -= 0.1;
+                                        tryCompress();
+                                    }
+                                }, 'image/jpeg', quality);
+                            }
+
+                            tryCompress();
+                        };
+                        img.onerror = reject;
+                    };
+                    reader.onerror = reject;
+                });
+            }
         </script>
     </body>
