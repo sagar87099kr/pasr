@@ -14,7 +14,7 @@ const upload = multer({ storage });
 
 // home service
 // Moved to top to ensure priority
-router.get("/homeservice", isLogedin, findNearbyProviders("Home Service"), wrapAsync(async (req, res) => {
+router.get("/homeservice", isLogedin, findNearbyProviders("Home Service provider"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/homeService.ejs", { allProvider });
 }));
