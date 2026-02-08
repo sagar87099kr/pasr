@@ -97,7 +97,7 @@ router.delete("/:id/verifyfailproduct", isLogedin, isadmin, wrapAsync(async (req
 }));
 
 // Product Detail Page
-router.get("/products/:id", isLogedin, wrapAsync(async (req, res) => {
+router.get("/products/:id", wrapAsync(async (req, res) => {
     let { id } = req.params;
     const product = await Product.findById(id).populate("owner");
 

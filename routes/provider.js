@@ -14,13 +14,13 @@ const upload = multer({ storage });
 
 // home service
 // Moved to top to ensure priority
-router.get("/homeservice", isLogedin, findNearbyProviders("Home Service provider"), wrapAsync(async (req, res) => {
+router.get("/homeservice", findNearbyProviders("Home Service provider"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/homeService.ejs", { allProvider });
 }));
 // others page call
 // Moved to top to ensure priority
-router.get("/others", isLogedin, findNearbyProviders("Others"), wrapAsync(async (req, res) => {
+router.get("/others", findNearbyProviders("Others"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/others.ejs", { allProvider });
 }));
@@ -55,13 +55,13 @@ router.get("/search", isLogedin, wrapAsync(async (req, res) => {
 }));
 
 // this will redirect into farmer page
-router.get("/farm", isLogedin, findNearbyProviders("Farming Vehicles"), wrapAsync(async (req, res) => {
+router.get("/farm", findNearbyProviders("Farming Vehicles"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/farming.ejs", { allProvider });
 }));
 
 // this will redirect the page to the fourwheeler page
-router.get("/car", isLogedin, findNearbyProviders("Four Wheelers"), wrapAsync(async (req, res) => {
+router.get("/car", findNearbyProviders("Four Wheelers"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/four_wheelers.ejs", { allProvider });
 
@@ -90,52 +90,52 @@ router.get("/provider/:id/profile", isLogedin, wrapAsync(async (req, res) => {
 }));
 
 // this will redirect the paget bus
-router.get("/bus", isLogedin, findNearbyProviders("HMV (Bus)"), wrapAsync(async (req, res) => {
+router.get("/bus", findNearbyProviders("HMV (Bus)"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     console.log(allProvider)
     res.render("pages/bus.ejs", { allProvider });
 }));
 
 // three wheelers
-router.get("/three-weelers", isLogedin, findNearbyProviders("Three Wheelers"), wrapAsync(async (req, res) => {
+router.get("/three-weelers", findNearbyProviders("Three Wheelers"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/three.ejs", { allProvider });
 
 }));
 
 // caretings
-router.get("/caterings", isLogedin, findNearbyProviders("Caterings"), wrapAsync(async (req, res) => {
+router.get("/caterings", findNearbyProviders("Caterings"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/caterings.ejs", { allProvider });
 }));
 
 // filming pages
-router.get("/filming", isLogedin, findNearbyProviders("Filming"), wrapAsync(async (req, res) => {
+router.get("/filming", findNearbyProviders("Filming"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/filming.ejs", { allProvider });
 
 }));
 
 //decoration
-router.get("/decor", isLogedin, findNearbyProviders("Decoration"), wrapAsync(async (req, res) => {
+router.get("/decor", findNearbyProviders("Decoration"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/decoration.ejs", { allProvider });
 }));
 
 // dj and tent pages
-router.get("/djdecor", isLogedin, findNearbyProviders("DJ and Tent"), wrapAsync(async (req, res) => {
+router.get("/djdecor", findNearbyProviders("DJ and Tent"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/djtant.ejs", { allProvider });
 }));
 
 // band party 
-router.get("/bandparty", isLogedin, findNearbyProviders("Band Party"), wrapAsync(async (req, res) => {
+router.get("/bandparty", findNearbyProviders("Band Party"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/bandparty.ejs", { allProvider });
 }));
 
 // heavy equipments
-router.get("/heavy", isLogedin, findNearbyProviders("Heavy Equipments"), wrapAsync(async (req, res) => {
+router.get("/heavy", findNearbyProviders("Heavy Equipments"), wrapAsync(async (req, res) => {
     const { allProvider } = res.locals;
     res.render("pages/Heavy_equipments.ejs", { allProvider });
 }));
