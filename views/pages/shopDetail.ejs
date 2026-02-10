@@ -321,6 +321,149 @@
         .shop-profile-container {
             grid-template-columns: 1fr !important;
         }
+
+        /* NEW: Item Detail Modal */
+        .item-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .item-modal-card {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            animation: modalSlideIn 0.3s ease-out;
+            position: relative;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .item-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .item-modal-close:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .item-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .item-modal-title {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .item-modal-body {
+            padding: 0;
+            overflow-y: auto;
+            max-height: calc(90vh - 150px);
+        }
+
+        .item-modal-img-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .item-modal-img {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .item-modal-price-overlay {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .item-modal-whatsapp-btn {
+            display: block;
+            width: 100%;
+            background: #25D366;
+            color: white;
+            padding: 18px;
+            border: none;
+            border-radius: 0;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .item-modal-whatsapp-btn:hover {
+            background: #20ba5a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .item-modal-card {
+                width: 95%;
+            }
+
+            .item-modal-img {
+                height: 400px;
+            }
+
+            .item-modal-price-overlay {
+                font-size: 20px;
+                padding: 10px 16px;
+            }
+        }
     </style>
 
     <body>
@@ -351,8 +494,8 @@
                             <h1 class="product-title">
                                 <%= shop.shopName %>
                             </h1>
-                            <div class="seller-badge">
-                                <i class="fa-solid fa-store"></i> Category: <%= shop.category %>
+                            <div class="seller-badge" style="cursor:pointer;" onclick="openUpiModal()">
+                                <i class="fa-solid fa-qrcode"></i> QR Code
                             </div>
 
                             <div class="info-grid">
@@ -403,15 +546,21 @@
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h2 class="section-heading">Shop Items</h2>
                         <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                            <button id="addItemBtn" class="btn-add-item"><i class="fa-solid fa-plus"></i> Add
+                            <button id="addItemBtn" class="btn-add-item"><i class="fa-solid fa-plus"></i>
+                                Add
                                 Item</button>
                             <% } %>
                     </div>
 
+
+
                     <div class="items-grid">
                         <% if(shop.items && shop.items.length> 0) { %>
                             <% shop.items.forEach(item=> { %>
-                                <div class="product-card">
+
+                                <div class="product-card"
+                                    onclick="openItemModal('<%= item.name %>', '<%= item.img && item.img.url ? item.img.url : '' %>', '<%= item.price %>', '<%= shop.owner.username %>')"
+                                    style="cursor: pointer;">
                                     <div class="product-img-wrap">
                                         <% if(item.img && item.img.url) { %>
                                             <img src="<%= item.img.url %>" alt="<%= item.name %>">
@@ -433,9 +582,11 @@
                                             <span>Qty: <%= item.quantity %></span>
                                         </div>
 
+                                        <!-- Direct WhatsApp button removed -->
+
                                         <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
                                             <button type="button" class="item-delete-btn"
-                                                onclick="openDeleteConfirm('<%= shop._id %>', '<%= item._id %>')">
+                                                onclick="event.stopPropagation(); openDeleteConfirm('<%= shop._id %>', '<%= item._id %>')">
                                                 <i class="fa-solid fa-trash"></i> Delete
                                             </button>
                                             <% } %>
@@ -443,7 +594,8 @@
                                 </div>
                                 <% }) %>
                                     <% } else { %>
-                                        <p style="color:#6b7280; grid-column: 1 / -1; text-align:center;">No items added
+                                        <p style="color:#6b7280; grid-column: 1 / -1; text-align:center;">No
+                                            items added
                                             yet.</p>
                                         <% } %>
                     </div>
@@ -466,8 +618,10 @@
                             <div class="head"
                                 style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                                 <div>
-                                    <h2 style="font-size:20px; font-weight:700; margin:0;">Reviews & Ratings</h2>
-                                    <p style="color:#6b7280; font-size:14px; margin:4px 0 0 0;">What customers are
+                                    <h2 style="font-size:20px; font-weight:700; margin:0;">Reviews & Ratings
+                                    </h2>
+                                    <p style="color:#6b7280; font-size:14px; margin:4px 0 0 0;">What
+                                        customers are
                                         saying</p>
                                 </div>
                             </div>
@@ -539,7 +693,8 @@
                                         </div>
                                         <% } %>
                                             <% } else { %>
-                                                <p class="text-muted text-center py-4">No reviews yet. Be the first to
+                                                <p class="text-muted text-center py-4">No reviews yet. Be
+                                                    the first to
                                                     review!</p>
                                                 <% } %>
                             </div>
@@ -610,6 +765,112 @@
                 </div>
             </div>
         </div>
+
+        <!-- NEW: Item Detail Modal -->
+        <div id="itemModal" class="item-modal">
+            <div class="item-modal-card">
+                <button class="item-modal-close" onclick="closeItemModal()">&times;</button>
+                <div class="item-modal-header">
+                    <h2 class="item-modal-title" id="modalItemName"></h2>
+                </div>
+                <div class="item-modal-body">
+                    <div class="item-modal-img-wrapper">
+                        <img id="modalItemImage" class="item-modal-img" alt="Item">
+                        <div class="item-modal-price-overlay" id="modalItemPrice"></div>
+                    </div>
+                    <a id="modalWhatsappLink" href="#" target="_blank" class="item-modal-whatsapp-btn">
+                        <i class="fa-brands fa-whatsapp"></i> Order on WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- UPI Modal -->
+        <div id="upiModal" class="modal">
+            <div class="modal-content" style="text-align:center;">
+                <span class="close" onclick="closeUpiModal()">&times;</span>
+                <h2 style="margin-bottom:20px;">Scan to Pay</h2>
+
+                <% if (shop.upiScanner && shop.upiScanner.url) { %>
+                    <div style="margin-bottom:20px;">
+                        <img src="<%= shop.upiScanner.url %>" alt="UPI QR Code"
+                            style="max-width:100%; border-radius:12px; border:1px solid #e5e7eb;">
+                    </div>
+                    <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                        <form action="/shops/<%= shop._id %>/upi?_method=DELETE" method="POST">
+                            <button class="btn btn-danger w-100"><i class="fa-solid fa-trash"></i> Remove QR
+                                Code</button>
+                        </form>
+                        <% } %>
+                            <% } else if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                <div style="padding:20px; border:2px dashed #d1d5db; border-radius:12px;">
+                                    <i class="fa-solid fa-qrcode fa-3x" style="color:#9ca3af; margin-bottom:15px;"></i>
+                                    <p style="color:#6b7280; margin-bottom:20px;">Upload your UPI QR Code image.</p>
+                                    <form action="/shops/<%= shop._id %>/upi?_method=PUT" method="POST"
+                                        enctype="multipart/form-data" id="upiModalForm">
+                                        <input type="file" name="upiImage" id="upiModalInput" accept="image/*"
+                                            style="display:none;"
+                                            onchange="document.getElementById('upiModalForm').submit()">
+                                        <button type="button" class="btn btn-primary w-100"
+                                            onclick="document.getElementById('upiModalInput').click()">
+                                            <i class="fa-solid fa-upload"></i> Upload QR Image
+                                        </button>
+                                    </form>
+                                </div>
+                                <% } else { %>
+                                    <div style="padding:40px 20px;">
+                                        <i class="fa-solid fa-ban fa-3x" style="color:#ef4444; margin-bottom:15px;"></i>
+                                        <h3 style="color:#4b5563;">No QR Code Available</h3>
+                                        <p style="color:#6b7280;">The shop owner hasn't uploaded a UPI QR code yet.</p>
+                                    </div>
+                                    <% } %>
+            </div>
+        </div>
+
+        <script>
+            // NEW: Open Item Modal
+            function openItemModal(name, imgUrl, price, ownerPhone) {
+                const modal = document.getElementById('itemModal');
+                const nameEl = document.getElementById('modalItemName');
+                const imgEl = document.getElementById('modalItemImage');
+                const priceEl = document.getElementById('modalItemPrice');
+                const whatsappLink = document.getElementById('modalWhatsappLink');
+
+                nameEl.textContent = name;
+                imgEl.src = imgUrl || '/images/placeholder.jpg';
+                priceEl.textContent = '₹' + price;
+
+                const message = `Hi, I am interested in ${name} priced at ₹${price}.\n\nView item image: ${imgUrl}\n\nIs it available?`;
+                whatsappLink.href = `https://wa.me/91${ownerPhone}?text=${encodeURIComponent(message)}`;
+
+                modal.style.display = 'flex';
+            }
+
+            function closeItemModal() {
+                document.getElementById('itemModal').style.display = 'none';
+            }
+
+            function openUpiModal() {
+                document.getElementById('upiModal').style.display = 'block';
+            }
+
+            function closeUpiModal() {
+                document.getElementById('upiModal').style.display = 'none';
+            }
+
+            // Close modals when clicking outside
+            window.addEventListener('click', function (event) {
+                const itemModal = document.getElementById('itemModal');
+                const addModal = document.getElementById('addItemModal');
+                const deleteModal = document.getElementById('deleteModal');
+                const upiModal = document.getElementById('upiModal');
+
+                if (event.target === itemModal) closeItemModal();
+                if (event.target === addModal) addModal.style.display = 'none';
+                if (event.target === deleteModal) deleteModal.style.display = 'none';
+                if (event.target === upiModal) closeUpiModal();
+            });
+        </script>
 
         <!-- Script for gallery/share same as productDetail -->
         <script>

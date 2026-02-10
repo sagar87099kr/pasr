@@ -52,6 +52,24 @@
                         <div class="invalid-feedback">Please provide a location.</div>
                     </div>
 
+                    <!-- Operating Hours -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label for="openingTime" class="form-label">Opening Time</label>
+                                <input type="time" name="shop[openingTime]" id="openingTime" class="form-control"
+                                    value="<%= shop.openingTime || '' %>">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label for="closingTime" class="form-label">Closing Time</label>
+                                <input type="time" name="shop[closingTime]" id="closingTime" class="form-control"
+                                    value="<%= shop.closingTime || '' %>">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Description -->
                     <div class="form-group">
                         <label for="shopDescription" class="form-label">Description</label>
