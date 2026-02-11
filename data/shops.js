@@ -12,6 +12,16 @@ const shopSchema = new Schema({
         maxlength: 500,
         default: ""
     },
+    upiScanner: {
+        url: String,
+        filename: String
+    },
+    openingTime: {
+        type: String, // e.g. "09:00"
+    },
+    closingTime: {
+        type: String, // e.g. "21:00"
+    },
     shopImage: {
         type: Array, // [{url: "...", filename: "..."}]
         required: true

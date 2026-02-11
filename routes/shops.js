@@ -64,70 +64,60 @@ router.delete("/shops/:id/verifyfail", isLogedin, isadmin, wrapAsync(async (req,
 }));
 
 // Index Route - List Shops
-router.get("/shops", wrapAsync(async (req, res) => {
+router.get("/shops", isLogedin, wrapAsync(async (req, res) => {
     let { lat, lng, range } = req.query;
     let shops = [];
-    range = parseInt(range) || 5;
-    if (range > 5) range = 5;
+    range = parseInt(range) || 10;
+    if (range > 10) range = 10;
 
-    // Use user's saved location if query params are missing and user is logged in
-    if ((!lat || !lng) && req.user && req.user.geometry && req.user.geometry.coordinates) {
-        lng = req.user.geometry.coordinates[0];
-        lat = req.user.geometry.coordinates[1];
+    // Priority 1: Query params (lat, lng from URL)
+    // Priority 2: Session location (from browser geolocation)
+    // Priority 3: User profile location
+    if (!lat || !lng) {
+        // Check session location first
+        if (req.session.location && req.session.location.coordinates && req.session.location.coordinates.length === 2) {
+            lng = req.session.location.coordinates[0];
+            lat = req.session.location.coordinates[1];
+        }
+        // Fall back to user's saved location
+        else if (req.user && req.user.geometry && req.user.geometry.coordinates) {
+            lng = req.user.geometry.coordinates[0];
+            lat = req.user.geometry.coordinates[1];
+        }
     }
 
     if (lat && lng) {
         let query = {
-            verified: true, // Assuming we only show verified shops? Or maybe all for now since default is false?
-            // Let's assume initially we might want to show unverified if there's no verification process yet, 
-            // OR strictly follow the pattern. localMarket.js uses verified: true.
-            // But wait, if verified default is false, users won't see their created shops.
-            // For now, let's allow unverified or check how localMarket handles it. 
-            // localMarket product schema has verified: false default.
-            // And index route filters verified: true. 
-            // So products must be verified by admin? 
-            // In localMarket.js: router.put("/:id/verifyproduct", ... isadmin ...)
-            // Use verified: true for consistency, but might need an admin route to verify.
-            // OR, for "Local Shops", maybe auto-verify? 
-            // User requested "same as local market", so I will stick to verified: true logic and maybe add admin verify later 
-            // OR just comment it out for testing if needed. 
-            // For now, I will Comment out verified: true to allow immediate visibility for testing, 
-            // or better yet, default verified to true in the creation if no admin process exists yet for shops.
-            // Actually, let's keep it consistent: verified: true.
-            // But wait, if I can't verify myself as admin easily, I'll be blocked.
-            // Let's check middleware.js admins list. User might be admin.
-            // I'll leave verified: true in query but default new shops to verified: false, 
-            // UNLESS I see an auto-verify pattern.
-            // localMarket.js: product.verified default false.
-            // I'll stick to that.
-
             geometry: {
                 $near: {
                     $geometry: {
                         type: "Point",
                         coordinates: [parseFloat(lng), parseFloat(lat)]
                     },
-                    $maxDistance: range * 1000
+                    $maxDistance: range * 1000 // Convert km to meters
                 }
             }
         };
 
-        // If 'verified' field exists in schema and is false by default, I should probably filter by it.
-        // However, if I want to see my just-created shop, I might be confused.
-        // I will temporarily allow all verified status for shops to ensure the user can see creation working,
-        // unless I strictly implement the verification flow.
-        // Let's look at localMarket.js again. 'verified: true'. 
-        // I'll copy that.
-        query.verified = true;
-
+        // Filter by category if specified
         if (req.query.category && req.query.category !== 'All Shops') {
             query.category = req.query.category;
         }
 
+        // Filter by opening hours if "Open Now" is checked
+        if (req.query.openNow === 'true') {
+            const now = new Date();
+            const options = { timeZone: 'Asia/Kolkata', hour12: false, hour: '2-digit', minute: '2-digit' };
+            const currentTime = now.toLocaleTimeString('en-US', options);
+            query.openingTime = { $lte: currentTime };
+            query.closingTime = { $gte: currentTime };
+        }
+
         shops = await Shop.find(query).populate('owner');
+        console.log(`Found ${shops.length} shops within ${range}km of (${lat}, ${lng})`);
     }
 
-    res.render("pages/shops.ejs", { shops, lat, lng, range });
+    res.render("pages/shops.ejs", { shops, lat, lng, range, queryParams: req.query });
 }));
 
 // New Shop Form
@@ -313,6 +303,41 @@ router.delete("/shops/:id/items/:itemId", isLogedin, isShopOwner, wrapAsync(asyn
     await Item.findByIdAndDelete(itemId);
 
     req.flash("success", "Item deleted successfully");
+    res.redirect(`/shops/${id}`);
+}));
+
+// Upload/Update UPI Scanner
+router.put("/shops/:id/upi", isLogedin, isShopOwner, upload.single("upiImage"), wrapAsync(async (req, res) => {
+    const { id } = req.params;
+    const shop = await Shop.findById(id);
+
+    if (req.file) {
+        // If existing UPI image exists, delete it from cloud
+        if (shop.upiScanner && shop.upiScanner.filename) {
+            await cloudinary.uploader.destroy(shop.upiScanner.filename);
+        }
+        shop.upiScanner = { url: req.file.path, filename: req.file.filename };
+        await shop.save();
+        req.flash("success", "UPI Scanner updated successfully");
+    } else {
+        req.flash("error", "No image uploaded");
+    }
+    res.redirect(`/shops/${id}`);
+}));
+
+// Delete UPI Scanner
+router.delete("/shops/:id/upi", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
+    const { id } = req.params;
+    const shop = await Shop.findById(id);
+
+    if (shop.upiScanner && shop.upiScanner.filename) {
+        await cloudinary.uploader.destroy(shop.upiScanner.filename);
+        shop.upiScanner = undefined;
+        await shop.save();
+        req.flash("success", "UPI Scanner removed");
+    } else {
+        req.flash("error", "No UPI Scanner to remove");
+    }
     res.redirect(`/shops/${id}`);
 }));
 

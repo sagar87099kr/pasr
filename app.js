@@ -37,6 +37,11 @@ const clientPromise = mongoose.connect(dbUrl)
     console.log(err);
   });
 
+const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
+// const xss = require("xss-clean"); // Sanitization
+const rateLimit = require("express-rate-limit");
+
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")))
@@ -44,6 +49,21 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.engine("ejs", ejsMate);
 app.use(express.json());
+
+// Security Middleware
+app.use(helmet({ contentSecurityPolicy: false })); // CSP is complex, disabling for now to avoid breaking maps/images
+// app.use(mongoSanitize()); // Disabling to check if this is causing the read-only query error
+// app.use(xss()); // DEPRECATED & CAUSES ERROR: Cannot set property query of #<IncomingMessage> which has only a getter
+// app.use(xss()); // DEPRECATED & CAUSES ERROR: Cannot set property query of #<IncomingMessage> which has only a getter
+
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
 
 const store = MongoStore.create({
   clientPromise,

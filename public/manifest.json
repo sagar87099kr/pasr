@@ -1,21 +1,30 @@
 {
-    "name": "PaSr - Local Services & Market",
+    "name": "PaSr - Local Shops & Services",
     "short_name": "PaSr",
+    "description": "Discover verified local shops, bazaars, and service providers near you. Find what you need within your preferred distance.",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#6366f1",
     "orientation": "portrait-primary",
+    "categories": [
+        "shopping",
+        "business",
+        "lifestyle"
+    ],
     "icons": [
         {
             "src": "/images/icon.jpeg",
             "sizes": "192x192",
-            "type": "image/jpeg"
+            "type": "image/jpeg",
+            "purpose": "any maskable"
         },
         {
             "src": "/images/icon.jpeg",
             "sizes": "512x512",
-            "type": "image/jpeg"
+            "type": "image/jpeg",
+            "purpose": "any maskable"
         }
     ]
 }

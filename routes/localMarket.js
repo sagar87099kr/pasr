@@ -17,23 +17,31 @@ router.get("/localMarket", isLogedin, wrapAsync(async (req, res) => {
     // Cap range at 10km maximum
     if (range > 10) range = 10;
 
-
-    // Use user's saved location if query params are missing and user is logged in
-    if ((!lat || !lng) && req.user && req.user.geometry && req.user.geometry.coordinates) {
-        lng = req.user.geometry.coordinates[0];
-        lat = req.user.geometry.coordinates[1];
+    // Priority 1: Query params (lat, lng from URL)
+    // Priority 2: Session location (from browser geolocation)
+    // Priority 3: User profile location
+    if (!lat || !lng) {
+        // Check session location first
+        if (req.session.location && req.session.location.coordinates && req.session.location.coordinates.length === 2) {
+            lng = req.session.location.coordinates[0];
+            lat = req.session.location.coordinates[1];
+        }
+        // Fall back to user's saved location
+        else if (req.user && req.user.geometry && req.user.geometry.coordinates) {
+            lng = req.user.geometry.coordinates[0];
+            lat = req.user.geometry.coordinates[1];
+        }
     }
 
     if (lat && lng) {
         let query = {
-            verified: true, // Only show verified products
             geometry: {
                 $near: {
                     $geometry: {
                         type: "Point",
                         coordinates: [parseFloat(lng), parseFloat(lat)]
                     },
-                    $maxDistance: range * 1000
+                    $maxDistance: range * 1000 // Convert km to meters
                 }
             }
         };
@@ -43,6 +51,7 @@ router.get("/localMarket", isLogedin, wrapAsync(async (req, res) => {
         }
 
         products = await Product.find(query).populate('owner');
+        console.log(`Found ${products.length} products within ${range}km of (${lat}, ${lng})`);
     }
 
 

@@ -45,7 +45,7 @@
                 <div class="row justify-content-center">
                     <div class="col-md-8 col-lg-6">
                         <div class="range-control-panel">
-                            <label for="rangeSlider" class="form-label d-flex justify-content-betweenfw-bold mb-2">
+                            <label for="rangeSlider" class="form-label d-flex justify-content-between fw-bold mb-2">
                                 <span>Search Radius</span>
                                 <span class="badge bg-secondary"><span id="rangeValue">
                                         <%= range || 10 %>
@@ -53,9 +53,14 @@
                             </label>
                             <input type="range" class="form-range" min="1" max="10" step="1" id="rangeSlider"
                                 value="<%= range || 10 %>">
-                            <div class="d-flex justify-content-between text-muted small">
-                                <span>1 km</span>
-                                <span>10 km</span>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-muted small">
+                                    <span>1 km</span>
+                                    <span class="mx-3">10 km</span>
+                                </div>
+                                <button id="applyRangeBtn" class="btn btn-primary btn-sm">
+                                    <i class="fa-solid fa-check"></i> Apply
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -183,18 +188,28 @@
 
         const slider = document.getElementById('rangeSlider');
         const rangeValue = document.getElementById('rangeValue');
+        const applyBtn = document.getElementById('applyRangeBtn');
 
-        if (slider) {
+        if (slider && applyBtn) {
+            // Update display value as slider moves
             slider.addEventListener('input', (e) => {
                 rangeValue.textContent = e.target.value;
             });
 
-            slider.addEventListener('change', (e) => {
+            // Apply filter when button is clicked
+            applyBtn.addEventListener('click', () => {
                 const urlParams = new URLSearchParams(window.location.search);
                 const lat = urlParams.get('lat');
                 const lng = urlParams.get('lng');
+                const newRange = slider.value;
+
                 if (lat && lng) {
-                    window.location.href = `/localMarket?lat=${lat}&lng=${lng}&range=${e.target.value}`;
+                    // If location is in URL, update range and keep location
+                    urlParams.set('range', newRange);
+                    window.location.search = urlParams.toString();
+                } else {
+                    // If no URL location, redirect with just range - backend will use saved user location
+                    window.location.href = `/localMarket?range=${newRange}`;
                 }
             });
         }

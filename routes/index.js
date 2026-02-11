@@ -96,6 +96,44 @@ router.get("/get-address", async (req, res) => {
     }
 });
 
+// Route to get coordinates from location name (Forward Geocoding - Manual Entry Fallback)
+router.get("/geocode-location", async (req, res) => {
+    const { location } = req.query;
+    if (!location) {
+        return res.status(400).json({ error: "Missing location parameter" });
+    }
+    try {
+        const response = await geocodingClient.forwardGeocode({
+            query: location,
+            limit: 1
+        }).send();
+
+        if (response.body.features.length > 0) {
+            const feature = response.body.features[0];
+            const [lng, lat] = feature.geometry.coordinates;
+            const placeName = feature.place_name;
+
+            // Save to session
+            req.session.location = {
+                type: 'Point',
+                coordinates: [lng, lat]
+            };
+
+            res.json({
+                success: true,
+                lat,
+                lng,
+                placeName
+            });
+        } else {
+            res.status(404).json({ error: "Location not found. Please try a different search." });
+        }
+    } catch (e) {
+        console.error("Forward geocoding error:", e);
+        res.status(500).json({ error: "Failed to geocode location" });
+    }
+});
+
 // Product Verification Route (Admin Only)
 router.get("/product/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
     let products = await Product.find().populate("owner");

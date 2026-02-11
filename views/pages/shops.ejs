@@ -45,36 +45,65 @@
                 <div class="row justify-content-center">
                     <div class="col-md-8 col-lg-6">
                         <div class="range-control-panel">
-                            <label for="rangeSlider" class="form-label d-flex justify-content-betweenfw-bold mb-2">
+                            <label for="rangeSlider" class="form-label d-flex justify-content-between fw-bold mb-2">
                                 <span>Search Radius</span>
                                 <span class="badge bg-secondary"><span id="rangeValue">
-                                        <%= range || 5 %>
+                                        <%= range || 10 %>
                                     </span> km</span>
                             </label>
-                            <input type="range" class="form-range" min="1" max="5" step="1" id="rangeSlider"
-                                value="<%= range || 5 %>">
-                            <div class="d-flex justify-content-between text-muted small">
-                                <span>1 km</span>
-                                <span>5 km</span>
+                            <input type="range" class="form-range" min="1" max="10" step="1" id="rangeSlider"
+                                value="<%= range || 10 %>">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-muted small">
+                                    <span>1 km</span>
+                                    <span class="mx-3">10 km</span>
+                                </div>
+                                <button id="applyRangeBtn" class="btn btn-primary btn-sm">
+                                    <i class="fa-solid fa-check"></i> Apply
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
 
+                <!-- Search Bar -->
+                <div class="row justify-content-center mb-3">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="position-relative">
+                            <input type="text" id="shopSearchInput" class="form-control" placeholder="Search shops..."
+                                value="<%= typeof query !== 'undefined' ? query : '' %>">
+                            <i class="fa-solid fa-search position-absolute"
+                                style="right: 15px; top: 50%; transform: translateY(-50%); color: #666;"></i>
+                        </div>
+
+                        <!-- Open Now Filter -->
+                        <div class="form-check form-switch mt-2 d-flex justify-content-center align-items-center gap-2">
+                            <input class="form-check-input" type="checkbox" id="openNowSwitch" style="cursor: pointer;">
+                            <label class="form-check-label" for="openNowSwitch"
+                                style="cursor: pointer; font-weight: 500;">
+                                Open Now Only
+                            </label>
+                        </div>
+                    </div>
+                </div>
                 <!-- Categories Scroll (Dynamic links preserving query params) -->
                 <% const catIcons={ "Grocery" : "🛒" , "Electronics" : "🔌" , "Fashion" : "👕" , "Medical" : "💊"
                     , "Hardware" : "🛠️" , "Restaurant" : "🍽️" , "Dhaba" : "🥘" , "Bakery" : "🍰" , "Mobile Shop"
                     : "📱" , "Stationery" : "📚" , "Salon" : "💇" , "Jewelers" : "💍" , "Non-Veg" : "🍖"
                     , "General Store" : "🏪" , "Furniture" : "🪑" , "Seeds & Fertilizers" : "🌱" , "Automobile" : "🚗"
-                    , "Printing & Digital" : "🖨️" , "Others" : "📦" }; const currentCat=typeof req !=='undefined' &&
-                    req.query.category ? req.query.category : 'All Shops' ; const makeCatLink=(catName)=> {
-                    let query = new URLSearchParams();
-                    if (lat) query.set('lat', lat);
-                    if (lng) query.set('lng', lng);
-                    if (range) query.set('range', range);
-                    query.set('category', catName);
-                    return `/shops?${query.toString()}`;
+                    , "Printing & Digital" : "🖨️" , "Others" : "📦" }; const currentCat=(typeof queryParams
+                    !=='undefined' && queryParams.category) ? queryParams.category : 'All Shops' ; const
+                    makeCatLink=(catName)=> {
+                    let params = new URLSearchParams();
+                    if (lat) params.set('lat', lat);
+                    if (lng) params.set('lng', lng);
+                    if (range) params.set('range', range);
+                    if (typeof queryParams !== 'undefined' && queryParams.openNow) {
+                    params.set('openNow', queryParams.openNow);
+                    }
+                    params.set('category', catName);
+                    return `/shops?${params.toString()}`;
                     }
                     %>
                     <div class="cat-scroll-wrapper">
@@ -131,6 +160,16 @@
                                     <div class="product-card">
                                         <div class="product-img-wrap">
                                             <img src="<%= shop.shopImage[0].url %>" alt="<%= shop.shopName %>">
+                                            <% let statusBadge='' ; if (shop.openingTime && shop.closingTime) { const
+                                                now=new Date(); const options={ timeZone: 'Asia/Kolkata' , hour12:
+                                                false, hour: '2-digit' , minute: '2-digit' }; const
+                                                currentTime=now.toLocaleTimeString('en-US', options); if (currentTime>=
+                                                shop.openingTime && currentTime <= shop.closingTime) {
+                                                    statusBadge='<span class="badge bg-success position-absolute" style="top:10px; right:10px; z-index:10;">Open Now</span>'
+                                                    ; } else {
+                                                    statusBadge='<span class="badge bg-danger position-absolute" style="top:10px; right:10px; z-index:10;">Closed</span>'
+                                                    ; } } %>
+                                                    <%- statusBadge %>
                                         </div>
                                         <div class="card-body-custom">
                                             <h5 class="prod-title">
@@ -138,7 +177,7 @@
                                             </h5>
                                             <p class="prod-desc">
                                                 <i class="fa-solid fa-user"></i>
-                                                <%= shop.owner.username %>
+                                                <%= shop.owner.name %>
                                             </p>
                                             <div class="prod-meta">
                                                 <span><i class="fa-solid fa-tag"></i>
@@ -202,19 +241,67 @@
 
         const slider = document.getElementById('rangeSlider');
         const rangeValue = document.getElementById('rangeValue');
+        const applyBtn = document.getElementById('applyRangeBtn');
 
-        if (slider) {
+        if (slider && applyBtn) {
+            // Update display value as slider moves
             slider.addEventListener('input', (e) => {
                 rangeValue.textContent = e.target.value;
             });
 
-            slider.addEventListener('change', (e) => {
+            // Apply filter when button is clicked
+            applyBtn.addEventListener('click', () => {
                 const urlParams = new URLSearchParams(window.location.search);
                 const lat = urlParams.get('lat');
                 const lng = urlParams.get('lng');
+                const newRange = slider.value;
+
                 if (lat && lng) {
-                    window.location.href = `/shops?lat=${lat}&lng=${lng}&range=${e.target.value}`;
+                    // If location is in URL, update range and keep location
+                    urlParams.set('range', newRange);
+                    window.location.search = urlParams.toString();
+                } else {
+                    // If no URL location, redirect with just range - backend will use saved user location
+                    window.location.href = `/shops?range=${newRange}`;
                 }
+            });
+        }
+
+        // Search Filter
+        const searchInput = document.getElementById('shopSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function () {
+                const filter = this.value.toLowerCase();
+                const cards = document.querySelectorAll('.product-card-link');
+
+                cards.forEach(card => {
+                    const title = card.querySelector('.prod-title').innerText.toLowerCase();
+                    const owner = card.querySelector('.prod-desc').innerText.toLowerCase();
+                    const meta = card.querySelector('.prod-meta').innerText.toLowerCase();
+
+                    if (title.includes(filter) || owner.includes(filter) || meta.includes(filter)) {
+                        card.style.display = "";
+                    } else {
+                        card.style.display = "none";
+                    }
+                });
+            });
+        }
+
+        // Open Now Switch Logic
+        const openNowSwitch = document.getElementById('openNowSwitch');
+        if (openNowSwitch) {
+            const urlParams = new URLSearchParams(window.location.search);
+            openNowSwitch.checked = urlParams.get('openNow') === 'true';
+
+            openNowSwitch.addEventListener('change', (e) => {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (e.target.checked) {
+                    urlParams.set('openNow', 'true');
+                } else {
+                    urlParams.delete('openNow');
+                }
+                window.location.search = urlParams.toString();
             });
         }
     </script>
