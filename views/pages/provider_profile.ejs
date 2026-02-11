@@ -81,7 +81,103 @@
             </button>
           </form>
         </div>
+
+        <!-- Delete Account Section -->
+        <div class="form-section" style="border-top: 1px solid #e5e7eb; padding-top: 24px; margin-top: 24px;">
+          <h3 class="section-title" style="color: #dc2626;">
+            <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+          </h3>
+          <p style="color: #6b7280; margin-bottom: 16px;">Deleting your account will permanently remove all your data
+            including listings, shops, products, and reviews.</p>
+          <button class="btn btn-danger" style="width: 100%; background-color: #dc2626; border-color: #dc2626;"
+            data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+            <i class="fa-solid fa-trash"></i> Delete My Account
+          </button>
+        </div>
       </section>
+
+      <!-- Delete Account Modal -->
+      <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header" style="border-bottom: 2px solid #dc2626; background-color: #fee2e2;">
+              <h5 class="modal-title" style="color: #dc2626; font-weight: 600;">
+                <i class="fa-solid fa-triangle-exclamation"></i> Delete Account Permanently
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body" id="modalBody">
+              <!-- Warning Step -->
+              <div id="warningStep">
+                <div
+                  style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; margin-bottom: 20px; border-radius: 4px;">
+                  <h6 style="color: #dc2626; margin-bottom: 12px; font-weight: 600;">
+                    ⚠️ This action cannot be undone!
+                  </h6>
+                  <p style="margin-bottom: 12px; color: #991b1b;">
+                    Deleting your account will permanently remove:
+                  </p>
+                  <ul style="color: #991b1b; margin-bottom: 0; padding-left: 20px;">
+                    <li>All your service provider listings</li>
+                    <li>All your shops and shop items</li>
+                    <li>All your products from local bazaar</li>
+                    <li>All your reviews</li>
+                    <li>All your uploaded images</li>
+                    <li>Your account and profile data</li>
+                  </ul>
+                </div>
+
+                <p style="font-weight: 500; margin-bottom: 16px;">
+                  Are you absolutely sure you want to proceed?
+                </p>
+
+                <button type="button" class="btn btn-danger w-100" onclick="showDeleteForm()">
+                  <i class="fa-solid fa-check"></i> Yes, I Want to Delete My Account
+                </button>
+                <button type="button" class="btn btn-secondary w-100 mt-2" data-bs-dismiss="modal">
+                  <i class="fa-solid fa-times"></i> Cancel
+                </button>
+              </div>
+
+              <!-- Form Step (Hidden Initially) -->
+              <div id="formStep" style="display: none;">
+                <p style="margin-bottom: 20px; color: #374151;">
+                  Please verify your identity to proceed with account deletion:
+                </p>
+
+                <form action="/customer/delete-account" method="POST" id="deleteForm">
+                  <div class="mb-3">
+                    <label for="phoneNumber" class="form-label fw-bold">Phone Number</label>
+                    <input type="tel" class="form-control" id="phoneNumber" name="username"
+                      placeholder="Enter your 10-digit phone number" pattern="[0-9]{10}" maxlength="10" required>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="password" class="form-label fw-bold">Password</label>
+                    <input type="password" class="form-control" id="password" name="password"
+                      placeholder="Enter your password" required>
+                  </div>
+
+                  <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="confirmDelete" required>
+                    <label class="form-check-label" for="confirmDelete">
+                      I understand this action is permanent and cannot be undone.
+                    </label>
+                  </div>
+
+                  <button type="submit" class="btn btn-danger w-100" style="padding: 12px;">
+                    <i class="fa-solid fa-trash"></i> Permanently Delete My Account
+                  </button>
+                  <button type="button" class="btn btn-secondary w-100 mt-2" onclick="showWarning()">
+                    <i class="fa-solid fa-arrow-left"></i> Go Back
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Listings Section -->
       <% if (listings && listings.length> 0) { %>
@@ -239,5 +335,28 @@
           btn.innerHTML = originalContent;
         });
       });
+    </script>
+
+    <script>
+      // Delete account modal functions
+      function showDeleteForm() {
+        document.getElementById('warningStep').style.display = 'none';
+        document.getElementById('formStep').style.display = 'block';
+      }
+
+      function showWarning() {
+        document.getElementById('formStep').style.display = 'none';
+        document.getElementById('warningStep').style.display = 'block';
+      }
+
+      // Reset modal when closed
+      const deleteModal = document.getElementById('deleteAccountModal');
+      if (deleteModal) {
+        deleteModal.addEventListener('hidden.bs.modal', function () {
+          showWarning();
+          const form = document.getElementById('deleteForm');
+          if (form) form.reset();
+        });
+      }
     </script>
   </body>
