@@ -3,7 +3,7 @@ const router = express.Router();
 const Shop = require("../data/shops.js");
 const Review = require("../data/review.js");
 const Item = require("../data/item.js");
-const { isLogedin, isOwner, validateShop, isadmin, validatereview, isReviewAuthor, validateItem } = require("../middeleware.js"); // Using generic middlewares where applicable
+const { isLogedin, isOwner, validateShop, isadmin, validatereview, isReviewAuthor, validateItem, isVerifiedCustomer } = require("../middeleware.js"); // Using generic middlewares where applicable
 const wrapAsync = require("../utils/wrapAsync.js");
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const mapToken = process.env.MAP_TOKEN;
@@ -96,7 +96,8 @@ router.get("/shops", isLogedin, wrapAsync(async (req, res) => {
                     },
                     $maxDistance: range * 1000 // Convert km to meters
                 }
-            }
+            },
+            verified: true // Only show verified shops
         };
 
         // Filter by category if specified
@@ -121,7 +122,7 @@ router.get("/shops", isLogedin, wrapAsync(async (req, res) => {
 }));
 
 // New Shop Form
-router.get("/shops/new", isLogedin, (req, res) => {
+router.get("/shops/new", isLogedin, isVerifiedCustomer, (req, res) => {
     res.render("pages/shopNew.ejs");
 });
 

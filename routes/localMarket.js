@@ -58,7 +58,7 @@ router.get("/localMarket", isLogedin, wrapAsync(async (req, res) => {
     res.render("pages/localMarket.ejs", { products, lat, lng, range });
 }));
 
-router.get("/product/seller", isLogedin, wrapAsync(async (req, res) => {
+router.get("/product/seller", isLogedin, isVerifiedCustomer, wrapAsync(async (req, res) => {
     res.render("pages/productSeller.ejs");
 }));
 
