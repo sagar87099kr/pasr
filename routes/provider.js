@@ -263,4 +263,82 @@ router.delete("/provider/:id/verifyfail", isLogedin, isadmin, wrapAsync(async (r
     res.redirect("/provider/verify");
 }));
 
+// Add image to provider gallery
+router.post("/provider/:id/add-image", isLogedin, isOwner, upload.single('image'), wrapAsync(async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { description } = req.body;
+        const provider = await Provider.findById(id);
+
+        if (!provider) {
+            req.flash("danger", "Provider not found.");
+            return res.redirect("/home");
+        }
+
+        // Add image with description to Image array
+        const imageData = {
+            url: req.file.path,
+            filename: req.file.filename,
+            description: description || ""
+        };
+
+        provider.Image.push(imageData);
+        await provider.save();
+
+        req.flash("success", "Image added successfully!");
+        res.redirect(`/provider/${id}/profile`);
+    } catch (e) {
+        console.error("Image upload error:", e);
+        req.flash("danger", "Failed to upload image.");
+        res.redirect(`/provider/${req.params.id}/profile`);
+    }
+}));
+
+// Delete image from provider gallery
+router.delete("/provider/:id/delete-image/:imageIndex", isLogedin, isOwner, wrapAsync(async (req, res) => {
+    try {
+        const { id, imageIndex } = req.params;
+        const provider = await Provider.findById(id);
+
+        if (!provider) {
+            req.flash("danger", "Provider not found.");
+            return res.redirect("/home");
+        }
+
+        const index = parseInt(imageIndex);
+        if (index >= 0 && index < provider.Image.length) {
+            const image = provider.Image[index];
+
+            // Delete from Cloudinary if filename exists
+            if (image.filename) {
+                await cloudinary.uploader.destroy(image.filename);
+                // Remove from array using $pull (more robust than splice for DB arrays)
+                await Provider.findByIdAndUpdate(id, { $pull: { Image: { filename: image.filename } } });
+            } else {
+                // If no filename (legacy data?), fell back to splice or pull by url? 
+                // For now, let's just use splice as fallback if no filename, 
+                // but getting image by index implies we have it.
+                // Actually, let's just safely pull by the exact object or verify.
+                // Since we have the image object, if filename is missing, we can try matching other fields or just splice.
+                // Given the constraint, let's stick to the user's request context: 
+                // "delete picture description... and image from cloudnary"
+
+                // If no filename, we can't delete from cloudinary, but we should still remove from DB.
+                provider.Image.splice(index, 1);
+                await provider.save();
+            }
+
+            req.flash("success", "Image deleted successfully!");
+        } else {
+            req.flash("danger", "Image not found.");
+        }
+
+        res.redirect(`/provider/${id}/profile`);
+    } catch (e) {
+        console.error("Image delete error:", e);
+        req.flash("danger", "Failed to delete image.");
+        res.redirect(`/provider/${req.params.id}/profile`);
+    }
+}));
+
 module.exports = router;

@@ -799,16 +799,20 @@
      order: 1;
    }
 
+   #gallerySection {
+     order: 2;
+   }
+
    #calendarSection {
-     order: 4;
+     order: 3;
    }
 
    #mapSection {
-     order: 5;
+     order: 4;
    }
 
    #reviewsSection {
-     order: 6;
+     order: 5;
    }
 
    /* inside profile: image first, then contacts, then description */

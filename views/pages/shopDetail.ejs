@@ -1,1037 +1,1334 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
     <link rel="stylesheet" href="/css/product_detail.css">
-    <style>
-        /* Review styles */
-        .reviews-card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 24px;
-            border: 1px solid #e5e7eb;
-            margin-top: 24px;
-        }
-
-        .review-form .field {
-            margin-bottom: 16px;
-        }
-
-        .review-form label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #4b5563;
-        }
-
-        .review-form textarea,
-        .review-form select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #d1d5db;
-        }
-
-        .review-card {
-            padding: 16px;
-            border-bottom: 1px solid #f3f4f6;
-            margin-bottom: 16px;
-        }
-
-        .review-top {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .review-user {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .avatar {
-            width: 40px;
-            height: 40px;
-            background: #e0e7ff;
-            color: #3b82f6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-weight: bold;
-        }
-
-        .user-name {
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        .user-sub {
-            font-size: 12px;
-            color: #9ca3af;
-        }
-
-        .rating {
-            color: #f59e0b;
-        }
-
-        .review-comment {
-            color: #4b5563;
-            line-height: 1.5;
-        }
-
-        /* Item Modal & Grid Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgb(0, 0, 0);
-            background-color: rgba(0, 0, 0, 0.4);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 10% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 90%;
-            max-width: 500px;
-            border-radius: 12px;
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .items-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .item-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 10px;
-            background: #fff;
-            transition: transform 0.2s;
-        }
-
-        .item-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .item-img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        .item-title {
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        .item-price {
-            color: #10b981;
-            font-weight: 700;
-        }
-
-        .item-qty {
-            color: #6b7280;
-            font-size: 13px;
-        }
-
-        .btn-add-item {
-            background-color: #3b82f6;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            margin-top: 20px;
-        }
-
-        .btn-add-item:hover {
-            background-color: #2563eb;
-        }
-
-
-        /* Mobile Call Action */
-        .mobile-call-action {
-            display: none;
-            margin-bottom: 20px;
-        }
-
-        @media (max-width: 900px) {
-            .mobile-call-action {
-                display: block;
+    <% const SHOP_CATEGORIES={ "Electronics" : [ { name: "Wiring & Cables" , icon: "🔌" }, {
+        name: "Switches & Switchgear" , icon: "🎚️" }, { name: "Distribution Panels" , icon: "⚡" }, { name: "Lighting" ,
+        icon: "💡" }, { name: "Fans" , icon: "💨" }, { name: "Installation Material" , icon: "🛠️" }, {
+        name: "Sockets & Plugs" , icon: "🔌" }, { name: "Inverters & Batteries" , icon: "🔋" }, { name: "Pumps & Motors"
+        , icon: "🌊" }, { name: "Tools & Testing" , icon: "🧰" }, { name: "Smart & Security" , icon: "🔒" }, {
+        name: "General" , icon: "📦" } ], "Grocery" : [ { name: "Staples & Grains" , icon: "🌾" }, {
+        name: "Edible Oil & Ghee" , icon: "🛢️" }, { name: "Spices & Masala" , icon: "🌶️" }, { name: "Snacks & Namkeen"
+        , icon: "🥨" }, { name: "Beverages" , icon: "🥤" }, { name: "Dairy & Refrigerator" , icon: "🥛" }, {
+        name: "Bakery Items" , icon: "🍞" }, { name: "Personal Care" , icon: "🧴" }, { name: "Home Cleaning & Household"
+        , icon: "🧹" }, { name: "Baby Care" , icon: "👶" }, { name: "Dry Fruits & Sweets" , icon: "🥜" }, {
+        name: "Instant & Ready to Eat" , icon: "🍜" }, { name: "General" , icon: "📦" } ], "Fashion" : [ {
+        name: "Men's Wear" , icon: "👕" }, { name: "Women's Wear" , icon: "👗" }, { name: "Kids Wear" , icon: "👶" }, {
+        name: "Ethnic Wear" , icon: "👘" }, { name: "Winter Wear" , icon: "🧥" }, { name: "Sports & Activewear" ,
+        icon: "🏃" }, { name: "Innerwear & Lingerie" , icon: "🩲" }, { name: "Accessories" , icon: "👜" }, {
+        name: "General" , icon: "📦" } ], "General Store" : [ { name: "Daily Essentials" , icon: "🧼" }, {
+        name: "Snacks & Beverages" , icon: "🥤" }, { name: "Personal Care" , icon: "🧴" }, { name: "Household Items" ,
+        icon: "🏠" }, { name: "Stationery" , icon: "✏️" }, { name: "Cleaning Supplies" , icon: "🧹" }, {
+        name: "Baby Care" , icon: "👶" }, { name: "General" , icon: "📦" } ], "Footwear" : [ { name: "Men's Footwear" ,
+        icon: "👞" }, { name: "Women's Footwear" , icon: "👠" }, { name: "Kids' Footwear" , icon: "👟" }, {
+        name: "Sports & Active Footwear" , icon: "🏃" }, { name: "Seasonal Footwear" , icon: "👢" }, {
+        name: "Premium / Branded" , icon: "🏷️" }, { name: "Footwear Accessories" , icon: "🧦" }, { name: "General" ,
+        icon: "📦" } ], "Automobile" : [ { name: "Parts & Accessories" , icon: "🔧" }, { name: "Oils & Lubricants" ,
+        icon: "🛢️" }, { name: "Batteries" , icon: "🔋" }, { name: "Tires & Wheels" , icon: "⚙️" }, {
+        name: "Car Care & Cleaning" , icon: "✨" }, { name: "Tools & Equipment" , icon: "🧰" }, { name: "General" ,
+        icon: "📦" } ], "Bakery" : [ { name: "Breads" , icon: "🍞" }, { name: "Cakes & Pastries" , icon: "🎂" }, {
+        name: "Cookies & Biscuits" , icon: "🍪" }, { name: "Sweets & Desserts" , icon: "🍰" }, { name: "Savory Items" ,
+        icon: "🥐" }, { name: "Custom Orders" , icon: "📝" }, { name: "General" , icon: "📦" } ], "Dhaba" : [ {
+        name: "Veg Dishes" , icon: "🥗" }, { name: "Non-Veg Dishes" , icon: "🍗" }, { name: "Rice & Roti" , icon: "🍚"
+        }, { name: "Snacks & Starters" , icon: "🍟" }, { name: "Beverages" , icon: "🥤" }, { name: "Combo Meals" ,
+        icon: "🍱" }, { name: "General" , icon: "📦" } ], "Furniture" : [ { name: "Beds & Mattresses" , icon: "🛏️" }, {
+        name: "Sofas & Chairs" , icon: "🛋️" }, { name: "Tables & Desks" , icon: "🪑" }, { name: "Storage & Cabinets" ,
+        icon: "🗄️" }, { name: "Home Decor" , icon: "🖼️" }, { name: "Office Furniture" , icon: "💼" }, {
+        name: "General" , icon: "📦" } ], "Hardware" : [ { name: "Tools & Equipment" , icon: "🔨" }, {
+        name: "Building Materials" , icon: "🧱" }, { name: "Paint & Supplies" , icon: "🎨" }, { name: "Plumbing" ,
+        icon: "🚰" }, { name: "Electrical Items" , icon: "💡" }, { name: "Locks & Security" , icon: "🔒" }, {
+        name: "General" , icon: "📦" } ], "Jewelers" : [ { name: "Gold Jewelry" , icon: "💛" }, { name: "Silver Jewelry"
+        , icon: "🤍" }, { name: "Diamond Jewelry" , icon: "💎" }, { name: "Imitation / Fashion" , icon: "✨" }, {
+        name: "Bridal Jewelry" , icon: "👰" }, { name: "Repairs & Custom" , icon: "🔧" }, { name: "General" , icon: "📦"
+        } ], "Medical" : [ { name: "Medicines" , icon: "💊" }, { name: "Health Supplements" , icon: "💪" }, {
+        name: "Medical Devices" , icon: "🩺" }, { name: "First Aid" , icon: "🩹" }, { name: "Baby Care" , icon: "👶" },
+        { name: "Personal Care" , icon: "🧴" }, { name: "General" , icon: "📦" } ], "Mobile Shop" : [ {
+        name: "Smartphones" , icon: "📱" }, { name: "Feature Phones" , icon: "📞" }, { name: "Accessories" , icon: "🎧"
+        }, { name: "Chargers & Cables" , icon: "🔌" }, { name: "Cases & Covers" , icon: "📲" }, {
+        name: "Repairs & Services" , icon: "🔧" }, { name: "General" , icon: "📦" } ], "Non-Veg" : [ { name: "Chicken" ,
+        icon: "🍗" }, { name: "Mutton" , icon: "🍖" }, { name: "Fish" , icon: "🐟" }, { name: "Eggs" , icon: "🥚" }, {
+        name: "Seafood" , icon: "🦐" }, { name: "Frozen Items" , icon: "❄️" }, { name: "General" , icon: "📦" }
+        ], "Printing & Digital" : [ { name: "Printing Services" , icon: "🖨️" }, { name: "Photocopying" , icon: "📄" },
+        { name: "Scanning" , icon: "📷" }, { name: "Lamination" , icon: "🧾" }, { name: "Binding" , icon: "📚" }, {
+        name: "Design Services" , icon: "🎨" }, { name: "General" , icon: "📦" } ], "Restaurant" : [ {
+        name: "Veg Dishes" , icon: "🥗" }, { name: "Non-Veg Dishes" , icon: "🍗" }, { name: "Chinese" , icon: "🥡" }, {
+        name: "South Indian" , icon: "🥘" }, { name: "Beverages" , icon: "🥤" }, { name: "Desserts" , icon: "🍨" }, {
+        name: "General" , icon: "📦" } ], "Salon" : [ { name: "Haircut & Styling" , icon: "✂️" }, { name: "Hair Color" ,
+        icon: "🎨" }, { name: "Facial & Cleanup" , icon: "💆" }, { name: "Spa & Massage" , icon: "💅" }, {
+        name: "Bridal Services" , icon: "👰" }, { name: "Men's Grooming" , icon: "🧔" }, { name: "General" , icon: "📦"
+        } ], "Seeds & Fertilizers" : [ { name: "Seeds" , icon: "🌱" }, { name: "Chemical Fertilizers" , icon: "🧪" }, {
+        name: "Organic Fertilizers" , icon: "♻️" }, { name: "Pesticides" , icon: "🦟" }, { name: "Farming Tools" ,
+        icon: "🚜" }, { name: "Plant Care" , icon: "🌿" }, { name: "General" , icon: "📦" } ], "Stationery" : [ {
+        name: "Writing Supplies" , icon: "✏️" }, { name: "Notebooks & Diaries" , icon: "📓" }, { name: "Art & Craft" ,
+        icon: "🎨" }, { name: "Office Supplies" , icon: "📎" }, { name: "School Items" , icon: "🎒" }, {
+        name: "Printing Paper" , icon: "📄" }, { name: "General" , icon: "📦" } ] }; function
+        getShopCategoryData(shopCategory) { if (!shopCategory) return null; const
+        key=Object.keys(SHOP_CATEGORIES).find(function(k) { return k.toLowerCase()===shopCategory.toLowerCase(); });
+        return key ? SHOP_CATEGORIES[key] : null; } const currentShopCats=getShopCategoryData(shop.category); %>
+        <style>
+            /* Review styles */
+            .reviews-card {
+                background: #fff;
+                border-radius: 16px;
+                padding: 24px;
+                border: 1px solid #e5e7eb;
+                margin-top: 24px;
             }
-        }
 
-        /* Market Style Product Card */
-        .items-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 16px;
-            margin-top: 20px;
-        }
+            .review-form .field {
+                margin-bottom: 16px;
+            }
 
-        @media (max-width: 600px) {
-            .items-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .review-form label {
+                display: block;
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #4b5563;
+            }
+
+            .review-form textarea,
+            .review-form select {
+                width: 100%;
+                padding: 10px;
+                border-radius: 8px;
+                border: 1px solid #d1d5db;
+            }
+
+            .review-card {
+                padding: 16px;
+                border-bottom: 1px solid #f3f4f6;
+                margin-bottom: 16px;
+            }
+
+            .review-top {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 8px;
+            }
+
+            .review-user {
+                display: flex;
                 gap: 10px;
+                align-items: center;
+            }
+
+            .avatar {
+                width: 40px;
+                height: 40px;
+                background: #e0e7ff;
+                color: #3b82f6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                font-weight: bold;
+            }
+
+            .user-name {
+                font-weight: 700;
+                font-size: 14px;
+            }
+
+            .user-sub {
+                font-size: 12px;
+                color: #9ca3af;
+            }
+
+            .rating {
+                color: #f59e0b;
+            }
+
+            .review-comment {
+                color: #4b5563;
+                line-height: 1.5;
+            }
+
+            /* Item Modal & Grid Styles */
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                background-color: rgb(0, 0, 0);
+                background-color: rgba(0, 0, 0, 0.4);
+            }
+
+            .modal-content {
+                background-color: #fefefe;
+                margin: 10% auto;
+                padding: 20px;
+                border: 1px solid #888;
+                width: 90%;
+                max-width: 500px;
+                border-radius: 12px;
+            }
+
+            .close {
+                color: #aaa;
+                float: right;
+                font-size: 28px;
+                font-weight: bold;
+            }
+
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+            .items-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
+            }
+
+            .item-card {
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                padding: 10px;
+                background: #fff;
+                transition: transform 0.2s;
+            }
+
+            .item-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            .item-img {
+                width: 100%;
+                height: 150px;
+                object-fit: cover;
+                border-radius: 8px;
+                margin-bottom: 10px;
+            }
+
+            .item-title {
+                font-weight: 600;
+                font-size: 16px;
+                margin-bottom: 5px;
+            }
+
+            .item-price {
+                color: #10b981;
+                font-weight: 700;
+            }
+
+            .item-qty {
+                color: #6b7280;
+                font-size: 13px;
+            }
+
+            .btn-add-item {
+                background-color: #3b82f6;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 8px;
+                border: none;
+                cursor: pointer;
+                font-weight: 600;
+                margin-top: 20px;
+            }
+
+            .btn-add-item:hover {
+                background-color: #2563eb;
+            }
+
+
+            /* Mobile Call Action */
+            .mobile-call-action {
+                display: none;
+                margin-bottom: 20px;
+            }
+
+            @media (max-width: 900px) {
+                .mobile-call-action {
+                    display: block;
+                }
+            }
+
+            /* Category Slider Base Styles */
+            .cat-scroll-wrapper {
+                overflow-x: auto;
+                white-space: nowrap;
+                padding-bottom: 5px;
+                margin-bottom: 20px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .cat-scroll-wrapper::-webkit-scrollbar {
+                display: none;
+            }
+
+            .cat-pill {
+                display: inline-block;
+                background: white;
+                border: 1px solid #eee;
+                padding: 8px 18px;
+                border-radius: 20px;
+                margin-right: 10px;
+                color: #333;
+                font-weight: 500;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+                text-decoration: none;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .cat-pill:hover {
+                background: #f8f9fa;
+                color: #000080;
+            }
+
+            .cat-pill.active {
+                background: #138808;
+                color: white;
+                border-color: #138808;
+            }
+
+            /* Market Style Product Card */
+            .items-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 20px;
+                margin-top: 10px;
+            }
+
+            /* Mobile Optimizations */
+            @media (max-width: 600px) {
+                .items-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 12px;
+                }
+
+                .product-img-wrap {
+                    height: 140px;
+                    /* Taller images */
+                }
+
+                .card-body-custom {
+                    padding: 10px;
+                }
+
+                .prod-title {
+                    font-size: 0.95rem;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+
+                /* Fixed Slider Styles */
+                .cat-scroll-wrapper {
+                    margin: 0;
+                    padding: 0 10px;
+                    /* Start text with some spacing */
+                    width: 100%;
+                    max-width: 100vw;
+                }
+
+                .cat-scroll-wrapper-container {
+                    margin: 0;
+                    /* Reset negative margins */
+                    padding: 0;
+                    width: 100%;
+                    position: sticky;
+                    top: 60px;
+                    z-index: 90;
+                    background-color: var(--bg-color);
+                }
+
+                .items-grid {
+                    padding: 0 8px;
+                    /* Slight padding so cards don't touch screen edge */
+                }
+            }
+
+            .product-card {
+                background: white;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                /* shadow-sm */
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                border: 1px solid #e5e7eb;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .product-card:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+                border-color: #ff9933;
+                /* market-primary */
             }
 
             .product-img-wrap {
-                height: 120px;
-                /* Smaller image on mobile */
+                position: relative;
+                height: 160px;
+                overflow: hidden;
+                background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+            }
+
+            .product-img-wrap img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.3s ease;
+            }
+
+            .product-card:hover .product-img-wrap img {
+                transform: scale(1.05);
+            }
+
+            .price-tag {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: linear-gradient(135deg, #ff9933, #ff7700);
+                color: white;
+                font-size: 0.9rem;
+                font-weight: 700;
+                padding: 6px 12px;
+                border-radius: 20px;
+                box-shadow: 0 4px 12px rgba(255, 153, 51, 0.4);
+                display: flex;
+                align-items: center;
+                gap: 2px;
             }
 
             .card-body-custom {
-                padding: 10px;
-                /* Compact padding */
+                padding: 14px;
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
             }
 
             .prod-title {
-                font-size: 0.9rem;
-            }
-        }
-
-        .product-card {
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            /* shadow-sm */
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid #e5e7eb;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .product-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-            border-color: #ff9933;
-            /* market-primary */
-        }
-
-        .product-img-wrap {
-            position: relative;
-            height: 160px;
-            overflow: hidden;
-            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
-        }
-
-        .product-img-wrap img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-
-        .product-card:hover .product-img-wrap img {
-            transform: scale(1.05);
-        }
-
-        .price-tag {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: linear-gradient(135deg, #ff9933, #ff7700);
-            color: white;
-            font-size: 0.9rem;
-            font-weight: 700;
-            padding: 6px 12px;
-            border-radius: 20px;
-            box-shadow: 0 4px 12px rgba(255, 153, 51, 0.4);
-            display: flex;
-            align-items: center;
-            gap: 2px;
-        }
-
-        .card-body-custom {
-            padding: 14px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .prod-title {
-            font-size: 1rem;
-            font-weight: 700;
-            margin: 0;
-            color: #1f2937;
-            line-height: 1.3;
-            text-transform: capitalize;
-        }
-
-        .prod-meta {
-            margin-top: auto;
-            padding-top: 10px;
-            border-top: 1px solid #f0f0f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.8rem;
-            color: #6b7280;
-        }
-
-        .item-delete-btn {
-            background: #fee2e2;
-            color: #ef4444;
-            border: none;
-            padding: 6px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: background 0.2s;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .item-delete-btn:hover {
-            background: #fecaca;
-        }
-
-        /* Override for Shop Profile Page (Single Column) */
-        .shop-profile-container {
-            grid-template-columns: 1fr !important;
-        }
-
-        /* NEW: Item Detail Modal */
-        .item-modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.75);
-            align-items: center;
-            justify-content: center;
-        }
-
-        .item-modal-card {
-            background: white;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-            animation: modalSlideIn 0.3s ease-out;
-            position: relative;
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                transform: scale(0.8);
-                opacity: 0;
+                font-size: 1rem;
+                font-weight: 700;
+                margin: 0;
+                color: #1f2937;
+                line-height: 1.3;
+                text-transform: capitalize;
             }
 
-            to {
-                transform: scale(1);
-                opacity: 1;
+            .prod-meta {
+                margin-top: auto;
+                padding-top: 10px;
+                border-top: 1px solid #f0f0f0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 0.8rem;
+                color: #6b7280;
             }
-        }
 
-        .item-modal-close {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            border: none;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            font-size: 20px;
-            cursor: pointer;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s;
-        }
+            .item-action-buttons {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-top: 10px;
+            }
 
-        .item-modal-close:hover {
-            background: rgba(0, 0, 0, 0.9);
-        }
+            .item-delete-btn,
+            .item-edit-btn {
+                border: none;
+                padding: 8px;
+                border-radius: 6px;
+                font-size: 0.85rem;
+                cursor: pointer;
+                transition: background 0.2s;
+                width: 100%;
+                font-weight: 500;
+            }
 
-        .item-modal-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 25px 20px;
-            text-align: center;
-            color: white;
-        }
+            .item-delete-btn {
+                background: #fee2e2;
+                color: #ef4444;
+            }
 
-        .item-modal-title {
-            margin: 0;
-            font-size: 22px;
-            font-weight: 700;
-        }
+            .item-delete-btn:hover {
+                background: #fecaca;
+            }
 
-        .item-modal-body {
-            padding: 0;
-            overflow-y: auto;
-            max-height: calc(90vh - 150px);
-        }
+            .item-edit-btn {
+                background: #dbeafe;
+                color: #2563eb;
+            }
 
-        .item-modal-img-wrapper {
-            position: relative;
-            width: 100%;
-        }
+            .item-edit-btn:hover {
+                background: #bfdbfe;
+            }
 
-        .item-modal-img {
-            width: 100%;
-            height: 500px;
-            object-fit: cover;
-            display: block;
-        }
+            /* Override for Shop Profile Page (Single Column) */
+            .shop-profile-container {
+                grid-template-columns: 1fr !important;
+            }
 
-        .item-modal-price-overlay {
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            font-size: 24px;
-            font-weight: 700;
-            padding: 12px 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
+            /* NEW: Item Detail Modal */
+            .item-modal {
+                display: none;
+                position: fixed;
+                z-index: 2000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.75);
+                align-items: center;
+                justify-content: center;
+            }
 
-        .item-modal-whatsapp-btn {
-            display: block;
-            width: 100%;
-            background: #25D366;
-            color: white;
-            padding: 18px;
-            border: none;
-            border-radius: 0;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            text-align: center;
-            transition: 0.3s;
-        }
-
-        .item-modal-whatsapp-btn:hover {
-            background: #20ba5a;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
-            color: white;
-        }
-
-        @media (max-width: 600px) {
             .item-modal-card {
-                width: 95%;
+                background: white;
+                border-radius: 20px;
+                width: 90%;
+                max-width: 500px;
+                max-height: 90vh;
+                overflow: hidden;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+                animation: modalSlideIn 0.3s ease-out;
+                position: relative;
+            }
+
+            @keyframes modalSlideIn {
+                from {
+                    transform: scale(0.8);
+                    opacity: 0;
+                }
+
+                to {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+
+            .item-modal-close {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: rgba(0, 0, 0, 0.6);
+                color: white;
+                border: none;
+                width: 35px;
+                height: 35px;
+                border-radius: 50%;
+                font-size: 20px;
+                cursor: pointer;
+                z-index: 10;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: 0.2s;
+            }
+
+            .item-modal-close:hover {
+                background: rgba(0, 0, 0, 0.9);
+            }
+
+            .item-modal-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 25px 20px;
+                text-align: center;
+                color: white;
+            }
+
+            .item-modal-title {
+                margin: 0;
+                font-size: 22px;
+                font-weight: 700;
+            }
+
+            .item-modal-body {
+                padding: 0;
+                overflow-y: auto;
+                max-height: calc(90vh - 150px);
+            }
+
+            .item-modal-img-wrapper {
+                position: relative;
+                width: 100%;
             }
 
             .item-modal-img {
-                height: 400px;
+                width: 100%;
+                height: 500px;
+                object-fit: cover;
+                display: block;
             }
 
             .item-modal-price-overlay {
-                font-size: 20px;
-                padding: 10px 16px;
+                position: absolute;
+                bottom: 15px;
+                right: 15px;
+                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                color: white;
+                font-size: 24px;
+                font-weight: 700;
+                padding: 12px 20px;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             }
-        }
-    </style>
 
-    <body>
-        <div class="product-container shop-profile-container">
-            <!-- LEFT COLUMN: Shop Details -->
-            <div class="main-content">
+            .item-modal-whatsapp-btn {
+                display: block;
+                width: 100%;
+                background: #25D366;
+                color: white;
+                padding: 18px;
+                border: none;
+                border-radius: 0;
+                font-size: 18px;
+                font-weight: 600;
+                cursor: pointer;
+                text-decoration: none;
+                text-align: center;
+                transition: 0.3s;
+            }
 
-                <!-- Shop Main Card -->
-                <section class="card-section">
-                    <div class="product-showcase">
-                        <!-- Image -->
-                        <div class="main-image-wrapper">
-                            <% if(shop.shopImage && shop.shopImage.length> 0) { %>
-                                <img src="<%= shop.shopImage[0].url %>" alt="<%= shop.shopName %>" class="main-image"
-                                    id="mainImage" />
-                                <% } else { %>
-                                    <div class="main-image"
-                                        style="background:#eee; display:flex; align-items:center; justify-content:center;">
-                                        No Image</div>
-                                    <% } %>
-                                        <button class="btn-share" id="shareBtn" type="button" title="Share Shop">
-                                            <i class="fa-solid fa-share-nodes"></i>
-                                        </button>
-                        </div>
+            .item-modal-whatsapp-btn:hover {
+                background: #20ba5a;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+                color: white;
+            }
 
-                        <!-- Info -->
-                        <div class="product-info-header">
-                            <h1 class="product-title">
-                                <%= shop.shopName %>
-                            </h1>
-                            <div class="seller-badge" style="cursor:pointer;" onclick="openUpiModal()">
-                                <i class="fa-solid fa-qrcode"></i> QR Code
+            @media (max-width: 600px) {
+                .item-modal-card {
+                    width: 95%;
+                }
+
+                .item-modal-img {
+                    height: 400px;
+                }
+
+                .item-modal-price-overlay {
+                    font-size: 20px;
+                    padding: 10px 16px;
+                }
+            }
+        </style>
+
+        <body>
+            <div class="product-container shop-profile-container">
+                <!-- LEFT COLUMN: Shop Details -->
+                <div class="main-content">
+
+                    <!-- Shop Main Card -->
+                    <section class="card-section">
+                        <div class="product-showcase">
+                            <!-- Image -->
+                            <div class="main-image-wrapper">
+                                <% if(shop.shopImage && shop.shopImage.length> 0) { %>
+                                    <img src="<%= shop.shopImage[0].url %>" alt="<%= shop.shopName %>"
+                                        class="main-image" id="mainImage" />
+                                    <% } else { %>
+                                        <div class="main-image"
+                                            style="background:#eee; display:flex; align-items:center; justify-content:center;">
+                                            No Image</div>
+                                        <% } %>
+                                            <button class="btn-share" id="shareBtn" type="button" title="Share Shop">
+                                                <i class="fa-solid fa-share-nodes"></i>
+                                            </button>
                             </div>
 
-                            <div class="info-grid">
-                                <div class="info-box">
-                                    <span class="info-label">Owner</span>
-                                    <span class="info-value">
-                                        <%= shop.owner.name %>
-                                    </span>
+                            <!-- Info -->
+                            <div class="product-info-header">
+                                <h1 class="product-title">
+                                    <%= shop.shopName %>
+                                </h1>
+                                <div class="seller-badge" style="cursor:pointer;" onclick="openUpiModal()">
+                                    <i class="fa-solid fa-qrcode"></i> QR Code
                                 </div>
-                                <div class="info-box">
-                                    <span class="info-label">Location</span>
-                                    <span class="info-value">
-                                        <%= shop.location %>
-                                    </span>
-                                </div>
-                                <a href="tel:<%= shop.owner.username %>" class="info-box"
-                                    style="text-decoration:none; justify-content:center; align-items:center; background:#eff6ff; border-color:#bfdbfe;">
-                                    <span class="info-value" style="color:#2563eb; font-size:16px;">
-                                        <i class="fa-solid fa-phone"></i> Call Owner
-                                    </span>
-                                </a>
-                            </div>
 
-                            <!-- Owner Actions -->
-                            <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                                <div class="owner-actions">
-                                    <a href="/shops/<%= shop._id %>/edit" class="btn btn-warning">
-                                        <i class="fa-solid fa-edit"></i> Edit
+                                <div class="info-grid">
+                                    <div class="info-box">
+                                        <span class="info-label">Owner</span>
+                                        <span class="info-value">
+                                            <%= shop.owner.name %>
+                                        </span>
+                                    </div>
+                                    <div class="info-box">
+                                        <span class="info-label">Location</span>
+                                        <span class="info-value">
+                                            <%= shop.location %>
+                                        </span>
+                                    </div>
+                                    <a href="tel:<%= shop.owner.username %>" class="info-box"
+                                        style="text-decoration:none; justify-content:center; align-items:center; background:#eff6ff; border-color:#bfdbfe;">
+                                        <span class="info-value" style="color:#2563eb; font-size:16px;">
+                                            <i class="fa-solid fa-phone"></i> Call Owner
+                                        </span>
                                     </a>
                                 </div>
-                                <% } %>
-                        </div>
-                    </div>
-                </section>
 
-                <!-- Description -->
-                <section class="card-section">
-                    <h2 class="section-heading">About this Shop</h2>
-                    <p class="description-text">
-                        <%= shop.shopDescription || "No description provided." %>
-                    </p>
-                </section>
-
-
-
-                <!-- ITEMS SECTION -->
-                <section class="card-section">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h2 class="section-heading">Shop Items</h2>
-                        <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                            <button id="addItemBtn" class="btn-add-item"><i class="fa-solid fa-plus"></i>
-                                Add
-                                Item</button>
-                            <% } %>
-                    </div>
-
-
-
-                    <div class="items-grid">
-                        <% if(shop.items && shop.items.length> 0) { %>
-                            <% shop.items.forEach(item=> { %>
-
-                                <div class="product-card"
-                                    onclick="openItemModal('<%= item.name %>', '<%= item.img && item.img.url ? item.img.url : '' %>', '<%= item.price %>', '<%= shop.owner.username %>')"
-                                    style="cursor: pointer;">
-                                    <div class="product-img-wrap">
-                                        <% if(item.img && item.img.url) { %>
-                                            <img src="<%= item.img.url %>" alt="<%= item.name %>">
-                                            <% } else { %>
-                                                <div
-                                                    style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#999; font-size:12px;">
-                                                    No Image</div>
-                                                <% } %>
-                                                    <div class="price-tag">
-                                                        ₹<%= item.price %>
-                                                    </div>
+                                <!-- Owner Actions -->
+                                <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                    <div class="owner-actions">
+                                        <a href="/shops/<%= shop._id %>/edit" class="btn btn-warning">
+                                            <i class="fa-solid fa-edit"></i> Edit
+                                        </a>
                                     </div>
-
-                                    <div class="card-body-custom">
-                                        <h5 class="prod-title">
-                                            <%= item.name %>
-                                        </h5>
-                                        <div class="prod-meta">
-                                            <span>Qty: <%= item.quantity %></span>
-                                        </div>
-
-                                        <!-- Direct WhatsApp button removed -->
-
-                                        <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                                            <button type="button" class="item-delete-btn"
-                                                onclick="event.stopPropagation(); openDeleteConfirm('<%= shop._id %>', '<%= item._id %>')">
-                                                <i class="fa-solid fa-trash"></i> Delete
-                                            </button>
-                                            <% } %>
-                                    </div>
-                                </div>
-                                <% }) %>
-                                    <% } else { %>
-                                        <p style="color:#6b7280; grid-column: 1 / -1; text-align:center;">No
-                                            items added
-                                            yet.</p>
-                                        <% } %>
-                    </div>
-                </section>
-
-                <!-- Gallery (if multiple images - currently max 1 but prepared for future) -->
-                <% if (shop.shopImage && shop.shopImage.length> 1) { %>
-                    <section class="card-section">
-                        <h2 class="section-heading">Shop Gallery</h2>
-                        <div class="gallery-grid">
-                            <% shop.shopImage.forEach((image, index)=> { %>
-                                <img src="<%= image.url %>" alt="Shop Image" class="gallery-img">
-                                <% }) %>
+                                    <% } %>
+                            </div>
                         </div>
                     </section>
-                    <% } %>
 
-                        <!-- REVIEWS SECTION -->
-                        <section class="reviews-card" id="reviewsSection">
-                            <div class="head"
-                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                                <div>
-                                    <h2 style="font-size:20px; font-weight:700; margin:0;">Reviews & Ratings
-                                    </h2>
-                                    <p style="color:#6b7280; font-size:14px; margin:4px 0 0 0;">What
-                                        customers are
-                                        saying</p>
+                    <!-- Description -->
+                    <section class="card-section">
+                        <h2 class="section-heading">About this Shop</h2>
+                        <p class="description-text">
+                            <%= shop.shopDescription || "No description provided." %>
+                        </p>
+                    </section>
+
+
+
+
+
+                    </section>
+
+                    <!-- Independent Items Section -->
+                    <div style="margin-top: 20px;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding: 0 5px;">
+                            <h2 style="font-size:1.5rem; font-weight:700; margin:0; color:var(--text-main);">Shop Items
+                            </h2>
+                            <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                <button id="addItemBtn" class="btn-add-item" style="margin:0;"><i
+                                        class="fa-solid fa-plus"></i> Add Item</button>
+                                <% } %>
+                        </div>
+
+                        <% if(currentShopCats) { %>
+                            <!-- Dynamic Category Slider -->
+                            <div class="cat-scroll-wrapper-container"
+                                style="position:sticky; top:60px; z-index:90; background-color:var(--bg-color); padding-top:10px; margin-bottom:10px;">
+                                <div class="cat-scroll-wrapper" id="categorySlider" style="padding-bottom:10px;">
+                                    <span class="cat-pill active" onclick="filterItems('All', this)">All Items</span>
+                                    <% currentShopCats.forEach(cat=> { %>
+                                        <span class="cat-pill" onclick="filterItems('<%= cat.name %>', this)">
+                                            <%= cat.icon %>
+                                                <%= cat.name %>
+                                        </span>
+                                        <% }) %>
                                 </div>
                             </div>
+                            <% } %>
 
-                            <!-- Review Form -->
-                            <form class="review-form" action="/shops/<%= shop._id %>/reviews" method="POST">
-                                <div class="field">
-                                    <label>Rating</label>
-                                    <select required name="review[ratings]">
-                                        <option value="5" selected>5 - Excellent</option>
-                                        <option value="4">4 - Good</option>
-                                        <option value="3">3 - Average</option>
-                                        <option value="2">2 - Poor</option>
-                                        <option value="1">1 - Bad</option>
-                                    </select>
-                                </div>
-
-                                <div class="field">
-                                    <label>Comment</label>
-                                    <textarea rows="3" placeholder="Write your review..." required
-                                        name="review[comment]"></textarea>
-                                </div>
-
-                                <div class="form-actions">
-                                    <button class="btn btn-primary">Submit Review</button>
-                                </div>
-                            </form>
-
-                            <div style="border-top:1px solid #e5e7eb; margin:24px 0;"></div>
-
-                            <!-- Reviews List -->
-                            <div class="reviews-list">
-                                <% if(shop.reviews && shop.reviews.length> 0) { %>
-                                    <% for (let review of shop.reviews){ %>
-                                        <div class="review-card">
-                                            <div class="review-top">
-                                                <div class="review-user">
-                                                    <div class="avatar">
-                                                        <%= review.author.name.charAt(0).toUpperCase() %>
-                                                    </div>
-                                                    <div>
-                                                        <div class="user-name">
-                                                            <%= review.author.name %>
-                                                        </div>
-                                                        <div class="user-sub">
-                                                            <%= review.createdAt ? review.createdAt.toDateString() : ''
-                                                                %>
-                                                        </div>
-                                                    </div>
+                                <div class="items-grid" id="itemsGrid">
+                                    <% if(shop.items && shop.items.length> 0) { %>
+                                        <% shop.items.forEach(item=> { %>
+                                            <div class="product-card item-card-filter"
+                                                data-category="<%= (item.itemCategory === 'Other' || item.itemCategory === 'Others' || !item.itemCategory) ? 'General' : item.itemCategory %>"
+                                                data-name="<%= item.name %>"
+                                                data-img="<%= item.img && item.img.url ? item.img.url : '' %>"
+                                                data-price="<%= item.price %>" data-owner="<%= shop.owner.username %>"
+                                                onclick="openItemModal(this)" style="cursor: pointer;">
+                                                <div class="product-img-wrap">
+                                                    <% if(item.img && item.img.url) { %>
+                                                        <img src="<%= item.img.url %>" alt="<%= item.name %>">
+                                                        <% } else { %>
+                                                            <div
+                                                                style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#999; font-size:12px;">
+                                                                No Image</div>
+                                                            <% } %>
+                                                                <div class="price-tag">
+                                                                    ₹<%= item.price %>
+                                                                </div>
                                                 </div>
-                                                <div class="rating">
-                                                    <% for(let i=0; i<review.ratings; i++) { %>★<% } %>
-                                                            <span style="color:#ccc; font-size:12px;">(<%=
-                                                                    review.ratings %>/5)</span>
+
+                                                <div class="card-body-custom">
+                                                    <h5 class="prod-title">
+                                                        <%= item.name %>
+                                                    </h5>
+                                                    <div class="prod-meta">
+                                                        <span>Qty: <%= item.quantity %></span>
+                                                    </div>
+
+                                                    <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                                        <div class="item-action-buttons">
+                                                            <button type="button" class="item-edit-btn"
+                                                                onclick="event.stopPropagation(); openEditItemModal('<%= item._id %>', '<%= item.name %>', '<%= item.price %>', '<%= item.quantity %>', '<%= item.itemCategory || '' %>')">
+                                                                <i class="fa-solid fa-edit"></i> Edit
+                                                            </button>
+                                                            <button type="button" class="item-delete-btn"
+                                                                onclick="event.stopPropagation(); openDeleteConfirm('<%= shop._id %>', '<%= item._id %>')">
+                                                                <i class="fa-solid fa-trash"></i> Delete
+                                                            </button>
+                                                        </div>
+                                                        <% } %>
                                                 </div>
                                             </div>
-                                            <p class="review-comment">
-                                                <%= review.comment %>
-                                            </p>
+                                            <% }) %>
+                                                <% } else { %>
+                                                    <p style="color:#6b7280; grid-column: 1 / -1; text-align:center;">
+                                                        No
+                                                        items added yet.</p>
+                                                    <% } %>
+                                </div>
 
-                                            <% if(currUser && review.author._id.equals(currUser._id)) { %>
-                                                <form
-                                                    action="/shops/<%= shop._id %>/reviews/<%= review._id %>?_method=DELETE"
-                                                    method="POST" style="margin-top:10px;">
-                                                    <button class="btn btn-sm btn-danger"
-                                                        style="padding:4px 8px; font-size:12px;">Delete</button>
-                                                </form>
-                                                <% } %>
-                                        </div>
-                                        <% } %>
-                                            <% } else { %>
-                                                <p class="text-muted text-center py-4">No reviews yet. Be
-                                                    the first to
-                                                    review!</p>
-                                                <% } %>
+                                <script>
+                                    function filterItems(category, element) {
+                                        // Update active state
+                                        document.querySelectorAll('.cat-pill').forEach(el => el.classList.remove('active'));
+                                        element.classList.add('active');
+
+                                        // Filter items
+                                        const items = document.querySelectorAll('.item-card-filter');
+                                        let count = 0;
+
+                                        items.forEach(item => {
+                                            const itemCat = item.getAttribute('data-category');
+                                            if (category === 'All' || itemCat === category) {
+                                                item.style.display = 'flex';
+                                                count++;
+                                            } else {
+                                                item.style.display = 'none';
+                                            }
+                                        });
+                                    }
+                                </script>
+                    </div>
+
+                    <!-- Gallery (only if multiple images) -->
+                    <% if (shop.shopImage && shop.shopImage.length> 1) { %>
+                        <section class="card-section" style="margin-top: 30px;">
+                            <h2 class="section-heading">Shop Gallery</h2>
+                            <div class="gallery-grid">
+                                <% shop.shopImage.forEach((image, index)=> { %>
+                                    <img src="<%= image.url %>" alt="Shop Image" class="gallery-img">
+                                    <% }) %>
                             </div>
                         </section>
+                        <% } %>
 
-            </div>
+                            <!-- REVIEWS SECTION -->
+                            <section class="reviews-card" id="reviewsSection">
+                                <div class="head"
+                                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                    <div>
+                                        <h2 style="font-size:20px; font-weight:700; margin:0;">Reviews & Ratings
+                                        </h2>
+                                        <p style="color:#6b7280; font-size:14px; margin:4px 0 0 0;">What
+                                            customers are
+                                            saying</p>
+                                    </div>
+                                </div>
 
+                                <!-- Review Form -->
+                                <form class="review-form" action="/shops/<%= shop._id %>/reviews" method="POST">
+                                    <div class="field">
+                                        <label>Rating</label>
+                                        <select required name="review[ratings]">
+                                            <option value="5" selected>5 - Excellent</option>
+                                            <option value="4">4 - Good</option>
+                                            <option value="3">3 - Average</option>
+                                            <option value="2">2 - Poor</option>
+                                            <option value="1">1 - Bad</option>
+                                        </select>
+                                    </div>
 
-        </div>
+                                    <div class="field">
+                                        <label>Comment</label>
+                                        <textarea rows="3" placeholder="Write your review..." required
+                                            name="review[comment]"></textarea>
+                                    </div>
 
-        <!-- Add Item Modal -->
-        <div id="addItemModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2 style="margin-bottom:20px;">Add New Item</h2>
-                <form action="/shops/<%= shop._id %>/items" method="POST" enctype="multipart/form-data"
-                    class="review-form">
-                    <div class="field">
-                        <label>Item Name</label>
-                        <input type="text" name="item[name]" required placeholder="Enter item name"
-                            style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
-                    </div>
-                    <div class="field">
-                        <label>Price (₹)</label>
-                        <input type="number" name="item[price]" required min="0" placeholder="0"
-                            style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
-                    </div>
-                    <div class="field">
-                        <label>Quantity</label>
-                        <input type="number" name="item[quantity]" required min="1" placeholder="1"
-                            style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
-                    </div>
-                    <div class="field">
-                        <label>Item Image</label>
-                        <input type="file" name="itemImage" id="itemImageInput" required
-                            style="width:100%; padding:10px; background:#f9fafb; border:1px solid #d1d5db; border-radius:8px;">
-                    </div>
-                    <button class="btn btn-primary w-100" id="addItemSubmitBtn">Add Item</button>
-                </form>
-            </div>
-        </div>
+                                    <div class="form-actions">
+                                        <button class="btn btn-primary">Submit Review</button>
+                                    </div>
+                                </form>
 
-        <!-- Delete Confirmation Modal -->
-        <div id="deleteModal" class="modal" style="z-index: 1100;">
-            <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px;">
-                <div style="margin-bottom: 20px;">
-                    <div
-                        style="width: 60px; height: 60px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px;">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </div>
-                    <h3 style="font-size: 20px; font-weight: 700; color: #1f2937; margin-bottom: 8px;">Delete Item?
-                    </h3>
-                    <p style="color: #6b7280; font-size: 15px; line-height: 1.5;">
-                        Are you sure you want to delete this item? This action cannot be undone.
-                    </p>
+                                <div style="border-top:1px solid #e5e7eb; margin:24px 0;"></div>
+
+                                <!-- Reviews List -->
+                                <div class="reviews-list">
+                                    <% if(shop.reviews && shop.reviews.length> 0) { %>
+                                        <% for (let review of shop.reviews){ %>
+                                            <div class="review-card">
+                                                <div class="review-top">
+                                                    <div class="review-user">
+                                                        <div class="avatar">
+                                                            <%= review.author.name.charAt(0).toUpperCase() %>
+                                                        </div>
+                                                        <div>
+                                                            <div class="user-name">
+                                                                <%= review.author.name %>
+                                                            </div>
+                                                            <div class="user-sub">
+                                                                <%= review.createdAt ? review.createdAt.toDateString()
+                                                                    : '' %>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="rating">
+                                                        <% for(let i=0; i<review.ratings; i++) { %>★<% } %>
+                                                                <span style="color:#ccc; font-size:12px;">(<%=
+                                                                        review.ratings %>
+                                                                        /5)</span>
+                                                    </div>
+                                                </div>
+                                                <p class="review-comment">
+                                                    <%= review.comment %>
+                                                </p>
+
+                                                <% if(currUser && review.author._id.equals(currUser._id)) { %>
+                                                    <form
+                                                        action="/shops/<%= shop._id %>/reviews/<%= review._id %>?_method=DELETE"
+                                                        method="POST" style="margin-top:10px;">
+                                                        <button class="btn btn-sm btn-danger"
+                                                            style="padding:4px 8px; font-size:12px;">Delete</button>
+                                                    </form>
+                                                    <% } %>
+                                            </div>
+                                            <% } %>
+                                                <% } else { %>
+                                                    <p class="text-muted text-center py-4">No reviews yet. Be
+                                                        the first to
+                                                        review!</p>
+                                                    <% } %>
+                                </div>
+                            </section>
+
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <button class="btn"
-                        style="background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; width: 100%;"
-                        onclick="closeDeleteModal()">
-                        Cancel
-                    </button>
-                    <form id="deleteForm" method="POST" style="margin:0; width: 100%;">
-                        <button class="btn btn-danger" style="width: 100%; justify-content: center;">
-                            Yes, Delete
-                        </button>
+
+
+            </div>
+
+            <!-- Add Item Modal -->
+            <div id="addItemModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2 style="margin-bottom:20px;">Add New Item</h2>
+                    <form action="/shops/<%= shop._id %>/items" method="POST" enctype="multipart/form-data"
+                        class="review-form">
+                        <div class="field">
+                            <label>Item Name</label>
+                            <input type="text" name="item[name]" required placeholder="Enter item name"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                        </div>
+                        <div class="field">
+                            <label>Price (₹)</label>
+                            <input type="number" name="item[price]" required min="0" placeholder="0"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                        </div>
+                        <div class="field">
+                            <label>Quantity</label>
+                            <input type="number" name="item[quantity]" required min="1" placeholder="1"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                        </div>
+
+                        <% if(currentShopCats) { %>
+                            <div class="field">
+                                <label>Item Category</label>
+                                <select name="item[itemCategory]" class="form-control"
+                                    style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"
+                                    required>
+                                    <option value="" disabled selected>Select Category</option>
+                                    <% currentShopCats.forEach(cat=> { %>
+                                        <option value="<%= cat.name %>">
+                                            <%= cat.icon %>
+                                                <%= cat.name %>
+                                        </option>
+                                        <% }) %>
+                                </select>
+                            </div>
+                            <% } %>
+                                <div class="field">
+                                    <label>Item Image</label>
+                                    <input type="file" name="itemImage" id="itemImageInput" required
+                                        style="width:100%; padding:10px; background:#f9fafb; border:1px solid #d1d5db; border-radius:8px;">
+                                </div>
+                                <button class="btn btn-primary w-100" id="addItemSubmitBtn">Add Item</button>
                     </form>
                 </div>
             </div>
-        </div>
 
-        <!-- NEW: Item Detail Modal -->
-        <div id="itemModal" class="item-modal">
-            <div class="item-modal-card">
-                <button class="item-modal-close" onclick="closeItemModal()">&times;</button>
-                <div class="item-modal-header">
-                    <h2 class="item-modal-title" id="modalItemName"></h2>
-                </div>
-                <div class="item-modal-body">
-                    <div class="item-modal-img-wrapper">
-                        <img id="modalItemImage" class="item-modal-img" alt="Item">
-                        <div class="item-modal-price-overlay" id="modalItemPrice"></div>
-                    </div>
-                    <a id="modalWhatsappLink" href="#" target="_blank" class="item-modal-whatsapp-btn">
-                        <i class="fa-brands fa-whatsapp"></i> Order on WhatsApp
-                    </a>
+            <!-- Edit Item Modal -->
+            <div id="editItemModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeEditItemModal()">&times;</span>
+                    <h2 style="margin-bottom:20px;">Edit Item</h2>
+                    <form id="editItemForm" method="POST" class="review-form">
+                        <input type="hidden" id="editItemId" name="itemId">
+                        <div class="field">
+                            <label>Item Name</label>
+                            <input type="text" id="editItemName" name="item[name]" required
+                                placeholder="Enter item name"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                        </div>
+                        <div class="field">
+                            <label>Price (₹)</label>
+                            <input type="number" id="editItemPrice" name="item[price]" required min="0" placeholder="0"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                        </div>
+                        <div class="field">
+                            <label>Quantity</label>
+                            <input type="number" id="editItemQuantity" name="item[quantity]" required min="1"
+                                placeholder="1"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                        </div>
+
+                        <% if(currentShopCats) { %>
+                            <div class="field">
+                                <label>Item Category</label>
+                                <select id="editItemCategory" name="item[itemCategory]" class="form-control"
+                                    style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"
+                                    required>
+                                    <option value="" disabled>Select Category</option>
+                                    <% currentShopCats.forEach(cat=> { %>
+                                        <option value="<%= cat.name %>">
+                                            <%= cat.icon %>
+                                                <%= cat.name %>
+                                        </option>
+                                        <% }) %>
+                                </select>
+                            </div>
+                            <% } %>
+                                <button type="submit" class="btn btn-primary w-100">Update Item</button>
+                    </form>
                 </div>
             </div>
-        </div>
 
-        <!-- UPI Modal -->
-        <div id="upiModal" class="modal">
-            <div class="modal-content" style="text-align:center;">
-                <span class="close" onclick="closeUpiModal()">&times;</span>
-                <h2 style="margin-bottom:20px;">Scan to Pay</h2>
-
-                <% if (shop.upiScanner && shop.upiScanner.url) { %>
-                    <div style="margin-bottom:20px;">
-                        <img src="<%= shop.upiScanner.url %>" alt="UPI QR Code"
-                            style="max-width:100%; border-radius:12px; border:1px solid #e5e7eb;">
+            <!-- Delete Confirmation Modal -->
+            <div id="deleteModal" class="modal" style="z-index: 1100;">
+                <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px;">
+                    <div style="margin-bottom: 20px;">
+                        <div
+                            style="width: 60px; height: 60px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px;">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </div>
+                        <h3 style="font-size: 20px; font-weight: 700; color: #1f2937; margin-bottom: 8px;">Delete
+                            Item?
+                        </h3>
+                        <p style="color: #6b7280; font-size: 15px; line-height: 1.5;">
+                            Are you sure you want to delete this item? This action cannot be undone.
+                        </p>
                     </div>
-                    <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                        <form action="/shops/<%= shop._id %>/upi?_method=DELETE" method="POST">
-                            <button class="btn btn-danger w-100"><i class="fa-solid fa-trash"></i> Remove QR
-                                Code</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <button class="btn"
+                            style="background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; width: 100%;"
+                            onclick="closeDeleteModal()">
+                            Cancel
+                        </button>
+                        <form id="deleteForm" method="POST" style="margin:0; width: 100%;">
+                            <button class="btn btn-danger" style="width: 100%; justify-content: center;">
+                                Yes, Delete
+                            </button>
                         </form>
-                        <% } %>
-                            <% } else if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                                <div style="padding:20px; border:2px dashed #d1d5db; border-radius:12px;">
-                                    <i class="fa-solid fa-qrcode fa-3x" style="color:#9ca3af; margin-bottom:15px;"></i>
-                                    <p style="color:#6b7280; margin-bottom:20px;">Upload your UPI QR Code image.</p>
-                                    <form action="/shops/<%= shop._id %>/upi?_method=PUT" method="POST"
-                                        enctype="multipart/form-data" id="upiModalForm">
-                                        <input type="file" name="upiImage" id="upiModalInput" accept="image/*"
-                                            style="display:none;"
-                                            onchange="document.getElementById('upiModalForm').submit()">
-                                        <button type="button" class="btn btn-primary w-100"
-                                            onclick="document.getElementById('upiModalInput').click()">
-                                            <i class="fa-solid fa-upload"></i> Upload QR Image
-                                        </button>
-                                    </form>
-                                </div>
-                                <% } else { %>
-                                    <div style="padding:40px 20px;">
-                                        <i class="fa-solid fa-ban fa-3x" style="color:#ef4444; margin-bottom:15px;"></i>
-                                        <h3 style="color:#4b5563;">No QR Code Available</h3>
-                                        <p style="color:#6b7280;">The shop owner hasn't uploaded a UPI QR code yet.</p>
-                                    </div>
-                                    <% } %>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <script>
-            // NEW: Open Item Modal
-            function openItemModal(name, imgUrl, price, ownerPhone) {
-                const modal = document.getElementById('itemModal');
-                const nameEl = document.getElementById('modalItemName');
-                const imgEl = document.getElementById('modalItemImage');
-                const priceEl = document.getElementById('modalItemPrice');
-                const whatsappLink = document.getElementById('modalWhatsappLink');
+            <!-- NEW: Item Detail Modal -->
+            <div id="itemModal" class="item-modal">
+                <div class="item-modal-card">
+                    <button class="item-modal-close" onclick="closeItemModal()">&times;</button>
+                    <div class="item-modal-header">
+                        <h2 class="item-modal-title" id="modalItemName"></h2>
+                    </div>
+                    <div class="item-modal-body">
+                        <div class="item-modal-img-wrapper">
+                            <img id="modalItemImage" class="item-modal-img" alt="Item">
+                            <div class="item-modal-price-overlay" id="modalItemPrice"></div>
+                        </div>
+                        <a id="modalWhatsappLink" href="#" target="_blank" class="item-modal-whatsapp-btn">
+                            <i class="fa-brands fa-whatsapp"></i> Order on WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
 
-                nameEl.textContent = name;
-                imgEl.src = imgUrl || '/images/placeholder.jpg';
-                priceEl.textContent = '₹' + price;
+            <!-- UPI Modal -->
+            <div id="upiModal" class="modal">
+                <div class="modal-content" style="text-align:center;">
+                    <span class="close" onclick="closeUpiModal()">&times;</span>
+                    <h2 style="margin-bottom:20px;">Scan to Pay</h2>
 
-                const message = `Hi, I am interested in ${name} priced at ₹${price}.\n\nView item image: ${imgUrl}\n\nIs it available?`;
-                whatsappLink.href = `https://wa.me/91${ownerPhone}?text=${encodeURIComponent(message)}`;
+                    <% if (shop.upiScanner && shop.upiScanner.url) { %>
+                        <div style="margin-bottom:20px;">
+                            <img src="<%= shop.upiScanner.url %>" alt="UPI QR Code"
+                                style="max-width:100%; border-radius:12px; border:1px solid #e5e7eb;">
+                        </div>
+                        <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                            <form action="/shops/<%= shop._id %>/upi?_method=DELETE" method="POST">
+                                <button class="btn btn-danger w-100"><i class="fa-solid fa-trash"></i> Remove QR
+                                    Code</button>
+                            </form>
+                            <% } %>
+                                <% } else if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                    <div style="padding:20px; border:2px dashed #d1d5db; border-radius:12px;">
+                                        <i class="fa-solid fa-qrcode fa-3x"
+                                            style="color:#9ca3af; margin-bottom:15px;"></i>
+                                        <p style="color:#6b7280; margin-bottom:20px;">Upload your UPI QR Code image.
+                                        </p>
+                                        <form action="/shops/<%= shop._id %>/upi?_method=PUT" method="POST"
+                                            enctype="multipart/form-data" id="upiModalForm">
+                                            <input type="file" name="upiImage" id="upiModalInput" accept="image/*"
+                                                style="display:none;"
+                                                onchange="document.getElementById('upiModalForm').submit()">
+                                            <button type="button" class="btn btn-primary w-100"
+                                                onclick="document.getElementById('upiModalInput').click()">
+                                                <i class="fa-solid fa-upload"></i> Upload QR Image
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <% } else { %>
+                                        <div style="padding:40px 20px;">
+                                            <i class="fa-solid fa-ban fa-3x"
+                                                style="color:#ef4444; margin-bottom:15px;"></i>
+                                            <h3 style="color:#4b5563;">No QR Code Available</h3>
+                                            <p style="color:#6b7280;">The shop owner hasn't uploaded a UPI QR code
+                                                yet.</p>
+                                        </div>
+                                        <% } %>
+                </div>
+            </div>
 
-                modal.style.display = 'flex';
-            }
+            <script>
+                // NEW: Open Item Modal
+                function openItemModal(element) {
+                    const name = element.getAttribute('data-name');
+                    const imgUrl = element.getAttribute('data-img');
+                    const price = element.getAttribute('data-price');
+                    const ownerPhone = element.getAttribute('data-owner');
+                    const modal = document.getElementById('itemModal');
+                    const nameEl = document.getElementById('modalItemName');
+                    const imgEl = document.getElementById('modalItemImage');
+                    const priceEl = document.getElementById('modalItemPrice');
+                    const whatsappLink = document.getElementById('modalWhatsappLink');
 
-            function closeItemModal() {
-                document.getElementById('itemModal').style.display = 'none';
-            }
+                    nameEl.textContent = name;
+                    imgEl.src = imgUrl || '/images/placeholder.jpg';
+                    priceEl.textContent = '₹' + price;
 
-            function openUpiModal() {
-                document.getElementById('upiModal').style.display = 'block';
-            }
+                    const message = `Hi, I am interested in ${name} priced at ₹${price}.\n\nView item image: ${imgUrl}\n\nIs it available?`;
+                    whatsappLink.href = `https://wa.me/91${ownerPhone}?text=${encodeURIComponent(message)}`;
 
-            function closeUpiModal() {
-                document.getElementById('upiModal').style.display = 'none';
-            }
-
-            // Close modals when clicking outside
-            window.addEventListener('click', function (event) {
-                const itemModal = document.getElementById('itemModal');
-                const addModal = document.getElementById('addItemModal');
-                const deleteModal = document.getElementById('deleteModal');
-                const upiModal = document.getElementById('upiModal');
-
-                if (event.target === itemModal) closeItemModal();
-                if (event.target === addModal) addModal.style.display = 'none';
-                if (event.target === deleteModal) deleteModal.style.display = 'none';
-                if (event.target === upiModal) closeUpiModal();
-            });
-        </script>
-
-        <!-- Script for gallery/share same as productDetail -->
-        <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                // Modal Logic
-                const modal = document.getElementById("addItemModal");
-                const btn = document.getElementById("addItemBtn");
-                const span = document.getElementsByClassName("close")[0];
-
-                if (btn) {
-                    btn.onclick = function () {
-                        modal.style.display = "block";
-                    }
+                    modal.style.display = 'flex';
                 }
 
-                if (span) {
-                    span.onclick = function () {
-                        modal.style.display = "none";
-                    }
+                function closeItemModal() {
+                    document.getElementById('itemModal').style.display = 'none';
                 }
 
-                window.onclick = function (event) {
-                    if (event.target == modal) {
-                        modal.style.display = "none";
-                    }
-                    if (event.target == document.getElementById("deleteModal")) {
-                        closeDeleteModal();
-                    }
+                function openUpiModal() {
+                    document.getElementById('upiModal').style.display = 'block';
                 }
 
-                // Existing Logic
-                const shareBtn = document.getElementById('shareBtn');
-                if (shareBtn) {
-                    shareBtn.addEventListener('click', async () => {
-                        if (navigator.share) {
-                            try {
-                                await navigator.share({
-                                    title: '<%= shop.shopName %>',
-                                    text: 'Check out this shop on Local Bazzar!',
-                                    url: window.location.href
-                                });
-                            } catch (err) { console.log(err); }
-                        } else {
-                            navigator.clipboard.writeText(window.location.href);
-                            alert('Link copied!');
-                        }
-                    });
+                function closeUpiModal() {
+                    document.getElementById('upiModal').style.display = 'none';
                 }
 
-                const galleryImages = document.querySelectorAll('.gallery-img');
-                const mainImage = document.getElementById('mainImage');
-                if (mainImage && galleryImages.length > 0) {
-                    galleryImages.forEach(img => {
-                        img.addEventListener('click', () => {
-                            mainImage.src = img.src;
-                        });
-                    });
-                }
-            });
+                // Close modals when clicking outside
+                window.addEventListener('click', function (event) {
+                    const itemModal = document.getElementById('itemModal');
+                    const addModal = document.getElementById('addItemModal');
+                    const deleteModal = document.getElementById('deleteModal');
+                    const upiModal = document.getElementById('upiModal');
 
-            // Delete Modal Functions
-            function openDeleteConfirm(shopId, itemId) {
-                const modal = document.getElementById('deleteModal');
-                const form = document.getElementById('deleteForm');
-                form.action = `/shops/${shopId}/items/${itemId}?_method=DELETE`;
-                modal.style.display = "flex"; // Flex to center if we want, or block
-                modal.style.alignItems = "center";
-                modal.style.justifyContent = "center";
-            }
-
-            function closeDeleteModal() {
-                const modal = document.getElementById('deleteModal');
-                modal.style.display = "none";
-            }
-
-            // Image Compression Logic
-            document.getElementById('itemImageInput').addEventListener('change', async function (event) {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                // 500KB limit
-                const MAX_SIZE = 500 * 1024;
-
-                if (file.size <= MAX_SIZE) return;
-
-                const submitBtn = document.getElementById('addItemSubmitBtn');
-                const originalText = submitBtn.innerText;
-                submitBtn.innerText = "Compressing Image...";
-                submitBtn.disabled = true;
-
-                try {
-                    const compressedFile = await compressImage(file, MAX_SIZE);
-
-                    // Replace the file input with compressed file
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(compressedFile);
-                    event.target.files = dataTransfer.files;
-
-                    console.log(`Compressed: ${(compressedFile.size / 1024).toFixed(2)}KB (Original: ${(file.size / 1024).toFixed(2)}KB)`);
-                } catch (err) {
-                    console.error("Compression failed", err);
-                } finally {
-                    submitBtn.innerText = originalText;
-                    submitBtn.disabled = false;
-                }
-            });
-
-            function compressImage(file, maxSize) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = (event) => {
-                        const img = new Image();
-                        img.src = event.target.result;
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            let width = img.width;
-                            let height = img.height;
-
-                            // Initial resize if huge
-                            const MAX_DIMENSION = 1920;
-                            if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-                                if (width > height) {
-                                    height *= MAX_DIMENSION / width;
-                                    width = MAX_DIMENSION;
-                                } else {
-                                    width *= MAX_DIMENSION / height;
-                                    height = MAX_DIMENSION;
-                                }
-                            }
-
-                            canvas.width = width;
-                            canvas.height = height;
-
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
-
-                            // Recursive compression
-                            let quality = 0.9;
-
-                            function tryCompress() {
-                                canvas.toBlob((blob) => {
-                                    if (blob.size <= maxSize || quality <= 0.1) {
-                                        const newFile = new File([blob], file.name, {
-                                            type: 'image/jpeg',
-                                            lastModified: Date.now(),
-                                        });
-                                        resolve(newFile);
-                                    } else {
-                                        quality -= 0.1;
-                                        tryCompress();
-                                    }
-                                }, 'image/jpeg', quality);
-                            }
-
-                            tryCompress();
-                        };
-                        img.onerror = reject;
-                    };
-                    reader.onerror = reject;
+                    if (event.target === itemModal) closeItemModal();
+                    if (event.target === addModal) addModal.style.display = 'none';
+                    if (event.target === deleteModal) deleteModal.style.display = 'none';
+                    if (event.target === upiModal) closeUpiModal();
                 });
-            }
-        </script>
-    </body>
+            </script>
+
+            <!-- Script for gallery/share same as productDetail -->
+            <script>
+                document.addEventListener("DOMContentLoaded", () => {
+                    // Modal Logic
+                    const modal = document.getElementById("addItemModal");
+                    const btn = document.getElementById("addItemBtn");
+                    const span = document.getElementsByClassName("close")[0];
+
+                    if (btn) {
+                        btn.onclick = function () {
+                            modal.style.display = "block";
+                        }
+                    }
+
+                    if (span) {
+                        span.onclick = function () {
+                            modal.style.display = "none";
+                        }
+                    }
+
+                    window.onclick = function (event) {
+                        if (event.target == modal) {
+                            modal.style.display = "none";
+                        }
+                        if (event.target == document.getElementById("deleteModal")) {
+                            closeDeleteModal();
+                        }
+                    }
+
+                    // Existing Logic
+                    const shareBtn = document.getElementById('shareBtn');
+                    if (shareBtn) {
+                        shareBtn.addEventListener('click', async () => {
+                            if (navigator.share) {
+                                try {
+                                    await navigator.share({
+                                        title: '<%= shop.shopName %>',
+                                        text: 'Check out this shop on Local Bazzar!',
+                                        url: window.location.href
+                                    });
+                                } catch (err) { console.log(err); }
+                            } else {
+                                navigator.clipboard.writeText(window.location.href);
+                                alert('Link copied!');
+                            }
+                        });
+                    }
+
+                    const galleryImages = document.querySelectorAll('.gallery-img');
+                    const mainImage = document.getElementById('mainImage');
+                    if (mainImage && galleryImages.length > 0) {
+                        galleryImages.forEach(img => {
+                            img.addEventListener('click', () => {
+                                mainImage.src = img.src;
+                            });
+                        });
+                    }
+                });
+
+                // Edit Item Modal Functions
+                function openEditItemModal(itemId, itemName, itemPrice, itemQuantity, itemCategory) {
+                    const modal = document.getElementById('editItemModal');
+                    document.getElementById('editItemId').value = itemId;
+                    document.getElementById('editItemName').value = itemName;
+                    document.getElementById('editItemPrice').value = itemPrice;
+                    document.getElementById('editItemQuantity').value = itemQuantity;
+
+                    const categorySelect = document.getElementById('editItemCategory');
+                    if (categorySelect && itemCategory) {
+                        categorySelect.value = itemCategory;
+                    }
+
+                    // Set form action
+                    const form = document.getElementById('editItemForm');
+                    form.action = `/shops/<%= shop._id %>/items/${itemId}?_method=PUT`;
+
+                    modal.style.display = "block";
+                }
+
+                function closeEditItemModal() {
+                    const modal = document.getElementById('editItemModal');
+                    modal.style.display = "none";
+                }
+
+                // Delete Modal Functions
+                function openDeleteConfirm(shopId, itemId) {
+                    const modal = document.getElementById('deleteModal');
+                    const form = document.getElementById('deleteForm');
+                    form.action = `/shops/${shopId}/items/${itemId}?_method=DELETE`;
+                    modal.style.display = "flex"; // Flex to center if we want, or block
+                    modal.style.alignItems = "center";
+                    modal.style.justifyContent = "center";
+                }
+
+                function closeDeleteModal() {
+                    const modal = document.getElementById('deleteModal');
+                    modal.style.display = "none";
+                }
+
+                // Image Compression Logic
+                document.getElementById('itemImageInput').addEventListener('change', async function (event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    // 500KB limit
+                    const MAX_SIZE = 500 * 1024;
+
+                    if (file.size <= MAX_SIZE) return;
+
+                    const submitBtn = document.getElementById('addItemSubmitBtn');
+                    const originalText = submitBtn.innerText;
+                    submitBtn.innerText = "Compressing Image...";
+                    submitBtn.disabled = true;
+
+                    try {
+                        const compressedFile = await compressImage(file, MAX_SIZE);
+
+                        // Replace the file input with compressed file
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(compressedFile);
+                        event.target.files = dataTransfer.files;
+
+                        console.log(`Compressed: ${(compressedFile.size / 1024).toFixed(2)}KB (Original: ${(file.size / 1024).toFixed(2)}KB)`);
+                    } catch (err) {
+                        console.error("Compression failed", err);
+                    } finally {
+                        submitBtn.innerText = originalText;
+                        submitBtn.disabled = false;
+                    }
+                });
+
+                function compressImage(file, maxSize) {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = (event) => {
+                            const img = new Image();
+                            img.src = event.target.result;
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                let width = img.width;
+                                let height = img.height;
+
+                                // Initial resize if huge
+                                const MAX_DIMENSION = 1920;
+                                if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+                                    if (width > height) {
+                                        height *= MAX_DIMENSION / width;
+                                        width = MAX_DIMENSION;
+                                    } else {
+                                        width *= MAX_DIMENSION / height;
+                                        height = MAX_DIMENSION;
+                                    }
+                                }
+
+                                canvas.width = width;
+                                canvas.height = height;
+
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+
+                                // Recursive compression
+                                let quality = 0.9;
+
+                                function tryCompress() {
+                                    canvas.toBlob((blob) => {
+                                        if (blob.size <= maxSize || quality <= 0.1) {
+                                            const newFile = new File([blob], file.name, {
+                                                type: 'image/jpeg',
+                                                lastModified: Date.now(),
+                                            });
+                                            resolve(newFile);
+                                        } else {
+                                            quality -= 0.1;
+                                            tryCompress();
+                                        }
+                                    }, 'image/jpeg', quality);
+                                }
+
+                                tryCompress();
+                            };
+                            img.onerror = reject;
+                        };
+                        reader.onerror = reject;
+                    });
+                }
+            </script>
+        </body>

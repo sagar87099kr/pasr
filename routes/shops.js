@@ -87,6 +87,10 @@ router.get("/shops", isLogedin, wrapAsync(async (req, res) => {
     }
 
     if (lat && lng) {
+        console.log(`\n========== SHOP DISTANCE QUERY DEBUG ==========`);
+        console.log(`User Location: Lat=${lat}, Lng=${lng}`);
+        console.log(`Search Range: ${range}km (${range * 1000}m)`);
+
         let query = {
             geometry: {
                 $near: {
@@ -103,6 +107,7 @@ router.get("/shops", isLogedin, wrapAsync(async (req, res) => {
         // Filter by category if specified
         if (req.query.category && req.query.category !== 'All Shops') {
             query.category = req.query.category;
+            console.log(`Category Filter: ${req.query.category}`);
         }
 
         // Filter by opening hours if "Open Now" is checked
@@ -112,10 +117,25 @@ router.get("/shops", isLogedin, wrapAsync(async (req, res) => {
             const currentTime = now.toLocaleTimeString('en-US', options);
             query.openingTime = { $lte: currentTime };
             query.closingTime = { $gte: currentTime };
+            console.log(`Open Now Filter: Current time = ${currentTime}`);
         }
+
+        console.log(`Query:`, JSON.stringify(query, null, 2));
+
+        // Check total verified shops first
+        const totalVerifiedShops = await Shop.countDocuments({ verified: true });
+        console.log(`Total Verified Shops in DB: ${totalVerifiedShops}`);
+
+        // Check if any shops have geometry
+        const shopsWithGeometry = await Shop.countDocuments({
+            verified: true,
+            'geometry.coordinates': { $exists: true, $ne: [] }
+        });
+        console.log(`Verified Shops with Geometry: ${shopsWithGeometry}`);
 
         shops = await Shop.find(query).populate('owner');
         console.log(`Found ${shops.length} shops within ${range}km of (${lat}, ${lng})`);
+        console.log(`==============================================\n`);
     }
 
     res.render("pages/shops.ejs", { shops, lat, lng, range, queryParams: req.query });
@@ -265,6 +285,7 @@ router.delete("/shops/:id", isLogedin, isShopOwner, wrapAsync(async (req, res) =
 router.post("/shops/:id/items", isLogedin, isShopOwner, upload.single("itemImage"), validateItem, wrapAsync(async (req, res) => {
     console.log("Create Item Route Hit");
     console.log("Body:", req.body);
+    console.log("Item Category:", req.body.item.itemCategory);
     console.log("File:", req.file);
 
     const { id } = req.params;
@@ -288,6 +309,22 @@ router.post("/shops/:id/items", isLogedin, isShopOwner, upload.single("itemImage
     await shop.save();
 
     req.flash("success", "Your item was added");
+    res.redirect(`/shops/${id}`);
+}));
+
+// Update Item
+router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
+    const { id, itemId } = req.params;
+    const { name, price, quantity, itemCategory } = req.body.item;
+
+    await Item.findByIdAndUpdate(itemId, {
+        name,
+        price,
+        quantity,
+        itemCategory
+    });
+
+    req.flash("success", "Item updated successfully");
     res.redirect(`/shops/${id}`);
 }));
 

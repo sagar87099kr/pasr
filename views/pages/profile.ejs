@@ -1,8 +1,8 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
   <script>
     window.mapToken = "<%= mapToken %>";
-    window.allData = <%- JSON.stringify(providerData) %>;
-    window.EXISTING_DAYS = <%- JSON.stringify(typeof existingDays !== "undefined" ? existingDays : []) %>;
+    window.allData = <% - JSON.stringify(providerData) %>;
+    window.EXISTING_DAYS = <% - JSON.stringify(typeof existingDays !== "undefined" ? existingDays : []) %>;
     window.IS_OWNER = <%= (currUser && providerData.owner._id.toString() === currUser._id.toString()) ? 'true' : 'false' %>;
   </script>
 
@@ -90,11 +90,6 @@
               <!-- Contacts (name/address/phone) -->
               <div class="info-grid" id="pContacts">
                 <div class="info-item">
-                  <span class="label">Phone</span>
-                  <span class="value" id="pPhone">+91 <%=providerData.owner.username %> , <%=providerData.phoneNO%>
-                  </span>
-                </div>
-                <div class="info-item">
                   <span class="label">Address</span>
                   <span class="value" id="pAddress">
                     <%=providerData.location %>
@@ -105,6 +100,31 @@
                   <span class="value" id="pLocation">India</span>
                 </div>
               </div>
+
+              <!-- Contact Action Buttons -->
+              <div class="contact-actions" style="margin-top: 12px; display: grid; gap: 10px;">
+                <a href="https://wa.me/91<%=providerData.owner.username %>?text=Hi%20<%=encodeURIComponent(providerData.company)%>,%20I%20want%20to%20book%20your%20service"
+                  class="btn-action btn-whatsapp" target="_blank"
+                  style="background: #25D366; color: white; padding: 12px 16px; border-radius: 12px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border: 1px solid #1da851; transition: background 0.2s;">
+                  <i class="fa-brands fa-whatsapp" style="font-size: 18px;"></i>
+                  Book Service on WhatsApp
+                </a>
+                <a href="tel:+91<%=providerData.owner.username %>" class="btn-action btn-call"
+                  style="background: #2563eb; color: white; padding: 12px 16px; border-radius: 12px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; border: 1px solid #1d4ed8; transition: background 0.2s;">
+                  <i class="fa-solid fa-phone" style="font-size: 16px;"></i>
+                  Call Me
+                </a>
+              </div>
+
+              <style>
+                .btn-whatsapp:hover {
+                  background: #1da851 !important;
+                }
+
+                .btn-call:hover {
+                  background: #1d4ed8 !important;
+                }
+              </style>
               <div class="actions">
                 <%if (currUser && providerData.owner._id.equals(currUser._id)){%>
                   <form action="/provider/<%=providerData._id  %>/edit">
@@ -264,30 +284,319 @@
             </form>
             <% } %>
         </div>
-        <!-- MAP below profile but on RIGHT (below calendar) -->
-        <section class="cardin map-card" id="mapSection">
+        <!-- IMAGE GALLERY below calendar but on RIGHT (replaces map) -->
+        <section class="cardin gallery-card" id="gallerySection">
           <div class="head">
             <div>
-              <h2>Map</h2>
-              <p class="muted">See me on map</p>
-            </div>
-
-          </div>
-
-          <div class="map-box">
-
-            <div class="map mb-3 mt-3">
-              <div id="map"></div>
-
+              <h2>Gallery</h2>
+              <p class="muted">Provider images and work samples</p>
             </div>
           </div>
+
+          <!-- Upload Form (Owner Only) -->
+          <% if (currUser && providerData.owner._id.equals(currUser._id)) { %>
+            <form action="/provider/<%= providerData._id %>/add-image" method="POST" enctype="multipart/form-data"
+              class="gallery-upload-form">
+              <div class="upload-group">
+                <div class="field">
+                  <label for="galleryImage">Upload Image</label>
+                  <input type="file" id="galleryImage" name="image" accept="image/*" required>
+                </div>
+                <div class="field">
+                  <label for="imageDescription">Description</label>
+                  <input type="text" id="imageDescription" name="description" placeholder="Describe this image..."
+                    maxlength="200">
+                </div>
+                <button type="submit" class="btn primary">
+                  <i class="fa-solid fa-upload"></i> Add Image
+                </button>
+              </div>
+            </form>
+            <div class="divider"></div>
+            <% } %>
+
+              <!-- Image Grid -->
+              <div class="gallery-grid">
+                <% if (providerData.Image && providerData.Image.length> 0) { %>
+                  <% providerData.Image.forEach((img, index)=> { %>
+                    <div class="gallery-item">
+                      <div class="gallery-img-wrap"
+                        onclick="openImageModal('<%= img.url %>', '<%= (img.description || '').replace(/'/g, '\\\'') %>', <%= index %>)">
+                        <img src="<%= img.url %>" alt="<%= img.description || 'Gallery image' %>">
+                      </div>
+                      <% if (img.description) { %>
+                        <p class="gallery-desc">
+                          <%= img.description %>
+                        </p>
+                        <% } %>
+                          <% if (currUser && providerData.owner._id.equals(currUser._id)) { %>
+                            <!-- No hidden form needed anymore -->
+                            <% } %>
+                    </div>
+                    <% }) %>
+                      <% } else { %>
+                        <p class="muted" style="grid-column: 1/-1; text-align: center; padding: 40px 20px;">
+                          No images uploaded yet.
+                          <% if (currUser && providerData.owner._id.equals(currUser._id)) { %>
+                            <br>Upload your first image above!
+                            <% } %>
+                        </p>
+                        <% } %>
+              </div>
         </section>
+
+        <!-- Image Modal for Full View -->
+        <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+          <span class="modal-close">&times;</span>
+          <img class="modal-image" id="modalImage" src="" alt="">
+          <div class="modal-caption" id="modalCaption"></div>
+
+          <!-- Delete Form in Modal -->
+          <div id="modalDeleteBtnContainer" style="display: none; margin-top: 15px;">
+            <form id="modalDeleteForm" method="POST"
+              onsubmit="return confirm(`Are you sure you want to delete ${this.getAttribute('data-desc') || 'this image'}? This action cannot be undone.`);">
+              <button type="submit" class="btn btn-danger">
+                <i class="fa-solid fa-trash"></i> Delete Image
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <style>
+          /* Gallery Upload Form */
+          .gallery-upload-form {
+            margin-bottom: 20px;
+          }
+
+          .upload-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+
+          .upload-group .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+          }
+
+          .upload-group label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #374151;
+          }
+
+          .upload-group input[type="file"],
+          .upload-group input[type="text"] {
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+          }
+
+          /* Gallery Grid */
+          .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+          }
+
+          .gallery-item {
+            position: relative;
+            background: #f9fafb;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s;
+          }
+
+          .gallery-img-wrap {
+            cursor: pointer;
+            aspect-ratio: 1;
+            overflow: hidden;
+            background: #e5e7eb;
+          }
+
+          .gallery-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+          }
+
+          .gallery-img-wrap:hover img {
+            transform: scale(1.05);
+          }
+
+          .gallery-desc {
+            padding: 8px 12px;
+            font-size: 13px;
+            color: #6b7280;
+            margin: 0;
+            background: white;
+          }
+
+          .gallery-delete-form {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            margin: 0;
+          }
+
+          .btn-delete-img {
+            background: rgba(220, 38, 38, 0.9);
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            z-index: 10;
+          }
+
+          .btn-delete-img:hover {
+            background: rgba(220, 38, 38, 1);
+            transform: scale(1.1);
+          }
+
+          /* Image Modal */
+          .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+          }
+
+          .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+          }
+
+          .modal-close:hover {
+            color: #bbb;
+          }
+
+          .modal-image {
+            max-width: 90%;
+            max-height: 80vh;
+            object-fit: contain;
+            animation: zoomIn 0.3s;
+          }
+
+          .modal-caption {
+            color: #ccc;
+            padding: 16px;
+            text-align: center;
+            font-size: 16px;
+            max-width: 80%;
+          }
+
+          @keyframes zoomIn {
+            from {
+              transform: scale(0.8);
+              opacity: 0;
+            }
+
+            to {
+              transform: scale(1);
+              opacity: 1;
+            }
+          }
+
+          /* Responsive */
+          @media (max-width: 768px) {
+            .gallery-grid {
+              grid-template-columns: repeat(3, 1fr);
+              gap: 8px;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .gallery-grid {
+              grid-template-columns: repeat(3, 1fr);
+              gap: 6px;
+            }
+          }
+        </style>
+
+        <script>
+          let currentImageIndex = null;
+          const isOwner = <%= (currUser && providerData.owner._id.equals(currUser._id)) ? 'true' : 'false' %>;
+
+          function openImageModal(imageUrl, description, index) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            const caption = document.getElementById('modalCaption');
+            const deleteBtnContainer = document.getElementById('modalDeleteBtnContainer');
+
+            modal.style.display = 'flex';
+            modalImg.src = imageUrl;
+            caption.textContent = description;
+
+            // Set current index for deletion
+            currentImageIndex = index;
+
+            // Show delete button only if owner
+            if (isOwner && index !== undefined && index !== null) {
+              deleteBtnContainer.style.display = 'block';
+              const deleteForm = document.getElementById('modalDeleteForm');
+              if (deleteForm) {
+                const deleteBaseUrl = "/provider/<%= providerData._id %>/delete-image/";
+                deleteForm.action = `${deleteBaseUrl}${index}?_method=DELETE`;
+                deleteForm.setAttribute('data-desc', description);
+              }
+            } else {
+              deleteBtnContainer.style.display = 'none';
+            }
+          }
+
+          function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+            currentImageIndex = null;
+          }
+
+
+          // Close modal on Escape key
+          document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+              closeImageModal();
+            }
+          });
+
+          // Override modal click to prevent closing when clicking content
+          document.addEventListener('DOMContentLoaded', function () {
+            const modal = document.getElementById('imageModal');
+            if (modal) {
+              modal.onclick = function (event) {
+                if (event.target === modal) {
+                  closeImageModal();
+                }
+              };
+            }
+          });
+        </script>
 
       </div>
 
     </section>
     <!-- </main> -->
     <!-- <script src="/js/script.js"></script> -->
-    <script src="/js/map.js"></script>
     <script src="/js/profile.js"></script>
   </body>

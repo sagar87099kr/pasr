@@ -14,6 +14,10 @@ const itemSchema = new Schema({
         type: Number,
         required: true
     },
+    itemCategory: {
+        type: String,
+        default: ""
+    },
     img: {
         url: String,
         filename: String
@@ -22,6 +26,7 @@ const itemSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "Shop"
     },
+
     createdAt: {
         type: Date,
         default: Date.now

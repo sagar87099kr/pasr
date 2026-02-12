@@ -59,9 +59,7 @@ module.exports.shopSchema = Joi.object({
                 const closingMinutes = closing[0] * 60 + closing[1];
 
                 if (closingMinutes <= openingMinutes) {
-                    return helpers.error('any.invalid', {
-                        message: 'Closing time must be after opening time'
-                    });
+                    return helpers.message('Closing time must be after opening time');
                 }
             }
             return value;
@@ -73,5 +71,6 @@ module.exports.itemSchema = Joi.object({
         name: Joi.string().required(),
         price: Joi.number().required().min(0),
         quantity: Joi.number().required().min(0),
+        itemCategory: Joi.string().allow(""),
     }).required()
 });
