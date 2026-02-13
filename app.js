@@ -59,7 +59,7 @@ app.use(helmet({ contentSecurityPolicy: false })); // CSP is complex, disabling 
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 1000, // Increased to 1000 to prevent blocking owner/users during normal use
   standardHeaders: true,
   legacyHeaders: false,
 });
