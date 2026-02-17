@@ -7,9 +7,7 @@ const Shop = require("../data/shops.js");
 const passport = require("passport");
 const { validatecustomer, saveRedirectUrl, isLogedin, isadmin } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
-const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
-const mapToken = process.env.MAP_TOKEN;
-const geocodingClient = mbxGeocoding({ accessToken: mapToken });
+const { forwardGeocode } = require("../utils/geocoder");
 
 // login route for all 
 // login route for all 
@@ -28,17 +26,14 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
         const { name, username, password, address } = req.body.customer;
 
         // Geocode the address to get coordinates
-        const geoData = await geocodingClient.forwardGeocode({
-            query: address,
-            limit: 1
-        }).send();
+        const geoData = await forwardGeocode(address);
 
         // Try to extract pincode from geocoding result
         let pincode = null;
         if (geoData.body.features.length > 0) {
             const context = geoData.body.features[0].context;
             if (context) {
-                const pinCtx = context.find(c => c.id.startsWith('postcode'));
+                const pinCtx = context.find(c => c.id.startsWith('postcode') || c.id === 'postal_code');
                 if (pinCtx) pincode = parseInt(pinCtx.text);
             }
         }
@@ -147,10 +142,10 @@ router.put("/customer/update/:id", isLogedin, wrapAsync(async (req, res) => {
     // Geocode the new address to get coordinates
     let geometry;
     try {
-        const coordinate = await geocodingClient.forwardGeocode({
-            query: address,
-            limit: 1
-        }).send();
+        const coordinate = await forwardGeocode(address);
+        if (!coordinate.body.features.length) {
+            throw new Error("No location found for this address");
+        }
         geometry = coordinate.body.features[0].geometry;
     } catch (e) {
         console.error("Geocoding failed", e);

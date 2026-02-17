@@ -13,17 +13,6 @@
    --free: #16a34a;
    --busy: #dc2626;
    --today: #f59e0b;
-
-
-   --muted: #9fb2d6;
-   --border: rgba(255, 255, 255, .12);
-
-   --free: #28c76f;
-   --busy: #ff4d4f;
-
-   --shadow: 0 10px 30px rgba(0, 0, 0, .35);
-
-
  }
 
  * {
@@ -117,24 +106,54 @@
  }
 
  /* Profile image box */
- .profile-img {
+ .profile-img-container {
    width: 250px;
-   height: 375px;
-   /* ✅ */
-   border-radius: 16px;
-   overflow: hidden;
-   border: 1px solid var(--border);
+   height: 250px;
+   border-radius: 50%;
+   /* overflow: hidden; Removed to show share button */
+   border: 4px solid var(--primary);
    box-shadow: 0 10px 22px rgba(16, 24, 40, .10);
    background: #fff;
+   position: relative;
+   cursor: pointer;
+   margin: 0 auto;
  }
 
- .profile-img img {
+ .profile-img {
    width: 100%;
    height: 100%;
    object-fit: cover;
-   /* ✅ cover */
    object-position: center;
    display: block;
+   transition: transform 0.3sease;
+ }
+
+ .profile-img-container:hover .profile-img {
+   transform: scale(1.05);
+ }
+
+ .btn-share {
+   position: absolute;
+   bottom: 15px;
+   right: 15px;
+   width: 40px;
+   height: 40px;
+   border-radius: 50%;
+   background: var(--primary);
+   color: white;
+   border: 2px solid white;
+   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+   transition: all 0.2s;
+   z-index: 10;
+ }
+
+ .btn-share:hover {
+   transform: scale(1.1);
+   background: var(--primary2);
  }
 
  .profile-info {
@@ -243,56 +262,28 @@
  }
 
  /* =============================
-   CALENDAR (right) width 600, height auto
+   CALENDAR (New Structure)
 ============================= */
- /* public/shedule.css (CSS) */
-
-
- .cal-wrap {
-   width: 600px;
-   height: 400px;
-   border: 1px solid var(--border);
-   border-radius: 16px;
+ #calendarApp {
+   width: 100%;
+   background: var(--card);
+   border-radius: var(--r);
+   padding: 20px;
    box-shadow: var(--shadow);
-   padding: 14px 14px 10px;
-   display: flex;
-   flex-direction: column;
-   gap: 10px;
-   background: rgba(255, 255, 255, .05);
  }
 
- @media (max-width: 640px) {
-   body {
-     place-items: start;
-     padding: 12px;
-   }
-
-   .cal-wrap {
-     width: 100%;
-     height: 400px;
-   }
- }
-
- .cal-topbar {
+ .cal-header {
    display: flex;
    justify-content: space-between;
    align-items: center;
-   gap: 10px;
+   margin-bottom: 15px;
  }
 
- .cal-title {
-   display: flex;
-   flex-direction: column;
-   gap: 2px;
- }
-
- .cal-h1 {
+ .cal-header h3 {
+   font-size: 18px;
    font-weight: 700;
- }
-
- .cal-h2 {
-   font-size: 12px;
-   color: var(--muted);
+   margin: 0;
+   color: var(--text);
  }
 
  .cal-nav {
@@ -300,154 +291,199 @@
    gap: 8px;
  }
 
- .cal-legend {
-   display: flex;
-   align-items: center;
+ .btn-nav {
+   background: transparent;
+   border: 1px solid var(--border);
+   border-radius: 8px;
+   padding: 6px 12px;
+   cursor: pointer;
+   color: var(--text);
+   transition: all 0.2s;
+ }
+
+ .btn-nav:hover {
+   background: #f1f5f9;
+   border-color: var(--primary);
+   color: var(--primary);
+ }
+
+ .cal-days-header {
+   display: grid;
+   grid-template-columns: repeat(7, 1fr);
    gap: 8px;
-   flex-wrap: wrap;
-   font-size: 12px;
+   margin-bottom: 8px;
+   text-align: center;
+   font-weight: 600;
+   font-size: 14px;
    color: var(--muted);
  }
 
- .small {
-   margin-left: auto;
- }
-
- .dot {
-   width: 10px;
-   height: 10px;
-   border-radius: 50%;
-   display: inline-block;
-   border: 1px solid var(--border);
- }
-
- .dot.free {
-   background: var(--free);
- }
-
- .dot.busy {
-   background: var(--busy);
- }
-
- .months {
-   flex: 1;
-   overflow: auto;
+ .cal-grid {
    display: grid;
-   grid-template-columns: 1fr;
-   /* one month visible */
-   gap: 10px;
-   padding-right: 4px;
+   grid-template-columns: repeat(7, 1fr);
+   gap: 8px;
+   position: relative;
+   z-index: 10;
+   background: pink;
+   /* DEBUG: Visible Hitbox */
+   border: 2px solid red;
+   /* DEBUG: Visible Hitbox */
+   min-height: 200px;
+   /* Force height */
  }
 
- .month {
-   border: 1px solid var(--border);
-   border-radius: 14px;
-   padding: 10px;
-   background: rgba(15, 26, 51, .55);
- }
-
- .month-title {
+ .cal-day {
+   aspect-ratio: 1;
    display: flex;
-   justify-content: space-between;
-   align-items: baseline;
+   align-items: center;
+   justify-content: center;
+   border-radius: 8px;
+   font-size: 14px;
+   font-weight: 500;
+   color: var(--text);
+   background: #f8fafc;
+   user-select: none;
+   cursor: pointer !important;
+   /* Force pointer cursor */
+   pointer-events: auto !important;
+   /* Force events */
+   position: relative;
+   z-index: 11;
+ }
+
+ /* MODAL FIXES */
+ .modal-footer {
+   border-top: 1px solid var(--border);
+   padding: 12px;
+   background: var(--card);
+   border-bottom-left-radius: 16px;
+   border-bottom-right-radius: 16px;
+   display: flex !important;
+   justify-content: flex-end !important;
+   gap: 10px;
+ }
+
+ .modal-footer .btn {
+   margin: 0;
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 14px;
+   min-height: 40px;
+ }
+
+ .modal-footer .btn-secondary {
+   background: #f1f5f9;
+   color: var(--text);
+   border: 1px solid var(--border);
+ }
+
+ .modal-footer .btn-primary {
+   background: var(--primary);
+   color: white;
+   border: 1px solid transparent;
+ }
+
+ .modal-footer .btn-primary:hover {
+   background: var(--primary2);
+ }
+
+ .cal-day.empty {
+   background: transparent;
+ }
+
+ .cal-day.today {
+   border-color: var(--today);
+   font-weight: 700;
+   box-shadow: 0 0 0 1px var(--today);
+ }
+
+
+ /* Status Colors with Higher Specificity */
+ #calendarApp .cal-day.free {
+   background-color: var(--free) !important;
+   color: white !important;
+   border-color: var(--free) !important;
+ }
+
+ #calendarApp .cal-day.busy {
+   background-color: var(--busy) !important;
+   color: white !important;
+   border-color: var(--busy) !important;
+   opacity: 1;
+   /* Ensure not transparent */
+ }
+
+ /* Modal Styles */
+ .slot-row {
    margin-bottom: 8px;
  }
 
- .month-title .name {
-   font-weight: 700;
-   font-size: 14px;
+ .slot-row .form-control {
+   max-width: 140px;
  }
 
- .month-title .year {
-   font-size: 12px;
-   color: var(--muted);
- }
-
- .dow {
-   display: grid;
-   grid-template-columns: repeat(7, 1fr);
-   gap: 6px;
-   font-size: 10px;
-   color: var(--muted);
-   margin-bottom: 6px;
- }
-
- .dow div {
-   text-align: center;
- }
-
- .grid {
-   display: grid;
-   grid-template-columns: repeat(7, 1fr);
-   gap: 6px;
- }
-
- .day {
-   height: 28px;
-   border-radius: 10px;
-   border: 1px solid var(--border);
-   color: var(--text);
-   display: grid;
-   place-items: center;
-   font-size: 12px;
+ /* Hover effects for owner */
+ .cal-day.clickable:hover {
+   transform: scale(1.05);
+   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
    cursor: pointer;
-   position: relative;
-   user-select: none;
-   padding: 0;
+   z-index: 2;
  }
 
- /* Full background color */
- .day.free {
-   background: #22c55e;
-   border-color: #16a34a;
-   color: white;
- }
-
- .day.busy {
-   background: #ef4444;
-   border-color: #dc2626;
-   color: white;
- }
-
- .day.muted {
-   opacity: .35;
+ .cal-day.readonly {
    cursor: default;
-   border-style: dashed;
-   background: rgba(255, 255, 255, .02);
  }
 
- .cal-actions {
+ .cal-footer {
+   margin-top: 15px;
    display: flex;
-   justify-content: flex-end;
-   padding-top: 6px;
+   justify-content: space-between;
+   align-items: center;
+   flex-wrap: wrap;
+   gap: 10px;
  }
 
- .btn {
-   border: 1px solid var(--border);
-   background: rgba(255, 255, 255, .06);
-   color: var(--text);
-   padding: 8px 12px;
-   border-radius: 12px;
+ .cal-legend {
+   display: flex;
+   gap: 12px;
+   font-size: 13px;
+   color: var(--muted);
+ }
+
+ .legend-item {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+ }
+
+ .legend-item .dot {
+   width: 10px;
+   height: 10px;
+   border-radius: 50%;
+ }
+
+ .legend-item .dot.free {
+   background-color: #22c55e;
+ }
+
+ .legend-item .dot.busy {
+   background-color: #ef4444;
+ }
+
+ .btn-save {
+   background: var(--primary);
+   color: white;
+   border: none;
+   padding: 8px 16px;
+   border-radius: 8px;
+   font-weight: 600;
    cursor: pointer;
-   font-weight: 700;
+   transition: background 0.2s;
  }
 
- .btn:hover {
-   background: rgba(255, 255, 255, .10);
- }
-
- .btn:disabled {
-   opacity: .5;
-   cursor: not-allowed;
- }
-
- .btn.ghost {
-   padding: 8px 10px;
- }
-
- .btn.primary {
-   background: rgba(100, 160, 255, .18);
-   border-color: rgba(100, 160, 255, .35);
+ .btn-save:hover {
+   background: var(--primary2);
  }
 
  /* =============================
@@ -755,13 +791,6 @@
 
  /* =============================
    MOBILE ORDER (exact)
-   1 image
-   2 name/address/phone
-   3 description
-   4 calendar
-   5 map
-   6 review form & rating
-   7 show reviews
 ============================= */
  @media (max-width: 1260px) {
    .layout {
@@ -777,20 +806,8 @@
      width: 100%;
    }
 
-   /* order: profile -> calendar -> map -> reviews */
-   .left {
-     order: 1;
-   }
-
-   .right {
-     order: 2;
-   }
-
    /* Put everything into one flow and control order */
-   .left {
-     display: contents;
-   }
-
+   .left,
    .right {
      display: contents;
    }
@@ -799,20 +816,25 @@
      order: 1;
    }
 
-   #gallerySection {
+   #calendarApp {
      order: 2;
    }
 
-   #calendarSection {
+   #descriptionCard {
      order: 3;
    }
 
-   #mapSection {
+   #gallerySection {
      order: 4;
    }
 
-   #reviewsSection {
+   /* Updated ID */
+   #mapSection {
      order: 5;
+   }
+
+   #reviewsSection {
+     order: 6;
    }
 
    /* inside profile: image first, then contacts, then description */
@@ -820,10 +842,9 @@
      grid-template-columns: 1fr;
    }
 
-   .profile-img {
-     width: 100%;
-     height: 375px;
-     /* keep requested image height */
+   .profile-img-container {
+     width: 200px;
+     height: 200px;
    }
 
    /* ensure text never gets clipped */

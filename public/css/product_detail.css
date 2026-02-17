@@ -345,3 +345,196 @@ body {
         gap: 24px;
     }
 }
+
+/* --- Shop Profile Redesign --- */
+.shop-profile-header {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.shop-profile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #60a5fa 100%);
+    z-index: 0;
+}
+
+.shop-profile-img-container {
+    position: relative;
+    z-index: 1;
+    margin-top: 40px;
+    /* Push down to overlap background */
+}
+
+.shop-profile-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid white;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.3s;
+    background-color: #fff;
+}
+
+.shop-profile-img:hover {
+    transform: scale(1.05);
+}
+
+.shop-details-container {
+    z-index: 1;
+    width: 100%;
+    max-width: 800px;
+}
+
+.shop-name-large {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 5px;
+}
+
+.shop-meta-badges {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.meta-badge {
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: #f3f4f6;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.shop-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    text-align: left;
+    margin-top: 20px;
+}
+
+.info-card {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.2s;
+}
+
+.info-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.info-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-card-content {
+    color: var(--text-main);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+/* Image Modal */
+.profile-img-modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.profile-img-modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.profile-modal-content {
+    max-width: 90%;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    transform: scale(0.9);
+    transition: transform 0.3s;
+}
+
+.profile-img-modal.show .profile-modal-content {
+    transform: scale(1);
+}
+
+.profile-modal-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 2001;
+}
+
+@media (min-width: 768px) {
+    .shop-profile-header {
+        flex-direction: row;
+        align-items: flex-start;
+        text-align: left;
+        padding-top: 60px;
+        /* Space for gradient top */
+    }
+
+    .shop-profile-img-container {
+        margin-top: 0;
+        margin-right: 30px;
+        flex-shrink: 0;
+    }
+
+    .shop-profile-img {
+        width: 160px;
+        height: 160px;
+        border-width: 5px;
+    }
+
+    .shop-meta-badges {
+        justify-content: flex-start;
+    }
+}

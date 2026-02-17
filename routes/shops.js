@@ -5,9 +5,7 @@ const Review = require("../data/review.js");
 const Item = require("../data/item.js");
 const { isLogedin, isOwner, validateShop, isadmin, validatereview, isReviewAuthor, validateItem, isVerifiedCustomer } = require("../middeleware.js"); // Using generic middlewares where applicable
 const wrapAsync = require("../utils/wrapAsync.js");
-const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
-const mapToken = process.env.MAP_TOKEN;
-const geocodingClient = mbxGeocoding({ accessToken: mapToken });
+const { forwardGeocode } = require("../utils/geocoder");
 const multer = require("multer");
 const { storage, cloudinary } = require("../cloud_con.js");
 const upload = multer({ storage });
@@ -149,10 +147,7 @@ router.get("/shops/new", isLogedin, isVerifiedCustomer, (req, res) => {
 // Create Shop
 router.post("/shops", isLogedin, upload.single("shopImage"), validateShop, wrapAsync(async (req, res) => {
     const shopData = req.body.shop;
-    const geoData = await geocodingClient.forwardGeocode({
-        query: shopData.location,
-        limit: 1,
-    }).send();
+    const geoData = await forwardGeocode(shopData.location);
 
     const shop = new Shop(shopData);
     shop.geometry = geoData.body.features[0].geometry;
@@ -251,10 +246,7 @@ router.put("/shops/:id", isLogedin, isShopOwner, validateShop, wrapAsync(async (
     const { shopName, shopDescription, category, location } = req.body.shop;
 
     // Geocode the new location
-    const geoData = await geocodingClient.forwardGeocode({
-        query: location,
-        limit: 1,
-    }).send();
+    const geoData = await forwardGeocode(location);
 
     const geometry = geoData.body.features[0].geometry;
 

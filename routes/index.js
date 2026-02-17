@@ -1,8 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
-const mapToken = process.env.MAP_TOKEN;
-const geocodingClient = mbxGeocoding({ accessToken: mapToken });
+const { forwardGeocode, reverseGeocode } = require("../utils/geocoder");
 const Product = require("../data/product.js");
 const Customer = require("../data/customers.js");
 const { isLogedin, isadmin } = require("../middeleware.js");
@@ -38,10 +36,7 @@ router.post("/set-location", async (req, res) => {
 
         if (req.user) {
             try {
-                const response = await geocodingClient.reverseGeocode({
-                    query: [parseFloat(longitude), parseFloat(latitude)],
-                    limit: 1
-                }).send();
+                const response = await reverseGeocode([parseFloat(longitude), parseFloat(latitude)]);
 
                 if (response.body.features.length > 0) {
                     const feature = response.body.features[0];
@@ -50,7 +45,7 @@ router.post("/set-location", async (req, res) => {
 
                     // Extract pincode from context
                     if (feature.context) {
-                        const pincodeCtx = feature.context.find(c => c.id.startsWith('postcode'));
+                        const pincodeCtx = feature.context.find(c => c.id.startsWith('postcode') || c.id === 'postal_code');
                         if (pincodeCtx) pincode = parseInt(pincodeCtx.text);
                     }
 
@@ -79,10 +74,7 @@ router.get("/get-address", async (req, res) => {
         return res.status(400).json({ error: "Missing latitude or longitude" });
     }
     try {
-        const response = await geocodingClient.reverseGeocode({
-            query: [parseFloat(lon), parseFloat(lat)],
-            limit: 1
-        }).send();
+        const response = await reverseGeocode([parseFloat(lon), parseFloat(lat)]);
 
         if (response.body.features.length > 0) {
             const address = response.body.features[0].place_name;
@@ -103,10 +95,7 @@ router.get("/geocode-location", async (req, res) => {
         return res.status(400).json({ error: "Missing location parameter" });
     }
     try {
-        const response = await geocodingClient.forwardGeocode({
-            query: location,
-            limit: 1
-        }).send();
+        const response = await forwardGeocode(location);
 
         if (response.body.features.length > 0) {
             const feature = response.body.features[0];

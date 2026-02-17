@@ -1,156 +1,273 @@
-// public/shedule.js (JS)
 /**
- * Requirements:
- * - Show 1 month in front (CURRENT month)
- * - Slider includes ALL months of 2026 (Jan..Dec 2026)
- * - Toggle day Free/Busy (no comments)
- * - Initially every day = Free
- * - Submit form POST /shedule/:id with daysJson
- * - Loads existing saved days from server so others see same schedule
+ * Profile Calendar Logic - Enhanced with Time Ranges
  */
 
-const monthsEl = document.getElementById("months");
-const monthLabel = document.getElementById("monthLabel");
+document.addEventListener('DOMContentLoaded', () => {
+  // DOM Elements
+  const calendarApp = document.getElementById('calendarApp');
+  if (!calendarApp) return;
 
-const prevBtn = document.getElementById("prevBtn");
-const nextBtn = document.getElementById("nextBtn");
-const todayBtn = document.getElementById("todayBtn");
+  const calMonthYear = document.getElementById('calMonthYear');
+  const calGrid = document.getElementById('calGrid');
+  const calPrev = document.getElementById('calPrev');
+  const calNext = document.getElementById('calNext');
+  const calToday = document.getElementById('calToday');
+  const calendarForm = document.getElementById('calendarForm');
+  const daysJsonInput = document.getElementById('daysJsonInput');
 
-const scheduleForm = document.getElementById("scheduleForm");
-const daysJsonInput = document.getElementById("daysJson");
+  // Modal Elements
+  let dayModal;
+  try {
+    dayModal = new bootstrap.Modal(document.getElementById('dayModal'));
+  } catch (err) {
+    console.error("Bootstrap Modal failed to init:", err);
+    alert("Error: Calendar Modal could not be loaded. Please refresh.");
+  }
+  const modalTitle = document.getElementById('dayModalTitle');
+  const modalDateInput = document.getElementById('modalDate');
 
-const DOW = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+  // Fix for sticky backdrop
+  const modalEl = document.getElementById('dayModal');
+  if (modalEl) {
+    modalEl.addEventListener('hidden.bs.modal', () => {
+      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    });
+  }
+  const radioFree = document.getElementById('statusFree');
+  const radioBusy = document.getElementById('statusBusy');
+  const timeSlotsSection = document.getElementById('timeSlotsSection');
+  const slotsContainer = document.getElementById('slotsContainer');
+  const addSlotBtn = document.getElementById('addSlotBtn');
+  const saveDayBtn = document.getElementById('saveDayBtn');
 
-function pad2(n) { return String(n).padStart(2, "0"); }
-function toISODate(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
-function monthName(d) { return d.toLocaleString(undefined, { month: "long" }); }
-function startOfMonth(y, m) { return new Date(y, m, 1); }
+  // State
+  let currentDate = new Date();
+  // Map: "YYYY-MM-DD" -> { date, status, timeSlots: [{start, end}] }
+  let availabilityMap = new Map();
 
-// Months: ALL 2026
-const months = Array.from({ length: 12 }, (_, i) => startOfMonth(2026, i));
+  const isOwner = window.IS_OWNER === true;
 
-// Visible month index = CURRENT month IF current year is 2026, else default to Jan 2026
-const now = new Date();
-let currentIndex = (now.getFullYear() === 2026) ? now.getMonth() : 0;
-
-// scheduleMap: ISO -> "free"|"busy"
-let scheduleMap = Object.create(null);
-
-// Initialize all days in 2026 as FREE
-function initAllFree() {
-  for (const m of months) {
-    const last = new Date(m.getFullYear(), m.getMonth() + 1, 0);
-    for (let day = 1; day <= last.getDate(); day++) {
-      const d = new Date(m.getFullYear(), m.getMonth(), day);
-      scheduleMap[toISODate(d)] = "free";
+  // Debug Helper
+  function logToUI(msg) {
+    const debugDiv = document.getElementById('debug-output');
+    if (debugDiv) {
+      debugDiv.innerHTML += `\n${msg}`;
     }
-  }
-}
-
-// Overlay saved data from server (so everyone sees same schedule)
-function overlayExistingDays(existing) {
-  if (!Array.isArray(existing)) return;
-  for (const e of existing) {
-    const date = String(e?.date || "");
-    const status = String(e?.status || "free");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-    if (!["free", "busy"].includes(status)) continue;
-    if (scheduleMap[date] !== undefined) scheduleMap[date] = status;
-  }
-}
-
-function render() {
-  monthsEl.innerHTML = "";
-  const m = months[currentIndex];
-  monthsEl.appendChild(renderMonth(m));
-
-  monthLabel.textContent = `${monthName(m)} ${m.getFullYear()} (${currentIndex + 1}/12)`;
-
-  prevBtn.disabled = currentIndex === 0;
-  nextBtn.disabled = currentIndex === 11;
-}
-
-function renderMonth(m) {
-  const monthBox = document.createElement("div");
-  monthBox.className = "month";
-
-  const head = document.createElement("div");
-  head.className = "month-title";
-  head.innerHTML = `
-    <div class="name">${monthName(m)}</div>
-    <div class="year">${m.getFullYear()}</div>
-  `;
-  monthBox.appendChild(head);
-
-  const dow = document.createElement("div");
-  dow.className = "dow";
-  for (const x of DOW) {
-    const d = document.createElement("div");
-    d.textContent = x;
-    dow.appendChild(d);
-  }
-  monthBox.appendChild(dow);
-
-  const grid = document.createElement("div");
-  grid.className = "grid";
-
-  const first = new Date(m.getFullYear(), m.getMonth(), 1);
-  const last = new Date(m.getFullYear(), m.getMonth() + 1, 0);
-  const leading = first.getDay();
-  const totalDays = last.getDate();
-
-  for (let i = 0; i < leading; i++) {
-    const blank = document.createElement("div");
-    blank.className = "day muted";
-    grid.appendChild(blank);
+    console.log(msg);
   }
 
-  for (let day = 1; day <= totalDays; day++) {
-    const d = new Date(m.getFullYear(), m.getMonth(), day);
-    const key = toISODate(d);
-    const status = scheduleMap[key] || "free";
+  function normalizeKey(dateStr) {
+    if (!dateStr) return "";
+    return dateStr.trim();
+  }
 
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = `day ${status}`;
-    btn.textContent = String(day);
-    btn.dataset.date = key;
+  // --- Initialization ---
 
-    btn.addEventListener("click", () => {
-      if (window.IS_OWNER) {
-        scheduleMap[key] = (scheduleMap[key] === "busy") ? "free" : "busy";
-        render();
-      }
+  function init() {
+    console.log("[Calendar] Init. Owner:", isOwner);
+
+    // Load existing data
+    if (window.EXISTING_DAYS && Array.isArray(window.EXISTING_DAYS)) {
+      logToUI(`[DEBUG] raw EXISTING_DAYS length: ${window.EXISTING_DAYS.length}`);
+      window.EXISTING_DAYS.forEach(day => {
+        if (day.date) {
+          const key = normalizeKey(day.date);
+          logToUI(`[DEBUG] Mapping date: ${key} -> status: ${day.status}`);
+          availabilityMap.set(key, {
+            date: key,
+            status: day.status || 'free',
+            timeSlots: day.timeSlots || []
+          });
+        }
+      });
+    }
+    logToUI(`[DEBUG] Availability Map size: ${availabilityMap.size}`);
+
+    renderCalendar(currentDate);
+
+    // Navigation Listeners
+    if (calPrev) calPrev.addEventListener('click', () => changeMonth(-1));
+    if (calNext) calNext.addEventListener('click', () => changeMonth(1));
+    if (calToday) calToday.addEventListener('click', () => {
+      currentDate = new Date();
+      renderCalendar(currentDate);
     });
 
-    grid.appendChild(btn);
+    // Grid Click (Event Delegation)
+    if (calGrid) {
+      calGrid.addEventListener('click', (e) => {
+        // Target any element with a date (the cell)
+        const cell = e.target.closest('[data-date]');
+        if (!cell) return;
+
+        const dateStr = cell.dataset.date;
+        if (!dateStr) return;
+
+        if (dateStr) {
+          openModal(dateStr);
+        }
+      });
+    }
+    // Modal Listeners
+    radioFree.addEventListener('change', toggleTimeSlotsVisibility);
+    radioBusy.addEventListener('change', toggleTimeSlotsVisibility);
+    addSlotBtn.addEventListener('click', addTimeSlotInput);
+    saveDayBtn.addEventListener('click', saveModalData);
+
+    // Form Submission
+    if (calendarForm) {
+      calendarForm.addEventListener('submit', handleFormSubmit);
+    }
   }
 
-  monthBox.appendChild(grid);
-  return monthBox;
-}
+  // --- Rendering ---
 
-// Slider controls
-prevBtn.addEventListener("click", () => {
-  if (currentIndex > 0) { currentIndex--; render(); }
-});
-nextBtn.addEventListener("click", () => {
-  if (currentIndex < 11) { currentIndex++; render(); }
-});
-todayBtn.addEventListener("click", () => {
-  currentIndex = (now.getFullYear() === 2026) ? now.getMonth() : 0;
-  render();
-});
+  function renderCalendar(date) {
+    calGrid.innerHTML = '';
+    const year = date.getFullYear();
+    const month = date.getMonth();
 
-// Submit form -> send JSON
-if (scheduleForm) {
-  scheduleForm.addEventListener("submit", () => {
-    const days = Object.entries(scheduleMap).map(([date, status]) => ({ date, status }));
-    daysJsonInput.value = JSON.stringify(days);
-  });
-}
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"];
+    calMonthYear.textContent = `${monthNames[month]} ${year}`;
 
-// Init
-initAllFree();
-overlayExistingDays(window.EXISTING_DAYS);
-render();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startDayOfWeek = firstDay.getDay();
+
+    // Padding
+    for (let i = 0; i < startDayOfWeek; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'cal-day empty';
+      calGrid.appendChild(empty);
+    }
+
+    const todayStr = normalizeKey(toIsoString(new Date()));
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = new Date(year, month, day);
+      const dateStr = normalizeKey(toIsoString(d));
+
+      const cell = document.createElement('div');
+      cell.className = 'cal-day';
+      cell.textContent = day;
+      cell.dataset.date = dateStr;
+
+      const data = availabilityMap.get(dateStr);
+      const status = data ? data.status : 'free';
+      if (data) {
+        logToUI(`[DEBUG] Render match: ${dateStr} -> ${status}`);
+        if (status === 'busy') {
+          cell.innerHTML += '<span style="font-size: 20px; line-height: 0; position: absolute; bottom: 2px;">•</span>';
+        }
+      }
+      cell.classList.add(status);
+
+      if (dateStr === todayStr) cell.classList.add('today');
+      cell.classList.add('clickable'); // Allow everyone to click
+
+      calGrid.appendChild(cell);
+    }
+  }
+
+  // --- Modal Logic ---
+
+  function openModal(dateStr) {
+    modalTitle.textContent = `Edit Availability: ${dateStr}`;
+    modalDateInput.value = dateStr;
+
+    const key = normalizeKey(dateStr);
+    const data = availabilityMap.get(key) || { status: 'free', timeSlots: [] };
+
+    // Set Status
+    if (data.status === 'busy') {
+      radioBusy.checked = true;
+    } else {
+      radioFree.checked = true;
+    }
+    toggleTimeSlotsVisibility();
+
+    // Render Slots
+    slotsContainer.innerHTML = '';
+    if (data.timeSlots && data.timeSlots.length > 0) {
+      data.timeSlots.forEach(slot => addTimeSlotInput(slot));
+    } else {
+      // Add one empty slot by default if busy? No, let user add.
+    }
+
+    dayModal.show();
+  }
+
+  function toggleTimeSlotsVisibility() {
+    if (radioBusy.checked) {
+      timeSlotsSection.classList.remove('d-none');
+    } else {
+      timeSlotsSection.classList.add('d-none');
+    }
+  }
+
+  function addTimeSlotInput(slotData = { start: '', end: '' }) {
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2 slot-row';
+    div.innerHTML = `
+            <span class="input-group-text">From</span>
+            <input type="time" class="form-control start-time" value="${slotData.start || ''}">
+            <span class="input-group-text">To</span>
+            <input type="time" class="form-control end-time" value="${slotData.end || ''}">
+            <button type="button" class="btn btn-outline-danger remove-slot"><i class="fa-solid fa-trash"></i></button>
+        `;
+
+    div.querySelector('.remove-slot').addEventListener('click', () => div.remove());
+    slotsContainer.appendChild(div);
+  }
+
+  function saveModalData() {
+    const dateStr = normalizeKey(modalDateInput.value);
+    const status = radioBusy.checked ? 'busy' : 'free';
+    let timeSlots = [];
+
+    if (status === 'busy') {
+      const rows = slotsContainer.querySelectorAll('.slot-row');
+      rows.forEach(row => {
+        const start = row.querySelector('.start-time').value;
+        const end = row.querySelector('.end-time').value;
+        if (start && end) {
+          timeSlots.push({ start, end });
+        }
+      });
+    }
+
+    // Update Map
+    availabilityMap.set(dateStr, { date: dateStr, status, timeSlots });
+
+    // Update UI
+    renderCalendar(currentDate); // Re-render to show color change
+    dayModal.hide();
+  }
+
+  // --- Logic ---
+
+  function changeMonth(delta) {
+    currentDate.setMonth(currentDate.getMonth() + delta);
+    renderCalendar(currentDate);
+  }
+
+  function handleFormSubmit(e) {
+    const daysArray = Array.from(availabilityMap.values());
+    daysJsonInput.value = JSON.stringify(daysArray);
+    console.log("[Calendar] Submitting:", daysArray);
+  }
+
+  function toIsoString(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  init();
+});

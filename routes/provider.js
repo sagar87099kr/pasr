@@ -5,9 +5,7 @@ const Shedule = require("../data/clander.js");
 const Review = require("../data/review.js");
 const { isLogedin, isVerifiedCustomer, validateprovider, isOwner, isadmin, findNearbyProviders } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
-const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
-const mapToken = process.env.MAP_TOKEN;
-const geocodingClient = mbxGeocoding({ accessToken: mapToken });
+const { forwardGeocode } = require("../utils/geocoder");
 const multer = require("multer");
 const { storage, cloudinary } = require("../cloud_con.js");
 const upload = multer({ storage });
@@ -86,6 +84,11 @@ router.get("/provider/:id/profile", isLogedin, wrapAsync(async (req, res) => {
     }
 
     const doc = await Shedule.findOne({ listingId: providerData._id }).lean();
+
+    console.log(`[DEBUG SERVER] Profile View - Provider: ${providerData.company}, Schedule Found: ${!!doc}, Days Count: ${doc?.days?.length}`);
+    if (doc?.days) {
+        console.log("[DEBUG SERVER] First 3 days:", JSON.stringify(doc.days.slice(0, 3)));
+    }
     res.render("pages/profile.ejs", { providerData, currUser: req.user, existingDays: doc?.days || [], containerClass: 'page' });
 }));
 
@@ -152,10 +155,7 @@ router.post("/become/provider", isLogedin, isVerifiedCustomer, validateprovider,
     let categories = req.body.provider.categories;
     const personImage = req.files;
 
-    let coordinate = await geocodingClient.forwardGeocode({
-        query: req.body.provider.location,
-        limit: 1
-    }).send();
+    let coordinate = await forwardGeocode(req.body.provider.location);
     const geometry = coordinate.body.features[0].geometry;
     try {
         const newProvider = new Provider({
@@ -197,10 +197,7 @@ router.put("/update/:id",
     isOwner,
     wrapAsync(async (req, res) => {
         let { id } = req.params;
-        let coordinate = await geocodingClient.forwardGeocode({
-            query: req.body.provider.location,
-            limit: 1
-        }).send();
+        let coordinate = await forwardGeocode(req.body.provider.location);
         const geometry = coordinate.body.features[0].geometry;
         const categories = req.body.provider.categories;
         let { discription, experience, company, location } = req.body.provider;

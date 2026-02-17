@@ -4,7 +4,13 @@ const Schema = mongoose.Schema;
 const daySchema = Schema(
   {
     date: { type: String, required: true }, // "YYYY-MM-DD"
-    status: { type: String, enum: ["free", "busy"], required: true }
+    status: { type: String, enum: ["free", "busy"], required: true },
+    timeSlots: [
+      {
+        start: { type: String }, // "14:00"
+        end: { type: String }    // "17:00"
+      }
+    ]
   },
   { _id: false }
 );

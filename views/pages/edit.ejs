@@ -26,59 +26,33 @@
         </div>
         <div class="mb-3">
           <label for="locationInput" class="form-label">Change Your Company location*</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="locationInput" required="True" name="provider[location]"
-              value="<%= data.location%>">
-            <button class="btn btn-outline-secondary" type="button" id="getLocationBtn" title="Use Current Location">
-              <i class="fa-solid fa-location-crosshairs"></i> Get Location
-            </button>
-          </div>
+          <input type="text" class="form-control" id="locationInput" required="True" name="provider[location]"
+            value="<%= data.location%>" placeholder="Start typing address...">
           <div class="invalid-feedback">You need to enter your company location.</div>
         </div>
 
         <script>
-          document.getElementById('getLocationBtn').addEventListener('click', () => {
-            const btn = document.getElementById('getLocationBtn');
-            const input = document.getElementById('locationInput');
-
-            if (!navigator.geolocation) {
-              alert("Geolocation is not supported by your browser");
-              return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Locating...';
-
+          function initAutocomplete() {
+            const input = document.getElementById("locationInput");
             const options = {
-              enableHighAccuracy: true,
-              timeout: 10000,
-              maximumAge: 0
+              fields: ["formatted_address", "geometry", "name"],
+              strictBounds: false,
             };
-            navigator.geolocation.getCurrentPosition(async (position) => {
-              const { latitude, longitude } = position.coords;
-              try {
-                const res = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
-                const data = await res.json();
-                if (data.address) {
-                  input.value = data.address;
-                } else {
-                  alert("Could not find address for this location.");
-                }
-              } catch (err) {
-                console.error(err);
-                alert("Failed to fetch address.");
-              } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+
+            const autocomplete = new google.maps.places.Autocomplete(input, options);
+
+            autocomplete.addListener("place_changed", () => {
+              const place = autocomplete.getPlace();
+              if (!place.geometry || !place.geometry.location) {
+                return;
               }
-            }, (err) => {
-              console.error(err);
-              alert("Unable to retrieve your location.");
-              btn.disabled = false;
-              btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Get Location';
+              // The input value is already updated
             });
-          });
+          }
         </script>
+        <script
+          src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&libraries=places&callback=initAutocomplete"
+          async defer></script>
         <hr>
         <br>
         <h4> Select the service you want to give service * </h4>

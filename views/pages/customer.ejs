@@ -49,13 +49,8 @@
           <!-- Address -->
           <div class="form-group">
             <label for="addressInput" class="form-label">Full Address *</label>
-            <div class="input-group">
-              <textarea class="form-control" id="addressInput" required name="customer[address]" rows="3"
-                placeholder="Type address or click 'Get Location'"></textarea>
-              <button class="btn btn-outline-secondary" type="button" id="getLocBtn">
-                <i class="fa-solid fa-location-crosshairs"></i> Get Location
-              </button>
-            </div>
+            <textarea class="form-control" id="addressInput" required name="customer[address]" rows="3"
+              placeholder="Start typing your address..."></textarea>
             <div class="invalid-feedback">Please provide your address.</div>
           </div>
 
@@ -114,52 +109,26 @@
 
 
     <script>
-      const locBtn = document.getElementById('getLocBtn');
-      const addressInput = document.getElementById('addressInput');
+      function initAutocomplete() {
+        const input = document.getElementById("addressInput");
+        const options = {
+          fields: ["formatted_address", "geometry", "name"],
+          strictBounds: false,
+        };
 
-      if (locBtn) {
-        locBtn.addEventListener('click', () => {
-          if (!navigator.geolocation) {
-            alert("Geolocation is not supported by your browser");
+        const autocomplete = new google.maps.places.Autocomplete(input, options);
+
+        autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          if (!place.geometry || !place.geometry.location) {
             return;
           }
-
-          const originalText = locBtn.innerHTML;
-          locBtn.disabled = true;
-          locBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Fetching...';
-
-          const options = {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-          };
-
-          navigator.geolocation.getCurrentPosition(async (position) => {
-            const { latitude, longitude } = position.coords;
-            try {
-              const response = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
-              if (!response.ok) throw new Error('Failed to fetch address');
-              const data = await response.json();
-              if (data.address) {
-                addressInput.value = data.address;
-              } else {
-                alert("Address not found for this location.");
-              }
-            } catch (error) {
-              console.error("Error fetching address:", error);
-              alert("Failed to fetch address details. Please type manually.");
-            } finally {
-              locBtn.disabled = false;
-              locBtn.innerHTML = originalText;
-            }
-          }, (error) => {
-            console.error("Geolocation error:", error);
-            alert("Unable to retrieve location. Please check permissions.");
-            locBtn.disabled = false;
-            locBtn.innerHTML = originalText;
-          }, options);
+          // The input value is already updated
         });
       }
     </script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&libraries=places&callback=initAutocomplete"
+      async defer></script>
     <script src="/js/script.js"></script>
   </body>

@@ -3,9 +3,7 @@ const router = express.Router();
 const Product = require("../data/product.js");
 const { isLogedin, isVerifiedCustomer, isOwner, isadmin, isProductOwner } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
-const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
-const mapToken = process.env.MAP_TOKEN;
-const geocodingClient = mbxGeocoding({ accessToken: mapToken });
+const { forwardGeocode } = require("../utils/geocoder");
 const multer = require("multer");
 const { storage, cloudinary } = require("../cloud_con.js");
 const upload = multer({ storage });
@@ -64,10 +62,7 @@ router.get("/product/seller", isLogedin, isVerifiedCustomer, wrapAsync(async (re
 
 router.post("/product/seller", isLogedin, upload.array("productImage"), wrapAsync(async (req, res) => {
     const productData = req.body.product;
-    const geoData = await geocodingClient.forwardGeocode({
-        query: productData.location,
-        limit: 1,
-    }).send();
+    const geoData = await forwardGeocode(productData.location);
 
     const product = new Product(productData);
     product.geometry = geoData.body.features[0].geometry;

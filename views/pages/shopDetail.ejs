@@ -1,4 +1,7 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
+    <script>
+        window.allData = <% - JSON.stringify(shop) %>;
+    </script>
     <link rel="stylesheet" href="/css/product_detail.css">
     <% const SHOP_CATEGORIES={ "Electronics" : [ { name: "Wiring & Cables" , icon: "🔌" }, {
         name: "Switches & Switchgear" , icon: "🎚️" }, { name: "Distribution Panels" , icon: "⚡" }, { name: "Lighting" ,
@@ -624,78 +627,122 @@
                 <div class="main-content">
 
                     <!-- Shop Main Card -->
-                    <section class="card-section">
-                        <div class="product-showcase">
-                            <!-- Image -->
-                            <div class="main-image-wrapper">
-                                <% if(shop.shopImage && shop.shopImage.length> 0) { %>
-                                    <img src="<%= shop.shopImage[0].url %>" alt="<%= shop.shopName %>"
-                                        class="main-image" id="mainImage" />
-                                    <% } else { %>
-                                        <div class="main-image"
-                                            style="background:#eee; display:flex; align-items:center; justify-content:center;">
-                                            No Image</div>
-                                        <% } %>
-                                            <button class="btn-share" id="shareBtn" type="button" title="Share Shop">
-                                                <i class="fa-solid fa-share-nodes"></i>
-                                            </button>
-                            </div>
-
-                            <!-- Info -->
-                            <div class="product-info-header">
-                                <h1 class="product-title">
-                                    <%= shop.shopName %>
-                                </h1>
-                                <div class="seller-badge" style="cursor:pointer;" onclick="openUpiModal()">
-                                    <i class="fa-solid fa-qrcode"></i> QR Code
-                                </div>
-
-                                <div class="info-grid">
-                                    <div class="info-box">
-                                        <span class="info-label">Owner</span>
-                                        <span class="info-value">
-                                            <%= shop.owner.name %>
-                                        </span>
-                                    </div>
-                                    <div class="info-box">
-                                        <span class="info-label">Location</span>
-                                        <span class="info-value">
-                                            <%= shop.location %>
-                                        </span>
-                                    </div>
-                                    <a href="tel:<%= shop.owner.username %>" class="info-box"
-                                        style="text-decoration:none; justify-content:center; align-items:center; background:#eff6ff; border-color:#bfdbfe;">
-                                        <span class="info-value" style="color:#2563eb; font-size:16px;">
-                                            <i class="fa-solid fa-phone"></i> Call Owner
-                                        </span>
-                                    </a>
-                                </div>
-
-                                <!-- Owner Actions -->
-                                <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                                    <div class="owner-actions">
-                                        <a href="/shops/<%= shop._id %>/edit" class="btn btn-warning">
-                                            <i class="fa-solid fa-edit"></i> Edit
-                                        </a>
+                    <!-- New Shop Profile Header -->
+                    <div class="shop-profile-header">
+                        <div class="shop-profile-img-container">
+                            <% if(shop.shopImage && shop.shopImage.length> 0) { %>
+                                <img src="<%= shop.shopImage[0].url %>" alt="<%= shop.shopName %>"
+                                    class="shop-profile-img" onclick="openProfileModal(this.src)">
+                                <% } else { %>
+                                    <div class="shop-profile-img"
+                                        style="display:flex; align-items:center; justify-content:center; background:#eee; font-size:12px; color:#999;"
+                                        onclick="openProfileModal(null)">
+                                        No Image
                                     </div>
                                     <% } %>
-                            </div>
                         </div>
-                    </section>
 
-                    <!-- Description -->
-                    <section class="card-section">
-                        <h2 class="section-heading">About this Shop</h2>
-                        <p class="description-text">
-                            <%= shop.shopDescription || "No description provided." %>
-                        </p>
-                    </section>
+                        <div class="shop-details-container">
+                            <h1 class="shop-name-large">
+                                <%= shop.shopName %>
+                            </h1>
+
+                            <div class="shop-meta-badges">
+                                <div class="meta-badge" onclick="openUpiModal()"
+                                    style="cursor:pointer; background:#dbeafe; color:#1e40af;">
+                                    <i class="fa-solid fa-qrcode"></i> UPI / QR
+                                </div>
+                                <% if(currentShopCats && currentShopCats.length> 0) { %>
+                                    <div class="meta-badge">
+                                        Shop Category
+                                    </div>
+                                    <% } %>
+                                        <button class="meta-badge" id="shareBtn" style="border:none; cursor:pointer;">
+                                            <i class="fa-solid fa-share-nodes"></i> Share
+                                        </button>
+                            </div>
+
+                            <div class="shop-info-grid">
+                                <div class="info-card">
+                                    <div class="info-card-header">
+                                        <i class="fa-solid fa-location-dot"></i> Location
+                                    </div>
+                                    <div class="info-card-content">
+                                        <%= shop.location || "Location not available" %>
+                                    </div>
+                                </div>
+
+                                <div class="info-card">
+                                    <div class="info-card-header">
+                                        <i class="fa-solid fa-user"></i> Owner
+                                    </div>
+                                    <div class="info-card-content">
+                                        <strong>
+                                            <%= shop.owner.name %>
+                                        </strong>
+                                        <div style="display:flex; gap:10px; margin-top:8px;">
+                                            <a href="tel:<%= shop.owner.username %>" class="btn btn-primary"
+                                                style="flex:1; padding:8px 12px; font-size:14px; text-decoration:none; justify-content:center;">
+                                                <i class="fa-solid fa-phone"></i> Call
+                                            </a>
+                                            <a href="https://wa.me/91<%= shop.owner.username %>" target="_blank"
+                                                class="btn"
+                                                style="flex:1; padding:8px 12px; font-size:14px; background:#25D366; color:white; text-decoration:none; justify-content:center;">
+                                                <i class="fa-brands fa-whatsapp"></i> Chat
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="info-card" style="grid-column: 1 / -1;">
+                                    <div class="info-card-header">
+                                        <i class="fa-solid fa-circle-info"></i> About
+                                    </div>
+                                    <div class="info-card-content">
+                                        <%= shop.shopDescription || "No description provided." %>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Owner Actions -->
+                            <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                <div class="owner-actions" style="justify-content:center; margin-top:20px;">
+                                    <a href="/shops/<%= shop._id %>/edit" class="btn btn-warning">
+                                        <i class="fa-solid fa-edit"></i> Edit Shop
+                                    </a>
+                                </div>
+                                <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Profile Image Modal -->
+                    <div id="profileImgModal" class="profile-img-modal" onclick="closeProfileModal()">
+                        <span class="profile-modal-close" onclick="closeProfileModal()">&times;</span>
+                        <img class="profile-modal-content" id="profileModalImg">
+                    </div>
+
+                    <script>
+                        function openProfileModal(src) {
+                            if (!src) return;
+                            const modal = document.getElementById("profileImgModal");
+                            const modalImg = document.getElementById("profileModalImg");
+                            modal.classList.add("show");
+                            modalImg.src = src;
+                        }
+
+                        function closeProfileModal() {
+                            const modal = document.getElementById("profileImgModal");
+                            modal.classList.remove("show");
+                        }
+                    </script>
 
 
 
 
 
-                    </section>
+
+
+
 
                     <!-- Independent Items Section -->
                     <div style="margin-top: 20px;">
@@ -798,6 +845,8 @@
                                         });
                                     }
                                 </script>
+
+
                     </div>
 
                     <!-- Gallery (only if multiple images) -->

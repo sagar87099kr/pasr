@@ -40,15 +40,8 @@
                     <!-- Location -->
                     <div class="form-group">
                         <label for="location" class="form-label">Location / Address *</label>
-                        <div class="input-group">
-                            <input type="text" name="shop[location]" id="location" class="form-control"
-                                value="<%= shop.location %>" placeholder="Type address or click 'Get Location'..."
-                                required>
-                            <button class="btn-location" type="button" id="getShopLocBtn"
-                                style="background: #2563eb; color: white; border: none; padding: 0 15px; border-radius: 0 8px 8px 0; font-weight: 500;">
-                                <i class="fa-solid fa-location-crosshairs"></i> Get Location
-                            </button>
-                        </div>
+                        <input type="text" name="shop[location]" id="location" class="form-control"
+                            value="<%= shop.location %>" placeholder="Start typing address..." required>
                         <div class="invalid-feedback">Please provide a location.</div>
                     </div>
 
@@ -93,49 +86,25 @@
         </div>
 
         <script>
-            const locBtn = document.getElementById('getShopLocBtn');
-            const locInput = document.getElementById('location');
+            function initAutocomplete() {
+                const input = document.getElementById("location");
+                const options = {
+                    fields: ["formatted_address", "geometry", "name"],
+                    strictBounds: false,
+                };
 
-            if (locBtn) {
-                locBtn.addEventListener('click', () => {
-                    if (!navigator.geolocation) {
-                        alert("Geolocation is not supported by your browser");
+                const autocomplete = new google.maps.places.Autocomplete(input, options);
+
+                autocomplete.addListener("place_changed", () => {
+                    const place = autocomplete.getPlace();
+                    if (!place.geometry || !place.geometry.location) {
                         return;
                     }
-
-                    const originalText = locBtn.innerHTML;
-                    locBtn.disabled = true;
-                    locBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Fetching...';
-
-                    const options = {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0
-                    };
-                    navigator.geolocation.getCurrentPosition(async (position) => {
-                        const { latitude, longitude } = position.coords;
-                        try {
-                            const response = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
-                            const data = await response.json();
-                            if (data.address) {
-                                locInput.value = data.address;
-                            } else {
-                                alert("Address not found for this location.");
-                            }
-                        } catch (error) {
-                            console.error("Error fetching address:", error);
-                            alert("Failed to fetch address details.");
-                        } finally {
-                            locBtn.disabled = false;
-                            locBtn.innerHTML = originalText;
-                        }
-                    }, (error) => {
-                        console.error("Geolocation error:", error);
-                        alert("Unable to retrieve location. Please check permissions.");
-                        locBtn.disabled = false;
-                        locBtn.innerHTML = originalText;
-                    });
+                    // The input value is already updated
                 });
             }
         </script>
+        <script
+            src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&libraries=places&callback=initAutocomplete"
+            async defer></script>
     </body>
