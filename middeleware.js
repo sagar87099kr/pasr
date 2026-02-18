@@ -10,7 +10,7 @@ module.exports.isLogedin = (req, res, next) => {
     if (!req.isAuthenticated()) {
 
         req.session.redirectUrl = req.originalUrl;
-        req.flash("danger", "You must be login to see all services.");
+        req.flash("danger", "please login or signup to see all services");
         return res.redirect("/alreadyLogin");
     }
     next();

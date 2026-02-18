@@ -55,7 +55,7 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
 
             req.flash(
                 "success",
-                `Welcome to PaSr. Thank you for signup ${name}`
+                "Welcome to PaSr. Thank you for signup. Our team will reach you soon for verification."
             );
             res.redirect("/home");
         });
