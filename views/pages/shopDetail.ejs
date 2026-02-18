@@ -59,10 +59,21 @@
         name: "Bridal Services" , icon: "👰" }, { name: "Men's Grooming" , icon: "🧔" }, { name: "General" , icon: "📦"
         } ], "Seeds & Fertilizers" : [ { name: "Seeds" , icon: "🌱" }, { name: "Chemical Fertilizers" , icon: "🧪" }, {
         name: "Organic Fertilizers" , icon: "♻️" }, { name: "Pesticides" , icon: "🦟" }, { name: "Farming Tools" ,
-        icon: "🚜" }, { name: "Plant Care" , icon: "🌿" }, { name: "General" , icon: "📦" } ], "Stationery" : [ {
+        icon: "🚜" }, { name: "Plant Care" , icon: "🌿" }, { name: "General" , icon: "📦" } ], "Sports" : [ {
+        name: "Cricket" , icon: "🏏" }, { name: "Football" , icon: "⚽" }, { name: "Badminton" , icon: "🏸" }, {
+        name: "Gym Equipment" , icon: "🏋️" }, { name: "Sportswear" , icon: "🎽" }, { name: "Indoor Games" , icon: "♟️"
+        }, { name: "Trophies & Medals" , icon: "🏆" }, { name: "General" , icon: "📦" } ], "Stationery" : [ {
         name: "Writing Supplies" , icon: "✏️" }, { name: "Notebooks & Diaries" , icon: "📓" }, { name: "Art & Craft" ,
         icon: "🎨" }, { name: "Office Supplies" , icon: "📎" }, { name: "School Items" , icon: "🎒" }, {
-        name: "Printing Paper" , icon: "📄" }, { name: "General" , icon: "📦" } ] }; function
+        name: "Printing Paper" , icon: "📄" }, { name: "General" , icon: "📦" } ], "Vegetables & Fruits" : [ {
+        name: "Fresh Vegetables" , icon: "🥦" }, { name: "Fresh Fruits" , icon: "🍎" }, { name: "Seasonal Items" ,
+        icon: "🌽" }, { name: "Exotic" , icon: "🥝" }, { name: "Organic" , icon: "🌿" }, { name: "Herbs" , icon: "🌿" },
+        { name: "General" , icon: "📦" } ], "Beauty/Cosmetics" : [ { name: "Makeup" , icon: "💄" }, { name: "Skincare" ,
+        icon: "🧴" }, { name: "Haircare" , icon: "💇‍♀️" }, { name: "Fragrance" , icon: "🌺" }, { name: "Personal Care"
+        , icon: "🛁" }, { name: "Tools & Accessories" , icon: "💅" }, { name: "General" , icon: "📦" } ], "Coaching" : [
+        { name: "Tuition (School)" , icon: "📚" }, { name: "Competitive Exams" , icon: "📝" }, {
+        name: "Language Classes" , icon: "🗣️" }, { name: "Arts & Hobbies" , icon: "🎨" }, { name: "Sports Coaching" ,
+        icon: "⚽" }, { name: "Professional Skills" , icon: "💻" }, { name: "General" , icon: "📦" } ] }; function
         getShopCategoryData(shopCategory) { if (!shopCategory) return null; const
         key=Object.keys(SHOP_CATEGORIES).find(function(k) { return k.toLowerCase()===shopCategory.toLowerCase(); });
         return key ? SHOP_CATEGORIES[key] : null; } const currentShopCats=getShopCategoryData(shop.category); %>

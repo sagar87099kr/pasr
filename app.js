@@ -22,8 +22,8 @@ const scheduleRouter = require("./routes/schedule.js");
 const indexRouter = require("./routes/index.js");
 const localMarketRouter = require("./routes/localMarket.js");
 
-const dbUrl = process.env.ATLAS_DB_URL;
 // const dbUrl = "mongodb://127.0.0.1:27017/pasr";
+const dbUrl = process.env.ATLAS_DB_URL;
 if (!dbUrl) {
   throw new Error("ATLAS_DB is missing in your .env file");
 }

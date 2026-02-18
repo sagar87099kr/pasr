@@ -59,13 +59,8 @@
           <form action="/customer/update/<%= currUser._id %>?_method=PUT" method="POST">
             <div class="form-group">
               <label for="addressInput" class="form-label">Change Your Location</label>
-              <div class="input-group">
-                <input type="text" class="form-control" id="addressInput" required name="customer[address]"
-                  value="<%= currUser.address%>">
-                <button class="btn btn-secondary" type="button" id="getLocationBtn" title="Use Current Location">
-                  <i class="fa-solid fa-location-crosshairs"></i>
-                </button>
-              </div>
+              <input type="text" class="form-control" id="addressInput" required name="customer[address]"
+                value="<%= currUser.address%>">
               <div class="invalid-feedback">You need to enter your location.</div>
             </div>
 
@@ -293,48 +288,7 @@
     </div>
 
     <script>
-      document.getElementById('getLocationBtn').addEventListener('click', () => {
-        const btn = document.getElementById('getLocationBtn');
-        const input = document.getElementById('addressInput');
 
-        if (!navigator.geolocation) {
-          alert("Geolocation is not supported by your browser");
-          return;
-        }
-
-        btn.disabled = true;
-        const originalContent = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
-
-        const options = {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        };
-        navigator.geolocation.getCurrentPosition(async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            const res = await fetch(`/get-address?lat=${latitude}&lon=${longitude}`);
-            const data = await res.json();
-            if (data.address) {
-              input.value = data.address;
-            } else {
-              alert("Could not find address for this location.");
-            }
-          } catch (err) {
-            console.error(err);
-            alert("Failed to fetch address.");
-          } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalContent;
-          }
-        }, (err) => {
-          console.error(err);
-          alert("Unable to retrieve your location.");
-          btn.disabled = false;
-          btn.innerHTML = originalContent;
-        });
-      });
     </script>
 
     <script>

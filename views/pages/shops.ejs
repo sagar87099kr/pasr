@@ -124,10 +124,11 @@
                 <% const catIcons={ "Grocery" : "🛒" , "Electronics" : "🔌" , "Fashion" : "👕" , "Medical" : "💊"
                     , "Hardware" : "🛠️" , "Restaurant" : "🍽️" , "Dhaba" : "🥘" , "Bakery" : "🍰" , "Mobile Shop"
                     : "📱" , "Stationery" : "📚" , "Salon" : "💇" , "Jewelers" : "💍" , "Non-Veg" : "🍖"
-                    , "General Store" : "🏪" , "Furniture" : "🪑" , "Seeds & Fertilizers" : "🌱" , "Automobile" : "🚗"
-                    , "Printing & Digital" : "🖨️" , "Footwear" : "👟" , "Others" : "📦" }; const currentCat=(typeof
-                    queryParams !=='undefined' && queryParams.category) ? queryParams.category : 'All Shops' ; const
-                    makeCatLink=(catName)=> {
+                    , "Vegetables & Fruits" : "🥕" , "Beauty/Cosmetics" : "💄" , "Coaching" : "👨‍🏫" , "General Store"
+                    : "🏪" , "Furniture" : "🪑" , "Seeds & Fertilizers" : "🌱" , "Automobile" : "🚗"
+                    , "Printing & Digital" : "🖨️" , "Footwear" : "👟" , "Sports" : "🏏" , "Wholesale" : "🏪" , "Others"
+                    : "📦" }; const currentCat=(typeof queryParams !=='undefined' && queryParams.category) ?
+                    queryParams.category : 'All Shops' ; const makeCatLink=(catName)=> {
                     let params = new URLSearchParams();
                     if (lat) params.set('lat', lat);
                     if (lng) params.set('lng', lng);
@@ -142,46 +143,58 @@
                     <div class="cat-scroll-wrapper">
                         <a href="<%= makeCatLink('All Shops') %>"
                             class="cat-pill <%= currentCat === 'All Shops' ? 'active' : '' %>">🏪 All Shops</a>
-                        <a href="<%= makeCatLink('Grocery') %>"
-                            class="cat-pill <%= currentCat === 'Grocery' ? 'active' : '' %>">🛒 Grocery</a>
+                        <a href="<%= makeCatLink('Automobile') %>"
+                            class="cat-pill <%= currentCat === 'Automobile' ? 'active' : '' %>">🚗 Automobile</a>
+                        <a href="<%= makeCatLink('Bakery') %>"
+                            class="cat-pill <%= currentCat === 'Bakery' ? 'active' : '' %>">🍰 Bakery</a>
+                        <a href="<%= makeCatLink('Beauty/Cosmetics') %>"
+                            class="cat-pill <%= currentCat === 'Beauty/Cosmetics' ? 'active' : '' %>">💄
+                            Beauty/Cosmetics</a>
+                        <a href="<%= makeCatLink('Coaching') %>"
+                            class="cat-pill <%= currentCat === 'Coaching' ? 'active' : '' %>">👨‍🏫 Coaching</a>
+                        <a href="<%= makeCatLink('Dhaba') %>"
+                            class="cat-pill <%= currentCat === 'Dhaba' ? 'active' : '' %>">🥘 Dhaba</a>
                         <a href="<%= makeCatLink('Electronics') %>"
                             class="cat-pill <%= currentCat === 'Electronics' ? 'active' : '' %>">🔌 Electronics</a>
                         <a href="<%= makeCatLink('Fashion') %>"
                             class="cat-pill <%= currentCat === 'Fashion' ? 'active' : '' %>">👕 Fashion</a>
-                        <a href="<%= makeCatLink('Medical') %>"
-                            class="cat-pill <%= currentCat === 'Medical' ? 'active' : '' %>">💊 Medical</a>
-                        <a href="<%= makeCatLink('Hardware') %>"
-                            class="cat-pill <%= currentCat === 'Hardware' ? 'active' : '' %>">🛠️ Hardware</a>
-                        <a href="<%= makeCatLink('Restaurant') %>"
-                            class="cat-pill <%= currentCat === 'Restaurant' ? 'active' : '' %>">🍽️ Restaurant</a>
-                        <a href="<%= makeCatLink('Dhaba') %>"
-                            class="cat-pill <%= currentCat === 'Dhaba' ? 'active' : '' %>">🥘 Dhaba</a>
-                        <a href="<%= makeCatLink('Bakery') %>"
-                            class="cat-pill <%= currentCat === 'Bakery' ? 'active' : '' %>">🍰 Bakery</a>
-                        <a href="<%= makeCatLink('Mobile Shop') %>"
-                            class="cat-pill <%= currentCat === 'Mobile Shop' ? 'active' : '' %>">📱 Mobile Shop</a>
-                        <a href="<%= makeCatLink('Stationery') %>"
-                            class="cat-pill <%= currentCat === 'Stationery' ? 'active' : '' %>">📚 Stationery</a>
-                        <a href="<%= makeCatLink('Salon') %>"
-                            class="cat-pill <%= currentCat === 'Salon' ? 'active' : '' %>">💇 Salon</a>
-                        <a href="<%= makeCatLink('Jewelers') %>"
-                            class="cat-pill <%= currentCat === 'Jewelers' ? 'active' : '' %>">💍 Jewelers</a>
-                        <a href="<%= makeCatLink('Non-Veg') %>"
-                            class="cat-pill <%= currentCat === 'Non-Veg' ? 'active' : '' %>">🍖 Non-Veg</a>
-                        <a href="<%= makeCatLink('General Store') %>"
-                            class="cat-pill <%= currentCat === 'General Store' ? 'active' : '' %>">🏪 General Store</a>
+                        <a href="<%= makeCatLink('Footwear') %>"
+                            class="cat-pill <%= currentCat === 'Footwear' ? 'active' : '' %>">👟 Footwear</a>
                         <a href="<%= makeCatLink('Furniture') %>"
                             class="cat-pill <%= currentCat === 'Furniture' ? 'active' : '' %>">🪑 Furniture</a>
-                        <a href="<%= makeCatLink('Seeds & Fertilizers') %>"
-                            class="cat-pill <%= currentCat === 'Seeds & Fertilizers' ? 'active' : '' %>">🌱 Seeds &
-                            Fertilizers</a>
-                        <a href="<%= makeCatLink('Automobile') %>"
-                            class="cat-pill <%= currentCat === 'Automobile' ? 'active' : '' %>">🚗 Automobile</a>
+                        <a href="<%= makeCatLink('General Store') %>"
+                            class="cat-pill <%= currentCat === 'General Store' ? 'active' : '' %>">🏪 General Store</a>
+                        <a href="<%= makeCatLink('Grocery') %>"
+                            class="cat-pill <%= currentCat === 'Grocery' ? 'active' : '' %>">🛒 Grocery</a>
+                        <a href="<%= makeCatLink('Hardware') %>"
+                            class="cat-pill <%= currentCat === 'Hardware' ? 'active' : '' %>">🛠️ Hardware</a>
+                        <a href="<%= makeCatLink('Jewelers') %>"
+                            class="cat-pill <%= currentCat === 'Jewelers' ? 'active' : '' %>">💍 Jewelers</a>
+                        <a href="<%= makeCatLink('Medical') %>"
+                            class="cat-pill <%= currentCat === 'Medical' ? 'active' : '' %>">💊 Medical</a>
+                        <a href="<%= makeCatLink('Mobile Shop') %>"
+                            class="cat-pill <%= currentCat === 'Mobile Shop' ? 'active' : '' %>">📱 Mobile Shop</a>
+                        <a href="<%= makeCatLink('Non-Veg') %>"
+                            class="cat-pill <%= currentCat === 'Non-Veg' ? 'active' : '' %>">🍖 Non-Veg</a>
                         <a href="<%= makeCatLink('Printing & Digital') %>"
                             class="cat-pill <%= currentCat === 'Printing & Digital' ? 'active' : '' %>">🖨️ Printing &
                             Digital</a>
-                        <a href="<%= makeCatLink('Footwear') %>"
-                            class="cat-pill <%= currentCat === 'Footwear' ? 'active' : '' %>">👟 Footwear</a>
+                        <a href="<%= makeCatLink('Restaurant') %>"
+                            class="cat-pill <%= currentCat === 'Restaurant' ? 'active' : '' %>">🍽️ Restaurant</a>
+                        <a href="<%= makeCatLink('Salon') %>"
+                            class="cat-pill <%= currentCat === 'Salon' ? 'active' : '' %>">💇 Salon</a>
+                        <a href="<%= makeCatLink('Seeds & Fertilizers') %>"
+                            class="cat-pill <%= currentCat === 'Seeds & Fertilizers' ? 'active' : '' %>">🌱 Seeds &
+                            Fertilizers</a>
+                        <a href="<%= makeCatLink('Sports') %>"
+                            class="cat-pill <%= currentCat === 'Sports' ? 'active' : '' %>">🏏 Sports</a>
+                        <a href="<%= makeCatLink('Stationery') %>"
+                            class="cat-pill <%= currentCat === 'Stationery' ? 'active' : '' %>">📚 Stationery</a>
+                        <a href="<%= makeCatLink('Vegetables & Fruits') %>"
+                            class="cat-pill <%= currentCat === 'Vegetables & Fruits' ? 'active' : '' %>">🥕 Vegetables &
+                            Fruits</a>
+                        <a href="<%= makeCatLink('Wholesale') %>"
+                            class="cat-pill <%= currentCat === 'Wholesale' ? 'active' : '' %>">🏪 Wholesale</a>
                         <a href="<%= makeCatLink('Others') %>"
                             class="cat-pill <%= currentCat === 'Others' ? 'active' : '' %>">📦 Others</a>
                     </div>
