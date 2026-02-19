@@ -171,7 +171,7 @@ router.post("/shops", isLogedin, upload.single("shopImage"), validateShop, wrapA
 }));
 
 // Show Shop Detail
-router.get("/shops/:id", isLogedin, wrapAsync(async (req, res) => {
+router.get("/shops/:id", wrapAsync(async (req, res) => {
     let { id } = req.params;
     const shop = await Shop.findById(id)
         .populate("owner")

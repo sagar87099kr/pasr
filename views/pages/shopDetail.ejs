@@ -692,11 +692,11 @@
                                             <%= shop.owner.name %>
                                         </strong>
                                         <div style="display:flex; gap:10px; margin-top:8px;">
-                                            <a href="tel:<%= shop.owner.username %>" class="btn btn-primary"
+                                            <a href="/action/call/<%= shop.owner.username %>" class="btn btn-primary"
                                                 style="flex:1; padding:8px 12px; font-size:14px; text-decoration:none; justify-content:center;">
                                                 <i class="fa-solid fa-phone"></i> Call
                                             </a>
-                                            <a href="https://wa.me/91<%= shop.owner.username %>" target="_blank"
+                                            <a href="/action/whatsapp/<%= shop.owner.username %>" target="_blank"
                                                 class="btn"
                                                 style="flex:1; padding:8px 12px; font-size:14px; background:#25D366; color:white; text-decoration:none; justify-content:center;">
                                                 <i class="fa-brands fa-whatsapp"></i> Chat
@@ -1173,7 +1173,7 @@
                     priceEl.textContent = '₹' + price;
 
                     const message = `Hi, I am interested in ${name} priced at ₹${price}.\n\nView item image: ${imgUrl}\n\nIs it available?`;
-                    whatsappLink.href = `https://wa.me/91${ownerPhone}?text=${encodeURIComponent(message)}`;
+                    whatsappLink.href = `/action/whatsapp/${ownerPhone}?text=${encodeURIComponent(message)}`;
 
                     modal.style.display = 'flex';
                 }

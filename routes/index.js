@@ -129,6 +129,22 @@ router.get("/product/verify", isLogedin, isadmin, wrapAsync(async (req, res) => 
     res.render("pages/productVerification.ejs", { products });
 }));
 
+// Protected Action Routes
+router.get("/action/call/:number", isLogedin, (req, res) => {
+    const { number } = req.params;
+    res.redirect(`tel:+91${number}`);
+});
+
+router.get("/action/whatsapp/:number", isLogedin, (req, res) => {
+    const { number } = req.params;
+    const { text } = req.query;
+    let redirectUrl = `https://wa.me/91${number}`;
+    if (text) {
+        redirectUrl += `?text=${encodeURIComponent(text)}`;
+    }
+    res.redirect(redirectUrl);
+});
+
 // Redirect root to home
 router.get("/", (req, res) => {
     res.redirect("/home");
