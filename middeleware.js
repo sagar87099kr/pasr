@@ -16,6 +16,21 @@ module.exports.isLogedin = (req, res, next) => {
     next();
 }
 
+module.exports.isNotBlocked = async (req, res, next) => {
+    try {
+        if (!req.user || !req.user._id) return next();
+
+        const customer = await Customer.findById(req.user._id);
+        if (customer && customer.isBlocked) {
+            req.flash("danger", "You are blocked because of your suspicious activity.");
+            const redirectUrl = req.get('Referrer') || '/home';
+            return res.redirect(redirectUrl);
+        }
+        next();
+    } catch (e) {
+        next(e);
+    }
+}
 
 module.exports.saveRedirectUrl = (req, res, next) => {
     if (req.session.redirectUrl) {
@@ -115,7 +130,7 @@ module.exports.isVerifiedCustomer = async (req, res, next) => {
 module.exports.isadmin = async (req, res, next) => {
     // Check if current user exists and their username matches the admin number
     // Using string comparison "8709956547" to be safe
-    const admins = ["8709956547", "9608812817", "7091212569", "7046699074", "9304703911"];
+    const admins = ["8709956547", "9608812817", "7091212569", "7046699074", "9304703911", "8873679038", "7091568049"];
     if (!res.locals.currUser || !admins.includes(String(res.locals.currUser.username))) {
         req.flash("danger", "Only admin have access of this route");
         return res.redirect(`/home`);

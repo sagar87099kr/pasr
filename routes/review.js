@@ -2,12 +2,13 @@ const express = require("express");
 const router = express.Router({ mergeParams: true });
 const Review = require("../data/review.js");
 const Provider = require("../data/serviceproviders.js");
-const { isLogedin, isVerifiedCustomer, validatereview, isReviewAuthor } = require("../middeleware.js");
+const { isLogedin, isNotBlocked, isVerifiedCustomer, validatereview, isReviewAuthor } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 
 // reviews data
 router.post("/:id/reviews",
     isLogedin,
+    isNotBlocked,
     isVerifiedCustomer,
     validatereview,
     wrapAsync(async (req, res) => {

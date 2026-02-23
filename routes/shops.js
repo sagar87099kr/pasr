@@ -3,7 +3,7 @@ const router = express.Router();
 const Shop = require("../data/shops.js");
 const Review = require("../data/review.js");
 const Item = require("../data/item.js");
-const { isLogedin, isOwner, validateShop, isadmin, validatereview, isReviewAuthor, validateItem, isVerifiedCustomer } = require("../middeleware.js"); // Using generic middlewares where applicable
+const { isLogedin, isNotBlocked, isOwner, validateShop, isadmin, validatereview, isReviewAuthor, validateItem, isVerifiedCustomer } = require("../middeleware.js"); // Using generic middlewares where applicable
 const wrapAsync = require("../utils/wrapAsync.js");
 const { forwardGeocode } = require("../utils/geocoder");
 const multer = require("multer");
@@ -145,7 +145,7 @@ router.get("/shops/new", isLogedin, isVerifiedCustomer, (req, res) => {
 });
 
 // Create Shop
-router.post("/shops", isLogedin, upload.single("shopImage"), validateShop, wrapAsync(async (req, res) => {
+router.post("/shops", isLogedin, isNotBlocked, upload.single("shopImage"), validateShop, wrapAsync(async (req, res) => {
     const shopData = req.body.shop;
     const geoData = await forwardGeocode(shopData.location);
 
@@ -190,7 +190,7 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
 }));
 
 // Create Review Route
-router.post("/shops/:id/reviews", isLogedin, validatereview, wrapAsync(async (req, res) => {
+router.post("/shops/:id/reviews", isLogedin, isNotBlocked, validatereview, wrapAsync(async (req, res) => {
     let { id } = req.params;
     let shop = await Shop.findById(id);
     let newReview = new Review(req.body.review);
@@ -274,7 +274,7 @@ router.delete("/shops/:id", isLogedin, isShopOwner, wrapAsync(async (req, res) =
 
 
 // Create Item
-router.post("/shops/:id/items", isLogedin, isShopOwner, upload.single("itemImage"), validateItem, wrapAsync(async (req, res) => {
+router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, upload.single("itemImage"), validateItem, wrapAsync(async (req, res) => {
     console.log("Create Item Route Hit");
     console.log("Body:", req.body);
     console.log("Item Category:", req.body.item.itemCategory);

@@ -4,6 +4,7 @@ const Customer = require("../data/customers.js");
 const Provider = require("../data/serviceproviders.js");
 const Product = require("../data/product.js");
 const Shop = require("../data/shops.js");
+const KeshanSabhaPost = require("../data/keshanSabhaPost.js");
 const passport = require("passport");
 const { validatecustomer, saveRedirectUrl, isLogedin, isadmin } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
@@ -55,9 +56,12 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
 
             req.flash(
                 "success",
-                "Welcome to PaSr. Thank you for signup. Our team will reach you soon for verification."
+                "Thank you for registering! Our team will reach you soon for verification. 🙌"
             );
-            res.redirect("/home");
+            // Explicitly save session before redirect to prevent flash loss with async session stores
+            req.session.save(() => {
+                res.redirect("/home");
+            });
         });
 
     } catch (e) {
@@ -108,7 +112,8 @@ router.get("/user", isLogedin, saveRedirectUrl, wrapAsync(async (req, res) => {
     const listings = await Provider.find({ owner: req.user._id });
     const products = await Product.find({ owner: req.user._id });
     const shops = await Shop.find({ owner: req.user._id });
-    res.render("pages/provider_profile.ejs", { listings, products, shops });
+    const kisanPosts = await KeshanSabhaPost.find({ author: req.user._id }).sort({ createdAt: -1 });
+    res.render("pages/provider_profile.ejs", { listings, products, shops, kisanPosts });
 }));
 
 // these are verification route for customers 

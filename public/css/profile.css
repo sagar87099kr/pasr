@@ -226,7 +226,6 @@
  /* Buttons */
  .btn {
    border: 1px solid var(--border);
-   background: #fff;
    padding: 12px 14px;
    border-radius: 14px;
    font-weight: 900;
@@ -234,7 +233,13 @@
    min-height: 44px;
  }
 
- .btn:hover {
+ /* Only apply default white bg if it's not a bootstrap modifier btn-* */
+ .btn:not([class*="btn-"]) {
+   background: #fff;
+   color: var(--text);
+ }
+
+ .btn:not([class*="btn-"]):hover {
    background: #bfdaf6;
  }
 

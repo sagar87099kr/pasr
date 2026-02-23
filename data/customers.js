@@ -55,6 +55,10 @@ const customerSchema = new Schema({
     maxlength: 60,
     minlength: 3,
   },
+  isBlocked: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -21,6 +21,7 @@ const reviewRouter = require("./routes/review.js");
 const scheduleRouter = require("./routes/schedule.js");
 const indexRouter = require("./routes/index.js");
 const localMarketRouter = require("./routes/localMarket.js");
+const kisanSabhaRouter = require("./routes/kisanSabha.js");
 
 // const dbUrl = "mongodb://127.0.0.1:27017/pasr";
 const dbUrl = process.env.ATLAS_DB_URL;
@@ -50,10 +51,13 @@ app.use(methodOverride("_method"));
 app.engine("ejs", ejsMate);
 app.use(express.json());
 
+// Trust proxy for secure cookies behind reverse proxies (Render, Heroku, etc.)
+app.set("trust proxy", 1);
+
 // Security Middleware
 app.use(helmet({ contentSecurityPolicy: false })); // CSP is complex, disabling for now to avoid breaking maps/images
-// app.use(mongoSanitize()); // Disabling to check if this is causing the read-only query error
-// app.use(xss()); // DEPRECATED & CAUSES ERROR: Cannot set property query of #<IncomingMessage> which has only a getter
+// mongoSanitize is DISABLED — incompatible with Express 5 (req.query is a read-only getter)
+// app.use(mongoSanitize({ replaceWith: '_' }));
 // app.use(xss()); // DEPRECATED & CAUSES ERROR: Cannot set property query of #<IncomingMessage> which has only a getter
 
 
@@ -76,19 +80,25 @@ const store = MongoStore.create({
 store.on("error", (err) => {
   console.log("SESSION STORE ERROR:", err);
 });
-app.use(
-  session({
-    store,
-    name: "pasr.sid",
-    secret: process.env.SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
-    },
-  })
-);
+
+const sessionConfig = {
+  store,
+  name: "pasr.sid",
+  secret: process.env.SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+  },
+};
+
+// Only enable secure cookies if in production environment to avoid breaking localhost
+if (process.env.NODE_ENV === "production" || app.get("env") === "production") {
+  sessionConfig.cookie.secure = true;
+}
+
+app.use(session(sessionConfig));
 
 app.use(flash());
 
@@ -122,6 +132,7 @@ app.use("/", providerRouter);
 app.use("/", reviewRouter);
 app.use("/", scheduleRouter);
 app.use("/", localMarketRouter);
+app.use("/", kisanSabhaRouter);
 app.use("/", require("./routes/shops.js"));
 
 

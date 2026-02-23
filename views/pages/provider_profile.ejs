@@ -1,6 +1,56 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
   <link rel="stylesheet" href="/css/provider_profile.css">
 
+  <style>
+    .post-card {
+      background: #fff;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      border: 1px solid #e9ecef;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .post-media {
+      width: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .post-media img,
+    .post-media video {
+      width: 100% !important;
+      max-width: 100%;
+      height: auto !important;
+      max-height: 600px;
+      object-fit: contain !important;
+      display: block;
+    }
+
+    .video-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .play-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3rem;
+      color: rgba(255, 255, 255, 0.85);
+      pointer-events: none;
+      text-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+      transition: opacity 0.2s ease;
+    }
+  </style>
+
   <body>
     <div class="profile-container">
 
@@ -284,6 +334,77 @@
                   </div>
                 </section>
                 <% } %>
+
+                  <!-- Kisan Sabha Posts Section -->
+                  <% if (typeof kisanPosts !=='undefined' && kisanPosts.length> 0) { %>
+                    <section class="profile-card"
+                      style="background: transparent; box-shadow: none; border: none; padding: 0;">
+                      <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
+                        <div class="user-info text-center w-100">
+                          <h2>My Kisan Sabha Posts</h2>
+                          <span class="user-type">Updates from your region</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <% kisanPosts.forEach(post=> { %>
+                          <div class="post-card mb-3 p-3 d-flex align-items-center justify-content-between"
+                            style="border-radius: 8px;">
+                            <div class="d-flex align-items-center">
+                              <div class="me-3" style="width: 40px; height: 40px; flex-shrink: 0;">
+                                <% if(post.media && post.media.length> 0) { %>
+                                  <% if(post.media[0].type==='video' ) { %>
+                                    <video src="<%= post.media[0].url %>" class="rounded-circle w-100 h-100"
+                                      style="object-fit: cover; background: #000;" muted playsinline></video>
+                                    <% } else { %>
+                                      <img src="<%= post.media[0].url %>" alt="Post thumbnail"
+                                        class="rounded-circle w-100 h-100"
+                                        style="object-fit: cover; background: #f8f9fa;">
+                                      <% } %>
+                                        <% } else { %>
+                                          <div
+                                            class="bg-light text-primary d-flex justify-content-center align-items-center w-100 h-100 rounded-circle">
+                                            <i class="fa-solid fa-location-dot"></i>
+                                          </div>
+                                          <% } %>
+                              </div>
+                              <div>
+                                <span class="fw-bold d-block text-dark">Local Post</span>
+                                <span class="text-muted" style="font-size: 0.85rem;">
+                                  <%= new Date(post.createdAt).toLocaleDateString() %> • <%= new
+                                      Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit' , minute: '2-digit'
+                                      }) %>
+                                </span>
+                              </div>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-3">
+                              <div>
+                                <% if(post.status==='approved' ) { %>
+                                  <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Live</span>
+                                  <% } else if(post.status==='rejected' ) { %>
+                                    <span class="badge bg-danger"><i class="fa-solid fa-xmark me-1"></i>Rejected</span>
+                                    <% } else { %>
+                                      <span class="badge bg-warning text-dark"><i
+                                          class="fa-solid fa-hourglass-half me-1"></i>Pending</span>
+                                      <% } %>
+                              </div>
+
+                              <a href="/kisan-sabha/<%= post._id %>" class="btn btn-sm btn-primary fw-bold px-3">
+                                View Post
+                              </a>
+
+                              <form action="/kisan-sabha/<%= post._id %>?_method=DELETE" method="POST" class="m-0 p-0"
+                                onsubmit="return confirm('Are you sure you want to delete this post?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger px-2"><i
+                                    class="fa-solid fa-trash"></i></button>
+                              </form>
+                            </div>
+                          </div>
+                          <% }) %>
+                      </div>
+                    </section>
+                    <% } %>
 
     </div>
 

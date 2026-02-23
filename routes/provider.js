@@ -3,7 +3,7 @@ const router = express.Router();
 const Provider = require("../data/serviceproviders.js");
 const Shedule = require("../data/clander.js");
 const Review = require("../data/review.js");
-const { isLogedin, isVerifiedCustomer, validateprovider, isOwner, isadmin, findNearbyProviders } = require("../middeleware.js");
+const { isLogedin, isNotBlocked, isVerifiedCustomer, validateprovider, isOwner, isadmin, findNearbyProviders } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const { forwardGeocode } = require("../utils/geocoder");
 const multer = require("multer");
@@ -150,7 +150,7 @@ router.get("/become/provider", isLogedin, isVerifiedCustomer, (req, res) => {
     res.render("pages/create.ejs")
 });
 
-router.post("/become/provider", isLogedin, isVerifiedCustomer, validateprovider, upload.array('provider[personImage]', 4), wrapAsync(async (req, res) => {
+router.post("/become/provider", isLogedin, isNotBlocked, isVerifiedCustomer, validateprovider, upload.array('provider[personImage]', 4), wrapAsync(async (req, res) => {
     let { company, experience, location, phoneNO } = req.body.provider;
     let categories = req.body.provider.categories;
     const personImage = req.files;

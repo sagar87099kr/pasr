@@ -1,16 +1,38 @@
-<nav class="navbar navbar-expand-sm bg-body-tertiary border-bottom sticky-top">
-  <div class="container-fluid">
+<nav class="navbar navbar-expand-sm bg-body-tertiary border-bottom sticky-top pb-1 pt-1">
+  <div class="container-fluid d-flex flex-wrap align-items-center">
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle drop" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-          <i class="fa-solid fa-circle-user"></i>
+    <!-- Top Row: Toggler, Search, Auth, Language -->
+    <div class="d-flex w-100 justify-content-between align-items-center order-1 gap-1 gap-sm-2">
+      <!-- Hamburger -->
+      <button class="navbar-toggler py-1 px-2 border-0" type="button" data-bs-toggle="collapse"
+        data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon" style="width: 1.2em; height: 1.2em;"></span>
+      </button>
+
+      <!-- Search Bar -->
+      <form class="d-flex flex-grow-1 header-search-form" role="search" action="/search" method="GET">
+        <input class="form-control form-control-sm me-1 notranslate" type="search" name="q"
+          placeholder="Search by name, phone..." aria-label="Search"
+          value="<%= typeof query !== 'undefined' ? query : '' %>" />
+        <button class="btn btn-sm btn-outline-success px-2" type="submit"><i
+            class="fa-solid fa-magnifying-glass"></i></button>
+      </form>
+
+      <!-- Language Toggle -->
+      <div class="form-check form-switch ms-1 me-1 mb-0 d-flex align-items-center">
+        <input class="form-check-input mt-0 me-1" type="checkbox" role="switch" id="languageSwitch"
+          style="width: 2em; height: 1em;">
+        <label class="form-check-label d-none d-sm-inline" for="languageSwitch"
+          style="font-size: 0.85rem;">Hindi</label>
+      </div>
+
+      <!-- Auth Dropdown/Profile (Desktop mostly, or kept small on mobile) -->
+      <div class="nav-item dropdown list-unstyled mb-0 ms-1">
+        <a class="nav-link dropdown-toggle drop p-0 text-dark" href="#" role="button" data-bs-toggle="dropdown"
+          aria-expanded="false">
+          <i class="fa-solid fa-circle-user fs-5"></i>
         </a>
-        <ul class="dropdown-menu">
+        <ul class="dropdown-menu dropdown-menu-end position-absolute">
           <li><a class="dropdown-item" href="/user">Profile</a></li>
           <li><a class="dropdown-item" href="#">About us</a> </li>
           <% if (typeof currUser==='undefined' || !currUser){%>
@@ -24,9 +46,13 @@
                 <li><a class="dropdown-item" href="/logout" style="color: red;">logOut</a></li>
                 <%}%>
         </ul>
-      </li>
-      <ul class="navbar-nav">
+      </div>
 
+    </div>
+
+    <!-- Collapsed Links -->
+    <div class="collapse navbar-collapse order-3 w-100 mt-2 mt-sm-0" id="navbarNav">
+      <ul class="navbar-nav me-auto">
         <li class="nav-item">
           <a class="nav-link" aria-current="page" href="/home">Home</a>
         </li>
@@ -36,7 +62,6 @@
         <li class="nav-item">
           <a class="nav-link" href="/shops/new"> List Your Shop </a>
         </li>
-
         <li class="nav-item">
           <a class="nav-link" href="/become/provider"> Become a Provider </a>
         </li>
@@ -50,19 +75,8 @@
         </li>
       </ul>
     </div>
+
   </div>
-  <form class="d-flex inline" role="search" action="/search" method="GET">
-    <input class="form-control me-2 notranslate" type="search" name="q" placeholder="Search by name, phone..."
-      aria-label="Search" value="<%= typeof query !== 'undefined' ? query : '' %>" />
-    <button class="btn btn-outline-success" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
-  </form>
-  <% if (typeof currUser==='undefined' || !currUser){%>
-    <button class="btn btn-outline-success"><a class="dropdown-item" href="/customer/signup">SignUp</a> </button>
-    <%}%>
-      <div class="form-check form-switch ms-2 me-2">
-        <input class="form-check-input" type="checkbox" role="switch" id="languageSwitch">
-        <label class="form-check-label" for="languageSwitch">Hindi</label>
-      </div>
 </nav>
 <!-- Meta Pixel Code -->
 <script>

@@ -11,6 +11,10 @@
     <!-- Horizontal Scroll Categories -->
     <div class="category-scroll-container">
         <div class="category-scroll">
+            <a href="/kisan-sabha" class="scroll-item">
+                <div class="scroll-icon"><i class="fa-solid fa-seedling"></i></div>
+                <span>Kisan Sabha</span>
+            </a>
             <a href="/localMarket" class="scroll-item">
                 <div class="scroll-icon"><i class="fa-solid fa-basket-shopping"></i></div>
                 <span>Local Bazaar</span>
@@ -71,6 +75,18 @@
     </div>
 
     <div class="service-grid">
+        <!-- Kisan Sabha -->
+        <a href="/kisan-sabha" class="service-card">
+            <div class="card-img-wrapper">
+                <img src="images/keshanSabha.png" class="service-img" alt="Kisan Sabha">
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">किसान सभा (Kisan Sabha)</h5>
+                <p class="card-text">A dedicated farmer community platform where our kisan brothers share farming
+                    experiences, crop tips, weather-based advice and success stories through photos and videos — direct
+                    from the field.</p>
+            </div>
+        </a>
         <!-- Local Bazaar -->
         <a href="/localMarket" class="service-card">
             <div class="card-img-wrapper">
@@ -96,7 +112,6 @@
                     Shop, etc.</p>
             </div>
         </a>
-
         <!-- Farming Vehicles -->
         <a href="/farm" class="service-card">
             <div class="card-img-wrapper">
@@ -271,33 +286,86 @@
         </div>
     </section>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            // Location logic remains unchanged
-            const askedForLocation = sessionStorage.getItem('askedForLocation');
-            if (!askedForLocation && navigator.geolocation) {
-                const options = {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                };
+    <!-- Welcome Signup Modal (For Unauthenticated Users Only) -->
+    <% if (!currUser) { %>
+        <div class="modal fade" id="welcomeSignupModal" tabindex="-1" aria-labelledby="welcomeSignupModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content shadow-lg border-0" style="border-radius: 1rem;">
+                    <div class="modal-header border-0 pb-0 d-flex justify-content-end">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center pt-0 px-4 pb-4">
+                        <div class="mb-3">
+                            <i class="fa-solid fa-hand-sparkles text-warning" style="font-size: 3rem;"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3" id="welcomeSignupModalLabel">Welcome to PASR.IN! 👋</h4>
+                        <p class="text-muted mb-4" style="font-size: 0.95rem;">
+                            Join our growing local community! Connect with farmers on <strong>Kisan Sabha</strong>,
+                            discover fresh neighborhood goods in the <strong>Local Bazaar</strong>, and book verified
+                            <strong>Home Services</strong> instantly.
+                        </p>
+                        <div class="d-grid gap-2">
+                            <a href="/customer/signup" class="btn btn-primary fw-bold py-2"
+                                style="border-radius: 50px;">
+                                Join Now — It's Free!
+                            </a>
+                            <a href="/alreadyLogin" class="btn btn-outline-secondary fw-bold py-2 mt-2"
+                                style="border-radius: 50px;">
+                                I already have an account
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        fetch('/set-location', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ latitude, longitude })
-                        }).catch(console.error);
-                        sessionStorage.setItem('askedForLocation', 'true');
-                    },
-                    (error) => {
-                        console.error("Geolocation error:", error);
-                        sessionStorage.setItem('askedForLocation', 'true');
-                    },
-                    options
-                );
-            }
-        });
-    </script>
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                // Check if the user has already seen the welcome modal
+                if (!localStorage.getItem('welcomeModalShown')) {
+                    // Delay the popup slightly to let the page load and allow the user to see the content first
+                    setTimeout(() => {
+                        const welcomeModalEl = document.getElementById('welcomeSignupModal');
+                        if (welcomeModalEl) {
+                            const welcomeModal = new bootstrap.Modal(welcomeModalEl);
+                            welcomeModal.show();
+                            // Mark as shown so it never appears again for this device/browser
+                            localStorage.setItem('welcomeModalShown', 'true');
+                        }
+                    }, 2000); // 2 seconds delay
+                }
+            });
+        </script>
+        <% } %>
+
+            <script>
+                document.addEventListener("DOMContentLoaded", () => {
+                    // Location logic remains unchanged
+                    const askedForLocation = sessionStorage.getItem('askedForLocation');
+                    if (!askedForLocation && navigator.geolocation) {
+                        const options = {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 0
+                        };
+
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                const { latitude, longitude } = position.coords;
+                                fetch('/set-location', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ latitude, longitude })
+                                }).catch(console.error);
+                                sessionStorage.setItem('askedForLocation', 'true');
+                            },
+                            (error) => {
+                                console.error("Geolocation error:", error);
+                                sessionStorage.setItem('askedForLocation', 'true');
+                            },
+                            options
+                        );
+                    }
+                });
+            </script>
