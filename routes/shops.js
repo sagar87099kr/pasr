@@ -243,14 +243,14 @@ router.get("/shops/:id/edit", isLogedin, isShopOwner, wrapAsync(async (req, res)
 // Update Shop
 router.put("/shops/:id", isLogedin, isShopOwner, validateShop, wrapAsync(async (req, res) => {
     let { id } = req.params;
-    const { shopName, shopDescription, category, location } = req.body.shop;
+    const { shopName, shopDescription, category, location, openingTime, closingTime } = req.body.shop;
 
     // Geocode the new location
     const geoData = await forwardGeocode(location);
 
     const geometry = geoData.body.features[0].geometry;
 
-    await Shop.findByIdAndUpdate(id, { shopName, shopDescription, category, location, geometry });
+    await Shop.findByIdAndUpdate(id, { shopName, shopDescription, category, location, geometry, openingTime, closingTime });
 
     req.flash("success", "Shop updated successfully");
     res.redirect(`/shops/${id}`);
@@ -288,6 +288,12 @@ router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, upload.sin
     }
 
     const itemData = req.body.item;
+    // Normalize sizes from checkboxes (may be string, array, or undefined)
+    if (itemData.sizes) {
+        itemData.sizes = Array.isArray(itemData.sizes) ? itemData.sizes : [itemData.sizes];
+    } else {
+        itemData.sizes = [];
+    }
     const newItem = new Item(itemData);
 
     if (req.file) {
@@ -308,12 +314,15 @@ router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, upload.sin
 router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
     const { id, itemId } = req.params;
     const { name, price, quantity, itemCategory } = req.body.item;
+    let sizes = req.body.item.sizes || [];
+    if (!Array.isArray(sizes)) sizes = [sizes];
 
     await Item.findByIdAndUpdate(itemId, {
         name,
         price,
         quantity,
-        itemCategory
+        itemCategory,
+        sizes
     });
 
     req.flash("success", "Item updated successfully");

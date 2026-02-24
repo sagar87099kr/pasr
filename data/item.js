@@ -18,6 +18,10 @@ const itemSchema = new Schema({
         type: String,
         default: ""
     },
+    sizes: {
+        type: [String],
+        default: []
+    },
     img: {
         url: String,
         filename: String

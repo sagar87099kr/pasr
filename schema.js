@@ -72,5 +72,6 @@ module.exports.itemSchema = Joi.object({
         price: Joi.number().required().min(0),
         quantity: Joi.number().required().min(0),
         itemCategory: Joi.string().allow(""),
+        sizes: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional(),
     }).required()
 });

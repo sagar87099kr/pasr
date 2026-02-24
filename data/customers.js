@@ -63,6 +63,14 @@ const customerSchema = new Schema({
     type: Date,
     default: Date.now
   },
+  resetToken: {
+    type: String,
+    default: null
+  },
+  resetTokenExpiry: {
+    type: Date,
+    default: null
+  }
 });
 
 customerSchema.plugin(passportLocalMongoose);

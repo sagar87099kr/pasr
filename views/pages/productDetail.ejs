@@ -176,10 +176,6 @@
 
                 <div class="seller-contact-details">
                     <div class="contact-row">
-                        <i class="fa-solid fa-phone"></i>
-                        <span>+91 <%= product.owner.username %></span>
-                    </div>
-                    <div class="contact-row">
                         <i class="fa-solid fa-location-dot"></i>
                         <span>
                             <%= product.location %>
@@ -187,12 +183,25 @@
                     </div>
                 </div>
 
-                <a href="/action/call/<%= product.owner.username %>" class="btn btn-primary w-100">
-                    <i class="fa-solid fa-phone"></i> Call Seller
-                </a>
+                <div class="d-flex gap-2 mt-3">
+                    <a href="/action/call/<%= product.owner.username %>" class="btn btn-primary flex-grow-1">
+                        <i class="fa-solid fa-phone"></i> Call
+                    </a>
+                    <a href="https://wa.me/91<%= product.owner.username %>?text=Hi,%20I%20am%20interested%20in%20your%20product:%20<%= encodeURIComponent(product.productName) %>"
+                        target="_blank" class="btn btn-success flex-grow-1"
+                        style="background-color: #25D366; border-color: #25D366;">
+                        <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                    </a>
+                </div>
             </div>
         </div>
 
+        </div>
+
+        <!-- Fullscreen Image Modal -->
+        <div id="imageModal" class="profile-img-modal" onclick="closeImageModal(event)">
+            <span class="profile-modal-close" onclick="closeImageModal(event)">&times;</span>
+            <img class="profile-modal-content" id="expandedImg">
         </div>
 
         <script>
@@ -222,10 +231,34 @@
             const galleryImages = document.querySelectorAll('.gallery-img');
             const mainImage = document.querySelector('.main-image');
 
+            // Add pointer style to main image to indicate it's clickable
+            if (mainImage) {
+                mainImage.style.cursor = 'pointer';
+            }
+
             galleryImages.forEach(img => {
                 img.addEventListener('click', () => {
                     mainImage.src = img.src;
                 });
             });
+
+            // Image Zoom Modal functionality
+            const imageModal = document.getElementById("imageModal");
+            const expandedImg = document.getElementById("expandedImg");
+
+            if (mainImage && imageModal && expandedImg) {
+                mainImage.addEventListener('click', () => {
+                    expandedImg.src = mainImage.src;
+                    imageModal.classList.add('show');
+                });
+            }
+
+            function closeImageModal(e) {
+                // Only close if clicking the background or the X button
+                if (e.target.id === 'imageModal' || e.target.classList.contains('profile-modal-close')) {
+                    const modal = document.getElementById('imageModal');
+                    if (modal) modal.classList.remove('show');
+                }
+            }
         </script>
     </body>

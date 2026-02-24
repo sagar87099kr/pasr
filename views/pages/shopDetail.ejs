@@ -774,7 +774,8 @@
                                 <div class="cat-scroll-wrapper" id="categorySlider" style="padding-bottom:10px;">
                                     <span class="cat-pill active" onclick="filterItems('All', this)">All Items</span>
                                     <% currentShopCats.forEach(cat=> { %>
-                                        <span class="cat-pill" onclick="filterItems('<%= cat.name %>', this)">
+                                        <span class="cat-pill" data-cat="<%= cat.name %>"
+                                            onclick="filterItems(this.getAttribute('data-cat'), this)">
                                             <%= cat.icon %>
                                                 <%= cat.name %>
                                         </span>
@@ -813,18 +814,32 @@
                                                         <span>Qty: <%= item.quantity %></span>
                                                     </div>
 
-                                                    <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                                                        <div class="item-action-buttons">
-                                                            <button type="button" class="item-edit-btn"
-                                                                onclick="event.stopPropagation(); openEditItemModal('<%= item._id %>', '<%= item.name %>', '<%= item.price %>', '<%= item.quantity %>', '<%= item.itemCategory || '' %>')">
-                                                                <i class="fa-solid fa-edit"></i> Edit
-                                                            </button>
-                                                            <button type="button" class="item-delete-btn"
-                                                                onclick="event.stopPropagation(); openDeleteConfirm('<%= shop._id %>', '<%= item._id %>')">
-                                                                <i class="fa-solid fa-trash"></i> Delete
-                                                            </button>
+                                                    <% if ((shop.category==='Footwear' || shop.category==='Fashion' ) &&
+                                                        item.sizes && item.sizes.length> 0) { %>
+                                                        <div
+                                                            style="margin-top:8px; display:flex; flex-wrap:wrap; gap:4px;">
+                                                            <% item.sizes.forEach(function(sz){ %>
+                                                                <span
+                                                                    style="font-size:11px; background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; border-radius:12px; padding:2px 8px; font-weight:600;">
+                                                                    <%= sz.replace('Kids-Infant-','').replace('Kids-Junior-','').replace('Infant-','').replace('Kids-','').replace('Women-','').replace('Men-','')
+                                                                        %>
+                                                                </span>
+                                                                <% }); %>
                                                         </div>
                                                         <% } %>
+
+                                                            <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                                                <div class="item-action-buttons">
+                                                                    <button type="button" class="item-edit-btn"
+                                                                        onclick="event.stopPropagation(); openEditItemModal('<%= item._id %>', '<%= item.name %>', '<%= item.price %>', '<%= item.quantity %>', '<%= item.itemCategory || '' %>', <%- JSON.stringify(item.sizes || []) %>)">
+                                                                        <i class="fa-solid fa-edit"></i> Edit
+                                                                    </button>
+                                                                    <button type="button" class="item-delete-btn"
+                                                                        onclick="event.stopPropagation(); openDeleteConfirm('<%= shop._id %>', '<%= item._id %>')">
+                                                                        <i class="fa-solid fa-trash"></i> Delete
+                                                                    </button>
+                                                                </div>
+                                                                <% } %>
                                                 </div>
                                             </div>
                                             <% }) %>
@@ -1004,12 +1019,213 @@
                                 </select>
                             </div>
                             <% } %>
-                                <div class="field">
-                                    <label>Item Image</label>
-                                    <input type="file" name="itemImage" id="itemImageInput" required
-                                        style="width:100%; padding:10px; background:#f9fafb; border:1px solid #d1d5db; border-radius:8px;">
-                                </div>
-                                <button class="btn btn-primary w-100" id="addItemSubmitBtn">Add Item</button>
+
+                                <% if(shop.category==='Footwear' ) { %>
+                                    <div class="field" id="shoeSizeField">
+                                        <label style="font-weight:700; margin-bottom:10px; display:block;">Available
+                                            Sizes</label>
+
+                                        <style>
+                                            .size-group {
+                                                margin-bottom: 14px;
+                                            }
+
+                                            .size-group-label {
+                                                font-size: 12px;
+                                                font-weight: 700;
+                                                text-transform: uppercase;
+                                                letter-spacing: 0.05em;
+                                                color: #6b7280;
+                                                margin-bottom: 8px;
+                                            }
+
+                                            .size-chips {
+                                                display: flex;
+                                                flex-wrap: wrap;
+                                                gap: 8px;
+                                            }
+
+                                            .size-chip input[type="checkbox"] {
+                                                display: none;
+                                            }
+
+                                            .size-chip label {
+                                                display: inline-block;
+                                                padding: 6px 13px;
+                                                border: 2px solid #d1d5db;
+                                                border-radius: 20px;
+                                                font-size: 13px;
+                                                font-weight: 600;
+                                                cursor: pointer;
+                                                background: #fff;
+                                                color: #374151;
+                                                transition: all 0.18s;
+                                                user-select: none;
+                                            }
+
+                                            .size-chip input[type="checkbox"]:checked+label {
+                                                border-color: #138808;
+                                                background: #138808;
+                                                color: #fff;
+                                            }
+
+                                            .size-chip label:hover {
+                                                border-color: #138808;
+                                                color: #138808;
+                                            }
+                                        </style>
+
+                                        <!-- Kids Infant (UK 1–9 | EU 17–26) -->
+                                        <div class="size-group">
+                                            <div class="size-group-label">👶 Kids – Infant (UK 1–9 | EU 17–26)</div>
+                                            <div class="size-chips">
+                                                <% ['1','2','3','4','5','6','7','8','9'].forEach(function(s){ %>
+                                                    <span class="size-chip">
+                                                        <input type="checkbox" name="item[sizes][]"
+                                                            value="Kids-Infant-UK<%= s %>" id="sz_add_ki_<%= s %>">
+                                                        <label for="sz_add_ki_<%= s %>">UK <%= s %></label>
+                                                    </span>
+                                                    <% }); %>
+                                            </div>
+                                        </div>
+
+                                        <!-- Kids Junior (UK 10–3 | EU 28–35) -->
+                                        <div class="size-group">
+                                            <div class="size-group-label">🧒 Kids – Junior (UK 10–3 | EU 28–35)</div>
+                                            <div class="size-chips">
+                                                <% ['10','11','12','13','1j','2j','3j'].forEach(function(s){ var
+                                                    label=s.endsWith('j') ? 'UK ' +s.replace('j','') : 'UK ' +s; var
+                                                    id=s; %>
+                                                    <span class="size-chip">
+                                                        <input type="checkbox" name="item[sizes][]"
+                                                            value="Kids-Junior-<%= id %>" id="sz_add_kj_<%= id %>">
+                                                        <label for="sz_add_kj_<%= id %>">
+                                                            <%= label %>
+                                                        </label>
+                                                    </span>
+                                                    <% }); %>
+                                            </div>
+                                        </div>
+
+                                        <!-- Women (UK 3–8 | EU 36–42) -->
+                                        <div class="size-group">
+                                            <div class="size-group-label">👠 Women (UK 3–8 | EU 36–42)</div>
+                                            <div class="size-chips">
+                                                <% ['3','4','5','6','7','8'].forEach(function(s){ %>
+                                                    <span class="size-chip">
+                                                        <input type="checkbox" name="item[sizes][]"
+                                                            value="Women-UK<%= s %>"
+                                                            id="sz_add_w_<%= s.replace('.','_') %>">
+                                                        <label for="sz_add_w_<%= s.replace('.','_') %>">UK <%= s %>
+                                                        </label>
+                                                    </span>
+                                                    <% }); %>
+                                            </div>
+                                        </div>
+
+                                        <!-- Men (UK 6–12 | EU 40–47) -->
+                                        <div class="size-group">
+                                            <div class="size-group-label">👞 Men (UK 6–12 | EU 40–47)</div>
+                                            <div class="size-chips">
+                                                <% ['6','7','8','9','10','11','12'].forEach(function(s){ %>
+                                                    <span class="size-chip">
+                                                        <input type="checkbox" name="item[sizes][]"
+                                                            value="Men-UK<%= s %>"
+                                                            id="sz_add_m_<%= s.replace('.','_') %>">
+                                                        <label for="sz_add_m_<%= s.replace('.','_') %>">UK <%= s %>
+                                                        </label>
+                                                    </span>
+                                                    <% }); %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <% } %>
+
+                                        <% if(shop.category==='Fashion' ) { %>
+                                            <div class="field" id="fashionSizeField">
+                                                <label
+                                                    style="font-weight:700; margin-bottom:10px; display:block;">Available
+                                                    Sizes</label>
+
+                                                <!-- Infants (0–24 months) -->
+                                                <div class="size-group">
+                                                    <div class="size-group-label">👶 Infants (0–24 Months)</div>
+                                                    <div class="size-chips">
+                                                        <% ['0-3M','3-6M','6-9M','9-12M','12-18M','18-24M'].forEach(function(s){
+                                                            %>
+                                                            <span class="size-chip">
+                                                                <input type="checkbox" name="item[sizes][]"
+                                                                    value="Infant-<%= s %>"
+                                                                    id="sz_add_inf_<%= s.replace('-','_') %>">
+                                                                <label for="sz_add_inf_<%= s.replace('-','_') %>">
+                                                                    <%= s %>
+                                                                </label>
+                                                            </span>
+                                                            <% }); %>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Kids (by age: 2–15 years) -->
+                                                <div class="size-group">
+                                                    <div class="size-group-label">🧒 Kids (Age 2–15 Years)</div>
+                                                    <div class="size-chips">
+                                                        <% ['2-3Y','3-4Y','4-5Y','5-6Y','6-7Y','7-8Y','8-9Y','9-10Y','10-11Y','11-12Y','12-13Y','13-14Y','14-15Y'].forEach(function(s){
+                                                            %>
+                                                            <span class="size-chip">
+                                                                <input type="checkbox" name="item[sizes][]"
+                                                                    value="Kids-<%= s %>"
+                                                                    id="sz_add_kid_<%= s.replace('-','_') %>">
+                                                                <label for="sz_add_kid_<%= s.replace('-','_') %>">
+                                                                    <%= s %>
+                                                                </label>
+                                                            </span>
+                                                            <% }); %>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Women -->
+                                                <div class="size-group">
+                                                    <div class="size-group-label">👗 Women</div>
+                                                    <div class="size-chips">
+                                                        <% ['XS','S','M','L','XL','XXL','XXXL'].forEach(function(s){ %>
+                                                            <span class="size-chip">
+                                                                <input type="checkbox" name="item[sizes][]"
+                                                                    value="Women-<%= s %>" id="sz_add_fw_<%= s %>">
+                                                                <label for="sz_add_fw_<%= s %>">
+                                                                    <%= s %>
+                                                                </label>
+                                                            </span>
+                                                            <% }); %>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Men -->
+                                                <div class="size-group">
+                                                    <div class="size-group-label">👕 Men</div>
+                                                    <div class="size-chips">
+                                                        <% ['XS','S','M','L','XL','XXL','XXXL'].forEach(function(s){ %>
+                                                            <span class="size-chip">
+                                                                <input type="checkbox" name="item[sizes][]"
+                                                                    value="Men-<%= s %>" id="sz_add_fm_<%= s %>">
+                                                                <label for="sz_add_fm_<%= s %>">
+                                                                    <%= s %>
+                                                                </label>
+                                                            </span>
+                                                            <% }); %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <% } %>
+
+                                                <div class="field">
+                                                    <label>Item Image</label>
+                                                    <input type="file" name="itemImage" id="itemImageInput" required
+                                                        style="width:100%; padding:10px; background:#f9fafb; border:1px solid #d1d5db; border-radius:8px;">
+                                                </div>
+                                                <button class="btn btn-primary w-100" id="addItemSubmitBtn">Add
+                                                    Item</button>
+
+
                     </form>
                 </div>
             </div>
@@ -1055,7 +1271,149 @@
                                 </select>
                             </div>
                             <% } %>
-                                <button type="submit" class="btn btn-primary w-100">Update Item</button>
+
+                                <% if(shop.category==='Footwear' ) { %>
+                                    <div class="field">
+                                        <label style="font-weight:700; margin-bottom:10px; display:block;">Available
+                                            Sizes</label>
+
+                                        <!-- Kids Infant -->
+                                        <div class="size-group">
+                                            <div class="size-group-label">👶 Kids – Infant (UK 1–9)</div>
+                                            <div class="size-chips">
+                                                <% ['1','2','3','4','5','6','7','8','9'].forEach(function(s){ %>
+                                                    <span class="size-chip">
+                                                        <input type="checkbox" name="item[sizes][]"
+                                                            value="Kids-Infant-UK<%= s %>" id="sz_edit_ki_<%= s %>">
+                                                        <label for="sz_edit_ki_<%= s %>">UK <%= s %></label>
+                                                    </span>
+                                                    <% }); %>
+                                            </div>
+                                        </div>
+                                        <!-- Kids Junior -->
+                                        <div class="size-group">
+                                            <div class="size-group-label">🧒 Kids – Junior (UK 10–3)</div>
+                                            <div class="size-chips">
+                                                <% ['10','11','12','13','1j','2j','3j'].forEach(function(s){ var
+                                                    label=s.endsWith('j') ? 'UK ' +s.replace('j','') : 'UK ' +s; %>
+                                                    <span class="size-chip">
+                                                        <input type="checkbox" name="item[sizes][]"
+                                                            value="Kids-Junior-<%= s %>" id="sz_edit_kj_<%= s %>">
+                                                        <label for="sz_edit_kj_<%= s %>">
+                                                            <%= label %>
+                                                        </label>
+                                                    </span>
+                                                    <% }); %>
+                                            </div>
+                                        </div>
+                                        <!-- Women -->
+                                        <div class="size-group">
+                                            <div class="size-group-label">👠 Women (UK 3–8)</div>
+                                            <div class="size-chips">
+                                                <% ['3','4','5','6','7','8'].forEach(function(s){ %>
+                                                    <span class="size-chip">
+                                                        <input type="checkbox" name="item[sizes][]"
+                                                            value="Women-UK<%= s %>"
+                                                            id="sz_edit_w_<%= s.replace('.','_') %>">
+                                                        <label for="sz_edit_w_<%= s.replace('.','_') %>">UK <%= s %>
+                                                        </label>
+                                                    </span>
+                                                    <% }); %>
+                                            </div>
+                                        </div>
+                                        <!-- Men -->
+                                        <div class="size-group">
+                                            <div class="size-group-label">👞 Men (UK 6–12)</div>
+                                            <div class="size-chips">
+                                                <% ['6','7','8','9','10','11','12'].forEach(function(s){ %>
+                                                    <span class="size-chip">
+                                                        <input type="checkbox" name="item[sizes][]"
+                                                            value="Men-UK<%= s %>"
+                                                            id="sz_edit_m_<%= s.replace('.','_') %>">
+                                                        <label for="sz_edit_m_<%= s.replace('.','_') %>">UK <%= s %>
+                                                        </label>
+                                                    </span>
+                                                    <% }); %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <% } %>
+
+                                        <% if(shop.category==='Fashion' ) { %>
+                                            <div class="field">
+                                                <label
+                                                    style="font-weight:700; margin-bottom:10px; display:block;">Available
+                                                    Sizes</label>
+
+                                                <!-- Infants -->
+                                                <div class="size-group">
+                                                    <div class="size-group-label">👶 Infants (0–24 Months)</div>
+                                                    <div class="size-chips">
+                                                        <% ['0-3M','3-6M','6-9M','9-12M','12-18M','18-24M'].forEach(function(s){
+                                                            %>
+                                                            <span class="size-chip">
+                                                                <input type="checkbox" name="item[sizes][]"
+                                                                    value="Infant-<%= s %>"
+                                                                    id="sz_edit_inf_<%= s.replace('-','_') %>">
+                                                                <label for="sz_edit_inf_<%= s.replace('-','_') %>">
+                                                                    <%= s %>
+                                                                </label>
+                                                            </span>
+                                                            <% }); %>
+                                                    </div>
+                                                </div>
+                                                <!-- Kids by age -->
+                                                <div class="size-group">
+                                                    <div class="size-group-label">🧒 Kids (Age 2–15 Years)</div>
+                                                    <div class="size-chips">
+                                                        <% ['2-3Y','3-4Y','4-5Y','5-6Y','6-7Y','7-8Y','8-9Y','9-10Y','10-11Y','11-12Y','12-13Y','13-14Y','14-15Y'].forEach(function(s){
+                                                            %>
+                                                            <span class="size-chip">
+                                                                <input type="checkbox" name="item[sizes][]"
+                                                                    value="Kids-<%= s %>"
+                                                                    id="sz_edit_kid_<%= s.replace('-','_') %>">
+                                                                <label for="sz_edit_kid_<%= s.replace('-','_') %>">
+                                                                    <%= s %>
+                                                                </label>
+                                                            </span>
+                                                            <% }); %>
+                                                    </div>
+                                                </div>
+                                                <!-- Women -->
+                                                <div class="size-group">
+                                                    <div class="size-group-label">👗 Women</div>
+                                                    <div class="size-chips">
+                                                        <% ['XS','S','M','L','XL','XXL','XXXL'].forEach(function(s){ %>
+                                                            <span class="size-chip">
+                                                                <input type="checkbox" name="item[sizes][]"
+                                                                    value="Women-<%= s %>" id="sz_edit_fw_<%= s %>">
+                                                                <label for="sz_edit_fw_<%= s %>">
+                                                                    <%= s %>
+                                                                </label>
+                                                            </span>
+                                                            <% }); %>
+                                                    </div>
+                                                </div>
+                                                <!-- Men -->
+                                                <div class="size-group">
+                                                    <div class="size-group-label">👕 Men</div>
+                                                    <div class="size-chips">
+                                                        <% ['XS','S','M','L','XL','XXL','XXXL'].forEach(function(s){ %>
+                                                            <span class="size-chip">
+                                                                <input type="checkbox" name="item[sizes][]"
+                                                                    value="Men-<%= s %>" id="sz_edit_fm_<%= s %>">
+                                                                <label for="sz_edit_fm_<%= s %>">
+                                                                    <%= s %>
+                                                                </label>
+                                                            </span>
+                                                            <% }); %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <% } %>
+
+                                                <button type="submit" class="btn btn-primary w-100">Update Item</button>
+
                     </form>
                 </div>
             </div>
@@ -1264,7 +1622,7 @@
                 });
 
                 // Edit Item Modal Functions
-                function openEditItemModal(itemId, itemName, itemPrice, itemQuantity, itemCategory) {
+                function openEditItemModal(itemId, itemName, itemPrice, itemQuantity, itemCategory, sizes) {
                     const modal = document.getElementById('editItemModal');
                     document.getElementById('editItemId').value = itemId;
                     document.getElementById('editItemName').value = itemName;
@@ -1275,6 +1633,12 @@
                     if (categorySelect && itemCategory) {
                         categorySelect.value = itemCategory;
                     }
+
+                    // Pre-check saved sizes in the edit modal
+                    const sizeCheckboxes = modal.querySelectorAll('input[name="item[sizes][]"]');
+                    sizeCheckboxes.forEach(cb => {
+                        cb.checked = sizes && sizes.includes(cb.value);
+                    });
 
                     // Set form action
                     const form = document.getElementById('editItemForm');
@@ -1390,5 +1754,99 @@
                         reader.onerror = reject;
                     });
                 }
+            </script>
+
+            <!-- NEW SCRIPT: Dynamic Size Group Toggling -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    function toggleSizeGroups(modalPrefix, selectedCategoryName) {
+                        const modal = document.getElementById(modalPrefix + 'ItemModal');
+                        if (!modal) return;
+
+                        const sizeField = modal.querySelector('.field#shoeSizeField') || modal.querySelector('.field#fashionSizeField');
+                        if (!sizeField) return;
+
+                        const sizeGroups = sizeField.querySelectorAll('.size-group');
+                        if (!sizeGroups || sizeGroups.length === 0) return;
+
+                        if (!selectedCategoryName || selectedCategoryName.toLowerCase().includes('general') || selectedCategoryName.toLowerCase().includes('other')) {
+                            sizeGroups.forEach(group => group.style.display = 'none');
+                            return;
+                        }
+
+                        const catLower = selectedCategoryName.toLowerCase();
+
+                        // strict demographic targeting
+                        const isMens = catLower.includes('men') && !catLower.includes('women');
+                        const isWomens = catLower.includes('women');
+                        const isKids = catLower.includes('kid') || catLower.includes('infant') || catLower.includes('baby') || catLower.includes('boy') || catLower.includes('girl');
+
+                        sizeGroups.forEach(group => {
+                            const labelText = group.querySelector('.size-group-label').innerText.toLowerCase();
+
+                            let shouldShow = false;
+
+                            // Broad categories where we want to show adult sizes (Men + Women)
+                            const isBroadAdult = catLower.includes('sport') || catLower.includes('active') ||
+                                catLower.includes('premium') || catLower.includes('brand') ||
+                                catLower.includes('ethnic') || catLower.includes('winter') ||
+                                catLower.includes('innerwear') || catLower.includes('lingerie');
+
+                            if (isBroadAdult) {
+                                // Show both Men's and Women's sizes for broad categories
+                                if (labelText.includes('men') || labelText.includes('women')) {
+                                    shouldShow = true;
+                                }
+                            } else {
+                                // Strict demographic logic
+                                if (isMens && (labelText.includes('men') && !labelText.includes('women'))) shouldShow = true;
+                                if (isWomens && labelText.includes('women')) shouldShow = true;
+                                if (isKids && (labelText.includes('kid') || labelText.includes('infant') || labelText.includes('junior'))) shouldShow = true;
+                            }
+
+                            if (shouldShow) {
+                                group.style.display = 'block';
+                            } else {
+                                group.style.display = 'none';
+                                // Uncheck hidden checkboxes
+                                const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+                                checkboxes.forEach(cb => cb.checked = false);
+                            }
+                        });
+                    }
+
+                    // Add Modal Select listener
+                    const addSelect = document.querySelector('#addItemModal select[name="item[itemCategory]"]');
+                    if (addSelect) {
+                        toggleSizeGroups('add', addSelect.value); // init
+                        addSelect.addEventListener('change', function (e) {
+                            toggleSizeGroups('add', this.value);
+                        });
+                    }
+
+                    // Edit Modal Select listener
+                    const editSelect = document.querySelector('#editItemModal select[name="item[itemCategory]"]');
+                    if (editSelect) {
+                        editSelect.addEventListener('change', function (e) {
+                            toggleSizeGroups('edit', this.value);
+                        });
+
+                        // We also need to listen to when the edit modal opens because its value is set via JS
+                        const originalOpenEditModal = window.openEditItemModal;
+                        if (typeof originalOpenEditModal !== 'undefined') {
+                            // We can't easily hook into the exact moment the value is set in the inline HTML onclick, 
+                            // but we can listen for click events on the edit buttons.
+                        }
+
+                        // Fallback: poll for changes or attach to button clicks globally
+                        document.body.addEventListener('click', function (e) {
+                            if (e.target.closest('.edit-btn') || e.target.closest('.user-actions .btn-secondary')) {
+                                setTimeout(() => {
+                                    toggleSizeGroups('edit', editSelect.value);
+                                }, 50); // slight delay to allow the inline onclick to set the value first
+                            }
+                        });
+                    }
+                });
             </script>
         </body>
