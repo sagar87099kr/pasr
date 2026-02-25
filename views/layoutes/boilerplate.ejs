@@ -54,7 +54,8 @@
             position: fixed;
             bottom: 20px;
             left: 16px;
-            z-index: 10000;
+            z-index: 1030;
+            /* Below Bootstrap modal backdrop (1040) so it gets covered correctly */
             display: flex;
             align-items: center;
             gap: 8px;
@@ -137,7 +138,93 @@
         .lang-switch-wrap input:checked~.lang-slider::before {
             transform: translateX(16px);
         }
+
+        /* Prevent Google Translate bar from ever causing layout shifts or grey blur */
+        .goog-te-banner-frame,
+        .goog-te-gadget,
+        #goog-gt-tt,
+        .goog-tooltip {
+            display: none !important;
+        }
+
+        body {
+            top: 0 !important;
+        }
+
+        .skiptranslate {
+            display: none !important;
+        }
+
+        /* ── Signup nudge banner (shared link pages) ── */
+        #signup-nudge-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1035;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.18);
+            animation: nudge-slide-up 0.4s ease;
+        }
+
+        @keyframes nudge-slide-up {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        #signup-nudge-bar>div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nudge-btn-primary {
+            padding: 7px 16px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            background: #fff;
+            color: #312e81 !important;
+            text-decoration: none;
+        }
+
+        .nudge-btn-secondary {
+            padding: 7px 16px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+        }
+
+        .nudge-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 6px;
+        }
     </style>
+
 
 
     <!-- Google Fonts — non-blocking with font-display=swap for faster text render -->
@@ -444,19 +531,47 @@
                         </div>
                     </div>
                 </div>
+                <!-- Small non-blocking signup nudge banner (shown on non-home pages) -->
+                <div id="signup-nudge-bar" style="display:none;">
+                    <span>👋 New here? Join <strong>PASR.IN</strong> — it's free!</span>
+                    <div>
+                        <a href="/customer/signup" class="nudge-btn-primary">Sign Up</a>
+                        <button type="button" class="nudge-btn-secondary" data-bs-toggle="modal"
+                            data-bs-target="#welcomeSignupModal">Login</button>
+                        <button type="button" class="nudge-close" id="nudge-close-btn" aria-label="Close">✕</button>
+                    </div>
+                </div>
+
                 <script>
                     document.addEventListener("DOMContentLoaded", () => {
-                        // Show only once per session — won't re-appear on page switch, but will show again in a new session
-                        if (!sessionStorage.getItem('welcomeModalShown')) {
-                            setTimeout(() => {
-                                const welcomeModalEl = document.getElementById('welcomeSignupModal');
-                                if (welcomeModalEl) {
-                                    const welcomeModal = new bootstrap.Modal(welcomeModalEl);
-                                    welcomeModal.show();
+                        const isHomePage = window.location.pathname === '/home' || window.location.pathname === '/';
+                        const alreadySeen = sessionStorage.getItem('welcomeModalShown');
+
+                        if (!alreadySeen) {
+                            if (isHomePage) {
+                                // Full blocking modal — fine on home, user is just browsing
+                                setTimeout(() => {
+                                    const el = document.getElementById('welcomeSignupModal');
+                                    if (el) {
+                                        new bootstrap.Modal(el).show();
+                                        sessionStorage.setItem('welcomeModalShown', 'true');
+                                    }
+                                }, 2000);
+                            } else {
+                                // Shared link / profile / shop page — show small non-blocking banner
+                                setTimeout(() => {
+                                    const bar = document.getElementById('signup-nudge-bar');
+                                    if (bar) bar.style.display = 'flex';
                                     sessionStorage.setItem('welcomeModalShown', 'true');
-                                }
-                            }, 2000);
+                                }, 1500);
+                            }
                         }
+
+                        // Close nudge bar
+                        const closeBtn = document.getElementById('nudge-close-btn');
+                        if (closeBtn) closeBtn.addEventListener('click', () => {
+                            document.getElementById('signup-nudge-bar').style.display = 'none';
+                        });
                     });
                 </script>
                 <% } %>
