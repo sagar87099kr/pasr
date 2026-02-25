@@ -1,3 +1,151 @@
+/* ============================
+   Navbar Login / Sign Up button (shown to guests only)
+   ============================ */
+.navbar-login-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff !important;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border: none;
+  border-radius: 999px;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+.navbar-login-btn:hover {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.45);
+  color: #fff !important;
+}
+
+.navbar-login-btn:active {
+  transform: scale(0.97);
+}
+
+/* ============================
+   Fixed Language Toggle FAB
+   Bottom-left, visible on every page
+   ============================ */
+#lang-toggle-fab {
+  position: fixed;
+  bottom: 20px;
+  left: 16px;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 999px;
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: box-shadow .18s ease, transform .18s ease;
+  user-select: none;
+}
+
+#lang-toggle-fab:hover {
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.18);
+  transform: translateY(-2px);
+}
+
+.lang-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+  transition: color .18s ease;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Highlight active label */
+#lang-toggle-fab.lang-hi #lang-label-hi,
+#lang-toggle-fab:not(.lang-hi) #lang-label-en {
+  color: #6366f1;
+}
+
+/* Custom toggle switch */
+.lang-switch-wrap {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.lang-switch-wrap input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.lang-slider {
+  position: absolute;
+  inset: 0;
+  background: #e2e8f0;
+  border-radius: 999px;
+  transition: background .18s ease;
+}
+
+.lang-slider::before {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform .18s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+.lang-switch-wrap input:checked~.lang-slider {
+  background: #6366f1;
+}
+
+.lang-switch-wrap input:checked~.lang-slider::before {
+  transform: translateX(16px);
+}
+
+
+.navbar-login-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff !important;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border: none;
+  border-radius: 999px;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+.navbar-login-btn:hover {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.45);
+  color: #fff !important;
+}
+
+.navbar-login-btn:active {
+  transform: scale(0.97);
+}
+
 /* home page */
 .card {
   padding: 0px !important;

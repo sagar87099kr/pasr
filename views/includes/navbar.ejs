@@ -18,37 +18,39 @@
             class="fa-solid fa-magnifying-glass"></i></button>
       </form>
 
-      <!-- Language Toggle -->
-      <div class="form-check form-switch ms-1 me-1 mb-0 d-flex align-items-center">
-        <input class="form-check-input mt-0 me-1" type="checkbox" role="switch" id="languageSwitch"
-          style="width: 2em; height: 1em;">
-        <label class="form-check-label d-none d-sm-inline" for="languageSwitch"
-          style="font-size: 0.85rem;">Hindi</label>
-      </div>
 
-      <!-- Auth Dropdown/Profile (Desktop mostly, or kept small on mobile) -->
-      <div class="nav-item dropdown list-unstyled mb-0 ms-1">
-        <a class="nav-link dropdown-toggle drop p-0 text-dark" href="#" role="button" data-bs-toggle="dropdown"
-          aria-expanded="false">
-          <i class="fa-solid fa-circle-user fs-5"></i>
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end position-absolute">
-          <li><a class="dropdown-item" href="/user">Profile</a></li>
-          <li><a class="dropdown-item" href="#">About us</a> </li>
-          <% if (typeof currUser==='undefined' || !currUser){%>
-            <li><a class="dropdown-item" href="/alreadyLogin">login</a> </li>
-            <li><a class="dropdown-item" href="/customer/signup">SignUp</a> </li>
-            <%}%>
-              <li>
-                <hr class="dropdown-divider">
-              </li>
-              <% if (typeof currUser !=='undefined' && currUser){%>
-                <li><a class="dropdown-item" href="/logout" style="color: red;">logOut</a></li>
+      <!-- Login / Sign Up button — only shown to guests, opens the welcome modal -->
+      <% if (typeof currUser==='undefined' || !currUser) { %>
+        <button type="button" class="btn btn-sm navbar-login-btn ms-1" data-bs-toggle="modal"
+          data-bs-target="#welcomeSignupModal">
+          Login / Sign Up
+        </button>
+        <% } %>
+
+          <!-- Auth Dropdown/Profile (Desktop mostly, or kept small on mobile) -->
+          <div class="nav-item dropdown list-unstyled mb-0 ms-1">
+            <a class="nav-link dropdown-toggle drop p-0 text-dark" href="#" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              <i class="fa-solid fa-circle-user fs-5"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end position-absolute">
+              <li><a class="dropdown-item" href="/user">Profile</a></li>
+              <li><a class="dropdown-item" href="#">About us</a> </li>
+              <% if (typeof currUser==='undefined' || !currUser){%>
+                <li><a class="dropdown-item" href="/alreadyLogin">login</a> </li>
+                <li><a class="dropdown-item" href="/customer/signup">SignUp</a> </li>
                 <%}%>
-        </ul>
-      </div>
+                  <li>
+                    <hr class="dropdown-divider">
+                  </li>
+                  <% if (typeof currUser !=='undefined' && currUser){%>
+                    <li><a class="dropdown-item" href="/logout" style="color: red;">logOut</a></li>
+                    <%}%>
+            </ul>
+          </div>
 
     </div>
+
 
     <!-- Collapsed Links -->
     <div class="collapse navbar-collapse order-3 w-100 mt-2 mt-sm-0" id="navbarNav">
