@@ -128,6 +128,15 @@ app.use((req, res, next) => {
   res.locals.error = req.flash("error");
   res.locals.currUser = req.user;
 
+  // Default SEO Tags
+  res.locals.seo = {
+    title: "PASR - Kisan Sabha & Local Bazaar",
+    description: "Connect with local farmers and shops on PASR. Find fresh produce, farm tools, and daily services in your neighborhood.",
+    keywords: "pasr, pasr.in, pasr market, pasr online, pasr giridih, pasr jharkhand, pasr farmers, pasr digital market, pasr website, pasr app, past in, past.in, p p market, pp market jharkhand, online market giridih, digital market giridih, 24 hours market giridih, farmers website giridih, kisan website jharkhand, online sabzi market giridih, buy vegetables online giridih, sell crops online giridih, giridih online shop, raj dhanwar online market, doranda online market, jharkhand farmers app, local business listing giridih, online dairy products giridih, sell milk online jharkhand, online goat selling giridih, poultry market online jharkhand, kisan news giridih, farmers news jharkhand, online agriculture platform india, district farmers network giridih, giridih business promotion website, digital kranti giridih, kisan digital platform, online mandi giridih, giridih bazar online, raj dhanwar bazar online, doranda bazar online, jharkhand digital bazar, local sellers website giridih, online services giridih, electrician online giridih, plumber online giridih, local mechanic giridih, property listing giridih, house rent giridih online, land sale giridih website, giridih job posting site, giridih advertisement website, free business listing giridih, small business promotion jharkhand, rural ecommerce india, village digital market jharkhand, kisan connect giridih, online fertilizer shop giridih, tractor service giridih, agriculture tools online giridih, farm equipment giridih, pasr news section, pasr farmer community, pasr online mandi, pasr jharkhand market, pasr digital india, pasr local platform, pasr rajdhanwar, pasr doranda, pasr kisan app, pasr business portal, pasr advertisement site, pasr farmers network, pasr online bazar, pasr district market, pasr agriculture news, pasr buy sell platform, pasr marketplace, pasr india, pasr rural market, pasr farmer support, pasr online promotion, pasr india website, pasr farmer group, pasr online service listing, pasr local business site, pasr digital shop, pasr ecommerce jharkhand, pasr giridih district, pasr rural ecommerce, pasr krishi platform, pasr mandi online, pasr digital business, pasr 24 hours market, pasr online store, pasr jharkhand farmers, pasr digital advertisement, pasr kisan news portal, pasr village market, pasr business growth platform, pasr community market",
+    image: "https://www.pasr.in/images/icon.jpeg",
+    url: "https://www.pasr.in" + req.originalUrl,
+  };
+
   next();
 });
 
