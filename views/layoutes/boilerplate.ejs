@@ -247,40 +247,47 @@
     <noscript>
         <link rel="stylesheet" href="/css/style.css">
     </noscript>
-    <link rel="preload" href="/css/profile.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-        <link rel="stylesheet" href="/css/profile.css">
-    </noscript>
-    <link rel="preload" href="/css/insidecate.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-        <link rel="stylesheet" href="/css/insidecate.css">
-    </noscript>
+    <% if (typeof useProfileCss !=='undefined' && useProfileCss) { %>
+        <link rel="preload" href="/css/profile.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript>
+            <link rel="stylesheet" href="/css/profile.css">
+        </noscript>
+        <% } %>
 
-    <!-- Font Awesome — non-blocking (icons are not LCP elements) -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" as="style"
-        onload="this.onload=null;this.rel='stylesheet'"
-        integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
-        crossorigin="anonymous" referrerpolicy="no-referrer">
-    <noscript>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
-            crossorigin="anonymous">
-    </noscript>
+            <% if (typeof useInsideCateCss !=='undefined' && useInsideCateCss) { %>
+                <link rel="preload" href="/css/insidecate.css" as="style"
+                    onload="this.onload=null;this.rel='stylesheet'">
+                <noscript>
+                    <link rel="stylesheet" href="/css/insidecate.css">
+                </noscript>
+                <% } %>
 
-    <link rel="icon" href="/images/icon.jpeg">
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#6366f1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+                    <!-- Font Awesome — non-blocking (icons are not LCP elements) -->
+                    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+                        as="style" onload="this.onload=null;this.rel='stylesheet'"
+                        integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+                        crossorigin="anonymous" referrerpolicy="no-referrer">
+                    <noscript>
+                        <link rel="stylesheet"
+                            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+                            crossorigin="anonymous">
+                    </noscript>
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('SW registered!', reg))
-                    .catch(err => console.log('SW failed', err));
-            });
-        }
-    </script>
+                    <link rel="icon" href="/images/icon.jpeg">
+                    <link rel="manifest" href="/manifest.json">
+                    <meta name="theme-color" content="#6366f1">
+                    <meta name="apple-mobile-web-app-capable" content="yes">
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+                    <script>
+                        if ('serviceWorker' in navigator) {
+                            window.addEventListener('load', () => {
+                                navigator.serviceWorker.register('/sw.js')
+                                    .then(reg => console.log('SW registered!', reg))
+                                    .catch(err => console.log('SW failed', err));
+                            });
+                        }
+                    </script>
 </head>
 
 <body>
@@ -320,261 +327,268 @@
             <script src="/js/script.js" defer></script>
             <script src="/js/pwa-install.js" defer></script>
 
-            <!-- Google Maps — deferred and loaded LAST (only needed on pages that use maps) -->
-            <script
-                src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&callback=initMap"
-                defer></script>
+            <!-- Google Maps — deferred and loaded LAST (only conditionally included) -->
+            <% if (typeof useMaps !=='undefined' && useMaps) { %>
+                <script
+                    src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&callback=initMap"
+                    defer></script>
+                <% } %>
 
-            <!-- Google Translate Widget (Hidden) -->
-            <div id="google_translate_element" style="display:none"></div>
+                    <!-- Google Translate Widget (Hidden) -->
+                    <div id="google_translate_element" style="display:none"></div>
 
-            <script type="text/javascript">
-                function googleTranslateElementInit() {
-                    new google.translate.TranslateElement({
-                        pageLanguage: 'en',
-                        includedLanguages: 'en,hi',
-                        autoDisplay: false
-                    }, 'google_translate_element');
-                }
-
-                // Custom Language Logic
-                document.addEventListener('DOMContentLoaded', function () {
-                    const langPref = localStorage.getItem('languagePreference');
-                    const languageSwitch = document.getElementById('languageSwitch');
-                    const langFab = document.getElementById('lang-toggle-fab');
-
-                    function setFabState(isHindi) {
-                        if (langFab) langFab.classList.toggle('lang-hi', isHindi);
-                    }
-
-                    if (languageSwitch) {
-                        // Set initial state based on preference
-                        if (langPref === 'hi') {
-                            languageSwitch.checked = true;
-                            setFabState(true);
-                            triggerHindiTranslation();
-                        } else {
-                            languageSwitch.checked = false;
-                            setFabState(false);
+                    <script type="text/javascript">
+                        function googleTranslateElementInit() {
+                            new google.translate.TranslateElement({
+                                pageLanguage: 'en',
+                                includedLanguages: 'en,hi',
+                                autoDisplay: false
+                            }, 'google_translate_element');
                         }
 
-                        // Listen for changes
-                        languageSwitch.addEventListener('change', function () {
-                            if (this.checked) {
-                                localStorage.setItem('languagePreference', 'hi');
-                                setFabState(true);
-                                triggerHindiTranslation();
-                            } else {
-                                localStorage.setItem('languagePreference', 'en');
-                                // clear changes by reloading or resetting
-                                window.location.reload();
-                            }
-                        });
-                    }
+                        // Custom Language Logic
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const langPref = localStorage.getItem('languagePreference');
+                            const languageSwitch = document.getElementById('languageSwitch');
+                            const langFab = document.getElementById('lang-toggle-fab');
 
-                    function triggerHindiTranslation() {
-                        // We need to wait for the Google Translate frame to load
-                        const checkInterval = setInterval(function () {
-                            const select = document.querySelector('.goog-te-combo');
-                            if (select) {
-                                clearInterval(checkInterval);
-                                select.value = 'hi';
-                                select.dispatchEvent(new Event('change'));
+                            function setFabState(isHindi) {
+                                if (langFab) langFab.classList.toggle('lang-hi', isHindi);
                             }
-                        }, 500);
 
-                        // Styles to hide the top bar if it appears
-                        const style = document.createElement('style');
-                        style.innerHTML = `
+                            if (languageSwitch) {
+                                // Set initial state based on preference
+                                if (langPref === 'hi') {
+                                    languageSwitch.checked = true;
+                                    setFabState(true);
+                                    triggerHindiTranslation();
+                                } else {
+                                    languageSwitch.checked = false;
+                                    setFabState(false);
+                                }
+
+                                // Listen for changes
+                                languageSwitch.addEventListener('change', function () {
+                                    if (this.checked) {
+                                        localStorage.setItem('languagePreference', 'hi');
+                                        setFabState(true);
+                                        triggerHindiTranslation();
+                                    } else {
+                                        localStorage.setItem('languagePreference', 'en');
+                                        // clear changes by reloading or resetting
+                                        window.location.reload();
+                                    }
+                                });
+                            }
+
+                            function triggerHindiTranslation() {
+                                // We need to wait for the Google Translate frame to load
+                                const checkInterval = setInterval(function () {
+                                    const select = document.querySelector('.goog-te-combo');
+                                    if (select) {
+                                        clearInterval(checkInterval);
+                                        select.value = 'hi';
+                                        select.dispatchEvent(new Event('change'));
+                                    }
+                                }, 500);
+
+                                // Styles to hide the top bar if it appears
+                                const style = document.createElement('style');
+                                style.innerHTML = `
             body { top: 0 !important; } 
             .goog-te-banner-frame { display: none !important; }
           `;
-                        document.head.appendChild(style);
-                    }
-                });
-            </script>
-            <script type="text/javascript"
-                src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
-            <!-- Global Loader -->
-            <style>
-                #global-loader {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(255, 255, 255, 0.9);
-                    z-index: 9999;
-                    display: none;
-                    /* Hidden by default */
-                    justify-content: center;
-                    align-items: center;
-                    flex-direction: column;
-                    gap: 15px;
-                    backdrop-filter: blur(4px);
-                }
-
-                .loader-spinner {
-                    width: 50px;
-                    height: 50px;
-                    border: 4px solid #e5e7eb;
-                    border-top: 4px solid #111827;
-                    /* Primary Dark Color */
-                    border-radius: 50%;
-                    animation: spin 0.8s linear infinite;
-                }
-
-                @keyframes spin {
-                    0% {
-                        transform: rotate(0deg);
-                    }
-
-                    100% {
-                        transform: rotate(360deg);
-                    }
-                }
-
-                .loader-text {
-                    font-family: system-ui, -apple-system, sans-serif;
-                    font-weight: 600;
-                    color: #374151;
-                    font-size: 16px;
-                    animation: pulse 1.5s infinite ease-in-out;
-                }
-
-                @keyframes pulse {
-
-                    0%,
-                    100% {
-                        opacity: 1;
-                    }
-
-                    50% {
-                        opacity: 0.6;
-                    }
-                }
-            </style>
-
-            <div id="global-loader">
-                <div class="loader-spinner"></div>
-                <div class="loader-text">Storing your data, please wait...</div>
-            </div>
-
-            <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                    const loader = document.getElementById('global-loader');
-
-                    // Show loader on valid form submission
-                    document.addEventListener('submit', (e) => {
-                        const form = e.target;
-
-                        // If the form is invalid, let the browser show validation errors and DO NOT show loader
-                        if (!form.checkValidity()) {
-                            return;
+                                document.head.appendChild(style);
+                            }
+                        });
+                    </script>
+                    <script type="text/javascript"
+                        src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+                        defer></script>
+                    <!-- Global Loader -->
+                    <style>
+                        #global-loader {
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: rgba(255, 255, 255, 0.9);
+                            z-index: 9999;
+                            display: none;
+                            /* Hidden by default */
+                            justify-content: center;
+                            align-items: center;
+                            flex-direction: column;
+                            gap: 15px;
+                            backdrop-filter: blur(4px);
                         }
 
-                        // Check if it's a delete form (by action URL containing DELETE or class)
-                        const isDelete = form.action.includes('?_method=DELETE') ||
-                            form.classList.contains('delete-form') ||
-                            (form.method && form.method.toUpperCase() === 'DELETE');
-
-                        if (isDelete) {
-                            return; // Don't show loader for delete
+                        .loader-spinner {
+                            width: 50px;
+                            height: 50px;
+                            border: 4px solid #e5e7eb;
+                            border-top: 4px solid #111827;
+                            /* Primary Dark Color */
+                            border-radius: 50%;
+                            animation: spin 0.8s linear infinite;
                         }
 
-                        // If valid and not delete, show loader
-                        loader.style.display = 'flex';
-                    });
+                        @keyframes spin {
+                            0% {
+                                transform: rotate(0deg);
+                            }
 
-                    // Hide loader when page restores from back/forward cache
-                    window.addEventListener('pageshow', (event) => {
-                        if (event.persisted) {
-                            loader.style.display = 'none';
-                        }
-                    });
-                });
-            </script>
-
-            <!-- Welcome Signup Modal (For Unauthenticated Users Only — Global) -->
-            <% if (typeof currUser==='undefined' || !currUser) { %>
-                <div class="modal fade" id="welcomeSignupModal" tabindex="-1" aria-labelledby="welcomeSignupModalLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content shadow-lg border-0" style="border-radius: 1rem;">
-                            <div class="modal-header border-0 pb-0 d-flex justify-content-end">
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body text-center pt-0 px-4 pb-4">
-                                <div class="mb-3">
-                                    <i class="fa-solid fa-hand-sparkles text-warning" style="font-size: 3rem;"></i>
-                                </div>
-                                <h4 class="fw-bold mb-3" id="welcomeSignupModalLabel">Welcome to PASR.IN! 👋</h4>
-                                <p class="text-muted mb-4" style="font-size: 0.95rem;">
-                                    Join our growing local community! Connect with farmers on <strong>Kisan
-                                        Sabha</strong>,
-                                    discover fresh neighborhood goods in the <strong>Local Bazaar</strong>, and book
-                                    verified
-                                    <strong>Home Services</strong> instantly.
-                                </p>
-                                <div class="d-grid gap-2">
-                                    <a href="/customer/signup" class="btn btn-primary fw-bold py-2"
-                                        style="border-radius: 50px;">
-                                        Join Now — It's Free!
-                                    </a>
-                                    <a href="/alreadyLogin" class="btn btn-outline-secondary fw-bold py-2 mt-2"
-                                        style="border-radius: 50px;">
-                                        I already have an account
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Small non-blocking signup nudge banner (shown on non-home pages) -->
-                <div id="signup-nudge-bar" style="display:none;">
-                    <span>👋 New here? Join <strong>PASR.IN</strong> — it's free!</span>
-                    <div>
-                        <a href="/customer/signup" class="nudge-btn-primary">Sign Up</a>
-                        <button type="button" class="nudge-btn-secondary" data-bs-toggle="modal"
-                            data-bs-target="#welcomeSignupModal">Login</button>
-                        <button type="button" class="nudge-close" id="nudge-close-btn" aria-label="Close">✕</button>
-                    </div>
-                </div>
-
-                <script>
-                    document.addEventListener("DOMContentLoaded", () => {
-                        const isHomePage = window.location.pathname === '/home' || window.location.pathname === '/';
-                        const alreadySeen = sessionStorage.getItem('welcomeModalShown');
-
-                        if (!alreadySeen) {
-                            if (isHomePage) {
-                                // Full blocking modal — fine on home, user is just browsing
-                                setTimeout(() => {
-                                    const el = document.getElementById('welcomeSignupModal');
-                                    if (el) {
-                                        new bootstrap.Modal(el).show();
-                                        sessionStorage.setItem('welcomeModalShown', 'true');
-                                    }
-                                }, 2000);
-                            } else {
-                                // Shared link / profile / shop page — show small non-blocking banner
-                                setTimeout(() => {
-                                    const bar = document.getElementById('signup-nudge-bar');
-                                    if (bar) bar.style.display = 'flex';
-                                    sessionStorage.setItem('welcomeModalShown', 'true');
-                                }, 1500);
+                            100% {
+                                transform: rotate(360deg);
                             }
                         }
 
-                        // Close nudge bar
-                        const closeBtn = document.getElementById('nudge-close-btn');
-                        if (closeBtn) closeBtn.addEventListener('click', () => {
-                            document.getElementById('signup-nudge-bar').style.display = 'none';
+                        .loader-text {
+                            font-family: system-ui, -apple-system, sans-serif;
+                            font-weight: 600;
+                            color: #374151;
+                            font-size: 16px;
+                            animation: pulse 1.5s infinite ease-in-out;
+                        }
+
+                        @keyframes pulse {
+
+                            0%,
+                            100% {
+                                opacity: 1;
+                            }
+
+                            50% {
+                                opacity: 0.6;
+                            }
+                        }
+                    </style>
+
+                    <div id="global-loader">
+                        <div class="loader-spinner"></div>
+                        <div class="loader-text">Storing your data, please wait...</div>
+                    </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                            const loader = document.getElementById('global-loader');
+
+                            // Show loader on valid form submission
+                            document.addEventListener('submit', (e) => {
+                                const form = e.target;
+
+                                // If the form is invalid, let the browser show validation errors and DO NOT show loader
+                                if (!form.checkValidity()) {
+                                    return;
+                                }
+
+                                // Check if it's a delete form (by action URL containing DELETE or class)
+                                const isDelete = form.action.includes('?_method=DELETE') ||
+                                    form.classList.contains('delete-form') ||
+                                    (form.method && form.method.toUpperCase() === 'DELETE');
+
+                                if (isDelete) {
+                                    return; // Don't show loader for delete
+                                }
+
+                                // If valid and not delete, show loader
+                                loader.style.display = 'flex';
+                            });
+
+                            // Hide loader when page restores from back/forward cache
+                            window.addEventListener('pageshow', (event) => {
+                                if (event.persisted) {
+                                    loader.style.display = 'none';
+                                }
+                            });
                         });
-                    });
-                </script>
-                <% } %>
+                    </script>
+
+                    <!-- Welcome Signup Modal (For Unauthenticated Users Only — Global) -->
+                    <% if (typeof currUser==='undefined' || !currUser) { %>
+                        <div class="modal fade" id="welcomeSignupModal" tabindex="-1"
+                            aria-labelledby="welcomeSignupModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content shadow-lg border-0" style="border-radius: 1rem;">
+                                    <div class="modal-header border-0 pb-0 d-flex justify-content-end">
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body text-center pt-0 px-4 pb-4">
+                                        <div class="mb-3">
+                                            <i class="fa-solid fa-hand-sparkles text-warning"
+                                                style="font-size: 3rem;"></i>
+                                        </div>
+                                        <h4 class="fw-bold mb-3" id="welcomeSignupModalLabel">Welcome to PASR.IN! 👋
+                                        </h4>
+                                        <p class="text-muted mb-4" style="font-size: 0.95rem;">
+                                            Join our growing local community! Connect with farmers on <strong>Kisan
+                                                Sabha</strong>,
+                                            discover fresh neighborhood goods in the <strong>Local Bazaar</strong>, and
+                                            book
+                                            verified
+                                            <strong>Home Services</strong> instantly.
+                                        </p>
+                                        <div class="d-grid gap-2">
+                                            <a href="/customer/signup" class="btn btn-primary fw-bold py-2"
+                                                style="border-radius: 50px;">
+                                                Join Now — It's Free!
+                                            </a>
+                                            <a href="/alreadyLogin" class="btn btn-outline-secondary fw-bold py-2 mt-2"
+                                                style="border-radius: 50px;">
+                                                I already have an account
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Small non-blocking signup nudge banner (shown on non-home pages) -->
+                        <div id="signup-nudge-bar" style="display:none;">
+                            <span>👋 New here? Join <strong>PASR.IN</strong> — it's free!</span>
+                            <div>
+                                <a href="/customer/signup" class="nudge-btn-primary">Sign Up</a>
+                                <button type="button" class="nudge-btn-secondary" data-bs-toggle="modal"
+                                    data-bs-target="#welcomeSignupModal">Login</button>
+                                <button type="button" class="nudge-close" id="nudge-close-btn"
+                                    aria-label="Close">✕</button>
+                            </div>
+                        </div>
+
+                        <script>
+                            document.addEventListener("DOMContentLoaded", () => {
+                                const isHomePage = window.location.pathname === '/home' || window.location.pathname === '/';
+                                const alreadySeen = sessionStorage.getItem('welcomeModalShown');
+
+                                if (!alreadySeen) {
+                                    if (isHomePage) {
+                                        // Full blocking modal — fine on home, user is just browsing
+                                        setTimeout(() => {
+                                            const el = document.getElementById('welcomeSignupModal');
+                                            if (el) {
+                                                new bootstrap.Modal(el).show();
+                                                sessionStorage.setItem('welcomeModalShown', 'true');
+                                            }
+                                        }, 2000);
+                                    } else {
+                                        // Shared link / profile / shop page — show small non-blocking banner
+                                        setTimeout(() => {
+                                            const bar = document.getElementById('signup-nudge-bar');
+                                            if (bar) bar.style.display = 'flex';
+                                            sessionStorage.setItem('welcomeModalShown', 'true');
+                                        }, 1500);
+                                    }
+                                }
+
+                                // Close nudge bar
+                                const closeBtn = document.getElementById('nudge-close-btn');
+                                if (closeBtn) closeBtn.addEventListener('click', () => {
+                                    document.getElementById('signup-nudge-bar').style.display = 'none';
+                                });
+                            });
+                        </script>
+                        <% } %>
 </body>
 
 </html>

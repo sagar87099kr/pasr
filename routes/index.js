@@ -21,7 +21,11 @@ router.get("/T&C", (req, res) => {
 
 // this is going to be the home route for the customer
 router.get("/home", (req, res) => {
-    res.render("pages/home.ejs")
+    res.render("pages/home.ejs", {
+        useMaps: false,
+        useProfileCss: false,
+        useInsideCateCss: false
+    });
 });
 
 // Route to set user location from browser
