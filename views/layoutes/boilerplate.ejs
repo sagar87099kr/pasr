@@ -5,34 +5,106 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PaSr</title>
-</head>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
-<link rel="stylesheet" href="/css/style.css">
-<link rel="stylesheet" href="/css/profile.css">
-<link rel="stylesheet" href="/css/insidecate.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
-    integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
-    crossorigin="anonymous" referrerpolicy="no-referrer" />
-<script src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&callback=initMap"
-    defer></script>
-<link rel="icon" href="/images/icon.jpeg">
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#6366f1">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('SW registered!', reg))
-                .catch(err => console.log('SW failed', err));
-        });
-    }
-</script>
+    <!-- Preconnect to external origins to reduce DNS+TCP overhead -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
+    <!-- Inline critical CSS: :root vars + navbar shell — prevents FOUC while full CSS loads async -->
+    <style>
+        :root {
+            --bg: #f6f7fb;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: rgba(15, 23, 42, 0.10);
+            --border2: rgba(15, 23, 42, 0.08);
+            --shadow: 0 14px 40px rgba(15, 23, 42, 0.10);
+            --shadow2: 0 18px 55px rgba(15, 23, 42, 0.14);
+            --radius: 22px;
+            --radius2: 18px;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .navbar {
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.86);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .contain {
+            width: min(1100px, calc(100% - 28px));
+            margin: 16px auto 44px;
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+    </style>
+
+    <!-- Google Fonts — non-blocking with font-display=swap for faster text render -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap">
+    </noscript>
+
+    <!-- Bootstrap CSS — non-blocking -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+    </noscript>
+
+    <!-- All local CSS — non-blocking (critical vars are already inlined above) -->
+    <link rel="preload" href="/css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="/css/style.css">
+    </noscript>
+    <link rel="preload" href="/css/profile.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="/css/profile.css">
+    </noscript>
+    <link rel="preload" href="/css/insidecate.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="/css/insidecate.css">
+    </noscript>
+
+    <!-- Font Awesome — non-blocking (icons are not LCP elements) -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'"
+        integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    <noscript>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+            crossorigin="anonymous">
+    </noscript>
+
+    <link rel="icon" href="/images/icon.jpeg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW registered!', reg))
+                    .catch(err => console.log('SW failed', err));
+            });
+        }
+    </script>
+</head>
 
 <body>
     <%- include("../includes/navbar.ejs") %>
@@ -42,17 +114,28 @@
                 <%- body %>
         </div>
         <%- include("../includes/footer.ejs") %>
+
+            <!-- Bootstrap JS — deferred, loads after paint -->
             <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
                 integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-                crossorigin="anonymous"></script>
+                crossorigin="anonymous" defer></script>
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"
                 integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y"
-                crossorigin="anonymous"></script>
+                crossorigin="anonymous" defer></script>
+
+            <!-- Image compressor — only needed on upload forms, deferred -->
             <script type="text/javascript"
-                src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
-            <script src="/js/imageCompressor.js"></script>
-            <script src="/js/script.js"></script>
-            <script src="/js/pwa-install.js"></script>
+                src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"
+                defer></script>
+            <script src="/js/imageCompressor.js" defer></script>
+            <script src="/js/script.js" defer></script>
+            <script src="/js/pwa-install.js" defer></script>
+
+            <!-- Google Maps — deferred and loaded LAST (only needed on pages that use maps) -->
+            <script
+                src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&callback=initMap"
+                defer></script>
+
             <!-- Google Translate Widget (Hidden) -->
             <div id="google_translate_element" style="display:none"></div>
 
@@ -114,7 +197,7 @@
                 });
             </script>
             <script type="text/javascript"
-                src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+                src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
             <!-- Global Loader -->
             <style>
                 #global-loader {
@@ -214,6 +297,59 @@
                     });
                 });
             </script>
+
+            <!-- Welcome Signup Modal (For Unauthenticated Users Only — Global) -->
+            <% if (typeof currUser==='undefined' || !currUser) { %>
+                <div class="modal fade" id="welcomeSignupModal" tabindex="-1" aria-labelledby="welcomeSignupModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content shadow-lg border-0" style="border-radius: 1rem;">
+                            <div class="modal-header border-0 pb-0 d-flex justify-content-end">
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center pt-0 px-4 pb-4">
+                                <div class="mb-3">
+                                    <i class="fa-solid fa-hand-sparkles text-warning" style="font-size: 3rem;"></i>
+                                </div>
+                                <h4 class="fw-bold mb-3" id="welcomeSignupModalLabel">Welcome to PASR.IN! 👋</h4>
+                                <p class="text-muted mb-4" style="font-size: 0.95rem;">
+                                    Join our growing local community! Connect with farmers on <strong>Kisan
+                                        Sabha</strong>,
+                                    discover fresh neighborhood goods in the <strong>Local Bazaar</strong>, and book
+                                    verified
+                                    <strong>Home Services</strong> instantly.
+                                </p>
+                                <div class="d-grid gap-2">
+                                    <a href="/customer/signup" class="btn btn-primary fw-bold py-2"
+                                        style="border-radius: 50px;">
+                                        Join Now — It's Free!
+                                    </a>
+                                    <a href="/alreadyLogin" class="btn btn-outline-secondary fw-bold py-2 mt-2"
+                                        style="border-radius: 50px;">
+                                        I already have an account
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    document.addEventListener("DOMContentLoaded", () => {
+                        // Show only once per session — won't re-appear on page switch, but will show again in a new session
+                        if (!sessionStorage.getItem('welcomeModalShown')) {
+                            setTimeout(() => {
+                                const welcomeModalEl = document.getElementById('welcomeSignupModal');
+                                if (welcomeModalEl) {
+                                    const welcomeModal = new bootstrap.Modal(welcomeModalEl);
+                                    welcomeModal.show();
+                                    sessionStorage.setItem('welcomeModalShown', 'true');
+                                }
+                            }, 2000);
+                        }
+                    });
+                </script>
+                <% } %>
 </body>
 
 </html>

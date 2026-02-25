@@ -286,86 +286,35 @@
         </div>
     </section>
 
-    <!-- Welcome Signup Modal (For Unauthenticated Users Only) -->
-    <% if (!currUser) { %>
-        <div class="modal fade" id="welcomeSignupModal" tabindex="-1" aria-labelledby="welcomeSignupModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content shadow-lg border-0" style="border-radius: 1rem;">
-                    <div class="modal-header border-0 pb-0 d-flex justify-content-end">
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body text-center pt-0 px-4 pb-4">
-                        <div class="mb-3">
-                            <i class="fa-solid fa-hand-sparkles text-warning" style="font-size: 3rem;"></i>
-                        </div>
-                        <h4 class="fw-bold mb-3" id="welcomeSignupModalLabel">Welcome to PASR.IN! 👋</h4>
-                        <p class="text-muted mb-4" style="font-size: 0.95rem;">
-                            Join our growing local community! Connect with farmers on <strong>Kisan Sabha</strong>,
-                            discover fresh neighborhood goods in the <strong>Local Bazaar</strong>, and book verified
-                            <strong>Home Services</strong> instantly.
-                        </p>
-                        <div class="d-grid gap-2">
-                            <a href="/customer/signup" class="btn btn-primary fw-bold py-2"
-                                style="border-radius: 50px;">
-                                Join Now — It's Free!
-                            </a>
-                            <a href="/alreadyLogin" class="btn btn-outline-secondary fw-bold py-2 mt-2"
-                                style="border-radius: 50px;">
-                                I already have an account
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                // Check if the user has already seen the welcome modal
-                if (!localStorage.getItem('welcomeModalShown')) {
-                    // Delay the popup slightly to let the page load and allow the user to see the content first
-                    setTimeout(() => {
-                        const welcomeModalEl = document.getElementById('welcomeSignupModal');
-                        if (welcomeModalEl) {
-                            const welcomeModal = new bootstrap.Modal(welcomeModalEl);
-                            welcomeModal.show();
-                            // Mark as shown so it never appears again for this device/browser
-                            localStorage.setItem('welcomeModalShown', 'true');
-                        }
-                    }, 2000); // 2 seconds delay
-                }
-            });
-        </script>
-        <% } %>
 
-            <script>
-                document.addEventListener("DOMContentLoaded", () => {
-                    // Location logic remains unchanged
-                    const askedForLocation = sessionStorage.getItem('askedForLocation');
-                    if (!askedForLocation && navigator.geolocation) {
-                        const options = {
-                            enableHighAccuracy: true,
-                            timeout: 10000,
-                            maximumAge: 0
-                        };
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Location logic remains unchanged
+            const askedForLocation = sessionStorage.getItem('askedForLocation');
+            if (!askedForLocation && navigator.geolocation) {
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                };
 
-                        navigator.geolocation.getCurrentPosition(
-                            (position) => {
-                                const { latitude, longitude } = position.coords;
-                                fetch('/set-location', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ latitude, longitude })
-                                }).catch(console.error);
-                                sessionStorage.setItem('askedForLocation', 'true');
-                            },
-                            (error) => {
-                                console.error("Geolocation error:", error);
-                                sessionStorage.setItem('askedForLocation', 'true');
-                            },
-                            options
-                        );
-                    }
-                });
-            </script>
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        fetch('/set-location', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ latitude, longitude })
+                        }).catch(console.error);
+                        sessionStorage.setItem('askedForLocation', 'true');
+                    },
+                    (error) => {
+                        console.error("Geolocation error:", error);
+                        sessionStorage.setItem('askedForLocation', 'true');
+                    },
+                    options
+                );
+            }
+        });
+    </script>

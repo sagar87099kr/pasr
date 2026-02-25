@@ -1,4 +1,5 @@
 
+const compression = require("compression");
 const express = require("express");
 const app = express();
 const path = require("path");
@@ -45,7 +46,15 @@ const rateLimit = require("express-rate-limit");
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-app.use(express.static(path.join(__dirname, "public")))
+// Compression middleware — gzip/brotli all responses (biggest TTFB win)
+app.use(compression());
+
+// Serve static files with long cache headers (1 year for assets)
+app.use(express.static(path.join(__dirname, "public"), {
+  maxAge: '1y',
+  etag: true,
+  lastModified: true,
+}))
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.engine("ejs", ejsMate);
