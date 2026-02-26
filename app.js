@@ -49,6 +49,11 @@ app.set("views", path.join(__dirname, "views"));
 // Compression middleware — gzip/brotli all responses (biggest TTFB win)
 app.use(compression());
 
+// Serve assetlinks.json explicitly since express.static ignores dotfiles by default
+app.get("/.well-known/assetlinks.json", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", ".well-known", "assetlinks.json"));
+});
+
 // Serve static files with long cache headers (1 year for assets)
 app.use(express.static(path.join(__dirname, "public"), {
   maxAge: '1y',
