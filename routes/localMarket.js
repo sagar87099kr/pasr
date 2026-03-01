@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const Product = require("../data/product.js");
+const Order = require("../data/order.js");
 const { isLogedin, isVerifiedCustomer, isOwner, isadmin, isProductOwner } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const { forwardGeocode } = require("../utils/geocoder");
-const multer = require("multer");
-const { storage, cloudinary } = require("../cloud_con.js");
-const upload = multer({ storage });
+const { storage, cloudinary, upload, itemUpload } = require("../cloud_con.js");
+const { doubleCsrfProtection } = require("../utils/csrf");
+
 
 router.get("/localMarket", wrapAsync(async (req, res) => {
     let { lat, lng, range } = req.query;
@@ -49,6 +50,49 @@ router.get("/localMarket", wrapAsync(async (req, res) => {
         }
 
         products = await Product.find(query).populate('owner');
+
+        if (req.user) {
+            // Prioritize the logged-in user's own products to the top
+            products.sort((a, b) => {
+                const aIsOwner = a.owner._id.equals(req.user._id);
+                const bIsOwner = b.owner._id.equals(req.user._id);
+                if (aIsOwner && !bIsOwner) return -1;
+                if (!aIsOwner && bIsOwner) return 1;
+                return 0;
+            });
+
+            const hasPendingOrders = await Order.exists({
+                shopId: req.user._id,
+                orderStatus: 'CREATED'
+            });
+
+            products = products
+                .filter(product => {
+                    // Only show verified products publicly.
+                    // The owner can see their own unverified (pending) listings.
+                    const isOwner = product.owner._id.equals(req.user._id);
+                    return product.verified || isOwner;
+                })
+                .map(product => {
+                    const prodObj = product.toObject();
+                    const isOwner = product.owner._id.equals(req.user._id);
+                    // Flag for the template to render a "Pending Verification" badge
+                    prodObj.isPendingVerification = !product.verified && isOwner;
+                    prodObj.hasPendingOrders = isOwner ? !!hasPendingOrders : false;
+                    return prodObj;
+                });
+        } else {
+            // Guest users: only see verified products
+            products = products
+                .filter(product => product.verified)
+                .map(product => {
+                    const prodObj = product.toObject();
+                    prodObj.isPendingVerification = false;
+                    prodObj.hasPendingOrders = false;
+                    return prodObj;
+                });
+        }
+
         console.log(`Found ${products.length} products within ${range}km of (${lat}, ${lng})`);
     }
 
@@ -60,7 +104,11 @@ router.get("/product/seller", isLogedin, isVerifiedCustomer, wrapAsync(async (re
     res.render("pages/productSeller.ejs");
 }));
 
-router.post("/product/seller", isLogedin, upload.array("productImage"), wrapAsync(async (req, res) => {
+router.post("/product/seller", isLogedin, doubleCsrfProtection, itemUpload.fields([
+
+    { name: 'productImage', maxCount: 5 },
+    { name: 'upiScanner', maxCount: 1 }
+]), wrapAsync(async (req, res) => {
     const productData = req.body.product;
     const geoData = await forwardGeocode(productData.location);
 
@@ -68,8 +116,13 @@ router.post("/product/seller", isLogedin, upload.array("productImage"), wrapAsyn
     product.geometry = geoData.body.features[0].geometry;
     product.owner = req.user._id;
 
-    if (req.files) {
-        product.productImage = req.files.map(f => ({ url: f.path, filename: f.filename }));
+    if (req.files['productImage']) {
+        product.productImage = req.files['productImage'].map(f => ({ url: f.path, filename: f.filename }));
+    }
+
+    if (req.files['upiScanner']) {
+        const upiFile = req.files['upiScanner'][0];
+        product.upiScanner = { url: upiFile.path, filename: upiFile.filename };
     }
 
     await product.save();
@@ -78,14 +131,16 @@ router.post("/product/seller", isLogedin, upload.array("productImage"), wrapAsyn
 }));
 
 // Verification Routes (Admin Only)
-router.put("/:id/verifyproduct", isLogedin, isadmin, wrapAsync(async (req, res) => {
+router.put("/:id/verifyproduct", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     let { id } = req.params;
     let product = await Product.findByIdAndUpdate(id, { ...req.body.product });
     req.flash("success", "Product Verified");
     res.redirect("/product/verify");
 }));
 
-router.delete("/:id/verifyfailproduct", isLogedin, isadmin, wrapAsync(async (req, res) => {
+router.delete("/:id/verifyfailproduct", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     let { id } = req.params;
     let product = await Product.findById(id);
 
@@ -114,17 +169,39 @@ router.get("/products/:id", wrapAsync(async (req, res) => {
 }));
 
 // Update Product
-router.put("/products/:id/edit", isLogedin, isProductOwner, wrapAsync(async (req, res) => {
+router.put("/products/:id/edit", isLogedin, isProductOwner, doubleCsrfProtection, itemUpload.fields([{ name: 'productImage', maxCount: 1 }, { name: 'upiScanner', maxCount: 1 }]), wrapAsync(async (req, res) => {
+
     let { id } = req.params;
     const { productName, productDescription, price, quantity, categories } = req.body.product;
-    await Product.findByIdAndUpdate(id, { productName, productDescription, price, quantity, categories });
+    const updateData = { productName, productDescription, price, quantity, categories };
+
+    if (req.files && req.files.productImage && req.files.productImage[0]) {
+        const product = await Product.findById(id);
+        if (product.productImage && product.productImage.length > 0) {
+            for (let img of product.productImage) {
+                await cloudinary.uploader.destroy(img.filename);
+            }
+        }
+        updateData.productImage = [{ url: req.files.productImage[0].path, filename: req.files.productImage[0].filename }];
+    }
+
+    if (req.files && req.files.upiScanner && req.files.upiScanner[0]) {
+        const product = await Product.findById(id);
+        if (product.upiScanner && product.upiScanner.filename) {
+            await cloudinary.uploader.destroy(product.upiScanner.filename);
+        }
+        updateData.upiScanner = { url: req.files.upiScanner[0].path, filename: req.files.upiScanner[0].filename };
+    }
+
+    await Product.findByIdAndUpdate(id, updateData);
 
     req.flash("success", "Product updated successfully");
     res.redirect(`/products/${id}`);
 }));
 
 // Delete Product
-router.delete("/products/:id/delete", isLogedin, isProductOwner, wrapAsync(async (req, res) => {
+router.delete("/products/:id/delete", isLogedin, isProductOwner, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     let { id } = req.params;
     const product = await Product.findById(id);
 

@@ -73,10 +73,13 @@ const shopSchema = new Schema({
     createdAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    dueToPasr: { type: Number, default: 0 }
 });
 
 shopSchema.index({ geometry: '2dsphere' });
+shopSchema.index({ category: 1 });
+shopSchema.index({ verified: 1 });
 
 const Item = require("./item.js");
 const Review = require("./review.js");

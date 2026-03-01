@@ -1,5 +1,6 @@
 const Provider = require("./data/serviceproviders.js");
-const { providerSchema, customerSchema, reviewSchema, shopSchema, itemSchema } = require("./schema.js");
+const { providerSchema, customerSchema, reviewSchema, shopSchema, itemSchema, deliveryPartnerSchema } = require("./schema.js");
+const DeliveryPartner = require("./data/deliveryPartner.js");
 const ExpressError = require("./utils/expressError.js");
 const Review = require("./data/review.js");
 const Customer = require("./data/customers.js");
@@ -187,6 +188,16 @@ module.exports.validateItem = (req, res, next) => {
     }
 }
 
+module.exports.validateDeliveryPartner = (req, res, next) => {
+    let { error } = deliveryPartnerSchema.validate(req.body);
+    if (error) {
+        let errMsg = error.details.map((el) => el.message).join(",");
+        throw new ExpressError(400, errMsg)
+    } else {
+        next();
+    }
+}
+
 
 module.exports.isReviewAuthor = async (req, res, next) => {
     try {
@@ -256,3 +267,16 @@ module.exports.findNearbyProviders = (category) => {
         }
     }
 }
+module.exports.isDeliveryPartner = async (req, res, next) => {
+    if (!req.isAuthenticated()) {
+        req.flash("danger", "You must be logged in.");
+        return res.redirect("/alreadyLogin");
+    }
+    const partner = await DeliveryPartner.findOne({ user: req.user._id });
+    if (!partner) {
+        req.flash("danger", "You are not registered as a Delivery Partner.");
+        return res.redirect("/home");
+    }
+    req.deliveryPartner = partner; // Attach profile for easy access
+    next();
+};

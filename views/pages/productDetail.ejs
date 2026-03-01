@@ -12,8 +12,8 @@
                     <div class="product-showcase">
                         <!-- Image -->
                         <div class="main-image-wrapper">
-                            <img src="<%= product.productImage[0].url %>" alt="<%= product.productName %>"
-                                class="main-image" />
+                            <img src="<%= optimizeImage(product.productImage[0].url) %>"
+                                alt="<%= product.productName %>" class="main-image" />
                             <button class="btn-share" id="shareBtn" type="button" title="Share Product">
                                 <i class="fa-solid fa-share-nodes"></i>
                             </button>
@@ -61,6 +61,8 @@
                                     </button>
                                     <form method="POST" action="/products/<%= product._id %>/delete?_method=DELETE"
                                         style="margin: 0;">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
                                         <button type="submit" class="btn btn-danger">
                                             <i class="fa-solid fa-trash"></i> Delete
                                         </button>
@@ -76,66 +78,81 @@
                             style="display: none; margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 24px;">
                             <h3 class="section-heading" style="font-size: 18px;">Edit Product Details</h3>
                             <form method="POST" action="/products/<%= product._id %>/edit?_method=PUT"
-                                class="needs-validation">
-                                <label for="productName" class="form-label">Product Name</label>
-                                <input type="text" class="form-control" id="productName" name="product[productName]"
-                                    value="<%= product.productName %>" required>
+                                enctype="multipart/form-data" class="needs-validation">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                                <div class="mb-3">
+                                    <label for="productName" class="form-label">Product Name</label>
+                                    <input type="text" class="form-control" id="productName" name="product[productName]"
+                                        value="<%= product.productName %>" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Category</label>
+                                    <select class="form-select" name="product[categories]" required>
+                                        <option value="vegetables" <%=product.categories==='vegetables' ? 'selected'
+                                            : '' %>>🥬 Vegetables</option>
+                                        <option value="Fruits" <%=product.categories==='Fruits' ? 'selected' : '' %>>🍎
+                                            Fruits</option>
+                                        <option value="Dairy products" <%=product.categories==='Dairy products'
+                                            ? 'selected' : '' %>>🥛 Dairy</option>
+                                        <option value="Spices & Masala" <%=product.categories==='Spices & Masala'
+                                            ? 'selected' : '' %>>🌶️ Spices & Masala</option>
+                                        <option value="Household Items" <%=product.categories==='Household Items'
+                                            ? 'selected' : '' %>>🏠 Household Items</option>
+                                        <option value="Farming Tools" <%=product.categories==='Farming Tools'
+                                            ? 'selected' : '' %>>🚜 Farming Tools</option>
+                                        <option value="Poultry & Eggs" <%=product.categories==='Poultry & Eggs'
+                                            ? 'selected' : '' %>>🥚 Poultry & Eggs</option>
+                                        <option value="Grains" <%=product.categories==='Grains' ? 'selected' : '' %>>🌾
+                                            Grains</option>
+                                        <option value="Animals" <%=product.categories==='Animals' ? 'selected' : '' %>>
+                                            🐄 Animals</option>
+                                        <option value="Others" <%=product.categories==='Others' ? 'selected' : '' %>>📦
+                                            Others</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="productDescription" class="form-label">Description</label>
+                                    <textarea class="form-control" id="productDescription"
+                                        name="product[productDescription]"
+                                        rows="3"><%= product.productDescription %></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="price" class="form-label">Price (₹)</label>
+                                        <input type="number" class="form-control" id="price" name="product[price]"
+                                            value="<%= product.price %>" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="quantity" class="form-label">Quantity</label>
+                                        <input type="number" class="form-control" id="quantity" name="product[quantity]"
+                                            value="<%= product.quantity %>" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Update Product Image (Optional)</label>
+                                        <input type="file" name="productImage" class="form-control">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Update UPI QR (Optional)</label>
+                                        <input type="file" name="upiScanner" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    <button type="button" class="btn btn-secondary"
+                                        onclick="toggleEditForm()">Cancel</button>
+                                </div>
+                            </form>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select class="form-select" name="product[categories]" required>
-                                <option value="vegetables" <%=product.categories==='vegetables' ? 'selected' : '' %>>🥬
-                                    Vegetables</option>
-                                <option value="Fruits" <%=product.categories==='Fruits' ? 'selected' : '' %>>🍎 Fruits
-                                </option>
-                                <option value="Dairy products" <%=product.categories==='Dairy products' ? 'selected'
-                                    : '' %>>🥛 Dairy</option>
-                                <option value="Spices & Masala" <%=product.categories==='Spices & Masala' ? 'selected'
-                                    : '' %>>🌶️ Spices & Masala</option>
-                                <option value="Household Items" <%=product.categories==='Household Items' ? 'selected'
-                                    : '' %>>🏠 Household Items</option>
-                                <option value="Farming Tools" <%=product.categories==='Farming Tools' ? 'selected' : ''
-                                    %>>🚜 Farming Tools</option>
-                                <option value="Poultry & Eggs" <%=product.categories==='Poultry & Eggs' ? 'selected'
-                                    : '' %>>🥚 Poultry & Eggs</option>
-                                <option value="Grains" <%=product.categories==='Grains' ? 'selected' : '' %>>🌾 Grains
-                                </option>
-                                <option value="Animals" <%=product.categories==='Animals' ? 'selected' : '' %>>🐄
-                                    Animals</option>
-                                <option value="Others" <%=product.categories==='Others' ? 'selected' : '' %>>📦 Others
-                                </option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="productDescription" class="form-label">Description</label>
-                            <textarea class="form-control" id="productDescription" name="product[productDescription]"
-                                rows="3"><%= product.productDescription %></textarea>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="price" class="form-label">Price (₹)</label>
-                                <input type="number" class="form-control" id="price" name="product[price]"
-                                    value="<%= product.price %>" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="quantity" class="form-label">Quantity</label>
-                                <input type="number" class="form-control" id="quantity" name="product[quantity]"
-                                    value="<%= product.quantity %>" required>
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                            <button type="button" class="btn btn-secondary" onclick="toggleEditForm()">Cancel</button>
-                        </div>
-                        </form>
-            </div>
-            <script>
-                function toggleEditForm() {
-                    const form = document.getElementById('editForm');
-                    form.style.display = form.style.display === 'none' ? 'block' : 'none';
-                }
-            </script>
-            <% } %>
+                        <script>
+                            function toggleEditForm() {
+                                const form = document.getElementById('editForm');
+                                form.style.display = form.style.display === 'none' ? 'block' : 'none';
+                            }
+                        </script>
+                        <% } %>
                 </section>
 
                 <!-- Description -->
@@ -152,49 +169,72 @@
                         <h2 class="section-heading">Product Gallery</h2>
                         <div class="gallery-grid">
                             <% product.productImage.forEach((image, index)=> { %>
-                                <img src="<%= image.url %>" alt="<%= product.productName %> - Image <%= index + 1 %>"
-                                    class="gallery-img">
+                                <img src="<%= optimizeImage(image.url) %>"
+                                    alt="<%= product.productName %> - Image <%= index + 1 %>" class="gallery-img">
                                 <% }) %>
                         </div>
                     </section>
                     <% } %>
 
-        </div>
+            </div>
 
-        <!-- RIGHT COLUMN: Contact Sidebar -->
-        <div class="sidebar">
-            <div class="contact-card">
-                <div class="contact-header">
-                    <div class="seller-avatar">
-                        <i class="fa-solid fa-user"></i>
+            <!-- RIGHT COLUMN: Contact Sidebar -->
+            <div class="sidebar">
+                <div class="contact-card">
+                    <div class="contact-header">
+                        <div class="seller-avatar">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <p class="seller-name">
+                            <%= product.owner.name %>
+                        </p>
+                        <p style="font-size: 13px; color: #6b7280; margin: 4px 0;">Product Owner</p>
                     </div>
-                    <p class="seller-name">
-                        <%= product.owner.name %>
-                    </p>
-                    <p style="font-size: 13px; color: #6b7280; margin: 4px 0;">Product Owner</p>
-                </div>
 
-                <div class="seller-contact-details">
-                    <div class="contact-row">
-                        <i class="fa-solid fa-location-dot"></i>
-                        <span>
-                            <%= product.location %>
-                        </span>
+                    <div class="seller-contact-details">
+                        <div class="contact-row">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span>
+                                <%= product.location %>
+                            </span>
+                        </div>
                     </div>
-                </div>
 
-                <div class="d-flex gap-2 mt-3">
-                    <a href="/action/call/<%= product.owner.username %>" class="btn btn-primary flex-grow-1">
-                        <i class="fa-solid fa-phone"></i> Call
-                    </a>
-                    <a href="https://wa.me/91<%= product.owner.username %>?text=Hi,%20I%20am%20interested%20in%20your%20product:%20<%= encodeURIComponent(product.productName) %>"
-                        target="_blank" class="btn btn-success flex-grow-1"
-                        style="background-color: #25D366; border-color: #25D366;">
-                        <i class="fa-brands fa-whatsapp"></i> WhatsApp
-                    </a>
+                    <!-- Add to Cart Section -->
+                    <div class="cart-action-box mt-4 p-3 border rounded bg-light">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <label class="fw-bold mb-0">Quantity:</label>
+                            <div class="input-group input-group-sm" style="width: 100px;">
+                                <button class="btn btn-outline-secondary" type="button" id="minusQty"><i
+                                        class="fa-solid fa-minus"></i></button>
+                                <input type="number" class="form-control text-center" id="prodQty" value="1" min="1"
+                                    max="<%= product.quantity %>">
+                                <button class="btn btn-outline-secondary" type="button" id="plusQty"><i
+                                        class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success fw-bold" id="addToCartBtn">
+                                <i class="fa-solid fa-cart-plus me-1"></i> Add to Cart
+                            </button>
+                            <button class="btn btn-primary fw-bold" id="buyNowBtn">
+                                <i class="fa-solid fa-bolt me-1"></i> Buy Now
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="/action/call/<%= product.owner.username %>" class="btn btn-primary flex-grow-1">
+                            <i class="fa-solid fa-phone"></i> Call
+                        </a>
+                        <a href="https://wa.me/91<%= product.owner.username %>?text=Hi,%20I%20am%20interested%20in%20your%20product:%20<%= encodeURIComponent(product.productName) %>"
+                            target="_blank" class="btn btn-success flex-grow-1"
+                            style="background-color: #25D366; border-color: #25D366;">
+                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
 
         </div>
 
@@ -206,6 +246,81 @@
 
         <script>
             document.addEventListener("DOMContentLoaded", () => {
+                // Quantity controls
+                const minusBtn = document.getElementById('minusQty');
+                const plusBtn = document.getElementById('plusQty');
+                const qtyInput = document.getElementById('prodQty');
+
+                if (minusBtn && plusBtn && qtyInput) {
+                    minusBtn.addEventListener('click', () => {
+                        if (qtyInput.value > 1) qtyInput.value = parseInt(qtyInput.value) - 1;
+                    });
+                    plusBtn.addEventListener('click', () => {
+                        const max = parseInt(qtyInput.getAttribute('max')) || 999;
+                        if (qtyInput.value < max) qtyInput.value = parseInt(qtyInput.value) + 1;
+                    });
+                }
+
+                // Add to Cart logic
+                const addBtn = document.getElementById('addToCartBtn');
+                const msgDiv = document.getElementById('cartMsg');
+
+                if (addBtn) {
+                    addBtn.addEventListener('click', async () => {
+                        const success = await handleAddToCart(false);
+                        if (success) window.location.reload();
+                    });
+                }
+
+                const buyBtn = document.getElementById('buyNowBtn');
+                if (buyBtn) {
+                    buyBtn.addEventListener('click', async () => {
+                        const success = await handleAddToCart(true);
+                        if (success) window.location.href = '/api/cart';
+                    });
+                }
+
+                async function handleAddToCart(silent) {
+                    const btn = silent ? buyBtn : addBtn;
+                    const originalHtml = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        const res = await fetch('/api/cart/add', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                itemId: '<%= product._id %>',
+                                quantity: parseInt(qtyInput.value)
+                            })
+                        });
+
+                        const data = await res.json();
+                        if (res.ok) {
+                            return true;
+                        } else {
+                            if (res.status === 401) {
+                                window.location.href = '/login';
+                            } else {
+                                showToast(data.message || 'Failed to add', 'danger');
+                            }
+                            return false;
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        showToast('Error adding to cart', 'danger');
+                        return false;
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
+                }
+
                 const shareBtn = document.getElementById('shareBtn');
                 if (shareBtn) {
                     shareBtn.addEventListener('click', async () => {

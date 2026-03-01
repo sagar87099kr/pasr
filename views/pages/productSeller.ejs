@@ -17,6 +17,8 @@
 
                 <form method="POST" action="/product/seller" novalidate class="needs-validation notranslate"
                     enctype="multipart/form-data">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
 
                     <!-- Category -->
                     <div class="form-group">
@@ -78,13 +80,22 @@
                     </div>
 
                     <!-- Image Upload -->
-                    <div class="form-group mt-4">
-                        <label class="form-label">Product Images *</label>
-                        <div class="p-3 border rounded bg-light text-center">
-                            <img src="/images/localMarket.jpg" alt="example" class="img-fluid rounded mb-3"
-                                style="max-height: 150px; opacity: 0.7;">
-                            <input type="file" name="productImage" multiple required class="form-control">
-                            <div class="form-text mt-2">Upload clear images of your product used for display.</div>
+                    <div class="row">
+                        <div class="col-md-6 form-group mt-4">
+                            <label class="form-label">Product Images *</label>
+                            <div
+                                class="p-3 border rounded bg-light text-center h-100 d-flex flex-column justify-content-center">
+                                <input type="file" name="productImage" multiple required class="form-control">
+                                <div class="form-text mt-2">Clear product photos.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 form-group mt-4">
+                            <label class="form-label">UPI QR Code (Optional)</label>
+                            <div
+                                class="p-3 border rounded bg-light text-center h-100 d-flex flex-column justify-content-center">
+                                <input type="file" name="upiScanner" class="form-control">
+                                <div class="form-text mt-2">Allows customers to pay you via UPI.</div>
+                            </div>
                         </div>
                     </div>
 

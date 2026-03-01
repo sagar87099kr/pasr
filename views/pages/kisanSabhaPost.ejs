@@ -148,6 +148,8 @@
                     <% if(currUser && currUser._id.toString()===post.author._id.toString()) { %>
                         <form action="/kisan-sabha/<%= post._id %>?_method=DELETE" method="POST"
                             onsubmit="return confirm('Are you sure you want to delete this post?');">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
                             <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i> Delete
                                 Post</button>
                         </form>
@@ -256,6 +258,8 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <form action="/kisan-sabha/<%= post._id %>/report" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
                     <div class="modal-header">
                         <h5 class="modal-title">Report Post</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -315,7 +319,13 @@
             const countSpan = document.getElementById('likeCount');
 
             try {
-                const res = await fetch(`/kisan-sabha/${id}/like`, { method: 'POST' });
+                const res = await fetch(`/kisan-sabha/${id}/like`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+
                 const data = await res.json();
 
                 if (data.success) {
@@ -341,7 +351,13 @@
         async function sharePost() {
             try {
                 // ping DB to increment share count
-                fetch("/kisan-sabha/<%= post._id %>/share", { method: "POST" });
+                fetch("/kisan-sabha/<%= post._id %>/share", {
+                    method: "POST",
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+
 
                 // native share sheet
                 if (navigator.share) {

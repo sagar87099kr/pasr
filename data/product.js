@@ -71,6 +71,10 @@ const productSchema = new Schema({
         type: Boolean,
         default: false
     },
+    upiScanner: {
+        url: String,
+        filename: String
+    },
     createdAt: {
         type: Date,
         default: Date.now
@@ -79,5 +83,7 @@ const productSchema = new Schema({
 });
 
 productSchema.index({ geometry: '2dsphere' });
+productSchema.index({ categories: 1 });
+productSchema.index({ verified: 1 });
 const Product = mongoose.model("Product", productSchema)
 module.exports = Product;

@@ -1,0 +1,954 @@
+<% layout('layoutes/boilerplate') -%>
+
+    <style>
+        .cart-container {
+            padding: 20px 0;
+            background: transparent;
+            min-height: 80vh;
+        }
+
+        .cart-header {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            color: #1e293b;
+        }
+
+        .shop-section {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .shop-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .shop-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-right: 15px;
+            flex-shrink: 0;
+            border: 1px solid #f1f5f9;
+        }
+
+        .cart-item-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cart-item-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cart-item-price {
+            font-size: 16px;
+            font-weight: 800;
+            color: #10b981;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cart-qty-controls {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .cart-qty-btn {
+            background: transparent;
+            border: none;
+            color: #475569;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .cart-qty-value {
+            font-weight: 700;
+            color: #475569;
+            padding: 0 4px;
+            font-size: 14px;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .cart-remove-btn {
+            color: #ef4444;
+            cursor: pointer;
+            background: rgba(239, 68, 68, 0.05);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .shop-summary-card {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: #475569;
+        }
+
+        .summary-total {
+            font-size: 18px;
+            font-weight: 800;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 12px;
+            color: #0f172a;
+        }
+
+        .checkout-btn {
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 12px;
+            width: 100%;
+        }
+
+        .location-alert {
+            font-size: 13px;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+        }
+
+        /* Delivery Option Toggle */
+        .delivery-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .delivery-opt-btn {
+            flex: 1;
+            padding: 12px 8px;
+            border-radius: 14px;
+            border: 2px solid #e2e8f0;
+            background: #f8fafc;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            color: #475569;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .delivery-opt-btn.active {
+            border-color: #6366f1;
+            background: #eef2ff;
+            color: #4338ca;
+        }
+
+        .delivery-opt-btn:hover:not(.active) {
+            border-color: #c7d2fe;
+            background: #f0f4ff;
+        }
+
+        .delivery-opt-btn .opt-icon {
+            font-size: 22px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* First order discount badge */
+        .first-order-badge {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border: 1px solid #6ee7b7;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #065f46;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .delivery-original-price {
+            text-decoration: line-through;
+            color: #94a3b8;
+            font-size: 13px;
+            margin-left: 4px;
+        }
+
+        /* Delivery Address Panel */
+        .delivery-address-panel {
+            background: #fff;
+            border: 2px dashed #6366f1;
+            border-radius: 16px;
+            padding: 18px 16px;
+            margin-bottom: 14px;
+            display: none;
+            /* shown only when HOME_DELIVERY is selected */
+        }
+
+        .delivery-address-panel .panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detect-loc-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+
+        .detect-loc-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .detected-address-box {
+            margin-top: 10px;
+            background: #f0fdf4;
+            border: 1px solid #6ee7b7;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 13px;
+            color: #065f46;
+            display: none;
+        }
+
+        .detected-address-box .addr-label {
+            font-weight: 700;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .change-loc-link {
+            font-size: 12px;
+            color: #6366f1;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
+        @media (max-width: 576px) {
+            .cart-item {
+                flex-wrap: wrap;
+            }
+
+            .cart-item-actions {
+                width: 100%;
+                justify-content: space-between;
+                margin-top: 10px;
+                padding-left: 95px;
+            }
+        }
+    </style>
+
+    <% containerClass='container py-4' ; %>
+
+        <div class="cart-container" style="max-width: 900px; margin: 0 auto; display: block;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="cart-header m-0">My Cart</h1>
+                <% if (cart && cart.items.length> 0) { %>
+                    <button id="clearCartBtn" class="btn btn-sm btn-outline-danger"
+                        style="border-radius: 50px; padding: 5px 15px;">
+                        <i class="fa-solid fa-trash-can me-1"></i> Clear Cart
+                    </button>
+                    <% } %>
+            </div>
+
+            <% if (!cart || cart.items.length===0) { %>
+                <div class="text-center py-5">
+                    <i class="fa-solid fa-cart-shopping mb-3" style="font-size: 60px; color: #d1d5db;"></i>
+                    <h3 style="color: #6b7280;">Your cart is empty</h3>
+                    <a href="/home" class="btn btn-primary mt-3">Start Shopping</a>
+                </div>
+                <% } else { %>
+                    <% const groupedItems={}; cart.items.forEach(item=> {
+                        if (!groupedItems[item.shopId]) {
+                        groupedItems[item.shopId] = {
+                        shopName: item.shopName,
+                        shopUpiUrl: item.shopUpiUrl,
+                        items: [],
+                        subtotal: 0
+                        };
+                        }
+                        groupedItems[item.shopId].items.push(item);
+                        groupedItems[item.shopId].subtotal += (item.price * item.quantity);
+                        });
+                        %>
+
+                        <% Object.keys(groupedItems).forEach(shopId=> {
+                            const group = groupedItems[shopId];
+                            %>
+                            <div class="shop-section" id="shop-section-<%= shopId %>">
+                                <div class="shop-header">
+                                    <div class="shop-title">
+                                        <i class="fa-solid fa-store text-primary"></i>
+                                        <%= group.shopName %>
+                                    </div>
+                                    <span class="badge bg-light text-dark border">
+                                        <%= group.items.length %> items
+                                    </span>
+                                </div>
+
+                                <div class="items-list">
+                                    <% group.items.forEach(item=> { %>
+                                        <div class="cart-item">
+                                            <img src="<%= item.image || '/images/placeholder.jpg' %>"
+                                                alt="<%= item.name %>">
+                                            <div class="cart-item-details">
+                                                <div class="cart-item-title">
+                                                    <%= item.name %>
+                                                </div>
+                                                <div class="cart-item-price">₹<%= item.price %>
+                                                </div>
+                                            </div>
+                                            <div class="cart-item-actions">
+                                                <div class="cart-qty-controls">
+                                                    <button class="cart-qty-btn update-qty-btn" data-action="decrease"
+                                                        data-itemid="<%= item.itemId %>"><i
+                                                            class="fa-solid fa-minus"></i></button>
+                                                    <span class="cart-qty-value">
+                                                        <%= item.quantity %>
+                                                    </span>
+                                                    <button class="cart-qty-btn update-qty-btn" data-action="increase"
+                                                        data-itemid="<%= item.itemId %>"><i
+                                                            class="fa-solid fa-plus"></i></button>
+                                                </div>
+                                                <button class="cart-remove-btn delete-item-btn" title="Remove"
+                                                    data-itemid="<%= item.itemId %>">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <% }) %>
+                                </div><!-- /items-list -->
+
+                                <!-- Add More Items button -->
+                                <div class="px-2 pb-1">
+                                    <a href="/shops/<%= shopId %>" class="btn btn-sm w-100 fw-600"
+                                        style="background:#eef2ff;color:#4338ca;border-radius:10px;font-size:13px;font-weight:700;border:1.5px dashed #6366f1;padding:8px 0;display:block;text-align:center;text-decoration:none;">
+                                        <i class="fa-solid fa-plus me-1"></i> Add More Items from <%= group.shopName %>
+                                    </a>
+                                </div>
+
+
+
+                                <div class="shop-summary-card">
+
+                                    <!-- Delivery Option Selector -->
+                                    <p class="fw-bold mb-2" style="color:#0f172a; font-size:15px;">How would you like to
+                                        receive this order?</p>
+                                    <div class="delivery-toggle">
+                                        <button class="delivery-opt-btn active" data-shopid="<%= shopId %>"
+                                            data-type="SELF_PICKUP">
+                                            <span class="opt-icon">🏪</span>
+                                            I'll Pick Up
+                                        </button>
+                                        <button class="delivery-opt-btn" data-shopid="<%= shopId %>"
+                                            data-type="HOME_DELIVERY">
+                                            <span class="opt-icon">🚚</span>
+                                            Home Delivery
+                                        </button>
+                                    </div>
+
+                                    <!-- Summary Rows -->
+                                    <div class="summary-row">
+                                        <span>Subtotal</span>
+                                        <span>₹<%= group.subtotal %></span>
+                                    </div>
+                                    <div class="summary-row delivery-row" style="display: none;">
+                                        <span>Delivery Fee <small class="delivery-dist text-muted"></small></span>
+                                        <span>
+                                            <span class="delivery-original-price" style="display:none;"></span>
+                                            <span class="delivery-amt">₹0</span>
+                                        </span>
+                                    </div>
+
+                                    <!-- First-order free delivery badge -->
+                                    <div class="first-order-badge" style="display:none;">
+                                        🎉 <span>First order!</span> Delivery is <strong>FREE</strong> for you — Save
+                                        <span class="first-order-save-amt"></span>
+                                    </div>
+
+                                    <div class="summary-row summary-total">
+                                        <span>Order Total</span>
+                                        <span class="grand-total" style="color:#138808">₹<%= group.subtotal %></span>
+                                    </div>
+
+                                    <!-- Delivery Address Panel (visible only for HOME_DELIVERY) -->
+                                    <div class="delivery-address-panel" id="addr-panel-<%= shopId %>">
+                                        <div class="panel-title">
+                                            <i class="fa-solid fa-location-dot" style="color:#6366f1"></i>
+                                            Enter your delivery address
+                                        </div>
+
+                                        <!-- Google Places Autocomplete Input -->
+                                        <div style="position:relative;">
+                                            <span
+                                                style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#6366f1;font-size:16px;pointer-events:none;">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                            </span>
+                                            <input type="text" id="places-input-<%= shopId %>" class="places-addr-input"
+                                                placeholder="Search your delivery address…" autocomplete="off"
+                                                style="width:100%;padding:11px 12px 11px 38px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;outline:none;transition:border-color .2s;"
+                                                onfocus="this.style.borderColor='#6366f1'"
+                                                onblur="this.style.borderColor='#e2e8f0'" />
+                                        </div>
+
+                                        <!-- Confirmed address shown after selection -->
+                                        <div class="detected-address-box" id="addr-box-<%= shopId %>"
+                                            style="display:none;">
+                                            <span class="addr-label">📍 Delivering to:</span>
+                                            <span class="addr-text"></span>
+                                            <span class="change-loc-link" id="change-loc-<%= shopId %>">Change
+                                                address</span>
+                                        </div>
+                                        <div class="addr-error text-danger mt-2" style="font-size:13px; display:none;">
+                                        </div>
+                                    </div>
+
+
+                                    <div class="d-grid gap-2 mt-4">
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <button class="btn btn-success checkout-btn upi-pay-btn"
+                                                    data-shopid="<%= shopId %>" data-shopname="<%= group.shopName %>"
+                                                    data-upi="<%= group.shopUpiUrl %>">
+                                                    <i class="fa-solid fa-qrcode me-1"></i> Pay UPI
+                                                </button>
+                                            </div>
+                                            <div class="col-6">
+                                                <button class="btn btn-primary checkout-btn cod-btn"
+                                                    data-shopid="<%= shopId %>" <%=group.subtotal>= 1000 ?
+                                                    'style="display:none"' : '' %>>
+                                                    <i class="fa-solid fa-money-bill me-1"></i> COD
+                                                    <span
+                                                        class="badge bg-success-subtle text-success border border-success-subtle ms-2 <%= group.subtotal >= 1000 ? 'd-none' : '' %>"
+                                                        style="font-size: 10px;">COD
+                                                        Available</span>
+                                                </button>
+                                                <small
+                                                    class="text-danger d-block text-center mt-1 cod-limit-msg <%= group.subtotal >= 1000 ? '' : 'd-none' %>"
+                                                    style="font-size: 10px;">COD
+                                                    not available for ₹1000+
+                                                    orders</small>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }) %>
+
+                                <!-- UPI Payment Modal (Shared) -->
+                                <div class="modal fade" id="upiPaymentModal" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fw-bold">Pay <span id="modalShopName"></span> via
+                                                    UPI</h5>
+                                                <button type="button" class="btn-close"
+                                                    data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-center">
+                                                <p class="text-muted mb-3">Pay exactly <strong
+                                                        style="color:#138808">₹<span
+                                                            id="modalUpiAmount"></span></strong></p>
+                                                <div id="qrContainer">
+                                                    <img id="modalQrImg" src="" alt="Shop UPI QR"
+                                                        class="img-fluid border rounded p-2 mb-3"
+                                                        style="max-width: 250px;">
+                                                </div>
+                                                <div id="noQrMsg" class="alert alert-warning d-none">
+                                                    Shop hasn't uploaded a QR yet. Use COD.
+                                                </div>
+                                                <div class="alert alert-info" style="font-size: 0.85rem;">
+                                                    Complete payment before clicking "I have Paid". We verify with the
+                                                    shop.
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer justify-content-between">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Cancel</button>
+                                                <button type="button" id="confirmUpiPaidBtn" class="btn btn-success">I
+                                                    have Paid, Place Order</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Order Success Modal -->
+                                <div class="modal fade" id="orderSuccessModal" tabindex="-1" aria-hidden="true"
+                                    data-bs-backdrop="static">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content"
+                                            style="border-radius: 20px; border: none; overflow: hidden;">
+                                            <div class="modal-body text-center py-5">
+                                                <div class="mb-4">
+                                                    <div class="success-icon-wrap"
+                                                        style="width: 80px; height: 80px; background: #ecfdf5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                                                        <i class="fa-solid fa-check text-success"
+                                                            style="font-size: 40px;"></i>
+                                                    </div>
+                                                </div>
+                                                <h3 class="fw-bold mb-2" style="color: #065f46;">Order Placed!</h3>
+                                                <p class="text-muted mb-4">Your order #<strong id="successOrderId"
+                                                        style="color: #0f172a;"></strong> has been received by the shop.
+                                                </p>
+
+                                                <div class="d-grid gap-3 px-3">
+                                                    <button type="button" id="whatsappNotifyBtn"
+                                                        class="btn btn-success fw-bold py-3"
+                                                        style="background:#25D366; border:none; border-radius: 14px; font-size: 16px;">
+                                                        <i class="fa-brands fa-whatsapp me-2"
+                                                            style="font-size: 20px;"></i> Notify Shopkeeper
+                                                    </button>
+                                                    <a href="/api/orders/my-orders"
+                                                        class="btn btn-link text-muted fw-bold"
+                                                        style="text-decoration: none;">View My Orders</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <% } %>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                // Per-shop location state
+                const shopLocState = {}; // shopId -> { lat, lng, address }
+
+                const upiModal = new bootstrap.Modal(document.getElementById('upiPaymentModal'));
+                let currentShopContext = null;
+
+                // --- Init all sections as SELF_PICKUP ---
+                document.querySelectorAll('.shop-section').forEach(section => {
+                    section.dataset.deliveryType = 'SELF_PICKUP';
+                    section.dataset.deliveryOk = 'true';
+                    const subtotalEl = section.querySelector('.summary-row span:last-child');
+                    section.dataset.total = subtotalEl ? subtotalEl.innerText.replace('₹', '') : '0';
+                });
+
+                // --- Delivery toggle buttons ---
+                document.querySelectorAll('.delivery-opt-btn').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const shopId = this.dataset.shopid;
+                        const type = this.dataset.type;
+                        const section = document.getElementById(`shop-section-${shopId}`);
+                        const subCard = section.querySelector('.shop-summary-card');
+
+                        // Update active styling
+                        section.querySelectorAll('.delivery-opt-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        section.dataset.deliveryType = type;
+
+                        const addrPanel = document.getElementById(`addr-panel-${shopId}`);
+
+                        if (type === 'SELF_PICKUP') {
+                            // Hide address panel, reset summary
+                            addrPanel.style.display = 'none';
+                            subCard.querySelector('.delivery-row').style.display = 'none';
+                            subCard.querySelector('.first-order-badge').style.display = 'none';
+                            const subtotalEl = section.querySelector('.summary-row span:last-child');
+                            const subtotal = parseFloat(subtotalEl ? subtotalEl.innerText.replace('₹', '') : '0') || 0;
+                            subCard.querySelector('.grand-total').innerText = `₹${subtotal}`;
+                            section.dataset.deliveryOk = 'true';
+                            section.dataset.total = subtotal;
+                            updateCodVisibility(shopId, subtotal);
+                        } else {
+                            // Show address panel — wait for user to detect location
+                            addrPanel.style.display = 'block';
+                            section.dataset.deliveryOk = 'false';
+
+                            // If location was already detected for this shop, re-use it
+                            if (shopLocState[shopId]) {
+                                fetchDeliveryFeeForSection(section, shopLocState[shopId].lat, shopLocState[shopId].lng);
+                            }
+                        }
+                    });
+                });
+
+                // --- Google Places Autocomplete (per shop) ---
+                // Initialized after Google Maps API loads via initPlacesForCart()
+                window.initPlacesForCart = function () {
+                    document.querySelectorAll('.places-addr-input').forEach(inputEl => {
+                        const shopId = inputEl.id.replace('places-input-', '');
+                        const section = document.getElementById(`shop-section-${shopId}`);
+                        const addrBox = document.getElementById(`addr-box-${shopId}`);
+                        const addrErrorEl = section.querySelector('.addr-error');
+
+                        const autocomplete = new google.maps.places.Autocomplete(inputEl, {
+                            componentRestrictions: { country: 'IN' },
+                            fields: ['formatted_address', 'geometry', 'name']
+                        });
+
+                        autocomplete.addListener('place_changed', () => {
+                            const place = autocomplete.getPlace();
+                            addrErrorEl.style.display = 'none';
+
+                            if (!place.geometry || !place.geometry.location) {
+                                addrErrorEl.innerText = 'Please select an address from the suggestions dropdown.';
+                                addrErrorEl.style.display = 'block';
+                                return;
+                            }
+
+                            const lat = place.geometry.location.lat();
+                            const lng = place.geometry.location.lng();
+                            const addressText = place.formatted_address || place.name || inputEl.value;
+
+                            // Store state
+                            shopLocState[shopId] = { lat, lng, address: addressText };
+
+                            // Show confirmed address box, hide input
+                            inputEl.style.display = 'none';
+                            addrBox.querySelector('.addr-text').innerText = addressText;
+                            addrBox.style.display = 'flex';
+
+                            // Fetch delivery fee
+                            fetchDeliveryFeeForSection(section, lat, lng);
+                        });
+                    });
+                };
+
+                // If Maps already loaded (e.g. page was cached), init right away
+                if (window.google && window.google.maps && window.google.maps.places) {
+                    window.initPlacesForCart();
+                }
+
+                // --- Change Address link (per shop) ---
+                document.querySelectorAll('.change-loc-link').forEach(link => {
+                    const shopId = link.id.replace('change-loc-', '');
+                    link.addEventListener('click', function () {
+                        const section = document.getElementById(`shop-section-${shopId}`);
+                        const addrBox = document.getElementById(`addr-box-${shopId}`);
+                        const inputEl = document.getElementById(`places-input-${shopId}`);
+                        const subCard = section.querySelector('.shop-summary-card');
+
+                        // Reset location state
+                        delete shopLocState[shopId];
+
+                        // Show input again, clear address box
+                        inputEl.value = '';
+                        inputEl.style.display = '';
+                        inputEl.focus();
+                        addrBox.style.display = 'none';
+
+                        subCard.querySelector('.delivery-row').style.display = 'none';
+                        subCard.querySelector('.first-order-badge').style.display = 'none';
+                        subCard.querySelector('.grand-total').innerText = section.querySelector('.summary-row span:last-child').innerText;
+                        section.dataset.deliveryOk = 'false';
+                    });
+                });
+
+                // --- Fetch & display delivery fee for a section ---
+                async function fetchDeliveryFeeForSection(section, lat, lng) {
+                    const shopId = section.id.replace('shop-section-', '');
+                    const subCard = section.querySelector('.shop-summary-card');
+                    const addrErrorEl = section.querySelector('.addr-error');
+
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        const res = await fetch('/api/cart/delivery-fee', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({ lat, lng, shopId })
+                        });
+
+                        const data = await res.json();
+
+                        if (res.ok) {
+                            subCard.querySelector('.delivery-dist').innerText = `(${data.distance} km)`;
+
+                            const deliveryAmtEl = subCard.querySelector('.delivery-amt');
+                            const originalPriceEl = subCard.querySelector('.delivery-original-price');
+                            const firstOrderBadge = subCard.querySelector('.first-order-badge');
+                            const firstOrderSaveEl = subCard.querySelector('.first-order-save-amt');
+
+                            if (data.isFirstOrder) {
+                                deliveryAmtEl.innerText = 'FREE';
+                                deliveryAmtEl.style.color = '#059669';
+                                deliveryAmtEl.style.fontWeight = '800';
+                                originalPriceEl.innerText = `₹${data.deliveryCharge}`;
+                                originalPriceEl.style.display = 'inline';
+                                firstOrderSaveEl.innerText = `₹${data.deliveryCharge}`;
+                                firstOrderBadge.style.display = 'flex';
+                            } else {
+                                deliveryAmtEl.innerText = `₹${data.deliveryCharge}`;
+                                deliveryAmtEl.style.color = '';
+                                deliveryAmtEl.style.fontWeight = '';
+                                originalPriceEl.style.display = 'none';
+                                firstOrderBadge.style.display = 'none';
+                            }
+
+                            subCard.querySelector('.grand-total').innerText = `₹${data.total}`;
+                            subCard.querySelector('.delivery-row').style.display = 'flex';
+                            if (addrErrorEl) addrErrorEl.style.display = 'none';
+                            section.dataset.deliveryOk = 'true';
+                            section.dataset.total = data.total;
+
+                            updateCodVisibility(shopId, data.total);
+                        } else {
+                            // Show distance/out-of-range error in addr-error
+                            if (addrErrorEl) {
+                                addrErrorEl.innerText = `⚠️ ${data.message}`;
+                                addrErrorEl.style.display = 'block';
+                            }
+                            section.dataset.deliveryOk = 'false';
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        if (addrErrorEl) {
+                            addrErrorEl.innerText = 'Failed to calculate delivery fee. Please try again.';
+                            addrErrorEl.style.display = 'block';
+                        }
+                    }
+                }
+
+                function updateCodVisibility(shopId, total) {
+                    const section = document.getElementById(`shop-section-${shopId}`);
+                    const codBtn = section.querySelector('.cod-btn');
+                    const msg = section.querySelector('.cod-limit-msg');
+                    if (total >= 1000) {
+                        codBtn.style.display = 'none';
+                        if (msg) msg.style.display = 'block';
+                    } else {
+                        codBtn.style.display = 'block';
+                        if (msg) msg.style.display = 'none';
+                    }
+                }
+
+                // --- Common Actions ---
+                document.querySelectorAll('.update-qty-btn').forEach(btn => {
+                    btn.addEventListener('click', async function () {
+                        const itemId = this.dataset.itemid, action = this.dataset.action;
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        const res = await fetch(`/api/cart/update/${itemId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({ action })
+                        });
+
+                        if (res.ok) window.location.reload();
+                    });
+                });
+
+                document.querySelectorAll('.delete-item-btn').forEach(btn => {
+                    btn.addEventListener('click', async function () {
+                        if (!confirm("Remove item?")) return;
+                        const itemId = this.dataset.itemid;
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        const res = await fetch(`/api/cart/remove/${itemId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken
+                            }
+                        });
+
+                        if (res.ok) window.location.reload();
+                    });
+                });
+
+                const clearBtn = document.getElementById('clearCartBtn');
+                if (clearBtn) clearBtn.addEventListener('click', async () => {
+                    if (!confirm("Clear entire cart?")) return;
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    const res = await fetch('/api/cart/clear', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        }
+                    });
+
+                    if (res.ok) window.location.reload();
+                });
+
+                // --- Order Placement ---
+                async function placeOrder(shopId, paymentType) {
+                    const section = document.getElementById(`shop-section-${shopId}`);
+                    const deliveryType = section.dataset.deliveryType || 'SELF_PICKUP';
+
+                    if (deliveryType === 'HOME_DELIVERY') {
+                        if (!shopLocState[shopId]) {
+                            alert('Please enter your delivery address first.'); return;
+                        }
+                        if (section.dataset.deliveryOk !== 'true') {
+                            alert('Delivery is not available to your location. Please choose Self Pickup or change your address.'); return;
+                        }
+                    }
+
+                    const loc = shopLocState[shopId];
+                    const payload = {
+                        paymentType,
+                        shopId,
+                        deliveryType,
+                        lat: deliveryType === 'HOME_DELIVERY' ? loc.lat : undefined,
+                        lng: deliveryType === 'HOME_DELIVERY' ? loc.lng : undefined
+                    };
+
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        const res = await fetch('/api/orders/checkout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const data = await res.json();
+                        if (res.ok) {
+                            // Prepare Success Modal
+                            document.getElementById('successOrderId').innerText = data.orderId;
+
+                            const whatsappBtn = document.getElementById('whatsappNotifyBtn');
+                            whatsappBtn.onclick = () => {
+                                const phone = `91${data.shopOwnerPhone}`;
+                                const baseUrl = window.location.origin;
+                                const orderLink = `${baseUrl}/api/orders/my-orders`;
+
+                                // Items Summary (shortened if too long)
+                                let items = data.itemsSummary;
+                                if (items.length > 30) items = items.substring(0, 27) + "...";
+
+                                let message = `📦 Order #${data.orderId} (${items})\n`;
+                                if (data.paymentType === 'COD') {
+                                    message += `मुझे सामान घर चाहिए, पहुँचने पर पैसे दूँगा।\nI want products at home, will pay on delivery.`;
+                                } else {
+                                    message += `मैंने UPI से पैसे भेज दिए हैं, सामान घर भेज दें।\nI sent money via UPI, please send my products home.`;
+                                }
+                                message += `\nView: ${orderLink}`;
+
+                                const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                                window.open(whatsappUrl, '_blank');
+
+                                // Redirect after a short delay
+                                setTimeout(() => { window.location.href = '/api/orders/my-orders'; }, 1500);
+                            };
+
+                            // Close UPI modal if open
+                            if (paymentType === 'PREPAID') {
+                                const upiModalEl = document.getElementById('upiPaymentModal');
+                                const upiInst = bootstrap.Modal.getInstance(upiModalEl);
+                                if (upiInst) upiInst.hide();
+                            }
+
+                            const successModal = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
+                            successModal.show();
+                        } else alert(data.message || 'Order failed.');
+                    } catch (e) { alert('Error: ' + e.message); }
+                }
+
+                document.querySelectorAll('.cod-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (confirm('Place COD order for this shop?')) placeOrder(btn.dataset.shopid, 'COD');
+                    });
+                });
+
+                document.querySelectorAll('.upi-pay-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const { shopid, shopname, upi } = btn.dataset;
+                        const section = document.getElementById(`shop-section-${shopid}`);
+
+                        currentShopContext = shopid;
+                        document.getElementById('modalShopName').innerText = shopname;
+                        document.getElementById('modalUpiAmount').innerText = section.dataset.total || section.querySelector('.grand-total').innerText.replace('₹', '');
+
+                        if (upi && upi !== 'null') {
+                            document.getElementById('modalQrImg').src = upi;
+                            document.getElementById('qrContainer').classList.remove('d-none');
+                            document.getElementById('noQrMsg').classList.add('d-none');
+                            document.getElementById('confirmUpiPaidBtn').disabled = false;
+                        } else {
+                            document.getElementById('qrContainer').classList.add('d-none');
+                            document.getElementById('noQrMsg').classList.remove('d-none');
+                            document.getElementById('confirmUpiPaidBtn').disabled = true;
+                        }
+                        upiModal.show();
+                    });
+                });
+
+                document.getElementById('confirmUpiPaidBtn').addEventListener('click', () => {
+                    if (currentShopContext) placeOrder(currentShopContext, 'PREPAID');
+                });
+            });
+            // Wire the global initMap callback to our Places initializer
+            window.initMap = function () {
+                if (window.initPlacesForCart) window.initPlacesForCart();
+            };
+        </script>

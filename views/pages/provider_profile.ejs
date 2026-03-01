@@ -79,13 +79,6 @@
           </div>
 
           <div class="info-item">
-            <span class="info-label">Email Address</span>
-            <span class="info-value">
-              <%= currUser.emailAddress %>
-            </span>
-          </div>
-
-          <div class="info-item">
             <span class="info-label">Current Address</span>
             <span class="info-value">
               <%= currUser.address %>
@@ -224,187 +217,261 @@
         </div>
       </div>
 
-      <!-- Listings Section -->
-      <% if (listings && listings.length> 0) { %>
-        <section class="profile-card">
-          <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
+      <!-- Delivery Partner Section -->
+      <% if (typeof deliveryPartner !=='undefined' && deliveryPartner) { %>
+        <section class="profile-card" style="border-left: 4px solid #6366f1;">
+          <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 16px;">
             <div class="user-info">
-              <h2>My Listings</h2>
-              <span class="user-type">Manage your services</span>
+              <h2>🛵 Delivery Partner</h2>
+              <span class="user-type">Your delivery partner profile</span>
+            </div>
+            <% if (deliveryPartner.isApproved) { %>
+              <span class="status-badge"
+                style="background:#d1fae5;color:#065f46;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;">✅
+                Approved</span>
+              <% } else { %>
+                <span class="status-badge"
+                  style="background:#fef3c7;color:#92400e;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;">⏳
+                  Pending Approval</span>
+                <% } %>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Partner ID</span>
+              <span class="info-value" style="font-family:monospace;font-size:12px;color:#6366f1;word-break:break-all;">
+                <%= deliveryPartner._id %>
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Full Name</span>
+              <span class="info-value">
+                <%= deliveryPartner.fullName %>
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Phone</span>
+              <span class="info-value">📱 <%= deliveryPartner.phoneNumber %></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Vehicle</span>
+              <span class="info-value">🏍 <%= deliveryPartner.vehicleType %> (<%= deliveryPartner.vehicleNumber %>
+                    )</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Status</span>
+              <span class="info-value">
+                <% if (deliveryPartner.isBlocked) { %>
+                  <span style="color:#dc2626;font-weight:700;">🚫 Blocked</span>
+                  <% } else if (deliveryPartner.isActive) { %>
+                    <span style="color:#059669;font-weight:700;">🟢 Online</span>
+                    <% } else { %>
+                      <span style="color:#6b7280;font-weight:700;">⚫ Offline</span>
+                      <% } %>
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Rating / Deliveries</span>
+              <span class="info-value">⭐ <%= deliveryPartner.rating.toFixed(1) %> &nbsp;·&nbsp; 📦 <%=
+                    deliveryPartner.totalDeliveries %> completed</span>
             </div>
           </div>
 
-          <div class="listings-grid">
-            <% listings.forEach(listing=> { %>
-              <div class="listing-card">
-                <div class="listing-info">
-                  <img src="<%= listing.personImage[0].path %>" alt="Service Image" class="listing-img">
-                  <div class="listing-details">
-                    <h4>
-                      <%= listing.company %>
-                    </h4>
-                    <p class="listing-cat">
-                      <%= listing.categories %>
-                    </p>
-                  </div>
-                </div>
-                <a href="/provider/<%= listing._id %>/profile" class="btn btn-view">
-                  View Profile <i class="fa-solid fa-arrow-right"></i>
-                </a>
-              </div>
-              <% }) %>
+          <div style="margin-top: 16px;">
+            <a href="/delivery/dashboard" class="btn btn-primary" style="border-radius:10px;font-weight:700;">
+              <i class="fa-solid fa-motorcycle me-1"></i> Go to Delivery Dashboard
+            </a>
           </div>
-        </section>
         </section>
         <% } %>
 
-          <!-- Products Section -->
-          <% if (products && products.length> 0) { %>
+          <!-- Listings Section -->
+          <% if (listings && listings.length> 0) { %>
+
             <section class="profile-card">
               <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
                 <div class="user-info">
-                  <h2>My Products</h2>
-                  <span class="user-type">Manage your products</span>
+                  <h2>My Listings</h2>
+                  <span class="user-type">Manage your services</span>
                 </div>
               </div>
 
               <div class="listings-grid">
-                <% products.forEach(product=> { %>
+                <% listings.forEach(listing=> { %>
                   <div class="listing-card">
                     <div class="listing-info">
-                      <img src="<%= product.productImage[0].url %>" alt="Product Image" class="listing-img">
+                      <img src="<%= listing.personImage[0].path %>" alt="Service Image" class="listing-img">
                       <div class="listing-details">
                         <h4>
-                          <%= product.productName %>
+                          <%= listing.company %>
                         </h4>
                         <p class="listing-cat">
-                          <%= product.categories %>
-                        </p>
-                        <p class="listing-cat" style="color: #6b7280; font-size: 12px;">Qty: <%= product.quantity %>
+                          <%= listing.categories %>
                         </p>
                       </div>
                     </div>
-                    <a href="/products/<%= product._id %>" class="btn btn-view">
-                      View Product <i class="fa-solid fa-arrow-right"></i>
+                    <a href="/provider/<%= listing._id %>/profile" class="btn btn-view">
+                      View Profile <i class="fa-solid fa-arrow-right"></i>
                     </a>
                   </div>
                   <% }) %>
               </div>
             </section>
+            </section>
             <% } %>
 
-              <!-- Shops Section -->
-              <% if (shops && shops.length> 0) { %>
+              <!-- Products Section -->
+              <% if (products && products.length> 0) { %>
                 <section class="profile-card">
                   <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
                     <div class="user-info">
-                      <h2>My Shops</h2>
-                      <span class="user-type">Manage your shops</span>
+                      <h2>My Products</h2>
+                      <span class="user-type">Manage your products</span>
                     </div>
                   </div>
 
                   <div class="listings-grid">
-                    <% shops.forEach(shop=> { %>
+                    <% products.forEach(product=> { %>
                       <div class="listing-card">
                         <div class="listing-info">
-                          <img src="<%= shop.shopImage[0].url %>" alt="Shop Image" class="listing-img">
+                          <img src="<%= optimizeImage(product.productImage[0].url) %>" alt="Product Image"
+                            class="listing-img">
                           <div class="listing-details">
                             <h4>
-                              <%= shop.shopName %>
+                              <%= product.productName %>
                             </h4>
                             <p class="listing-cat">
-                              <%= shop.category %>
+                              <%= product.categories %>
                             </p>
-                            <p class="listing-cat" style="color: #6b7280; font-size: 12px;">
-                              <%= shop.location %>
+                            <p class="listing-cat" style="color: #6b7280; font-size: 12px;">Qty: <%= product.quantity %>
                             </p>
                           </div>
                         </div>
-                        <div class="d-flex gap-2 mt-3">
-                          <a href="/shops/<%= shop._id %>" class="btn btn-view flex-grow-1">
-                            View Shop
-                          </a>
-                          <a href="/shops/<%= shop._id %>/edit" class="btn btn-secondary flex-grow-0"
-                            style="padding: 0.5rem 0.8rem;">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                          </a>
-                        </div>
+                        <a href="/products/<%= product._id %>" class="btn btn-view">
+                          View Product <i class="fa-solid fa-arrow-right"></i>
+                        </a>
                       </div>
                       <% }) %>
                   </div>
                 </section>
                 <% } %>
 
-                  <!-- Kisan Sabha Posts Section -->
-                  <% if (typeof kisanPosts !=='undefined' && kisanPosts.length> 0) { %>
-                    <section class="profile-card"
-                      style="background: transparent; box-shadow: none; border: none; padding: 0;">
+                  <!-- Shops Section -->
+                  <% if (shops && shops.length> 0) { %>
+                    <section class="profile-card">
                       <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
-                        <div class="user-info text-center w-100">
-                          <h2>My Kisan Sabha Posts</h2>
-                          <span class="user-type">Updates from your region</span>
+                        <div class="user-info">
+                          <h2>My Shops</h2>
+                          <span class="user-type">Manage your shops</span>
                         </div>
                       </div>
 
-                      <div>
-                        <% kisanPosts.forEach(post=> { %>
-                          <div class="post-card mb-3 p-3 d-flex align-items-center justify-content-between"
-                            style="border-radius: 8px;">
-                            <div class="d-flex align-items-center">
-                              <div class="me-3" style="width: 40px; height: 40px; flex-shrink: 0;">
-                                <% if(post.media && post.media.length> 0) { %>
-                                  <% if(post.media[0].type==='video' ) { %>
-                                    <video src="<%= post.media[0].url %>" class="rounded-circle w-100 h-100"
-                                      style="object-fit: cover; background: #000;" muted playsinline></video>
-                                    <% } else { %>
-                                      <img src="<%= post.media[0].url %>" alt="Post thumbnail"
-                                        class="rounded-circle w-100 h-100"
-                                        style="object-fit: cover; background: #f8f9fa;">
-                                      <% } %>
-                                        <% } else { %>
-                                          <div
-                                            class="bg-light text-primary d-flex justify-content-center align-items-center w-100 h-100 rounded-circle">
-                                            <i class="fa-solid fa-location-dot"></i>
-                                          </div>
-                                          <% } %>
-                              </div>
-                              <div>
-                                <span class="fw-bold d-block text-dark">Local Post</span>
-                                <span class="text-muted" style="font-size: 0.85rem;">
-                                  <%= new Date(post.createdAt).toLocaleDateString() %> • <%= new
-                                      Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit' , minute: '2-digit'
-                                      }) %>
-                                </span>
+                      <div class="listings-grid">
+                        <% shops.forEach(shop=> { %>
+                          <div class="listing-card">
+                            <div class="listing-info">
+                              <img src="<%= optimizeImage(shop.shopImage[0].url) %>" alt="Shop Image"
+                                class="listing-img">
+                              <div class="listing-details">
+                                <h4>
+                                  <%= shop.shopName %>
+                                </h4>
+                                <p class="listing-cat">
+                                  <%= shop.category %>
+                                </p>
+                                <p class="listing-cat" style="color: #6b7280; font-size: 12px;">
+                                  <%= shop.location %>
+                                </p>
                               </div>
                             </div>
-
-                            <div class="d-flex align-items-center gap-3">
-                              <div>
-                                <% if(post.status==='approved' ) { %>
-                                  <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Live</span>
-                                  <% } else if(post.status==='rejected' ) { %>
-                                    <span class="badge bg-danger"><i class="fa-solid fa-xmark me-1"></i>Rejected</span>
-                                    <% } else { %>
-                                      <span class="badge bg-warning text-dark"><i
-                                          class="fa-solid fa-hourglass-half me-1"></i>Pending</span>
-                                      <% } %>
-                              </div>
-
-                              <a href="/kisan-sabha/<%= post._id %>" class="btn btn-sm btn-primary fw-bold px-3">
-                                View Post
+                            <div class="d-flex gap-2 mt-3">
+                              <a href="/shops/<%= shop._id %>" class="btn btn-view flex-grow-1">
+                                View Shop
                               </a>
-
-                              <form action="/kisan-sabha/<%= post._id %>?_method=DELETE" method="POST" class="m-0 p-0"
-                                onsubmit="return confirm('Are you sure you want to delete this post?');">
-                                <button type="submit" class="btn btn-sm btn-outline-danger px-2"><i
-                                    class="fa-solid fa-trash"></i></button>
-                              </form>
+                              <a href="/shops/<%= shop._id %>/edit" class="btn btn-secondary flex-grow-0"
+                                style="padding: 0.5rem 0.8rem;">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                              </a>
                             </div>
                           </div>
                           <% }) %>
                       </div>
                     </section>
                     <% } %>
+
+                      <!-- Kisan Sabha Posts Section -->
+                      <% if (typeof kisanPosts !=='undefined' && kisanPosts.length> 0) { %>
+                        <section class="profile-card"
+                          style="background: transparent; box-shadow: none; border: none; padding: 0;">
+                          <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
+                            <div class="user-info text-center w-100">
+                              <h2>My Kisan Sabha Posts</h2>
+                              <span class="user-type">Updates from your region</span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <% kisanPosts.forEach(post=> { %>
+                              <div class="post-card mb-3 p-3 d-flex align-items-center justify-content-between"
+                                style="border-radius: 8px;">
+                                <div class="d-flex align-items-center">
+                                  <div class="me-3" style="width: 40px; height: 40px; flex-shrink: 0;">
+                                    <% if(post.media && post.media.length> 0) { %>
+                                      <% if(post.media[0].type==='video' ) { %>
+                                        <video src="<%= optimizeImage(post.media[0].url) %>"
+                                          class="rounded-circle w-100 h-100"
+                                          style="object-fit: cover; background: #000;" muted playsinline></video>
+                                        <% } else { %>
+                                          <img src="<%= optimizeImage(post.media[0].url) %>" alt="Post thumbnail"
+                                            class="rounded-circle w-100 h-100"
+                                            style="object-fit: cover; background: #f8f9fa;">
+                                          <% } %>
+                                            <% } else { %>
+                                              <div
+                                                class="bg-light text-primary d-flex justify-content-center align-items-center w-100 h-100 rounded-circle">
+                                                <i class="fa-solid fa-location-dot"></i>
+                                              </div>
+                                              <% } %>
+                                  </div>
+                                  <div>
+                                    <span class="fw-bold d-block text-dark">Local Post</span>
+                                    <span class="text-muted" style="font-size: 0.85rem;">
+                                      <%= new Date(post.createdAt).toLocaleDateString() %> • <%= new
+                                          Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit' ,
+                                          minute: '2-digit' }) %>
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-3">
+                                  <div>
+                                    <% if(post.status==='approved' ) { %>
+                                      <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Live</span>
+                                      <% } else if(post.status==='rejected' ) { %>
+                                        <span class="badge bg-danger"><i
+                                            class="fa-solid fa-xmark me-1"></i>Rejected</span>
+                                        <% } else { %>
+                                          <span class="badge bg-warning text-dark"><i
+                                              class="fa-solid fa-hourglass-half me-1"></i>Pending</span>
+                                          <% } %>
+                                  </div>
+
+                                  <a href="/kisan-sabha/<%= post._id %>" class="btn btn-sm btn-primary fw-bold px-3">
+                                    View Post
+                                  </a>
+
+                                  <form action="/kisan-sabha/<%= post._id %>?_method=DELETE" method="POST"
+                                    class="m-0 p-0"
+                                    onsubmit="return confirm('Are you sure you want to delete this post?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger px-2"><i
+                                        class="fa-solid fa-trash"></i></button>
+                                  </form>
+                                </div>
+                              </div>
+                              <% }) %>
+                          </div>
+                        </section>
+                        <% } %>
 
     </div>
 

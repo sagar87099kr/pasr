@@ -81,11 +81,12 @@
                             <label for="rangeSlider" class="form-label d-flex justify-content-between fw-bold mb-2">
                                 <span>Search Radius</span>
                                 <span class="badge bg-secondary"><span id="rangeValue">
-                                        <%= range || 10 %>
+                                        <%= range || 5 %>
                                     </span> km</span>
                             </label>
                             <input type="range" class="form-range" min="1" max="10" step="1" id="rangeSlider"
-                                value="<%= range || 10 %>">
+                                value="<%= range || 5 %>">
+
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="text-muted small">
                                     <span>1 km</span>
@@ -203,44 +204,63 @@
                     <!-- Shop Grid -->
                     <% if (shops && shops.length> 0) { %>
                         <div class="market-grid">
-                            <% for (let shop of shops) { %>
-                                <a href="/shops/<%= shop._id %>" class="product-card-link">
-                                    <div class="product-card">
-                                        <div class="product-img-wrap">
-                                            <img src="<%= shop.shopImage[0].url %>" alt="<%= shop.shopName %>">
-                                            <% let statusBadge='' ; if (shop.openingTime && shop.closingTime) { const
-                                                now=new Date(); const options={ timeZone: 'Asia/Kolkata' , hour12:
-                                                false, hour: '2-digit' , minute: '2-digit' }; const
-                                                currentTime=now.toLocaleTimeString('en-US', options); if (currentTime>=
-                                                shop.openingTime && currentTime <= shop.closingTime) {
-                                                    statusBadge='<span class="badge bg-success position-absolute" style="top:10px; right:10px; z-index:10;">Open Now</span>'
-                                                    ; } else {
-                                                    statusBadge='<span class="badge bg-danger position-absolute" style="top:10px; right:10px; z-index:10;">Closed</span>'
-                                                    ; } } %>
-                                                    <%- statusBadge %>
-                                        </div>
-                                        <div class="card-body-custom">
-                                            <h5 class="prod-title">
-                                                <%= shop.shopName %>
-                                            </h5>
-                                            <p class="prod-desc">
-                                                <i class="fa-solid fa-user"></i>
-                                                <%= shop.owner.name %>
-                                            </p>
-                                            <div class="prod-meta">
-                                                <span><i class="fa-solid fa-tag"></i>
-                                                    <%= catIcons[shop.category] || '' %>
-                                                        <%= shop.category %>
-                                                </span>
-                                                <span class="text-truncate" style="max-width: 100px;"><i
-                                                        class="fa-solid fa-map-pin"></i>
-                                                    <%= shop.location %>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </a>
-                                <% } %>
+                            <% for (let shop of shops) { var istOffsetMs=5.5 * 60 * 60 * 1000; var nowIST=new Date(new
+                                Date().getTime() + istOffsetMs); var istH=nowIST.getUTCHours(); var
+                                istM=nowIST.getUTCMinutes(); var nowStr=(istH < 10 ? '0' : '' ) + istH + ':' + (istM <
+                                10 ? '0' : '' ) + istM; var shopIsClosed=false; if (shop.openingTime &&
+                                shop.closingTime) { shopIsClosed=!(nowStr>= shop.openingTime && nowStr <=
+                                    shop.closingTime); } var isOwner=currUser && shop.owner._id.equals(currUser._id);
+                                    var isOpenNow=!shopIsClosed && !!(shop.openingTime && shop.closingTime); %>
+                                    <a href="/shops/<%= shop._id %>" class="product-card-link" <% if (!isOwner &&
+                                        shopIsClosed) { %>data-closed="true" data-opening-time="<%= shop.openingTime %>"
+                                            data-shop-name="<%= shop.shopName %>"<% } %>
+                                                    >
+                                                    <div
+                                                        class="product-card <%= isOwner ? 'owned-shop-card' : '' %> <%= (!isOwner && shopIsClosed) ? 'shop-closed-card' : '' %>">
+                                                        <% if (isOwner) { %>
+                                                            <div class="owned-shop-badge">
+                                                                <i class="fa-solid fa-user-check"></i> Your Shop
+                                                            </div>
+                                                            <% if (shop.hasPendingOrders) { %>
+                                                                <div class="card-notification-dot"
+                                                                    title="New Order Received!"></div>
+                                                                <% } %>
+                                                                    <% } %>
+                                                                        <div class="product-img-wrap">
+                                                                            <img src="<%= optimizeImage(shop.shopImage[0].url) %>"
+                                                                                alt="<%= shop.shopName %>">
+                                                                            <% if (shop.openingTime && shop.closingTime)
+                                                                                { %>
+                                                                                <span class="badge position-absolute"
+                                                                                    style="top:10px;right:10px;z-index:10;background:<%= isOpenNow ? '#16a34a' : '#dc2626' %>;">
+                                                                                    <%= isOpenNow ? 'Open Now'
+                                                                                        : 'Closed' %>
+                                                                                </span>
+                                                                                <% } %>
+                                                                        </div>
+                                                                        <div class="card-body-custom">
+                                                                            <h5 class="prod-title">
+                                                                                <%= shop.shopName %>
+                                                                            </h5>
+                                                                            <p class="prod-desc">
+                                                                                <i class="fa-solid fa-user"></i>
+                                                                                <%= shop.owner.name %>
+                                                                            </p>
+                                                                            <div class="prod-meta">
+                                                                                <span><i class="fa-solid fa-tag"></i>
+                                                                                    <%= catIcons[shop.category] || '' %>
+                                                                                        <%= shop.category %>
+                                                                                </span>
+                                                                                <span class="text-truncate"
+                                                                                    style="max-width:100px;"><i
+                                                                                        class="fa-solid fa-map-pin"></i>
+                                                                                    <%= shop.location %>
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                    </div>
+                                    </a>
+                                    <% } %>
                         </div>
                         <% } else { %>
                             <!-- Empty State -->
@@ -252,10 +272,95 @@
                             </div>
                             <% } %>
 
+                                <!-- Closed Shop Modal -->
+                                <div class="modal fade" id="closedShopModal" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered" style="max-width:340px;">
+                                        <div class="modal-content border-0 shadow-lg"
+                                            style="border-radius:20px;overflow:hidden;">
+                                            <div
+                                                style="background:linear-gradient(135deg,#1e1e2e,#2d1b69);padding:28px 24px 20px;text-align:center;">
+                                                <div style="font-size:3rem;margin-bottom:8px;">🔒</div>
+                                                <h5 style="color:#fff;font-weight:800;margin:0;font-size:1.2rem;">Shop
+                                                    is Closed</h5>
+                                                <p id="closedShopName"
+                                                    style="color:#a5b4fc;margin:6px 0 0;font-size:14px;"></p>
+                                            </div>
+                                            <div class="modal-body text-center" style="padding:24px;">
+                                                <div
+                                                    style="background:#f0fdf4;border-radius:12px;padding:20px 20px;margin-bottom:15px;">
+                                                    <p style="color:#6b7280;font-size:14px;margin-bottom:8px;">The shop
+                                                        is currently closed.</p>
+                                                    <span id="closedShopOpenTime"
+                                                        style="font-size:1.8rem;font-weight:800;color:#16a34a;"></span>
+                                                    <p
+                                                        style="color:#16a34a;font-size:14px;font-weight:600;margin-top:8px;">
+                                                        Shop will open at this time</p>
+                                                </div>
+                                                <p style="color:#94a3b8;font-size:12px;margin:0;">Stay on this page and
+                                                    explore other open shops!</p>
+                                            </div>
+                                            <div class="modal-footer"
+                                                style="border:none;padding:0 24px 20px;justify-content:center;">
+                                                <button class="btn btn-primary fw-bold px-5" style="border-radius:10px;"
+                                                    data-bs-dismiss="modal">Got it</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <% } %>
     </div>
 
     <script>
+        // --- Closed Shop Click Interceptor (Event Delegation — Bootstrap timing safe) ---
+        (function () {
+            let closedModal = null;
+
+            function getModal() {
+                if (closedModal) return closedModal;
+                const el = document.getElementById('closedShopModal');
+                if (!el || typeof bootstrap === 'undefined') return null;
+                closedModal = new bootstrap.Modal(el);
+                return closedModal;
+            }
+
+            document.addEventListener('click', function (e) {
+                const link = e.target.closest('.product-card-link[data-closed="true"]');
+                if (!link) return;
+                e.preventDefault();
+
+                const modal = getModal();
+                if (!modal) {
+                    // Bootstrap not ready yet — retry after brief delay
+                    setTimeout(() => {
+                        const m = getModal();
+                        if (m) {
+                            updateAndShow(link, m);
+                        }
+                    }, 300);
+                    return;
+                }
+                updateAndShow(link, modal);
+            });
+
+            function updateAndShow(link, modal) {
+                const openTime24 = link.dataset.openingTime;
+                const shopName = link.dataset.shopName;
+                let display = openTime24 || 'soon';
+                if (openTime24) {
+                    const [h, m] = openTime24.split(':').map(Number);
+                    const ampm = h >= 12 ? 'PM' : 'AM';
+                    const h12 = h % 12 || 12;
+                    display = `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
+                }
+                const nameEl = document.getElementById('closedShopName');
+                const timeEl = document.getElementById('closedShopOpenTime');
+                if (nameEl) nameEl.innerText = shopName || '';
+                if (timeEl) timeEl.innerText = display;
+                modal.show();
+            }
+        })();
+
         const btn = document.getElementById('getLocationBtn');
         if (btn) {
             btn.addEventListener('click', () => {

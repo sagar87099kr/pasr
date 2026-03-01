@@ -199,13 +199,6 @@
                   </div>
 
                   <div class="row">
-                    <div class="label">Email</div>
-                    <div class="value">
-                      <%=customer.emailAddress%>
-                    </div>
-                  </div>
-
-                  <div class="row">
                     <div class="label">Address</div>
                     <div class="value">
                       <%=customer.address%>
@@ -222,24 +215,8 @@
                 <div class="action">
                   <span class="#">
                     <span class="dot"></span>
-                    <% if (!(customer.verified===true)){%>
-                      <form method="POST" action="/<%=customer._id%>/verifycustomer?_method=PUT" novalidate
-                        class="needs-validation">
-                        <div class="mb-3">
-                          <label for="exampleInputEmail1" class="form-label">Enter Your name.</label>
-                          <input type="text" class="form-control" id="exampleInputEmail1" required="True"
-                            name="customer[verifedBy]" placeholder="Admin">
-                          <div class="invalid-feedback">It is compulsory to write.</div>
-                        </div>
-
-                        <input type="hidden" name="customer[verified]" value="true">
-                        <button class="badge true" style="margin: 20px;">Verify</button>
-                      </form>
-                      </form>
-                      </form>
-                      <button class="badge false" style="margin-top: 2px;"
-                        onclick="openAdminDeleteConfirm('<%=customer._id%>')">Delete customer</button>
-                      <%}%>
+                    <button class="badge false" style="margin-top: 2px;"
+                      onclick="openAdminDeleteConfirm('<%=customer._id%>')">Delete customer</button>
                   </span>
                 </div>
               </section>
@@ -274,13 +251,6 @@
                 <div class="label">Number</div>
                 <div class="value">
                   <%=customer.username%>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="label">Email</div>
-                <div class="value">
-                  <%=customer.emailAddress%>
                 </div>
               </div>
 
@@ -332,6 +302,8 @@
           Cancel
         </button>
         <form id="adminDeleteForm" method="POST" style="margin:0;">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
           <button
             style="width:100%; padding:10px; background:#ef4444; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer;">
             Delete

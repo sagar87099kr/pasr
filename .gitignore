@@ -4,3 +4,4 @@ node_modules/
 *.log
 npm-debug.log
 check_*.js
+serviceAccountKey.json

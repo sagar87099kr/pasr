@@ -1,0 +1,789 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <% containerClass='container py-4' ; %>
+
+        <style>
+            .orders-header {
+                background: linear-gradient(135deg, #1e1b4b, #4338ca);
+                color: #fff;
+                border-radius: 18px;
+                padding: 22px 26px;
+                margin-bottom: 22px;
+            }
+
+            .orders-header h2 {
+                font-weight: 800;
+                margin: 0 0 4px;
+                font-size: 1.5rem;
+            }
+
+            .orders-header p {
+                opacity: .8;
+                margin: 0;
+                font-size: 13px;
+            }
+
+            .active-pill {
+                background: #fef3c7;
+                color: #92400e;
+                border-radius: 999px;
+                padding: 4px 14px;
+                font-size: 13px;
+                font-weight: 800;
+            }
+
+            .live-dot {
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                background: #22c55e;
+                border-radius: 50%;
+                margin-right: 6px;
+                animation: blink 1.2s infinite;
+            }
+
+            @keyframes blink {
+
+                0%,
+                100% {
+                    opacity: 1
+                }
+
+                50% {
+                    opacity: .3
+                }
+            }
+
+            .order-card {
+                border-radius: 16px;
+                border: none;
+                box-shadow: 0 4px 20px rgba(15, 23, 42, .09);
+                overflow: hidden;
+                height: 100%;
+                transition: transform .15s, box-shadow .15s;
+            }
+
+            .order-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 32px rgba(15, 23, 42, .14);
+            }
+
+            .sec-label {
+                font-size: 10px;
+                font-weight: 800;
+                color: #94a3b8;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 5px;
+            }
+
+            .customer-block {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                background: #f0f4ff;
+                border-radius: 12px;
+                padding: 10px 12px;
+            }
+
+            .avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                flex-shrink: 0;
+                background: linear-gradient(135deg, #6366f1, #4f46e5);
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 800;
+                font-size: 17px;
+            }
+
+            .customer-name {
+                font-weight: 700;
+                font-size: 14px;
+                color: #1e293b;
+            }
+
+            .customer-phone {
+                font-size: 12px;
+                color: #6366f1;
+            }
+
+            .wa-btn {
+                margin-left: auto;
+                background: #25d366;
+                color: #fff;
+                border: none;
+                border-radius: 8px;
+                padding: 6px 11px;
+                font-size: 12px;
+                font-weight: 700;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                flex-shrink: 0;
+            }
+
+            .address-block {
+                background: #fff7ed;
+                border: 1px solid #fed7aa;
+                border-radius: 10px;
+                padding: 9px 12px;
+                font-size: 13px;
+                color: #7c2d12;
+                line-height: 1.5;
+            }
+
+            .dtype-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 11px;
+                font-weight: 700;
+                padding: 3px 10px;
+                border-radius: 999px;
+            }
+
+            .dtype-pickup {
+                background: #f1f5f9;
+                color: #475569;
+            }
+
+            .items-wrap {
+                border-radius: 10px;
+                overflow: hidden;
+                border: 1px solid #e2e8f0;
+            }
+
+            .items-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 13px;
+            }
+
+            .items-table thead {
+                background: #f8fafc;
+            }
+
+            .items-table th {
+                padding: 6px 10px;
+                font-weight: 700;
+                color: #64748b;
+                text-align: left;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: .5px;
+            }
+
+            .items-table td {
+                padding: 8px 10px;
+                border-top: 1px solid #f1f5f9;
+            }
+
+            .items-table .item-name {
+                font-weight: 600;
+                color: #1e293b;
+            }
+
+            .items-table .qty-badge {
+                background: #e2e8f0;
+                border-radius: 6px;
+                padding: 2px 8px;
+                font-weight: 700;
+                font-size: 12px;
+            }
+
+            .items-table .price-cell {
+                font-weight: 700;
+                text-align: right;
+            }
+
+            .totals-block {
+                background: #f8fafc;
+                border-radius: 10px;
+                padding: 11px 14px;
+            }
+
+            .total-row {
+                display: flex;
+                justify-content: space-between;
+                font-size: 13px;
+                color: #64748b;
+                margin-bottom: 3px;
+            }
+
+            .total-row.grand {
+                font-size: 15px;
+                font-weight: 800;
+                color: #16a34a;
+                border-top: 1px solid #e2e8f0;
+                padding-top: 7px;
+                margin-top: 4px;
+            }
+
+            .payment-block {
+                border-radius: 12px;
+                padding: 12px 14px;
+            }
+
+            .payment-block.cod {
+                background: #f0fdf4;
+                border: 1px solid #bbf7d0;
+            }
+
+            .payment-block.upi-pending {
+                background: #fff7ed;
+                border: 1px solid #fed7aa;
+            }
+
+            .payment-block.upi-paid {
+                background: #f0fdf4;
+                border: 1px solid #86efac;
+            }
+
+            .pay-type-label {
+                font-size: 12px;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: .5px;
+            }
+
+            .pay-status-msg {
+                font-size: 13px;
+                margin-top: 3px;
+                font-weight: 600;
+            }
+
+            .otp-wrap {
+                background: linear-gradient(135deg, #fef3c7, #fde68a);
+                border-radius: 10px;
+                text-align: center;
+                padding: 8px 12px;
+            }
+
+            .otp-val {
+                font-size: 24px;
+                font-weight: 900;
+                color: #78350f;
+                letter-spacing: 8px;
+            }
+
+            .filter-tabs {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                margin-bottom: 18px;
+            }
+
+            .filter-tab {
+                padding: 6px 14px;
+                border-radius: 999px;
+                border: 2px solid #e2e8f0;
+                background: #fff;
+                font-size: 13px;
+                font-weight: 700;
+                color: #475569;
+                cursor: pointer;
+                transition: all .15s;
+            }
+
+            .filter-tab.active,
+            .filter-tab:hover {
+                border-color: #6366f1;
+                background: #eef2ff;
+                color: #4338ca;
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 60px 20px;
+                color: #94a3b8;
+            }
+
+            .empty-state i {
+                font-size: 52px;
+                margin-bottom: 14px;
+            }
+
+            .partner-box {
+                background: #f0fdf4;
+                border: 1px solid #86efac;
+                border-radius: 12px;
+                padding: 12px 14px;
+            }
+
+            .broadcast-box {
+                background: #fff7ed;
+                border: 1px solid #fed7aa;
+                border-radius: 10px;
+                padding: 10px 14px;
+                text-align: center;
+            }
+
+            .delivery-choice-btns {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .delivery-choice-btns .btn {
+                flex: 1;
+                font-size: 13px;
+                font-weight: 700;
+                min-width: 120px;
+            }
+        </style>
+
+        <!-- Header & Commission Info -->
+        <div class="orders-header">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-6">
+                    <h2>🏪 Shop Orders</h2>
+                    <p><span class="live-dot"></span>Orders received for your shop</p>
+                </div>
+                <div class="col-lg-6 d-flex justify-content-lg-end gap-3 align-items-center flex-wrap">
+                    <!-- Commission Card -->
+                    <div class="p-2 px-3 rounded-4 d-flex align-items-center gap-3"
+                        style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+                        <div class="text-start">
+                            <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; opacity: 0.7;">Due
+                                to PASR</div>
+                            <div style="font-size: 18px; font-weight: 800;">₹<%= totalDue.toFixed(2) %>
+                            </div>
+                        </div>
+                        <% if (totalDue> 0) { %>
+                            <button class="btn btn-sm btn-light fw-bold" data-bs-toggle="modal"
+                                data-bs-target="#payPasrModal" style="border-radius: 8px;">Pay Now</button>
+                            <% } %>
+                    </div>
+
+                    <% if (pendingCount> 0) { %>
+                        <span class="active-pill">⚡ <%= pendingCount %> Active</span>
+                        <% } %>
+                            <button onclick="window.location.reload()" class="btn btn-sm"
+                                style="background:rgba(255,255,255,0.2);color:#fff;border-radius:10px;font-weight:700;">
+                                <i class="fa-solid fa-rotate-right"></i> Refresh
+                            </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pay PASR Modal -->
+        <div class="modal fade" id="payPasrModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 rounded-4 shadow-lg">
+                    <div class="modal-header border-0 pb-0">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center p-4 pt-2">
+                        <div class="mb-3">
+                            <i class="fa-solid fa-building-columns text-primary mb-3" style="font-size: 48px;"></i>
+                            <h4 class="fw-bold">Pay Commission to PASR</h4>
+                            <p class="text-muted small">Scan the QR code below or use the UPI ID to pay <strong>₹<%=
+                                        totalDue.toFixed(2) %></strong></p>
+                        </div>
+
+                        <!-- Placeholder for Admin UPI/Scanner -->
+                        <div class="bg-light p-4 rounded-4 mb-4 border border-dashed">
+                            <div class="mb-3">
+                                <div class="bg-white p-2 rounded-3 d-inline-block shadow-sm">
+                                    <!-- Using a placeholder QR image -->
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=PASR@UPI&pn=PASR%20Platform&am=<%= totalDue %>"
+                                        alt="PASR UPI QR" style="width: 150px; height: 150px;">
+                                </div>
+                            </div>
+                            <div class="fw-bold text-primary mb-1">PASR@UPI</div>
+                            <div class="small text-muted">Platform Commission Account</div>
+                        </div>
+
+                        <div class="alert alert-info py-2 small mb-4">
+                            <i class="fa-solid fa-info-circle me-1"></i> Once paid, please inform the Admin to confirm
+                            your payment and reset your due amount.
+                        </div>
+
+                        <button class="btn btn-primary w-100 fw-bold py-2 rounded-3" data-bs-dismiss="modal">I've Made
+                            the Payment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <% if (!orders || orders.length===0) { %>
+            <div class="empty-state">
+                <i class="fa-solid fa-box-open"></i>
+                <h4>No orders yet</h4>
+                <p>When a customer places an order from your shop, it will appear here.</p>
+            </div>
+            <% } else { %>
+
+                <!-- Filter Tabs -->
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">All (<%= orders.length %>)</button>
+                    <button class="filter-tab" data-filter="CREATED">🆕 New</button>
+                    <button class="filter-tab" data-filter="ACCEPTED">✅ Accepted</button>
+                    <button class="filter-tab" data-filter="READY_FOR_DELIVERY">📦 Ready</button>
+                    <button class="filter-tab" data-filter="BROADCAST">📢 Broadcast</button>
+                    <button class="filter-tab" data-filter="ASSIGNED">🛵 Assigned</button>
+                    <button class="filter-tab" data-filter="COMPLETED">✔ Done</button>
+                    <button class="filter-tab" data-filter="CANCELLED">❌ Cancelled</button>
+                </div>
+
+                <div class="row" id="ordersGrid">
+                    <% orders.forEach(order=> { %>
+                        <% let statusColor='bg-secondary' ; if (order.orderStatus==='CREATED' )
+                            statusColor='bg-warning text-dark' ; else if (order.orderStatus==='ACCEPTED' )
+                            statusColor='bg-primary' ; else if (order.orderStatus==='BROADCAST' )
+                            statusColor='bg-orange text-dark' ; else if
+                            (['READY_FOR_DELIVERY','ASSIGNED','OUT_FOR_DELIVERY'].includes(order.orderStatus))
+                            statusColor='bg-info text-dark' ; else if (order.orderStatus==='COMPLETED' )
+                            statusColor='bg-success' ; else if (order.orderStatus==='CANCELLED' )
+                            statusColor='bg-danger' ; %>
+                            <div class="col-md-6 col-lg-4 mb-4 order-col" data-status="<%= order.orderStatus %>">
+                                <div class="card order-card">
+
+                                    <!-- Card header -->
+                                    <div class="d-flex justify-content-between align-items-center px-3 pt-3 pb-2"
+                                        style="border-bottom:1px solid #f1f5f9;background:#f8fafc;">
+                                        <div>
+                                            <div
+                                                style="font-size:11px;font-weight:800;color:#6366f1;letter-spacing:.5px;">
+                                                #<%= order.orderId ? order.orderId.replace('PASR-ORD-','') :
+                                                    order._id.toString().slice(-8).toUpperCase() %>
+                                            </div>
+                                            <div style="font-size:11px;color:#94a3b8;">
+                                                <%= new
+                                                    Date(order.createdAt).toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
+                                                    %>
+                                            </div>
+                                        </div>
+                                        <span class="badge <%= statusColor %>" style="font-size:12px;">
+                                            <%= order.orderStatus.replace(/_/g,' ') %>
+                        </span>
+                    </div>
+
+                    <div class="p-3 d-flex flex-column gap-3">
+
+                        <!-- ① Customer Info -->
+                        <div>
+                            <div class="sec-label">👤 Customer</div>
+                            <div class="customer-block">
+                                <div class="avatar"><%= (order.resolvedCustomer ? order.resolvedCustomer.name : '
+                                                C').charAt(0).toUpperCase() %>
+                                    </div>
+                                    <div>
+                                        <div class="customer-name">
+                                            <%= order.resolvedCustomer ? order.resolvedCustomer.name : 'Customer' %>
+                                        </div>
+                                        <div class="customer-phone">📱 <%= order.resolvedCustomer ?
+                                                order.resolvedCustomer.mobile : '—' %>
+                                        </div>
+                                    </div>
+                                    <% if (order.resolvedCustomer) { %>
+                                        <a href="https://wa.me/91<%= order.resolvedCustomer.mobile %>?text=<%= encodeURIComponent('Hello! Your order from PASR has been received.') %>"
+                                            target="_blank" class="wa-btn">
+                                            <i class="fa-brands fa-whatsapp"></i> Chat
+                                        </a>
+                                        <% } %>
+                                </div>
+                            </div>
+
+                            <!-- ② Delivery Address -->
+                            <div>
+                                <% if (order.deliveryType==='HOME_DELIVERY' ) { %>
+                                    <div class="sec-label">📍 Delivery Address</div>
+                                    <div class="address-block">
+                                        <i class="fa-solid fa-location-dot" style="color:#ea580c;margin-right:4px;"></i>
+                                        <%= order.deliveryAddress && order.deliveryAddress.trim() ?
+                                            order.deliveryAddress : 'Address not available (GPS coordinates used)' %>
+                                            <% if (order.distanceInKm) { %>
+                                                <span class="ms-2 badge bg-light text-muted border"
+                                                    style="font-size:11px;">
+                                                    <%= order.distanceInKm.toFixed(1) %> km away
+                                                </span>
+                                                <% } %>
+                                    </div>
+                                    <% } else { %>
+                                        <span class="dtype-pill dtype-pickup">🏪 Customer will self pickup from your
+                                            shop</span>
+                                        <% } %>
+                            </div>
+
+                            <!-- ③ Items -->
+                            <div>
+                                <div class="sec-label">🛒 Items Ordered</div>
+                                <div class="items-wrap">
+                                    <table class="items-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Item</th>
+                                                <th style="text-align:center">Qty</th>
+                                                <th style="text-align:right">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% order.items.forEach(item=> { %>
+                                                <tr>
+                                                    <td class="item-name">
+                                                        <%= item.name %>
+                                                    </td>
+                                                    <td style="text-align:center;"><span class="qty-badge">× <%=
+                                                                item.quantity %></span></td>
+                                                    <td class="price-cell">₹<%= item.price * item.quantity %>
+                                                    </td>
+                                                </tr>
+                                                <% }) %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- ④ Bill -->
+                            <div>
+                                <div class="sec-label">💰 Bill</div>
+                                <div class="totals-block">
+                                    <div class="total-row"><span>Items subtotal</span><span>₹<%= order.subtotalAmount %>
+                                        </span></div>
+                                    <% if (order.deliveryType==='HOME_DELIVERY' ) { %>
+                                        <div class="total-row">
+                                            <span>Delivery charge</span>
+                                            <% if (order.firstOrderDiscount> 0) { %>
+                                                <span><s style="color:#94a3b8">₹<%= order.firstOrderDiscount %></s>
+                                                    <strong class="text-success">FREE</strong></span>
+                                                <% } else { %>
+                                                    <span>₹<%= order.deliveryCharge %></span>
+                                                    <% } %>
+                                        </div>
+                                        <% } %>
+                                            <div class="total-row grand"><span>Total to collect</span><span>₹<%=
+                                                        order.totalAmount %></span></div>
+                                </div>
+                            </div>
+
+                            <!-- ⑤ Payment -->
+                            <div>
+                                <div class="sec-label">💳 Payment</div>
+                                <% if (order.paymentType==='COD' ) { %>
+                                    <div class="payment-block cod">
+                                        <div class="pay-type-label" style="color:#15803d;">💵 Cash on Delivery (COD)
+                                        </div>
+                                        <div class="pay-status-msg" style="color:#166534;">Collect <strong>₹<%=
+                                                    order.totalAmount %></strong> in cash when delivering.</div>
+                                    </div>
+                                    <% } else if (order.paymentType==='PREPAID' ) { %>
+                                        <% if (order.paymentStatus==='VERIFIED' ) { %>
+                                            <div class="payment-block upi-paid">
+                                                <div class="pay-type-label" style="color:#15803d;">✅ UPI — PAID</div>
+                                                <div class="pay-status-msg" style="color:#166534;">Payment of ₹<%=
+                                                        order.totalAmount %> verified. No amount to collect.</div>
+                                            </div>
+                                            <% } else { %>
+                                                <div class="payment-block upi-pending">
+                                                    <div class="pay-type-label" style="color:#c2410c;">⏳ UPI — PAYMENT
+                                                        PENDING</div>
+                                                    <div class="pay-status-msg" style="color:#92400e;">Customer claims
+                                                        to have paid ₹<%= order.totalAmount %> via UPI. Verify in your
+                                                            bank/app before preparing the order.</div>
+                                                </div>
+                                                <% } %>
+                                                    <% } %>
+                            </div>
+
+                            <!-- ⑥ Delivery OTP -->
+                            <% if (order.deliveryOTP && order.deliveryType==='HOME_DELIVERY' &&
+                                !['COMPLETED','CANCELLED'].includes(order.orderStatus)) { %>
+                                <div>
+                                    <div class="sec-label">🔑 Delivery OTP (ask customer at handover)</div>
+                                    <div class="otp-wrap">
+                                        <div class="otp-val">
+                                            <%= order.deliveryOTP %>
+                                        </div>
+                                    </div>
+                                </div>
+                                <% } %>
+
+                                    <!-- ⑦ Assigned Delivery Partner Info -->
+                                    <% if (order.partnerSnapshot && order.partnerSnapshot.name) { %>
+                                        <div class="partner-box">
+                                            <div class="sec-label" style="color:#15803d;">✅ Delivery Partner Assigned
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 mt-1">
+                                                <div
+                                                    style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#15803d);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">
+                                                    🛵</div>
+                                                <div>
+                                                    <div style="font-weight:700;font-size:14px;color:#166534;">
+                                                        <%= order.partnerSnapshot.name %>
+                                                    </div>
+                                                    <div style="font-size:12px;color:#15803d;">📱 <%=
+                                                            order.partnerSnapshot.phone %>
+                                                            <% if(order.partnerSnapshot.vehicle){ %> &nbsp;·&nbsp; 🏍
+                                                                <%= order.partnerSnapshot.vehicle %>
+                                                                    <% } %>
+                                                    </div>
+                                                </div>
+                                                <a href="tel:<%= order.partnerSnapshot.phone %>"
+                                                    class="ms-auto btn btn-sm btn-success"
+                                                    style="border-radius:8px;font-weight:700;"><i
+                                                        class="fa-solid fa-phone"></i> Call</a>
+                                            </div>
+                                        </div>
+                                        <% } %>
+
+                                            <!-- ⑧ Self-delivery badge -->
+                                            <% if (order.selfDelivery) { %>
+                                                <div
+                                                    style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#1d4ed8;">
+                                                    🛵 You are delivering this order yourself
+                                                </div>
+                                                <% } %>
+
+                                                    <!-- ⑨ Broadcast waiting state -->
+                                                    <% if (order.orderStatus==='BROADCAST' ) { %>
+                                                        <div class="broadcast-box">
+                                                            <div style="font-weight:700;color:#c2410c;font-size:13px;">
+                                                                📢 Waiting for a delivery partner to accept</div>
+                                                            <div style="font-size:12px;color:#92400e;margin-top:3px;">
+                                                                All nearby partners have been notified. First to accept
+                                                                will be shown above.</div>
+                                                        </div>
+                                                        <% } %>
+
+                                                            <!-- ⑩ Action Buttons -->
+                                                            <% const needsPayVerify=(order.paymentType==='PREPAID' &&
+                                                                order.paymentStatus==='PENDING' ); const
+                                                                needsAccept=(order.orderStatus==='CREATED' &&
+                                                                order.paymentType==='COD' ); const
+                                                                isDeliverableHomeOrder=(
+                                                                order.deliveryType==='HOME_DELIVERY' &&
+                                                                ['CREATED','ACCEPTED','READY_FOR_DELIVERY'].includes(order.orderStatus)
+                                                                && !order.selfDelivery && order.orderStatus
+                                                                !=='BROADCAST' && !(order.partnerSnapshot &&
+                                                                order.partnerSnapshot.name) ); %>
+                                                                <% if (needsPayVerify || needsAccept ||
+                                                                    isDeliverableHomeOrder) { %>
+                                                                    <div class="d-flex flex-column gap-2">
+                                                                        <% if (needsPayVerify) { %>
+                                                                            <button class="btn btn-success fw-bold"
+                                                                                onclick="verifyPayment('<%= order._id %>')">
+                                                                                <i class="fa-solid fa-check-circle"></i>
+                                                                                Confirm UPI Payment Received
+                                                                            </button>
+                                                                            <% } %>
+                                                                                <% if (needsAccept) { %>
+                                                                                    <button
+                                                                                        class="btn btn-primary fw-bold"
+                                                                                        onclick="acceptCOD('<%= order._id %>')">
+                                                                                        <i
+                                                                                            class="fa-solid fa-thumbs-up"></i>
+                                                                                        Accept Order
+                                                                                    </button>
+                                                                                    <% } %>
+                                                                                        <% if (isDeliverableHomeOrder) {
+                                                                                            %>
+                                                                                            <div class="sec-label mt-1">
+                                                                                                📦 How will this be
+                                                                                                delivered?</div>
+                                                                                            <div
+                                                                                                class="delivery-choice-btns">
+                                                                                                <button
+                                                                                                    class="btn btn-outline-primary"
+                                                                                                    onclick="selfDeliver('<%= order._id %>')">
+                                                                                                    🛵 I'll Deliver
+                                                                                                    Myself
+                                                                                                </button>
+                                                                                                <button
+                                                                                                    class="btn btn-warning"
+                                                                                                    onclick="broadcastDelivery('<%= order._id %>')">
+                                                                                                    📢 Call Delivery
+                                                                                                    Partner
+                                                                                                </button>
+                                                                                            </div>
+                                                                                            <% } %>
+                                                                    </div>
+                                                                    <% } %>
+
+                </div><!-- /card body -->
+                </div>
+                </div>
+                <% }) %>
+                    </div>
+
+                    <% } %>
+
+                        <script>
+                            // Filter tabs
+                            document.querySelectorAll('.filter-tab').forEach(tab => {
+                                tab.addEventListener('click', function () {
+                                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                                    this.classList.add('active');
+                                    const f = this.dataset.filter;
+                                    document.querySelectorAll('.order-col').forEach(col => {
+                                        col.style.display = (f === 'all' || col.dataset.status === f) ? '' : 'none';
+                                    });
+                                });
+                            });
+
+                            async function verifyPayment(id) {
+                                if (!confirm("Have you confirmed the UPI payment in your bank/app?")) return;
+                                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                                const res = await fetch(`/api/orders/${id}/verify-payment`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': csrfToken
+                                    }
+                                });
+
+                                const d = await res.json();
+                                if (res.ok) { alert("Payment verified! Order is ready."); window.location.reload(); }
+                                else alert(d.message || "Failed.");
+                            }
+                            async function acceptCOD(id) {
+                                if (!confirm("Accept this COD order?")) return;
+                                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                                const res = await fetch(`/api/orders/${id}/accept`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': csrfToken
+                                    }
+                                });
+
+                                const d = await res.json();
+                                if (res.ok) { alert("Order accepted!"); window.location.reload(); }
+                                else alert(d.message || "Failed.");
+                            }
+                            async function selfDeliver(id) {
+                                if (!confirm("You will deliver this order yourself. Confirm?")) return;
+                                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                                const res = await fetch(`/api/orders/${id}/self-deliver`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': csrfToken
+                                    }
+                                });
+
+                                const d = await res.json();
+                                if (res.ok) { alert(d.message || "Marked as self-delivery!"); window.location.reload(); }
+                                else alert(d.message || "Failed.");
+                            }
+                            async function broadcastDelivery(id) {
+                                if (!confirm("Send a notification to all available delivery partners nearby. The first one to accept will get this order.")) return;
+                                const btn = event.target;
+                                btn.disabled = true; btn.textContent = '📡 Broadcasting...';
+                                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                                const res = await fetch(`/api/orders/${id}/broadcast-delivery`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': csrfToken
+                                    }
+                                });
+
+                                const d = await res.json();
+                                if (res.ok) { alert(`✅ ${d.message}`); window.location.reload(); }
+                                else { alert(d.message || "Failed."); btn.disabled = false; btn.textContent = '📢 Call Delivery Partner'; }
+                            }
+
+                            // Auto-refresh every 45 seconds to catch claimed/updated orders
+                            setTimeout(() => window.location.reload(), 45000);
+                        </script>

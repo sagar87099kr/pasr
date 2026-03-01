@@ -17,6 +17,8 @@
 
         <form method="POST" action="/become/provider" novalidate class="needs-validation notranslate"
           enctype="multipart/form-data">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
 
           <!-- Company Name -->
           <div class="form-group">

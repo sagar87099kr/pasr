@@ -11,6 +11,8 @@
 
                 <form action="/shops/<%= shop._id %>?_method=PUT" method="POST" novalidate
                     class="needs-validation notranslate">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
 
                     <!-- Shop Name -->
                     <div class="form-group">

@@ -5,6 +5,8 @@ const Product = require("../data/product.js");
 const Customer = require("../data/customers.js");
 const { isLogedin, isadmin } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
+const { doubleCsrfProtection } = require("../utils/csrf");
+
 
 // help route
 router.get("/help", (req, res) => {
@@ -36,7 +38,8 @@ router.get("/home", (req, res) => {
 });
 
 // Route to set user location from browser
-router.post("/set-location", async (req, res) => {
+router.post("/set-location", doubleCsrfProtection, async (req, res) => {
+
     const { latitude, longitude } = req.body;
     if (latitude && longitude) {
         req.session.location = {

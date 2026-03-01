@@ -27,27 +27,60 @@
         </button>
         <% } %>
 
-          <!-- Auth Dropdown/Profile (Desktop mostly, or kept small on mobile) -->
-          <div class="nav-item dropdown list-unstyled mb-0 ms-1">
-            <a class="nav-link dropdown-toggle drop p-0 text-dark" href="#" role="button" data-bs-toggle="dropdown"
-              aria-expanded="false">
-              <i class="fa-solid fa-circle-user fs-5"></i>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end position-absolute">
-              <li><a class="dropdown-item" href="/user">Profile</a></li>
-              <li><a class="dropdown-item" href="#">About us</a> </li>
-              <% if (typeof currUser==='undefined' || !currUser){%>
-                <li><a class="dropdown-item" href="/alreadyLogin">login</a> </li>
-                <li><a class="dropdown-item" href="/customer/signup">SignUp</a> </li>
-                <%}%>
-                  <li>
-                    <hr class="dropdown-divider">
-                  </li>
-                  <% if (typeof currUser !=='undefined' && currUser){%>
-                    <li><a class="dropdown-item" href="/logout" style="color: red;">logOut</a></li>
-                    <%}%>
-            </ul>
-          </div>
+          <!-- Notifications -->
+          <% if (typeof currUser !=='undefined' && currUser) { %>
+            <div class="nav-item dropdown list-unstyled mb-0 ms-1" id="notificationContainer">
+              <a class="nav-link notification-nav-item" href="#" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false" id="notificationBell">
+                <i class="fa-solid fa-bell fs-5"></i>
+                <span class="notification-badge" id="notificationBadge"></span>
+              </a>
+              <div class="dropdown-menu dropdown-menu-end notification-dropdown position-absolute"
+                aria-labelledby="notificationBell">
+                <div id="notificationHeaderWrapper">
+                  <div class="notification-header">
+                    <h6>Notifications</h6>
+                    <button class="mark-all-read-btn" onclick="markAllNotificationsAsRead(event)">Mark all as
+                      read</button>
+                  </div>
+                </div>
+                <div class="notification-list" id="notificationList">
+                  <div class="no-notifications">Loading...</div>
+                </div>
+              </div>
+            </div>
+            <% } %>
+
+              <!-- Auth Dropdown/Profile (Desktop mostly, or kept small on mobile) -->
+              <div class="nav-item dropdown list-unstyled mb-0 ms-1">
+                <a class="nav-link dropdown-toggle drop p-0 text-dark" href="#" role="button" data-bs-toggle="dropdown"
+                  aria-expanded="false">
+                  <i class="fa-solid fa-circle-user fs-5"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end position-absolute">
+                  <li><a class="dropdown-item" href="/user">Profile</a></li>
+                  <li><a class="dropdown-item" href="/api/orders/my-orders">My Orders</a></li>
+                  <li><a class="dropdown-item fw-bold" href="/api/orders/my-shop-orders">🏪 Shop Orders</a></li>
+                  <li><a class="dropdown-item" href="/api/cart">My Cart</a></li>
+                  <% if (typeof currUser !=='undefined' && currUser) { %>
+                    <% if (currUser.collection.name==='deliverypartners' ) { %>
+                      <li><a class="dropdown-item fw-bold text-primary" href="/delivery/dashboard">Delivery
+                          Dashboard</a></li>
+                      <% } %>
+                        <% } %>
+                          <li><a class="dropdown-item" href="#">About us</a> </li>
+                          <% if (typeof currUser==='undefined' || !currUser){%>
+                            <li><a class="dropdown-item" href="/alreadyLogin">login</a> </li>
+                            <li><a class="dropdown-item" href="/customer/signup">SignUp</a> </li>
+                            <%}%>
+                              <li>
+                                <hr class="dropdown-divider">
+                              </li>
+                              <% if (typeof currUser !=='undefined' && currUser){%>
+                                <li><a class="dropdown-item" href="/logout" style="color: red;">logOut</a></li>
+                                <%}%>
+                </ul>
+              </div>
 
     </div>
 
@@ -104,3 +137,74 @@
 <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=883296107650724&ev=PageView&noscript=1" /></noscript>
 <!-- End Meta Pixel Code -->
+
+<% if (typeof currUser !=='undefined' && currUser) { %>
+  <script>
+    async function fetchNotifications() {
+      try {
+        const res = await fetch('/api/notifications');
+        const data = await res.json();
+        if (data.success) {
+          renderNotifications(data.notifications);
+        }
+      } catch (e) {
+        console.error('Error fetching notifications:', e);
+      }
+    }
+
+    function renderNotifications(notifications) {
+      const list = document.getElementById('notificationList');
+      const badge = document.getElementById('notificationBadge');
+      const container = document.getElementById('notificationContainer');
+      const headerWrapper = document.getElementById('notificationHeaderWrapper');
+
+      if (!list || !container || !headerWrapper) return;
+
+      if (notifications.length === 0) {
+        headerWrapper.style.display = 'none';
+        list.innerHTML = '<div class="no-notifications">No notification yet</div>';
+        if (badge) badge.style.display = 'none';
+        return;
+      }
+
+      headerWrapper.style.display = 'block';
+      if (badge) badge.style.display = 'block';
+
+      list.innerHTML = notifications.map(n => `
+      <a href="${n.type === 'ORDER_RECEIVED' ? '/api/orders/my-shop-orders' : '/api/orders/my-orders'}" class="notification-item ${n.isRead ? '' : 'unread'}" onclick="markAsRead('${n._id}')">
+        <span class="notification-title">${n.title}</span>
+        <span class="notification-msg">${n.message}</span>
+        <span class="notification-time">${new Date(n.createdAt).toLocaleString()}</span>
+      </a>
+    `).join('');
+    }
+
+    async function markAsRead(id) {
+      try {
+        await fetch(`/api/notifications/mark-read/${id}`, { method: 'POST' });
+      } catch (e) {
+        console.error('Error marking as read:', e);
+      }
+    }
+
+    async function markAllNotificationsAsRead(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      try {
+        const res = await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+        if (res.ok) {
+          fetchNotifications();
+        }
+      } catch (e) {
+        console.error('Error marking all as read:', e);
+      }
+    }
+
+    // Initial fetch
+    fetchNotifications();
+    // Poll every 30 seconds for faster shopkeeper alerts
+    setInterval(fetchNotifications, 30000);
+  </script>
+  <% } %>

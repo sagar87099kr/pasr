@@ -8,7 +8,9 @@ const wrapAsync = require("../utils/wrapAsync.js");
 const { forwardGeocode } = require("../utils/geocoder");
 const multer = require("multer");
 const { storage, cloudinary } = require("../cloud_con.js");
+const { doubleCsrfProtection } = require("../utils/csrf");
 const upload = multer({ storage });
+
 
 // home service
 // Moved to top to ensure priority
@@ -150,7 +152,8 @@ router.get("/become/provider", isLogedin, isVerifiedCustomer, (req, res) => {
     res.render("pages/create.ejs")
 });
 
-router.post("/become/provider", isLogedin, isNotBlocked, isVerifiedCustomer, validateprovider, upload.array('provider[personImage]', 4), wrapAsync(async (req, res) => {
+router.post("/become/provider", isLogedin, isNotBlocked, isVerifiedCustomer, doubleCsrfProtection, validateprovider, upload.array('provider[personImage]', 4), wrapAsync(async (req, res) => {
+
     let { company, experience, location, phoneNO } = req.body.provider;
     let categories = req.body.provider.categories;
     const personImage = req.files;
@@ -195,7 +198,9 @@ router.get("/provider/:id/edit",
 router.put("/update/:id",
     isLogedin,
     isOwner,
+    doubleCsrfProtection,
     wrapAsync(async (req, res) => {
+
         let { id } = req.params;
         let coordinate = await forwardGeocode(req.body.provider.location);
         const geometry = coordinate.body.features[0].geometry;
@@ -214,7 +219,8 @@ router.get("/provider/verify", isLogedin, isadmin, async (req, res) => {
     res.render("pages/providerverify.ejs", { providers });
 });
 
-router.put("/:id/verifyprovider", isLogedin, isadmin, async (req, res) => {
+router.put("/:id/verifyprovider", isLogedin, isadmin, doubleCsrfProtection, async (req, res) => {
+
     let { id } = req.params;
     const { verified, verifedBy } = req.body.provider;
     console.log(verified)
@@ -222,7 +228,8 @@ router.put("/:id/verifyprovider", isLogedin, isadmin, async (req, res) => {
     console.log("provider is verifed");
 });
 
-router.delete("/provider/:id/verifyfail", isLogedin, isadmin, wrapAsync(async (req, res) => {
+router.delete("/provider/:id/verifyfail", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     try {
         let { id } = req.params;
         let provider = await Provider.findById(id);
@@ -261,7 +268,8 @@ router.delete("/provider/:id/verifyfail", isLogedin, isadmin, wrapAsync(async (r
 }));
 
 // Add image to provider gallery
-router.post("/provider/:id/add-image", isLogedin, isOwner, upload.single('image'), wrapAsync(async (req, res) => {
+router.post("/provider/:id/add-image", isLogedin, isOwner, doubleCsrfProtection, upload.single('image'), wrapAsync(async (req, res) => {
+
     try {
         const { id } = req.params;
         const { description } = req.body;
@@ -292,7 +300,8 @@ router.post("/provider/:id/add-image", isLogedin, isOwner, upload.single('image'
 }));
 
 // Delete image from provider gallery
-router.delete("/provider/:id/delete-image/:imageIndex", isLogedin, isOwner, wrapAsync(async (req, res) => {
+router.delete("/provider/:id/delete-image/:imageIndex", isLogedin, isOwner, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     try {
         const { id, imageIndex } = req.params;
         const provider = await Provider.findById(id);

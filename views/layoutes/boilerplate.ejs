@@ -4,9 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>
-        <%= typeof seo !=='undefined' ? seo.title : 'PASR' %>
-    </title>
+    <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+
+    <title>PASR - Kisan Sabha & Local Bazaar</title>
+
+    <!-- Performance: Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://res.cloudinary.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://ka-f.fontawesome.com" crossorigin>
     <meta name="description"
         content="<%= typeof seo !== 'undefined' ? seo.description : 'Connect with local farmers and shops on PASR.' %>">
     <% if (typeof seo !=='undefined' && seo.keywords) { %>
@@ -281,7 +288,7 @@
 
 
 
-            <!-- Google Fonts — non-blocking with font-display=swap for faster text render -->
+            <!-- Google Fonts — non-blocking (font-display=swap prevents FOUT from blocking render) -->
             <link rel="preload"
                 href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
                 as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -290,44 +297,26 @@
                     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap">
             </noscript>
 
-            <!-- Bootstrap CSS — non-blocking -->
-            <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-                as="style" onload="this.onload=null;this.rel='stylesheet'">
-            <noscript>
-                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
-            </noscript>
+            <!-- Bootstrap CSS -->
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+                integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+                crossorigin="anonymous">
 
-            <!-- All local CSS — non-blocking (critical vars are already inlined above) -->
-            <link rel="preload" href="/css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-            <noscript>
-                <link rel="stylesheet" href="/css/style.css">
-            </noscript>
+            <!-- All local CSS -->
+            <link rel="stylesheet" href="/css/style.css">
             <% if (typeof useProfileCss !=='undefined' && useProfileCss) { %>
-                <link rel="preload" href="/css/profile.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-                <noscript>
-                    <link rel="stylesheet" href="/css/profile.css">
-                </noscript>
+                <link rel="stylesheet" href="/css/profile.css">
                 <% } %>
 
                     <% if (typeof useInsideCateCss !=='undefined' && useInsideCateCss) { %>
-                        <link rel="preload" href="/css/insidecate.css" as="style"
-                            onload="this.onload=null;this.rel='stylesheet'">
-                        <noscript>
-                            <link rel="stylesheet" href="/css/insidecate.css">
-                        </noscript>
+                        <link rel="stylesheet" href="/css/insidecate.css">
                         <% } %>
 
-                            <!-- Font Awesome — non-blocking (icons are not LCP elements) -->
-                            <link rel="preload"
-                                href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
-                                as="style" onload="this.onload=null;this.rel='stylesheet'"
-                                integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+                            <!-- Font Awesome -->
+                            <link rel="stylesheet"
+                                href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+                                integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
                                 crossorigin="anonymous" referrerpolicy="no-referrer">
-                            <noscript>
-                                <link rel="stylesheet"
-                                    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
-                                    crossorigin="anonymous">
-                            </noscript>
 
                             <link rel="icon" href="/images/icon.jpeg">
                             <link rel="manifest" href="/manifest.json">
@@ -344,9 +333,24 @@
                                     });
                                 }
                             </script>
+
+                            <script>
+                                function showToast(message, type = 'success') {
+                                    const toastEl = document.getElementById('liveToast');
+                                    const toastMsg = document.getElementById('toastMessage');
+                                    if (!toastEl || !toastMsg) return;
+                                    toastMsg.innerText = message;
+                                    toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info');
+                                    toastEl.classList.add(`bg-${type}`);
+                                    const toast = new bootstrap.Toast(toastEl, {
+                                        delay: 3000
+                                    });
+                                    toast.show();
+                                }
+                            </script>
 </head>
 
-<body>
+<body data-logged-in="<%= currUser ? 'true' : 'false' %>">
 
     <!-- Fixed Language Toggle — visible on every page, bottom-left corner -->
     <div id="lang-toggle-fab" title="Switch Language">
@@ -367,12 +371,8 @@
         </div>
         <%- include("../includes/footer.ejs") %>
 
-            <!-- Bootstrap JS — deferred, loads after paint -->
-            <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-                integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-                crossorigin="anonymous" defer></script>
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"
-                integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y"
+            <!-- Bootstrap JS -->
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
                 crossorigin="anonymous" defer></script>
 
             <!-- Image compressor — only needed on upload forms, deferred -->
@@ -382,11 +382,12 @@
             <script src="/js/imageCompressor.js" defer></script>
             <script src="/js/script.js" defer></script>
             <script src="/js/pwa-install.js" defer></script>
+            <script src="/js/fcm-init.js" defer></script>
 
             <!-- Google Maps — deferred and loaded LAST (only conditionally included) -->
             <% if (typeof useMaps !=='undefined' && useMaps) { %>
                 <script
-                    src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&callback=initMap"
+                    src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&libraries=places&callback=initMap"
                     defer></script>
                 <% } %>
 
@@ -645,6 +646,31 @@
                             });
                         </script>
                         <% } %>
+                            <!-- Toast Notification Container -->
+                            <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+                                <div id="liveToast" class="toast align-items-center text-white bg-success border-0"
+                                    role="alert" aria-live="assertive" aria-atomic="true">
+                                    <div class="d-flex">
+                                        <div class="toast-body" id="toastMessage">
+                                            Item added to cart!
+                                        </div>
+                                        <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                                            data-bs-dismiss="toast" aria-label="Close"></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <script>
+                                function showToast(message, type = 'success') {
+                                    const toastEl = document.getElementById('liveToast');
+                                    const toastMsg = document.getElementById('toastMessage');
+                                    toastMsg.innerText = message;
+                                    toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info');
+                                    toastEl.classList.add(`bg-${type}`);
+                                    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+                                    toast.show();
+                                }
+                            </script>
 </body>
 
 </html>

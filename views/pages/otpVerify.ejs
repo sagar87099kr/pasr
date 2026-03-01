@@ -112,6 +112,8 @@
                     </div>
 
                     <form action="/customer/verify-otp" method="POST">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
                         <div class="otp-input-row">
                             <input type="text" name="otp" maxlength="6" placeholder="— — — — — —" pattern="\d{6}"
                                 required autocomplete="one-time-code" id="otpInput">

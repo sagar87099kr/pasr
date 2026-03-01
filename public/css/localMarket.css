@@ -341,8 +341,39 @@ body {
         padding: 6px 12px;
     }
 
-    .card-body-custom {
-        padding: 12px;
+    .owned-shop-badge i {
+        font-size: 11px;
+    }
+}
+
+.card-notification-dot {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 14px;
+    height: 14px;
+    background-color: #ef4444;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    z-index: 20;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
     }
 }
 
@@ -366,4 +397,43 @@ body {
     .product-img-wrap {
         height: 180px;
     }
+}
+
+/* Owned Shop Highlighting */
+.owned-shop-card {
+    border: 2px solid var(--market-primary) !important;
+    background: linear-gradient(to bottom, #fffef5, #ffffff) !important;
+    position: relative;
+    box-shadow: 0 8px 20px rgba(255, 153, 51, 0.15) !important;
+}
+
+.owned-shop-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--market-primary);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    z-index: 10;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Closed Shop Card */
+.shop-closed-card {
+    opacity: 0.72;
+    filter: grayscale(30%);
+    cursor: not-allowed;
+}
+
+.product-card-link[data-closed="true"]:hover .product-card {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+    border-color: #fca5a5;
+    cursor: not-allowed;
 }

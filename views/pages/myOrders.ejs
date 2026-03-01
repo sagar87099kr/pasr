@@ -1,0 +1,204 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <div class="container mt-4 mb-5">
+        <div class="row mb-4">
+            <div class="col-12 d-flex justify-content-between align-items-center">
+                <h2 class="fw-bold mb-0">My Orders</h2>
+            </div>
+        </div>
+
+        <div class="row">
+            <% if (orders && orders.length> 0) { %>
+                <% orders.forEach(order=> { %>
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card shadow-sm h-100 border-0" style="border-radius: 12px; overflow: hidden;">
+                            <div
+                                class="card-header bg-light border-bottom ps-3 pt-3 pb-2 d-flex justify-content-between align-items-center">
+                                <span class="text-muted" style="font-size: 0.85rem;">
+                                    <%= new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric' ,
+                                        month: 'short' , year: 'numeric' }) %>
+                                </span>
+
+                                <% let statusColor='bg-secondary' ; if (order.orderStatus==='CREATED' )
+                                    statusColor='bg-info text-dark' ; else if (order.orderStatus==='ACCEPTED' )
+                                    statusColor='bg-primary' ; else if (order.orderStatus==='READY_FOR_DELIVERY' )
+                                    statusColor='bg-warning text-dark' ; else if (order.orderStatus==='ASSIGNED' )
+                                    statusColor='bg-info' ; else if (order.orderStatus==='OUT_FOR_DELIVERY' )
+                                    statusColor='bg-primary' ; else if (order.orderStatus==='COMPLETED' )
+                                    statusColor='bg-success' ; else if (order.orderStatus==='CANCELLED' )
+                                    statusColor='bg-danger' ; %>
+                                    <span class="badge <%= statusColor %> px-2 py-1">
+                                        <%= order.orderStatus.replace(/_/g, ' ' ) %>
+                                    </span>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title text-truncate fw-bold">
+                                    <% if(order.resolvedSeller) { %>
+                                        <%= order.resolvedSeller.name %>
+                                            <% } else { %>
+                                                Market Item
+                                                <% } %>
+                                </h5>
+
+                                <hr class="text-muted">
+
+                                <p class="mb-1 text-muted" style="font-size: 0.9rem;">Items:</p>
+                                <ul class="list-unstyled mb-3 ms-2" style="font-size: 0.9rem;">
+                                    <% order.items.forEach(item=> { %>
+                                        <li class="d-flex justify-content-between">
+                                            <span class="text-truncate" style="max-width: 70%;">- <%= item.name %>
+                                                    &times; <%= item.quantity %></span>
+                                            <span class="fw-bold">₹<%= item.price * item.quantity %></span>
+                                        </li>
+                                        <% }) %>
+                                </ul>
+
+                                <div class="d-flex justify-content-between text-muted" style="font-size: 0.85rem;">
+                                    <span>Delivery</span>
+                                    <span>
+                                        <% if (order.deliveryType==='SELF_PICKUP' ) { %>
+                                            <span class="badge bg-secondary">🏪 Self Pickup</span>
+                                            <% } else { %>
+                                                <span class="badge bg-info text-dark">🚚 Home Delivery</span>
+                                                <% } %>
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted mt-1" style="font-size: 0.85rem;">
+                                    <span>Delivery Charge</span>
+                                    <span>
+                                        <% if (order.firstOrderDiscount> 0) { %>
+                                            <span style="text-decoration:line-through; color:#94a3b8;">₹<%=
+                                                    order.firstOrderDiscount %></span>
+                                            <span class="text-success fw-bold ms-1">FREE 🎉</span>
+                                            <% } else { %>
+                                                ₹<%= order.deliveryCharge %>
+                                                    <% } %>
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between fw-bold mt-2 pt-2 border-top"
+                                    style="font-size: 1.1rem;">
+                                    <span>Total</span>
+                                    <span>₹<%= order.totalAmount %></span>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
+                                    <span
+                                        class="badge <%= order.paymentStatus === 'COLLECTED' || order.paymentStatus === 'VERIFIED' ? 'bg-success' : 'bg-warning text-dark' %>">
+                                        <%= order.paymentType %> (<%= order.paymentStatus %>)
+                                    </span>
+
+                                    <% if(order.orderStatus !=='COMPLETED' && order.orderStatus !=='CANCELLED' &&
+                                        order.deliveryOTP) { %>
+                                        <div class="border rounded px-2 py-1 bg-light text-center">
+                                            <small class="text-muted text-uppercase d-block"
+                                                style="font-size: 0.65rem;">Delivery OTP</small>
+                                            <span class="fw-bold text-dark fs-5 tracking-widest">
+                                                <%= order.deliveryOTP %>
+                                            </span>
+                                        </div>
+                                        <% } %>
+                                </div>
+
+                                <!-- Shop Owner Actions -->
+                                <% if(currUser && order.resolvedSeller &&
+                                    order.resolvedSeller.sellerId.toString()===currUser._id.toString()) { %>
+                                    <div class="mt-3 pt-3 border-top d-flex gap-2">
+                                        <% if (order.paymentType==='PREPAID' && order.paymentStatus==='PENDING' ) { %>
+                                            <button class="btn btn-sm btn-success w-100"
+                                                onclick="verifyOrderPayment('<%= order._id %>')">
+                                                <i class="fa-solid fa-check-circle"></i> Confirm Payment
+                                            </button>
+                                            <% } else if (order.orderStatus==='CREATED' && order.paymentType==='COD' ) {
+                                                %>
+                                                <button class="btn btn-sm btn-primary w-100"
+                                                    onclick="acceptCodOrder('<%= order._id %>')">
+                                                    <i class="fa-solid fa-thumbs-up"></i> Accept COD Order
+                                                </button>
+                                                <% } %>
+
+                                                    <% if (['ACCEPTED', 'READY_FOR_DELIVERY'
+                                                        ].includes(order.orderStatus)) { %>
+                                                        <button class="btn btn-sm btn-info w-100 text-white"
+                                                            onclick="requestDelivery('<%= order._id %>')">
+                                                            <i class="fa-solid fa-motorcycle"></i> Request Delivery
+                                                        </button>
+                                                        <% } %>
+                                    </div>
+                                    <% } %>
+
+                            </div>
+                        </div>
+                    </div>
+                    <% }) %>
+                        <% } else { %>
+                            <div class="col-12 text-center py-5">
+                                <i class="fa-solid fa-box-open text-muted" style="font-size: 4rem;"></i>
+                                <h4 class="mt-3 text-muted">No Orders Yet</h4>
+                                <p class="text-muted">Looks like you haven't placed any orders.</p>
+                                <a href="/home" class="btn btn-primary mt-2">Start Shopping</a>
+                            </div>
+                            <% } %>
+        </div>
+    </div>
+
+    <!-- Shop Owner Action Scripts -->
+    <script>
+        async function verifyOrderPayment(orderId) {
+            if (!confirm("Have you verified that the UPI payment was received in your bank account?")) return;
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch(`/api/orders/${orderId}/verify-payment`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert("Payment Verified! Order accepted and ready for delivery.");
+                    window.location.reload();
+                } else {
+                    alert(data.message || "Failed to verify payment");
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        async function acceptCodOrder(orderId) {
+            if (!confirm("Accept this Cash on Delivery order?")) return;
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch(`/api/orders/${orderId}/accept`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert("Order accepted!");
+                    window.location.reload();
+                } else {
+                    alert(data.message || "Failed to accept order");
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        async function requestDelivery(orderId) {
+            if (!confirm("Request a delivery partner for this order?")) return;
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch(`/api/orders/${orderId}/request-delivery`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert("Delivery requested successfully!");
+                    window.location.reload();
+                } else {
+                    alert(data.message || "Failed to request delivery");
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+    </script>

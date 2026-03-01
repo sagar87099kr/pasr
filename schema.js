@@ -72,6 +72,32 @@ module.exports.itemSchema = Joi.object({
         price: Joi.number().required().min(0),
         quantity: Joi.number().required().min(0),
         itemCategory: Joi.string().allow(""),
+        description: Joi.string().allow(""),
         sizes: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional(),
-    }).required()
+    }).required(),
+    imageId: Joi.string().allow(""),
+    productId: Joi.string().allow(""),
+});
+
+module.exports.deliveryPartnerSchema = Joi.object({
+    fullName: Joi.string().required(),
+    phoneNumber: Joi.number().required(),
+    dateOfBirth: Joi.date().required(),
+    address: Joi.object({
+        city: Joi.string().required(),
+        pincode: Joi.number().required()
+    }).required(),
+    workLocation: Joi.object({
+        lat: Joi.number().required(),
+        lng: Joi.number().required()
+    }).required(),
+    aadharNumber: Joi.string().required(),
+    panNumber: Joi.string().required(),
+    bankDetails: Joi.object({
+        accountNumber: Joi.string().allow(""),
+        ifscCode: Joi.string().allow(""),
+        upiId: Joi.string().allow("")
+    }).optional(),
+    vehicleType: Joi.string().valid('bike', 'scooter', 'bicycle', 'tempo', 'four_wheeler').required(),
+    vehicleNumber: Joi.string().allow("")
 });

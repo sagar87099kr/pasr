@@ -1,0 +1,48 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <link rel="stylesheet" href="/css/auth.css">
+
+    <div class="auth-container mt-2 mb-2">
+        <div class="auth-card" style="max-width: 450px;">
+            <div class="auth-header">
+                <i class="fa-solid fa-motorcycle fs-1 mb-2 text-primary"></i>
+                <h1 class="auth-title">Partner Login</h1>
+                <p class="auth-subtitle">Local Bazaar Delivery Network</p>
+            </div>
+
+            <form action="/delivery/login" method="POST" class="needs-validation" novalidate>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                <div class="form-group text-start">
+                    <label for="phoneNumber" class="form-label">Phone Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i
+                                class="fa-solid fa-phone text-muted"></i></span>
+                        <input type="number" class="form-control border-start-0 ps-0" id="phoneNumber"
+                            name="phoneNumber" placeholder="9876543210" required>
+                    </div>
+                    <div class="invalid-feedback">Please enter your registered phone number.</div>
+                </div>
+
+                <div class="form-group text-start">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i
+                                class="fa-solid fa-lock text-muted"></i></span>
+                        <input type="password" class="form-control border-start-0 ps-0" id="password" name="password"
+                            placeholder="••••••••" required>
+                    </div>
+                    <div class="invalid-feedback">Please enter your password.</div>
+                </div>
+
+                <button class="btn-submit mt-4">
+                    <i class="fa-solid fa-right-to-bracket me-2"></i> Login as Partner
+                </button>
+            </form>
+
+            <div class="text-center mt-4">
+                <a href="/home" class="text-muted text-decoration-none small"><i
+                        class="fa-solid fa-arrow-left me-1"></i>
+                    Back to Shopping</a>
+            </div>
+        </div>
+    </div>

@@ -9,6 +9,8 @@ const passport = require("passport");
 const { validatecustomer, saveRedirectUrl, isLogedin, isadmin } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const { forwardGeocode } = require("../utils/geocoder");
+const { doubleCsrfProtection } = require("../utils/csrf");
+
 
 // login route for all 
 // login route for all 
@@ -22,7 +24,8 @@ router.get("/customer/signup", (req, res) => {
 });
 
 // STEP 1: Collect signup form data, generate OTP, store in session, redirect to verify page
-router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, next) => {
+router.post("/customer/signup", doubleCsrfProtection, validatecustomer, wrapAsync(async (req, res, next) => {
+
     try {
         const { name, username, password, address } = req.body.customer;
 
@@ -72,7 +75,8 @@ router.get("/customer/verify-otp", (req, res) => {
 });
 
 // STEP 2b: Verify OTP and complete registration
-router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
+router.post("/customer/verify-otp", doubleCsrfProtection, wrapAsync(async (req, res, next) => {
+
     const pending = req.session.pendingSignup;
 
     if (!pending) {
@@ -126,7 +130,8 @@ router.get("/alreadyLogin", (req, res) => {
     res.render("pages/relogin.ejs", { failedAttempts });
 });
 
-router.post("/alreadyLogin", saveRedirectUrl, (req, res, next) => {
+router.post("/alreadyLogin", doubleCsrfProtection, saveRedirectUrl, (req, res, next) => {
+
     passport.authenticate("local", (err, user, info) => {
         if (err) return next(err);
 
@@ -170,7 +175,8 @@ router.get("/forgot-password", (req, res) => {
 });
 
 // POST: Look up user, generate token, show WhatsApp send screen
-router.post("/forgot-password", wrapAsync(async (req, res) => {
+router.post("/forgot-password", doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     const { username } = req.body;
     const user = await Customer.findOne({ username: Number(username) });
 
@@ -216,7 +222,8 @@ router.get("/reset-password/:token", wrapAsync(async (req, res) => {
 }));
 
 // POST: Set the new password
-router.post("/reset-password/:token", wrapAsync(async (req, res) => {
+router.post("/reset-password/:token", doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     const { token } = req.params;
     const { password, confirmPassword } = req.body;
 
@@ -254,11 +261,13 @@ router.post("/reset-password/:token", wrapAsync(async (req, res) => {
 
 // here i am going to create a new page where people will able to see their profile. 
 router.get("/user", isLogedin, saveRedirectUrl, wrapAsync(async (req, res) => {
+    const DeliveryPartner = require("../data/deliveryPartner");
     const listings = await Provider.find({ owner: req.user._id });
     const products = await Product.find({ owner: req.user._id });
     const shops = await Shop.find({ owner: req.user._id });
     const kisanPosts = await KeshanSabhaPost.find({ author: req.user._id }).sort({ createdAt: -1 });
-    res.render("pages/provider_profile.ejs", { listings, products, shops, kisanPosts });
+    const deliveryPartner = await DeliveryPartner.findOne({ user: req.user._id });
+    res.render("pages/provider_profile.ejs", { listings, products, shops, kisanPosts, deliveryPartner });
 }));
 
 // these are verification route for customers 
@@ -268,7 +277,8 @@ router.get("/customer/verify", isLogedin, isadmin, async (req, res) => {
 });
 
 // set value true
-router.put("/:id/verifycustomer", isLogedin, isadmin, async (req, res) => {
+router.put("/:id/verifycustomer", isLogedin, isadmin, doubleCsrfProtection, async (req, res) => {
+
     let { id } = req.params;
     const { verified, verifedBy } = req.body.customer;
     console.log(verified)
@@ -277,7 +287,8 @@ router.put("/:id/verifycustomer", isLogedin, isadmin, async (req, res) => {
 });
 
 // we anything suspicious delete customer from database
-router.delete("/customer/:id/verifyfail", isLogedin, isadmin, async (req, res) => {
+router.delete("/customer/:id/verifyfail", isLogedin, isadmin, doubleCsrfProtection, async (req, res) => {
+
     let { id } = req.params;
     await Customer.findByIdAndDelete(id);
     console.log("customer is deleted");
@@ -285,7 +296,8 @@ router.delete("/customer/:id/verifyfail", isLogedin, isadmin, async (req, res) =
 
 
 // Update Customer Profile Route
-router.put("/customer/update/:id", isLogedin, wrapAsync(async (req, res) => {
+router.put("/customer/update/:id", isLogedin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     const { id } = req.params;
     const { address, pincode } = req.body.customer;
 
@@ -314,7 +326,8 @@ router.put("/customer/update/:id", isLogedin, wrapAsync(async (req, res) => {
 }));
 
 // Delete Account - Direct deletion with admin notification logging
-router.post("/customer/delete-account", isLogedin, wrapAsync(async (req, res) => {
+router.post("/customer/delete-account", isLogedin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     const { username, password } = req.body;
     const userId = req.user._id;
 

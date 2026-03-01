@@ -1,6 +1,6 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
     <script>
-        window.allData = <% - JSON.stringify(shop) %>;
+        window.allData = <% -JSON.stringify(shop) %>;
     </script>
     <link rel="stylesheet" href="/css/product_detail.css">
     <% const SHOP_CATEGORIES={ "Electronics" : [ { name: "Wiring & Cables" , icon: "🔌" }, {
@@ -18,7 +18,7 @@
         name: "Ethnic Wear" , icon: "👘" }, { name: "Winter Wear" , icon: "🧥" }, { name: "Sports & Activewear" ,
         icon: "🏃" }, { name: "Innerwear & Lingerie" , icon: "🩲" }, { name: "Accessories" , icon: "👜" }, {
         name: "General" , icon: "📦" } ], "General Store" : [ { name: "Daily Essentials" , icon: "🧼" }, {
-        name: "Snacks & Beverages" , icon: "🥤" }, { name: "Personal Care" , icon: "🧴" }, { name: "Household Items" ,
+        name: "Snacks & Namkeen" , icon: "🥨" }, { name: "Personal Care" , icon: "🧴" }, { name: "Household Items" ,
         icon: "🏠" }, { name: "Stationery" , icon: "✏️" }, { name: "Cleaning Supplies" , icon: "🧹" }, {
         name: "Baby Care" , icon: "👶" }, { name: "General" , icon: "📦" } ], "Footwear" : [ { name: "Men's Footwear" ,
         icon: "👞" }, { name: "Women's Footwear" , icon: "👠" }, { name: "Kids' Footwear" , icon: "👟" }, {
@@ -571,12 +571,19 @@
             .item-modal-img-wrapper {
                 position: relative;
                 width: 100%;
+                aspect-ratio: 8 / 12;
+                background-color: #e5e7eb;
+                /* Gray background */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
             }
 
             .item-modal-img {
                 width: 100%;
-                height: 500px;
-                object-fit: cover;
+                height: 100%;
+                object-fit: contain;
                 display: block;
             }
 
@@ -593,10 +600,9 @@
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             }
 
-            .item-modal-whatsapp-btn {
+            .item-modal-action-btn {
                 display: block;
                 width: 100%;
-                background: #25D366;
                 color: white;
                 padding: 18px;
                 border: none;
@@ -609,10 +615,8 @@
                 transition: 0.3s;
             }
 
-            .item-modal-whatsapp-btn:hover {
-                background: #20ba5a;
+            .item-modal-action-btn:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
                 color: white;
             }
 
@@ -621,15 +625,102 @@
                     width: 95%;
                 }
 
-                .item-modal-img {
-                    height: 400px;
-                }
-
                 .item-modal-price-overlay {
                     font-size: 20px;
                     padding: 10px 16px;
                 }
-            }
+
+                /* Image Suggestion System */
+                .suggestions-container {
+                    display: none;
+                    background: white;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 12px;
+                    margin-top: 8px;
+                    max-height: 300px;
+                    overflow-y: auto;
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                    position: absolute;
+                    width: 100%;
+                    z-index: 100;
+                }
+
+                .suggestion-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 10px;
+                    cursor: pointer;
+                    border-bottom: 1px solid #f3f4f6;
+                    transition: background 0.2s;
+                }
+
+                .suggestion-item:hover {
+                    background: #f9fafb;
+                }
+
+                .suggestion-item img {
+                    width: 70px;
+                    height: 70px;
+                    border-radius: 6px;
+                    object-fit: cover;
+                    background: #f3f4f6;
+                }
+
+                .suggestion-info {
+                    flex: 1;
+                }
+
+                .suggestion-name {
+                    font-weight: 600;
+                    font-size: 14px;
+                    color: #1f2937;
+                }
+
+                .suggestion-desc {
+                    font-size: 12px;
+                    color: #6b7280;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 200px;
+                }
+
+                .selected-suggestion-preview {
+                    display: none;
+                    position: relative;
+                    width: 100%;
+                    margin: 15px 0;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    border: 2px solid #6366f1;
+                }
+
+                .selected-suggestion-preview img {
+                    width: 100%;
+                    height: 200px;
+                    object-fit: contain;
+                    background: #f3f4f6;
+                    display: block;
+                }
+
+                .remove-selected-img {
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    background: rgba(239, 68, 68, 0.9);
+                    color: white;
+                    border: none;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    font-size: 14px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                }
         </style>
 
         <body>
@@ -642,7 +733,7 @@
                     <div class="shop-profile-header">
                         <div class="shop-profile-img-container">
                             <% if(shop.shopImage && shop.shopImage.length> 0) { %>
-                                <img src="<%= shop.shopImage[0].url %>" alt="<%= shop.shopName %>"
+                                <img src="<%= optimizeImage(shop.shopImage[0].url) %>" alt="<%= shop.shopName %>"
                                     class="shop-profile-img" onclick="openProfileModal(this.src)">
                                 <% } else { %>
                                     <div class="shop-profile-img"
@@ -767,110 +858,149 @@
                                 <% } %>
                         </div>
 
-                        <% if(currentShopCats) { %>
-                            <!-- Dynamic Category Slider -->
-                            <div class="cat-scroll-wrapper-container"
-                                style="position:sticky; top:60px; z-index:90; background-color:var(--bg-color); padding-top:10px; margin-bottom:10px;">
-                                <div class="cat-scroll-wrapper" id="categorySlider" style="padding-bottom:10px;">
-                                    <span class="cat-pill active" onclick="filterItems('All', this)">All Items</span>
-                                    <% currentShopCats.forEach(cat=> { %>
-                                        <span class="cat-pill" data-cat="<%= cat.name %>"
-                                            onclick="filterItems(this.getAttribute('data-cat'), this)">
-                                            <%= cat.icon %>
-                                                <%= cat.name %>
-                                        </span>
-                                        <% }) %>
+                        <% let categoriesToDisplay=[]; const isOwnerView=currUser &&
+                            shop.owner._id.equals(currUser._id); if (!isOwnerView && typeof availableCategories
+                            !=='undefined' ) { // Customer view: only show categories with in-stock items const
+                            masterCats=getShopCategoryData(shop.category) || [];
+                            categoriesToDisplay=availableCategories.map(catName=> {
+                            const found = masterCats.find(c => c.name === catName);
+                            return found || { name: catName, icon: "📦" };
+                            }).sort((a,b) => a.name.localeCompare(b.name));
+                            } else if (currentShopCats) {
+                            // Owner view: show all possible categories for setup
+                            categoriesToDisplay = currentShopCats;
+                            }
+                            %>
+
+                            <% if(categoriesToDisplay && categoriesToDisplay.length> 0) { %>
+                                <!-- Dynamic Category Slider -->
+                                <div class="cat-scroll-wrapper-container"
+                                    style="position:sticky; top:60px; z-index:90; background-color:var(--bg-color); padding-top:10px; margin-bottom:10px;">
+                                    <div class="cat-scroll-wrapper" id="categorySlider" style="padding-bottom:10px;">
+                                        <span class="cat-pill active" onclick="filterItems('All', this)">All
+                                            Items</span>
+                                        <% categoriesToDisplay.forEach(cat=> { %>
+                                            <span class="cat-pill" data-cat="<%= cat.name %>"
+                                                onclick="filterItems(this.getAttribute('data-cat'), this)">
+                                                <%= cat.icon %>
+                                                    <%= cat.name %>
+                                            </span>
+                                            <% }) %>
+                                    </div>
                                 </div>
-                            </div>
-                            <% } %>
+                                <% } %>
 
-                                <div class="items-grid" id="itemsGrid">
-                                    <% if(shop.items && shop.items.length> 0) { %>
-                                        <% shop.items.forEach(item=> { %>
-                                            <div class="product-card item-card-filter"
-                                                data-category="<%= (item.itemCategory === 'Other' || item.itemCategory === 'Others' || !item.itemCategory) ? 'General' : item.itemCategory %>"
-                                                data-name="<%= item.name %>"
-                                                data-img="<%= item.img && item.img.url ? item.img.url : '' %>"
-                                                data-price="<%= item.price %>" data-owner="<%= shop.owner.username %>"
-                                                onclick="openItemModal(this)" style="cursor: pointer;">
-                                                <div class="product-img-wrap">
-                                                    <% if(item.img && item.img.url) { %>
-                                                        <img src="<%= item.img.url %>" alt="<%= item.name %>">
-                                                        <% } else { %>
-                                                            <div
-                                                                style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#999; font-size:12px;">
-                                                                No Image</div>
-                                                            <% } %>
-                                                                <div class="price-tag">
-                                                                    ₹<%= item.price %>
-                                                                </div>
-                                                </div>
-
-                                                <div class="card-body-custom">
-                                                    <h5 class="prod-title">
-                                                        <%= item.name %>
-                                                    </h5>
-                                                    <div class="prod-meta">
-                                                        <span>Qty: <%= item.quantity %></span>
-                                                    </div>
-
-                                                    <% if ((shop.category==='Footwear' || shop.category==='Fashion' ) &&
-                                                        item.sizes && item.sizes.length> 0) { %>
-                                                        <div
-                                                            style="margin-top:8px; display:flex; flex-wrap:wrap; gap:4px;">
-                                                            <% item.sizes.forEach(function(sz){ %>
-                                                                <span
-                                                                    style="font-size:11px; background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; border-radius:12px; padding:2px 8px; font-weight:600;">
-                                                                    <%= sz.replace('Kids-Infant-','').replace('Kids-Junior-','').replace('Infant-','').replace('Kids-','').replace('Women-','').replace('Men-','')
-                                                                        %>
-                                                                </span>
-                                                                <% }); %>
+                                    <!-- Products Grid -->
+                                    <div class="items-grid" id="itemsGrid">
+                                        <% if (typeof displayItems !=='undefined' && displayItems.length> 0) { %>
+                                            <% displayItems.forEach(item=> { %>
+                                                <% const product=item.product || item; const itemName=product.name ||
+                                                    item.name; const itemImg=(product.img && product.img.url) ?
+                                                    product.img.url : (item.img && item.img.url ? item.img.url : '' );
+                                                    const itemDesc=product.description || item.description || '' ; const
+                                                    itemCat=product.category || item.itemCategory || 'General' ; %>
+                                                    <div class="product-card item-card-filter <%= (item.quantity === 0) ? 'virtual-item' : '' %>"
+                                                        data-category="<%= (itemCat === 'Other' || itemCat === 'Others' || !itemCat) ? 'General' : itemCat %>"
+                                                        data-name="<%= itemName %>" data-img="<%= itemImg %>"
+                                                        data-price="<%= item.price %>"
+                                                        data-quantity="<%= item.quantity %>"
+                                                        data-itemid="<%= item._id || '' %>"
+                                                        data-productid="<%= product._id || '' %>"
+                                                        data-shopid="<%= shop._id %>"
+                                                        data-shopname="<%= shop.shopName %>"
+                                                        data-owner="<%= shop.owner.username %>"
+                                                        data-description="<%= itemDesc %>"
+                                                        data-isvirtual="<%= item.isVirtual %>"
+                                                        onclick="openItemModal(this)"
+                                                        style="cursor: pointer; <%= (item.quantity === 0) ? 'opacity: 0.7; border-style: dashed;' : '' %>">
+                                                        <div class="product-img-wrap">
+                                                            <% if(itemImg) { %>
+                                                                <img src="<%= itemImg %>" alt="<%= itemName %>">
+                                                                <% } else { %>
+                                                                    <div
+                                                                        style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#999; font-size:12px;">
+                                                                        No Image</div>
+                                                                    <% } %>
+                                                                        <div class="price-tag">
+                                                                            ₹<%= item.price %>
+                                                                        </div>
+                                                                        <% if(item.quantity===0) { %>
+                                                                            <div
+                                                                                style="position: absolute; top: 10px; right: 10px; background: #6b7280; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">
+                                                                                INACTIVE
+                                                                            </div>
+                                                                            <% } %>
                                                         </div>
-                                                        <% } %>
 
-                                                            <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                                                                <div class="item-action-buttons">
-                                                                    <button type="button" class="item-edit-btn"
-                                                                        onclick="event.stopPropagation(); openEditItemModal('<%= item._id %>', '<%= item.name %>', '<%= item.price %>', '<%= item.quantity %>', '<%= item.itemCategory || '' %>', <%- JSON.stringify(item.sizes || []) %>)">
-                                                                        <i class="fa-solid fa-edit"></i> Edit
-                                                                    </button>
-                                                                    <button type="button" class="item-delete-btn"
-                                                                        onclick="event.stopPropagation(); openDeleteConfirm('<%= shop._id %>', '<%= item._id %>')">
-                                                                        <i class="fa-solid fa-trash"></i> Delete
-                                                                    </button>
+                                                        <div class="card-body-custom">
+                                                            <h5 class="prod-title">
+                                                                <%= itemName %>
+                                                            </h5>
+                                                            <div class="prod-meta">
+                                                                <span>Qty: <%= item.quantity %></span>
+                                                            </div>
+
+                                                            <% if ((shop.category==='Footwear' ||
+                                                                shop.category==='Fashion' ) && item.sizes &&
+                                                                item.sizes.length> 0) { %>
+                                                                <div
+                                                                    style="margin-top:8px; display:flex; flex-wrap:wrap; gap:4px;">
+                                                                    <% item.sizes.forEach(function(sz){ %>
+                                                                        <span
+                                                                            style="font-size:11px; background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; border-radius:12px; padding:2px 8px; font-weight:600;">
+                                                                            <%= sz.replace('Kids-Infant-','').replace('Kids-Junior-','').replace('Infant-','').replace('Kids-','').replace('Women-','').replace('Men-','')
+                                                                                %>
+                                                                        </span>
+                                                                        <% }); %>
                                                                 </div>
                                                                 <% } %>
-                                                </div>
-                                            </div>
-                                            <% }) %>
-                                                <% } else { %>
-                                                    <p style="color:#6b7280; grid-column: 1 / -1; text-align:center;">
-                                                        No
-                                                        items added yet.</p>
-                                                    <% } %>
-                                </div>
 
-                                <script>
-                                    function filterItems(category, element) {
-                                        // Update active state
-                                        document.querySelectorAll('.cat-pill').forEach(el => el.classList.remove('active'));
-                                        element.classList.add('active');
+                                                                    <% if (currUser &&
+                                                                        shop.owner._id.equals(currUser._id)) { %>
+                                                                        <div class="item-action-buttons">
+                                                                            <button type="button" class="item-edit-btn"
+                                                                                onclick="event.stopPropagation(); openEditItemModalFromBtn(this)">
+                                                                                <i class="fa-solid fa-edit"></i> Edit
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="item-delete-btn"
+                                                                                onclick="event.stopPropagation(); openDeleteConfirm('<%= shop._id %>', '<%= item._id %>')">
+                                                                                <i class="fa-solid fa-trash"></i> Delete
+                                                                            </button>
+                                                                        </div>
+                                                                        <% } %>
+                                                        </div>
+                                                    </div>
+                                                    <% }) %>
+                                                        <% } else { %>
+                                                            <p
+                                                                style="color:#6b7280; grid-column: 1 / -1; text-align:center;">
+                                                                No
+                                                                items added yet.</p>
+                                                            <% } %>
+                                    </div>
 
-                                        // Filter items
-                                        const items = document.querySelectorAll('.item-card-filter');
-                                        let count = 0;
+                                    <script>
+                                        function filterItems(category, element) {
+                                            // Update active state
+                                            document.querySelectorAll('.cat-pill').forEach(el => el.classList.remove('active'));
+                                            element.classList.add('active');
 
-                                        items.forEach(item => {
-                                            const itemCat = item.getAttribute('data-category');
-                                            if (category === 'All' || itemCat === category) {
-                                                item.style.display = 'flex';
-                                                count++;
-                                            } else {
-                                                item.style.display = 'none';
-                                            }
-                                        });
-                                    }
-                                </script>
+                                            // Filter items
+                                            const items = document.querySelectorAll('.item-card-filter');
+                                            let count = 0;
+
+                                            items.forEach(item => {
+                                                const itemCat = item.getAttribute('data-category');
+                                                if (category === 'All' || itemCat === category) {
+                                                    item.style.display = 'flex';
+                                                    count++;
+                                                } else {
+                                                    item.style.display = 'none';
+                                                }
+                                            });
+                                        }
+                                    </script>
 
 
                     </div>
@@ -881,7 +1011,7 @@
                             <h2 class="section-heading">Shop Gallery</h2>
                             <div class="gallery-grid">
                                 <% shop.shopImage.forEach((image, index)=> { %>
-                                    <img src="<%= image.url %>" alt="Shop Image" class="gallery-img">
+                                    <img src="<%= optimizeImage(image.url) %>" alt="Shop Image" class="gallery-img">
                                     <% }) %>
                             </div>
                         </section>
@@ -902,6 +1032,8 @@
 
                                 <!-- Review Form -->
                                 <form class="review-form" action="/shops/<%= shop._id %>/reviews" method="POST">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
                                     <div class="field">
                                         <label>Rating</label>
                                         <select required name="review[ratings]">
@@ -961,6 +1093,7 @@
                                                     <form
                                                         action="/shops/<%= shop._id %>/reviews/<%= review._id %>?_method=DELETE"
                                                         method="POST" style="margin-top:10px;">
+                                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                         <button class="btn btn-sm btn-danger"
                                                             style="padding:4px 8px; font-size:12px;">Delete</button>
                                                     </form>
@@ -986,12 +1119,24 @@
                     <span class="close">&times;</span>
                     <h2 style="margin-bottom:20px;">Add New Item</h2>
                     <form action="/shops/<%= shop._id %>/items" method="POST" enctype="multipart/form-data"
-                        class="review-form">
-                        <div class="field">
+                        id="createItemForm" class="review-form">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                        <div class="field" style="position: relative;">
                             <label>Item Name</label>
-                            <input type="text" name="item[name]" required placeholder="Enter item name"
-                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                            <input type="text" name="item[name]" id="addItemName" required placeholder="Enter item name"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"
+                                autocomplete="off">
+                            <div id="addItemSuggestions" class="suggestions-container"></div>
                         </div>
+
+                        <!-- Selected Image Preview -->
+                        <div id="addItemSelectedPreview" class="selected-suggestion-preview">
+                            <img id="addPreviewImg" src="" alt="Selected">
+                            <button type="button" class="remove-selected-img"
+                                onclick="clearSelectedImage('add')">&times;</button>
+                        </div>
+                        <input type="hidden" name="imageId" id="addItemImageId">
                         <div class="field">
                             <label>Price (₹)</label>
                             <input type="number" name="item[price]" required min="0" placeholder="0"
@@ -999,14 +1144,19 @@
                         </div>
                         <div class="field">
                             <label>Quantity</label>
-                            <input type="number" name="item[quantity]" required min="1" placeholder="1"
+                            <input type="number" name="item[quantity]" required min="0" placeholder="0"
                                 style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                        </div>
+                        <div class="field" id="addItemDescriptionField">
+                            <label>Description</label>
+                            <textarea name="item[description]" rows="3" placeholder="Enter item description"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"></textarea>
                         </div>
 
                         <% if(currentShopCats) { %>
-                            <div class="field">
+                            <div class="field" id="addItemCategoryField">
                                 <label>Item Category</label>
-                                <select name="item[itemCategory]" class="form-control"
+                                <select id="addItemCategorySelect" name="item[itemCategory]" class="form-control"
                                     style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"
                                     required>
                                     <option value="" disabled selected>Select Category</option>
@@ -1217,9 +1367,9 @@
                                             </div>
                                             <% } %>
 
-                                                <div class="field">
+                                                <div class="field" id="addItemImageField">
                                                     <label>Item Image</label>
-                                                    <input type="file" name="itemImage" id="itemImageInput" required
+                                                    <input type="file" name="itemImage" id="itemImageInput"
                                                         style="width:100%; padding:10px; background:#f9fafb; border:1px solid #d1d5db; border-radius:8px;">
                                                 </div>
                                                 <button class="btn btn-primary w-100" id="addItemSubmitBtn">Add
@@ -1235,25 +1385,40 @@
                 <div class="modal-content">
                     <span class="close" onclick="closeEditItemModal()">&times;</span>
                     <h2 style="margin-bottom:20px;">Edit Item</h2>
-                    <form id="editItemForm" method="POST" class="review-form">
+                    <form id="editItemForm" method="POST" enctype="multipart/form-data" class="review-form">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
                         <input type="hidden" id="editItemId" name="itemId">
-                        <div class="field">
+                        <input type="hidden" id="editProductId" name="productId">
+                        <div class="field" style="position: relative;">
                             <label>Item Name</label>
                             <input type="text" id="editItemName" name="item[name]" required
-                                placeholder="Enter item name"
+                                placeholder="Enter item name" autocomplete="off"
                                 style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
-                        </div>
-                        <div class="field">
-                            <label>Price (₹)</label>
-                            <input type="number" id="editItemPrice" name="item[price]" required min="0" placeholder="0"
-                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
-                        </div>
-                        <div class="field">
-                            <label>Quantity</label>
-                            <input type="number" id="editItemQuantity" name="item[quantity]" required min="1"
-                                placeholder="1"
-                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
-                        </div>
+                            <div class="field">
+                                <label>Price (₹)</label>
+                                <input type="number" id="editItemPrice" name="item[price]" required min="0"
+                                    placeholder="0"
+                                    style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                            </div>
+                            <div class="field">
+                                <label>Quantity</label>
+                                <input type="number" id="editItemQuantity" name="item[quantity]" required min="0"
+                                    placeholder="0"
+                                    style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                            </div>
+                            <div class="field">
+                                <label>Description</label>
+                                <textarea id="editItemDescription" name="item[description]" rows="3"
+                                    placeholder="Enter item description"
+                                    style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"></textarea>
+                            </div>
+                            <div class="field" id="editItemImageField">
+                                <label>Update Image (Optional)</label>
+                                <input type="file" name="itemImage"
+                                    style="width:100%; padding:10px; background:#f9fafb; border:1px solid #d1d5db; border-radius:8px;">
+                            </div>
+                        </div><!-- /field: item name group -->
 
                         <% if(currentShopCats) { %>
                             <div class="field">
@@ -1412,11 +1577,12 @@
                                             </div>
                                             <% } %>
 
-                                                <button type="submit" class="btn btn-primary w-100">Update Item</button>
+                                                <button type="submit" class="btn btn-primary w-100">Update
+                                                    Item</button>
 
                     </form>
                 </div>
-            </div>
+            </div><!-- /editItemModal -->
 
             <!-- Delete Confirmation Modal -->
             <div id="deleteModal" class="modal" style="z-index: 1100;">
@@ -1440,6 +1606,8 @@
                             Cancel
                         </button>
                         <form id="deleteForm" method="POST" style="margin:0; width: 100%;">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
                             <button class="btn btn-danger" style="width: 100%; justify-content: center;">
                                 Yes, Delete
                             </button>
@@ -1460,9 +1628,19 @@
                             <img id="modalItemImage" class="item-modal-img" alt="Item">
                             <div class="item-modal-price-overlay" id="modalItemPrice"></div>
                         </div>
-                        <a id="modalWhatsappLink" href="#" target="_blank" class="item-modal-whatsapp-btn">
-                            <i class="fa-brands fa-whatsapp"></i> Order on WhatsApp
-                        </a>
+                        <div class="item-modal-desc" id="modalItemDescription"
+                            style="padding: 15px; font-size: 14px; color: #4b5563; line-height: 1.5; background: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                        </div>
+                        <div style="display: flex; gap: 0; width: 100%;">
+                            <button id="modalAddToCartBtn" class="item-modal-action-btn"
+                                style="background:#f59e0b; flex:1; border-right:1px solid rgba(255,255,255,0.2);">
+                                <i class="fa-solid fa-cart-plus"></i> Add to Cart
+                            </button>
+                            <button id="modalOrderNowBtn" class="item-modal-action-btn"
+                                style="background:#10b981; flex:1;">
+                                <i class="fa-solid fa-bolt"></i> Order Now
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1475,11 +1653,13 @@
 
                     <% if (shop.upiScanner && shop.upiScanner.url) { %>
                         <div style="margin-bottom:20px;">
-                            <img src="<%= shop.upiScanner.url %>" alt="UPI QR Code"
+                            <img src="<%= optimizeImage(shop.upiScanner.url) %>" alt="UPI QR Code"
                                 style="max-width:100%; border-radius:12px; border:1px solid #e5e7eb;">
                         </div>
                         <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
                             <form action="/shops/<%= shop._id %>/upi?_method=DELETE" method="POST">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
                                 <button class="btn btn-danger w-100"><i class="fa-solid fa-trash"></i> Remove QR
                                     Code</button>
                             </form>
@@ -1491,10 +1671,11 @@
                                         <p style="color:#6b7280; margin-bottom:20px;">Upload your UPI QR Code image.
                                         </p>
                                         <form action="/shops/<%= shop._id %>/upi?_method=PUT" method="POST"
-                                            enctype="multipart/form-data" id="upiModalForm">
+                                            enctype="multipart/form-data" id="upiForm">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <input type="file" name="upiImage" id="upiModalInput" accept="image/*"
                                                 style="display:none;"
-                                                onchange="document.getElementById('upiModalForm').submit()">
+                                                onchange="document.getElementById('upiForm').submit()">
                                             <button type="button" class="btn btn-primary w-100"
                                                 onclick="document.getElementById('upiModalInput').click()">
                                                 <i class="fa-solid fa-upload"></i> Upload QR Image
@@ -1519,21 +1700,111 @@
                     const name = element.getAttribute('data-name');
                     const imgUrl = element.getAttribute('data-img');
                     const price = element.getAttribute('data-price');
-                    const ownerPhone = element.getAttribute('data-owner');
+                    const itemId = element.getAttribute('data-itemid');
+                    const shopId = element.getAttribute('data-shopid');
+                    const shopName = element.getAttribute('data-shopname');
+                    const description = element.getAttribute('data-description');
+
                     const modal = document.getElementById('itemModal');
                     const nameEl = document.getElementById('modalItemName');
                     const imgEl = document.getElementById('modalItemImage');
                     const priceEl = document.getElementById('modalItemPrice');
-                    const whatsappLink = document.getElementById('modalWhatsappLink');
 
                     nameEl.textContent = name;
                     imgEl.src = imgUrl || '/images/placeholder.jpg';
                     priceEl.textContent = '₹' + price;
 
-                    const message = `Hi, I am interested in ${name} priced at ₹${price}.\n\nView item image: ${imgUrl}\n\nIs it available?`;
-                    whatsappLink.href = `/action/whatsapp/${ownerPhone}?text=${encodeURIComponent(message)}`;
+                    const descEl = document.getElementById('modalItemDescription');
+                    if (descEl) {
+                        const desc = element.getAttribute('data-description');
+                        descEl.textContent = desc || 'No description available.';
+                    }
+
+                    const cartBtn = document.getElementById('modalAddToCartBtn');
+                    const orderBtn = document.getElementById('modalOrderNowBtn');
+
+                    // Store data attributes on the buttons directly
+                    if (cartBtn) {
+                        cartBtn.setAttribute('data-itemid', itemId);
+                        cartBtn.setAttribute('data-name', name);
+                        cartBtn.setAttribute('data-img', imgUrl);
+                        cartBtn.setAttribute('data-price', price);
+                        cartBtn.setAttribute('data-shopid', shopId);
+                        cartBtn.setAttribute('data-shopname', shopName);
+                        cartBtn.setAttribute('data-description', description);
+                    }
+                    if (orderBtn) {
+                        orderBtn.setAttribute('data-itemid', itemId);
+                        orderBtn.setAttribute('data-name', name);
+                        orderBtn.setAttribute('data-img', imgUrl);
+                        orderBtn.setAttribute('data-price', price);
+                        orderBtn.setAttribute('data-shopid', shopId);
+                        orderBtn.setAttribute('data-shopname', shopName);
+                        orderBtn.setAttribute('data-description', description);
+                    }
 
                     modal.style.display = 'flex';
+                }
+
+                // Attach event listeners outside the open function to prevent duplicate bindings or closures capturing old variables
+                document.getElementById('modalAddToCartBtn')?.addEventListener('click', function () {
+                    addToCart(
+                        this.getAttribute('data-itemid'),
+                        this.getAttribute('data-name'),
+                        this.getAttribute('data-img'),
+                        this.getAttribute('data-price'),
+                        this.getAttribute('data-shopid'),
+                        this.getAttribute('data-shopname')
+                    );
+                });
+
+                document.getElementById('modalOrderNowBtn')?.addEventListener('click', function () {
+                    orderNow(
+                        this.getAttribute('data-itemid'),
+                        this.getAttribute('data-name'),
+                        this.getAttribute('data-img'),
+                        this.getAttribute('data-price'),
+                        this.getAttribute('data-shopid'),
+                        this.getAttribute('data-shopname')
+                    );
+                });
+
+                async function addToCart(itemId, name, imgUrl, price, shopId, shopName, silent = false) {
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        const res = await fetch('/api/cart/add', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({ itemId, itemName: name, itemImage: imgUrl, price, shopId, shopName })
+                        });
+
+
+                        const data = await res.json();
+                        if (res.ok) {
+                            window.location.reload();
+                            return true;
+                        } else {
+                            if (res.status === 401) {
+                                window.location.href = '/login';
+                            } else {
+                                showToast(data.message || "Failed to add to cart", 'danger');
+                            }
+                            return false;
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        showToast("Error adding to cart", 'danger');
+                        return false;
+                    }
+                }
+
+                function orderNow(itemId, name, imgUrl, price, shopId, shopName) {
+                    addToCart(itemId, name, imgUrl, price, shopId, shopName, true).then((success) => {
+                        if (success) window.location.href = '/api/cart';
+                    });
                 }
 
                 function closeItemModal() {
@@ -1572,6 +1843,14 @@
 
                     if (btn) {
                         btn.onclick = function () {
+                            // Reset form and previews
+                            const form = modal.querySelector('form');
+                            if (form) form.reset();
+                            const imageIdInput = document.getElementById('addItemImageId');
+                            if (imageIdInput) imageIdInput.value = '';
+                            if (typeof window.clearSelectedImage === 'function') {
+                                window.clearSelectedImage('add');
+                            }
                             modal.style.display = "block";
                         }
                     }
@@ -1622,12 +1901,30 @@
                 });
 
                 // Edit Item Modal Functions
-                function openEditItemModal(itemId, itemName, itemPrice, itemQuantity, itemCategory, sizes) {
+                function openEditItemModalFromBtn(btn) {
+                    const card = btn.closest('.product-card');
+                    const itemId = card.getAttribute('data-itemid');
+                    const productId = card.getAttribute('data-productid');
+                    const isVirtual = card.getAttribute('data-isvirtual');
+                    const itemName = card.getAttribute('data-name');
+                    const itemPrice = card.getAttribute('data-price');
+                    const itemQuantity = card.getAttribute('data-quantity');
+                    const itemCategory = card.getAttribute('data-category');
+                    const sizes = JSON.parse(card.getAttribute('data-sizes') || '[]');
+                    const description = card.getAttribute('data-description');
+                    openEditItemModal(itemId, itemName, itemPrice, itemQuantity, itemCategory, sizes, description, productId, isVirtual);
+                }
+
+                function openEditItemModal(itemId, itemName, itemPrice, itemQuantity, itemCategory, sizes, description, productId, isVirtual) {
                     const modal = document.getElementById('editItemModal');
-                    document.getElementById('editItemId').value = itemId;
+                    const form = document.getElementById('editItemForm');
+
+                    document.getElementById('editItemId').value = itemId || '';
+                    document.getElementById('editProductId').value = productId || '';
                     document.getElementById('editItemName').value = itemName;
                     document.getElementById('editItemPrice').value = itemPrice;
                     document.getElementById('editItemQuantity').value = itemQuantity;
+                    document.getElementById('editItemDescription').value = description || '';
 
                     const categorySelect = document.getElementById('editItemCategory');
                     if (categorySelect && itemCategory) {
@@ -1640,9 +1937,16 @@
                         cb.checked = sizes && sizes.includes(cb.value);
                     });
 
-                    // Set form action
-                    const form = document.getElementById('editItemForm');
-                    form.action = `/shops/<%= shop._id %>/items/${itemId}?_method=PUT`;
+                    // Set form action based on virtual status
+                    if (isVirtual === 'true') {
+                        document.querySelector('#editItemModal h2').textContent = "Activate Product";
+                        document.querySelector('#editItemModal button[type="submit"]').textContent = "Activate Product";
+                        form.action = `/shops/<%= shop._id %>/items`;
+                    } else {
+                        document.querySelector('#editItemModal h2').textContent = "Edit Item";
+                        document.querySelector('#editItemModal button[type="submit"]').textContent = "Update Item";
+                        form.action = `/shops/<%= shop._id %>/items/${itemId}?_method=PUT`;
+                    }
 
                     modal.style.display = "block";
                 }
@@ -1845,6 +2149,177 @@
                                     toggleSizeGroups('edit', editSelect.value);
                                 }, 50); // slight delay to allow the inline onclick to set the value first
                             }
+                        });
+                    }
+
+                    // Shared Image Reuse System Logic
+                    function debounce(func, wait) {
+                        let timeout;
+                        return function (...args) {
+                            clearTimeout(timeout);
+                            timeout = setTimeout(() => func.apply(this, args), wait);
+                        };
+                    }
+
+                    async function fetchSuggestions(q, suggestionsEl, hiddenEl, previewPrefix) {
+                        if (q.length < 2) {
+                            suggestionsEl.style.display = 'none';
+                            return;
+                        }
+
+                        try {
+                            const category = '<%= shop.category %>';
+                            const res = await fetch(`/api/item-suggestions?q=${encodeURIComponent(q)}&category=${encodeURIComponent(category)}`);
+                            const items = await res.json();
+
+                            if (items.length > 0) {
+                                renderSuggestions(items, suggestionsEl, hiddenEl, previewPrefix);
+                                suggestionsEl.style.display = 'block';
+                            } else {
+                                suggestionsEl.style.display = 'none';
+                            }
+                        } catch (err) {
+                            console.error("Failed to fetch suggestions", err);
+                        }
+                    }
+
+                    function renderSuggestions(items, suggestionsEl, hiddenEl, previewPrefix) {
+                        suggestionsEl.innerHTML = '';
+                        items.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'suggestion-item';
+                            div.innerHTML = `
+                                <img src="${item.imageUrl}" alt="${item.displayName}">
+                                <div class="suggestion-info">
+                                    <div class="suggestion-name">${item.displayName}</div>
+                                    <div class="suggestion-desc">${item.description}</div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-primary" style="font-size: 10px; padding: 4px 8px;">Select</button>
+                            `;
+                            div.onclick = () => selectImage(item, suggestionsEl, hiddenEl, previewPrefix);
+                            suggestionsEl.appendChild(div);
+                        });
+                    }
+
+                    function selectImage(item, suggestionsEl, hiddenEl, previewPrefix) {
+                        // Update hidden input and name input
+                        hiddenEl.value = item.imageId;
+
+                        const inputId = previewPrefix === 'add' ? 'addItemName' : 'editItemName';
+                        const nameInput = document.getElementById(inputId);
+                        if (nameInput) nameInput.value = item.displayName;
+
+                        // Also update description if empty
+                        const modalId = previewPrefix === 'add' ? 'addItemModal' : 'editItemModal';
+                        const descTextarea = document.querySelector(`#${modalId} textarea[name="item[description]"]`) ||
+                            document.getElementById('editItemDescription');
+                        if (descTextarea && !descTextarea.value) {
+                            descTextarea.value = item.description;
+                        }
+
+                        // Update Preview
+                        const previewEl = document.getElementById(`${previewPrefix}ItemSelectedPreview`);
+                        const imgEl = document.getElementById(`${previewPrefix}PreviewImg`);
+                        imgEl.src = item.imageUrl;
+                        previewEl.style.display = 'block';
+
+                        // Auto-set category if available
+                        if (previewPrefix === 'add' && item.itemCategory) {
+                            const catSelect = document.getElementById('addItemCategorySelect');
+                            if (catSelect) catSelect.value = item.itemCategory;
+                        }
+
+                        // Hide suggestions
+                        suggestionsEl.style.display = 'none';
+
+                        // Optional: clear file input (only for Add)
+                        if (previewPrefix === 'add') {
+                            const fileInput = document.getElementById('itemImageInput');
+                            if (fileInput) fileInput.value = '';
+
+                            // HIDE extra fields for "Quick-Add"
+                            const descField = document.getElementById('addItemDescriptionField');
+                            const catField = document.getElementById('addItemCategoryField');
+                            const uploadField = document.getElementById('addItemImageField');
+
+                            if (descField) descField.style.display = 'none';
+                            if (catField) catField.style.display = 'none';
+                            if (uploadField) uploadField.style.display = 'none';
+                        } else {
+                            // Logic for Edit (already handled for uploadField)
+                            const uploadField = document.getElementById('editItemImageField');
+                            if (uploadField) uploadField.style.display = 'none';
+                        }
+                    }
+
+                    window.clearSelectedImage = function (prefix) {
+                        const previewEl = document.getElementById(`${prefix}ItemSelectedPreview`);
+                        const hiddenEl = document.getElementById(prefix === 'add' ? 'addItemImageId' : '');
+
+                        if (hiddenEl) hiddenEl.value = '';
+                        if (previewEl) previewEl.style.display = 'none';
+
+                        // SHOW the upload field and extra fields
+                        if (prefix === 'add') {
+                            const descField = document.getElementById('addItemDescriptionField');
+                            const catField = document.getElementById('addItemCategoryField');
+                            const uploadField = document.getElementById('addItemImageField');
+
+                            if (descField) descField.style.display = 'block';
+                            if (catField) catField.style.display = 'block';
+                            if (uploadField) uploadField.style.display = 'block';
+                        } else {
+                            const uploadField = document.getElementById('editItemImageField');
+                            if (uploadField) uploadField.style.display = 'block';
+                        }
+                    }
+
+                    function setupImageSuggestions(inputId, suggestionsId, hiddenId, previewPrefix) {
+                        const input = document.getElementById(inputId);
+                        const suggestions = document.getElementById(suggestionsId);
+                        const hidden = document.getElementById(hiddenId);
+
+                        if (!input || !suggestions || !hidden) return;
+
+                        const debouncedFetch = debounce((q) => fetchSuggestions(q, suggestions, hidden, previewPrefix), 300);
+
+                        input.addEventListener('input', (e) => debouncedFetch(e.target.value));
+
+                        // Hide suggestions when clicking outside
+                        document.addEventListener('click', (e) => {
+                            if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+                                suggestions.style.display = 'none';
+                            }
+                        });
+                    }
+
+                    // Initialize for Add modal
+                    setupImageSuggestions('addItemName', 'addItemSuggestions', 'addItemImageId', 'add');
+
+                    // Form Validation: Ensure either imageId or File is provided
+                    const addForm = document.querySelector('#addItemModal form');
+                    if (addForm) {
+                        addForm.addEventListener('submit', function (e) {
+                            const imageId = document.getElementById('addItemImageId').value;
+                            const fileInput = document.getElementById('itemImageInput');
+                            const hasFile = fileInput && fileInput.files.length > 0;
+
+                            if (!imageId && !hasFile) {
+                                e.preventDefault();
+                                alert('Please select a recommended image or upload a product photo.');
+                            }
+                        });
+                    }
+
+                    const editForm = document.querySelector('#editItemModal form');
+                    if (editForm) {
+                        editForm.addEventListener('submit', function (e) {
+                            const fileInput = editForm.querySelector('input[type="file"]');
+                            const hasFile = fileInput && fileInput.files.length > 0;
+
+                            // For edit, we don't strictly require a NEW image if it already has one.
+                            // But since the user wants "No image, No item", we should ensure the item being edited HAS an image.
+                            // The edit modal opening logic should ensure an image exists or is being uploaded.
                         });
                     }
                 });

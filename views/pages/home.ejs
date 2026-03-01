@@ -304,9 +304,13 @@
                         const { latitude, longitude } = position.coords;
                         fetch('/set-location', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
                             body: JSON.stringify({ latitude, longitude })
                         }).catch(console.error);
+
                         sessionStorage.setItem('askedForLocation', 'true');
                     },
                     (error) => {

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Shedule = require("../data/clander.js");
 const { isLogedin, isOwner } = require("../middeleware.js");
+const { doubleCsrfProtection } = require("../utils/csrf");
 const mongoose = require("mongoose");
 
 function isISODate(s) {
@@ -25,7 +26,8 @@ router.get("/shedule/:id", isLogedin, isOwner, async (req, res) => {
 });
 
 // POST form -> saves schedule to MongoDB
-router.post("/shedule/:id", isLogedin, isOwner, async (req, res) => {
+router.post("/shedule/:id", isLogedin, isOwner, doubleCsrfProtection, async (req, res) => {
+
     try {
         const { id } = req.params;
         console.log(`[Schedule POST] Hit for ID: ${id}`);

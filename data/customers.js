@@ -46,11 +46,11 @@ const customerSchema = new Schema({
   },
   verified: {
     type: Boolean,
-    default: false
+    default: true
   },
   verifedBy: {
     type: String,
-    default: "none",
+    default: "WhatsApp OTP",
     trim: true,
     maxlength: 60,
     minlength: 3,
@@ -70,8 +70,13 @@ const customerSchema = new Schema({
   resetTokenExpiry: {
     type: Date,
     default: null
+  },
+  fcmToken: {
+    type: String,
+    default: null
   }
 });
+
 
 customerSchema.plugin(passportLocalMongoose);
 

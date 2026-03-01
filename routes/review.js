@@ -3,14 +3,18 @@ const router = express.Router({ mergeParams: true });
 const Review = require("../data/review.js");
 const Provider = require("../data/serviceproviders.js");
 const { isLogedin, isNotBlocked, isVerifiedCustomer, validatereview, isReviewAuthor } = require("../middeleware.js");
+const { doubleCsrfProtection } = require("../utils/csrf");
 const wrapAsync = require("../utils/wrapAsync.js");
+
 
 // reviews data
 router.post("/:id/reviews",
     isLogedin,
     isNotBlocked,
     isVerifiedCustomer,
+    doubleCsrfProtection,
     validatereview,
+
     wrapAsync(async (req, res) => {
         let { id } = req.params;
         let provider = await Provider.findById(id);
@@ -28,6 +32,8 @@ router.post("/:id/reviews",
 // delete reviews
 router.delete("/provider/:id/review/:reviewId", isLogedin,
     isReviewAuthor,
+    doubleCsrfProtection,
+
     wrapAsync(async (req, res) => {
         let { id, reviewId } = req.params;
         await Provider.findByIdAndUpdate(id, { $pull: { review: reviewId } });

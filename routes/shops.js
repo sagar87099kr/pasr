@@ -3,12 +3,16 @@ const router = express.Router();
 const Shop = require("../data/shops.js");
 const Review = require("../data/review.js");
 const Item = require("../data/item.js");
-const { isLogedin, isNotBlocked, isOwner, validateShop, isadmin, validatereview, isReviewAuthor, validateItem, isVerifiedCustomer } = require("../middeleware.js"); // Using generic middlewares where applicable
+const Order = require("../data/order.js");
+const { isLogedin, isNotBlocked, isOwner, validateShop, isadmin, validatereview, isReviewAuthor, validateItem, isVerifiedCustomer } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const { forwardGeocode } = require("../utils/geocoder");
-const multer = require("multer");
-const { storage, cloudinary } = require("../cloud_con.js");
-const upload = multer({ storage });
+const { storage, cloudinary, upload, itemUpload } = require("../cloud_con.js");
+const ItemImageRegistry = require("../data/itemImageRegistry");
+const { normalizeItemName } = require("../utils/normalization");
+const MasterProduct = require("../data/masterProduct");
+const { doubleCsrfProtection } = require("../utils/csrf");
+
 
 // Define a middleware specifically for Shop ownership if isOwner is strictly for Providers
 // Looking at middleware.js: isOwner checks Provider. isProductOwner checks Product.
@@ -39,7 +43,8 @@ router.get("/shops/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
 }));
 
 // Verify Shop Action
-router.put("/shops/:id/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
+router.put("/shops/:id/verify", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     const { id } = req.params;
     const { verifiedBy } = req.body;
     const shop = await Shop.findByIdAndUpdate(id, { verified: true, verifiedBy });
@@ -48,7 +53,8 @@ router.put("/shops/:id/verify", isLogedin, isadmin, wrapAsync(async (req, res) =
 }));
 
 // Fail/Delete Shop Action
-router.delete("/shops/:id/verifyfail", isLogedin, isadmin, wrapAsync(async (req, res) => {
+router.delete("/shops/:id/verifyfail", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     const { id } = req.params;
     const shop = await Shop.findById(id);
     if (shop.shopImage) {
@@ -65,7 +71,7 @@ router.delete("/shops/:id/verifyfail", isLogedin, isadmin, wrapAsync(async (req,
 router.get("/shops", wrapAsync(async (req, res) => {
     let { lat, lng, range } = req.query;
     let shops = [];
-    range = parseInt(range) || 10;
+    range = parseInt(range) || 5;
     if (range > 10) range = 10;
 
     // Priority 1: Query params (lat, lng from URL)
@@ -132,6 +138,36 @@ router.get("/shops", wrapAsync(async (req, res) => {
         console.log(`Verified Shops with Geometry: ${shopsWithGeometry}`);
 
         shops = await Shop.find(query).populate('owner');
+
+        // Prioritize owned shop to the top
+        if (req.user) {
+            shops.sort((a, b) => {
+                const aIsOwner = a.owner._id.equals(req.user._id);
+                const bIsOwner = b.owner._id.equals(req.user._id);
+                if (aIsOwner && !bIsOwner) return -1;
+                if (!aIsOwner && bIsOwner) return 1;
+                return 0;
+            });
+
+            // For owned shops, check if they have pending orders
+            const pendingOrderShops = await Order.find({
+                shopId: { $in: shops.filter(s => s.owner._id.equals(req.user._id)).map(s => s._id) },
+                orderStatus: 'CREATED'
+            }).distinct('shopId');
+
+            const pendingShopIds = pendingOrderShops.map(id => id.toString());
+
+            shops = shops.map(shop => {
+                const shopObj = shop.toObject();
+                if (req.user && shop.owner._id.equals(req.user._id)) {
+                    shopObj.hasPendingOrders = pendingShopIds.includes(shop._id.toString());
+                } else {
+                    shopObj.hasPendingOrders = false;
+                }
+                return shopObj;
+            });
+        }
+
         console.log(`Found ${shops.length} shops within ${range}km of (${lat}, ${lng})`);
         console.log(`==============================================\n`);
     }
@@ -145,27 +181,39 @@ router.get("/shops/new", isLogedin, isVerifiedCustomer, (req, res) => {
 });
 
 // Create Shop
-router.post("/shops", isLogedin, isNotBlocked, upload.single("shopImage"), validateShop, wrapAsync(async (req, res) => {
+router.post("/shops", isLogedin, isNotBlocked, doubleCsrfProtection, upload.single("shopImage"), validateShop, wrapAsync(async (req, res) => {
+
     const shopData = req.body.shop;
     const geoData = await forwardGeocode(shopData.location);
 
     const shop = new Shop(shopData);
     shop.geometry = geoData.body.features[0].geometry;
     shop.owner = req.user._id;
-    // For strictly following local market which requires admin verification, we set verified to false by default.
-    // User requested verification route, implying manual verification flow.
     shop.verified = false;
 
     if (req.file) {
-        // Store as array for schema consistency if schema expects array, 
-        // OR as single object if schema expects single. 
-        // Based on previous code `shop.shopImage = req.files.map...`, it expects an array.
-        // Even with single image, we can push to array for future flexibility 
-        // OR compatibility with existing `shopDetail.ejs` (which probably iterates).
         shop.shopImage = [{ url: req.file.path, filename: req.file.filename }];
     }
 
     await shop.save();
+
+    // SEEDING: If it's a Grocery shop, add template items
+    if (shop.category === "Grocery") {
+        const Item = require("../data/item.js");
+        const groceryTemplates = require("../data/groceryTemplates");
+        for (let template of groceryTemplates) {
+            const newItem = new Item({
+                ...template,
+                price: 0,
+                quantity: 0,
+                shop: shop._id
+            });
+            await newItem.save();
+            shop.items.push(newItem._id);
+        }
+        await shop.save();
+    }
+
     req.flash("success", "Shop registered successfully!");
     res.redirect("/shops");
 }));
@@ -181,16 +229,142 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
                 path: "author"
             }
         })
-        .populate("items");
+        .populate({
+            path: "items",
+            populate: { path: "product" }
+        });
+
     if (!shop) {
         req.flash("error", "Shop not found");
         return res.redirect("/shops");
     }
-    res.render("pages/shopDetail.ejs", { shop });
+
+    // Check if shop is closed and user is not owner
+    const isOwner = req.user && shop.owner._id.equals(req.user._id);
+
+    if (!isOwner && shop.openingTime && shop.closingTime) {
+        var istOffsetMs = 5.5 * 60 * 60 * 1000;
+        var nowIST = new Date(new Date().getTime() + istOffsetMs);
+        var istH = nowIST.getUTCHours();
+        var istM = nowIST.getUTCMinutes();
+        var nowStr = (istH < 10 ? '0' : '') + istH + ':' + (istM < 10 ? '0' : '') + istM;
+
+        if (!(nowStr >= shop.openingTime && nowStr <= shop.closingTime)) {
+            // Format time for flash message
+            const [h, m] = shop.openingTime.split(':').map(Number);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const h12 = h % 12 || 12;
+            const displayTime = `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
+
+            req.flash("error", `This shop is currently closed. It will open at ${displayTime}.`);
+            return res.redirect("/shops");
+        }
+    }
+
+    if (isOwner) {
+        // Owner View: Show all MasterProducts for this category + Local Items
+        let masterQuery = { isActive: true };
+        if (shop.category === "Grocery") {
+            const grocerySubCats = [
+                "Grocery", "Staples & Grains", "Edible Oil & Ghee",
+                "Spices & Masala", "Snacks & Namkeen", "Beverages",
+                "Dairy & Refrigerator", "Bakery Items", "Personal Care",
+                "Home Cleaning & Household", "Baby Care", "Dry Fruits & Sweets",
+                "Instant & Ready to Eat"
+            ];
+            masterQuery.category = { $in: grocerySubCats };
+        } else if (shop.category === "General Store") {
+            const generalStoreSubCats = [
+                "General Store", "Daily Essentials", "Snacks & Beverages", "Personal Care",
+                "Household Items", "Stationery", "Cleaning Supplies",
+                "Baby Care", "Snacks & Namkeen"
+            ];
+            masterQuery.category = { $in: generalStoreSubCats };
+        } else {
+            masterQuery.category = shop.category;
+        }
+
+        const masterProducts = await MasterProduct.find(masterQuery).lean();
+
+        // 2. Create a map of existing items by product ID
+        const inventoryMap = {};
+        shop.items.forEach(item => {
+            if (item.product) {
+                inventoryMap[item.product._id.toString()] = item;
+            }
+        });
+
+        // 3. Merge: Every master product should appear. 
+        const mergedItems = masterProducts.map(mp => {
+            const existing = inventoryMap[mp._id.toString()];
+            if (existing) {
+                return {
+                    ...existing.toObject(),
+                    product: mp,
+                    isVirtual: false
+                };
+            } else {
+                return {
+                    product: mp,
+                    price: 0,
+                    quantity: 0,
+                    isVirtual: true,
+                    shop: shop._id
+                };
+            }
+        });
+
+        // Also add any "custom" items that don't have a MasterProduct
+        shop.items.forEach(item => {
+            if (!item.product) {
+                mergedItems.push({
+                    ...item.toObject(),
+                    isVirtual: false,
+                    isCustom: true
+                });
+            }
+        });
+
+        // [STRICT IMAGE FILTER] Only show items with images
+        const filteredMergedItems = mergedItems
+            .filter(item => {
+                const hasImg = (item.img && item.img.url) || (item.product && item.product.img && item.product.img.url);
+                return !!hasImg;
+            })
+            .sort((a, b) => {
+                const aVal = a.quantity > 0 ? 1 : 0;
+                const bVal = b.quantity > 0 ? 1 : 0;
+                return bVal - aVal;
+            });
+
+        res.render("pages/shopDetail.ejs", { shop, displayItems: filteredMergedItems });
+    } else {
+        // Customer View: Only items with quantity > 0 AND having an image
+        const sellableItems = (shop.items || [])
+            .map(item => item.toObject ? item.toObject() : item)
+            .filter(item => {
+                const hasImg = (item.img && item.img.url) || (item.product && item.product.img && item.product.img.url);
+                return item.quantity > 0 && !!hasImg;
+            })
+            .sort((a, b) => a.price - b.price);
+
+        // Calculate available categories for the filter bar
+        const availableCategories = [...new Set(sellableItems.map(item => {
+            if (item.product && item.product.category) return item.product.category;
+            return item.itemCategory || "Others";
+        }))];
+
+        res.render("pages/shopDetail.ejs", {
+            shop,
+            displayItems: sellableItems,
+            availableCategories
+        });
+    }
 }));
 
 // Create Review Route
-router.post("/shops/:id/reviews", isLogedin, isNotBlocked, validatereview, wrapAsync(async (req, res) => {
+router.post("/shops/:id/reviews", isLogedin, isNotBlocked, doubleCsrfProtection, validatereview, wrapAsync(async (req, res) => {
+
     let { id } = req.params;
     let shop = await Shop.findById(id);
     let newReview = new Review(req.body.review);
@@ -221,7 +395,8 @@ const isShopReviewAuthor = async (req, res, next) => {
 };
 
 // Delete Review Route
-router.delete("/shops/:id/reviews/:reviewId", isLogedin, isShopReviewAuthor, wrapAsync(async (req, res) => {
+router.delete("/shops/:id/reviews/:reviewId", isLogedin, isShopReviewAuthor, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     let { id, reviewId } = req.params;
     await Shop.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
     await Review.findByIdAndDelete(reviewId);
@@ -241,7 +416,8 @@ router.get("/shops/:id/edit", isLogedin, isShopOwner, wrapAsync(async (req, res)
 }));
 
 // Update Shop
-router.put("/shops/:id", isLogedin, isShopOwner, validateShop, wrapAsync(async (req, res) => {
+router.put("/shops/:id", isLogedin, isShopOwner, doubleCsrfProtection, validateShop, wrapAsync(async (req, res) => {
+
     let { id } = req.params;
     const { shopName, shopDescription, category, location, openingTime, closingTime } = req.body.shop;
 
@@ -257,7 +433,8 @@ router.put("/shops/:id", isLogedin, isShopOwner, validateShop, wrapAsync(async (
 }));
 
 // Delete Shop
-router.delete("/shops/:id", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
+router.delete("/shops/:id", isLogedin, isShopOwner, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     let { id } = req.params;
     const shop = await Shop.findById(id);
 
@@ -274,7 +451,8 @@ router.delete("/shops/:id", isLogedin, isShopOwner, wrapAsync(async (req, res) =
 
 
 // Create Item
-router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, upload.single("itemImage"), validateItem, wrapAsync(async (req, res) => {
+router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, doubleCsrfProtection, itemUpload.single("itemImage"), validateItem, wrapAsync(async (req, res) => {
+
     console.log("Create Item Route Hit");
     console.log("Body:", req.body);
     console.log("Item Category:", req.body.item.itemCategory);
@@ -288,16 +466,48 @@ router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, upload.sin
     }
 
     const itemData = req.body.item;
+    const { productId } = req.body; // New: product reference from virtual inventory
+
     // Normalize sizes from checkboxes (may be string, array, or undefined)
     if (itemData.sizes) {
         itemData.sizes = Array.isArray(itemData.sizes) ? itemData.sizes : [itemData.sizes];
     } else {
         itemData.sizes = [];
     }
+
     const newItem = new Item(itemData);
 
-    if (req.file) {
+    if (productId) {
+        newItem.product = productId;
+    }
+
+    // SHARED IMAGE REUSE LOGIC
+    if (req.body.imageId) {
+        // Reuse existing image from registry
+        const registryEntry = await ItemImageRegistry.findOne({ publicId: req.body.imageId });
+        if (registryEntry) {
+            newItem.img = {
+                url: registryEntry.imageUrl,
+                filename: registryEntry.publicId
+            };
+            registryEntry.usageCount += 1;
+            await registryEntry.save();
+        }
+    } else if (req.file) {
+        // New image upload - add to registry
         newItem.img = { url: req.file.path, filename: req.file.filename };
+
+        const canonical = normalizeItemName(itemData.name);
+        await ItemImageRegistry.create({
+            canonicalName: canonical,
+            displayName: itemData.name,
+            description: itemData.description || "",
+            imageUrl: req.file.path,
+            publicId: req.file.filename,
+            itemCategory: shop.category,
+            usageCount: 1,
+            locked: true
+        });
     }
 
     newItem.shop = shop._id;
@@ -306,36 +516,101 @@ router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, upload.sin
     await newItem.save();
     await shop.save();
 
-    req.flash("success", "Your item was added");
+    req.flash("success", "Item activated/added successfully");
     res.redirect(`/shops/${id}`);
 }));
 
 // Update Item
-router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
+router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, doubleCsrfProtection, itemUpload.single("itemImage"), wrapAsync(async (req, res) => {
+
     const { id, itemId } = req.params;
-    const { name, price, quantity, itemCategory } = req.body.item;
+    const { name, price, quantity, itemCategory, description } = req.body.item;
     let sizes = req.body.item.sizes || [];
     if (!Array.isArray(sizes)) sizes = [sizes];
 
-    await Item.findByIdAndUpdate(itemId, {
+    const updateData = {
         name,
         price,
         quantity,
         itemCategory,
+        description,
         sizes
-    });
+    };
+
+    const item = await Item.findById(itemId);
+    const oldFilename = item.img ? item.img.filename : null;
+
+    if (req.body.imageId) {
+        // Switch to an existing registry image
+        const registryEntry = await ItemImageRegistry.findOne({ publicId: req.body.imageId });
+        if (registryEntry) {
+            updateData.img = {
+                url: registryEntry.imageUrl,
+                filename: registryEntry.publicId
+            };
+            registryEntry.usageCount += 1;
+            await registryEntry.save();
+
+            // Handle cleanup of old image reference
+            if (oldFilename) {
+                const oldRegistry = await ItemImageRegistry.findOne({ publicId: oldFilename });
+                if (oldRegistry) {
+                    oldRegistry.usageCount = Math.max(0, oldRegistry.usageCount - 1);
+                    await oldRegistry.save();
+                }
+            }
+        }
+    } else if (req.file) {
+        // New image upload
+        if (oldFilename) {
+            const oldRegistry = await ItemImageRegistry.findOne({ publicId: oldFilename });
+            if (oldRegistry) {
+                oldRegistry.usageCount = Math.max(0, oldRegistry.usageCount - 1);
+                await oldRegistry.save();
+                // We DO NOT delete from Cloudinary here as per registry rules (Admin only deletion)
+            } else {
+                // Not in registry, safe to delete (legacy/cleanup)
+                await cloudinary.uploader.destroy(oldFilename);
+            }
+        }
+        updateData.img = { url: req.file.path, filename: req.file.filename };
+
+        // Add new image to registry
+        const canonical = normalizeItemName(name);
+        await ItemImageRegistry.create({
+            canonicalName: canonical,
+            displayName: name,
+            description: description || "",
+            imageUrl: req.file.path,
+            publicId: req.file.filename,
+            itemCategory: shop.category,
+            usageCount: 1,
+            locked: true
+        });
+    }
+
+    await Item.findByIdAndUpdate(itemId, updateData);
 
     req.flash("success", "Item updated successfully");
     res.redirect(`/shops/${id}`);
 }));
 
 // Delete Item
-router.delete("/shops/:id/items/:itemId", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
+router.delete("/shops/:id/items/:itemId", isLogedin, isShopOwner, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     const { id, itemId } = req.params;
     const item = await Item.findById(itemId);
 
     if (item.img && item.img.filename) {
-        await cloudinary.uploader.destroy(item.img.filename);
+        const registryEntry = await ItemImageRegistry.findOne({ publicId: item.img.filename });
+        if (registryEntry) {
+            registryEntry.usageCount = Math.max(0, registryEntry.usageCount - 1);
+            await registryEntry.save();
+            // DO NOT delete from Cloudinary (Shared image registry policy)
+        } else {
+            // Not in registry (legacy), delete as before
+            await cloudinary.uploader.destroy(item.img.filename);
+        }
     }
 
     await Shop.findByIdAndUpdate(id, { $pull: { items: itemId } });
@@ -346,7 +621,8 @@ router.delete("/shops/:id/items/:itemId", isLogedin, isShopOwner, wrapAsync(asyn
 }));
 
 // Upload/Update UPI Scanner
-router.put("/shops/:id/upi", isLogedin, isShopOwner, upload.single("upiImage"), wrapAsync(async (req, res) => {
+router.put("/shops/:id/upi", isLogedin, isShopOwner, doubleCsrfProtection, upload.single("upiImage"), wrapAsync(async (req, res) => {
+
     const { id } = req.params;
     const shop = await Shop.findById(id);
 
@@ -365,7 +641,8 @@ router.put("/shops/:id/upi", isLogedin, isShopOwner, upload.single("upiImage"), 
 }));
 
 // Delete UPI Scanner
-router.delete("/shops/:id/upi", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
+router.delete("/shops/:id/upi", isLogedin, isShopOwner, doubleCsrfProtection, wrapAsync(async (req, res) => {
+
     const { id } = req.params;
     const shop = await Shop.findById(id);
 
