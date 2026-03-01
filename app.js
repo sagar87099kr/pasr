@@ -216,10 +216,8 @@ app.use((req, res, next) => {
   res.locals.error = req.flash("error");
   res.locals.currUser = req.user;
 
-  // Generate CSRF token only for non-AJAX GET requests to prevent rotating cookies on background operations
-  const isAjax = req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest' || (req.headers['accept'] && req.headers['accept'].includes('application/json'));
-
-  if (req.method === "GET" && !isAjax && !req.path.startsWith('/api')) {
+  // Generate CSRF token for all standard page GET requests
+  if (req.method === "GET" && !req.path.startsWith('/api')) {
     try {
       res.locals.csrfToken = generateToken(req, res);
     } catch (e) {
@@ -227,7 +225,7 @@ app.use((req, res, next) => {
       res.locals.csrfToken = "";
     }
   } else {
-    // For non-GET or AJAX, attempt to use existing token from headers/body if available
+    // For non-GET or API, try to reuse existing token if available (for forms/AJAX)
     res.locals.csrfToken = req.body?._csrf || req.headers["x-csrf-token"] || "";
   }
 
@@ -288,7 +286,8 @@ app.use((err, req, res, next) => {
     if (req.xhr || req.headers['accept']?.includes('application/json')) {
       return res.status(403).json({ success: false, message: "Form security expired. Please refresh." });
     }
-    return res.status(403).redirect("back");
+    const backURL = req.header('Referer') || '/home';
+    return res.status(403).redirect(backURL);
   }
   let { statusCode = Number(err.statusCode) || 500, message = "Something Went wrong!" } = err;
   // Ensure csrfToken is available even in error views
