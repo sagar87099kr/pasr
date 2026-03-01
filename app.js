@@ -216,12 +216,17 @@ app.use((req, res, next) => {
   res.locals.error = req.flash("error");
   res.locals.currUser = req.user;
 
-  res.locals.testVar = "PIPELINE_IS_WORKING_VER_2";
   // Generate CSRF token for all standard page GET requests
-  if (req.method === "GET") {
-    res.locals.csrfToken = "GLOBAL_GET_DUMMY_TOKEN";
+  if (req.method === "GET" && !req.path.startsWith('/api')) {
+    try {
+      res.locals.csrfToken = generateToken(req, res);
+    } catch (e) {
+      console.error("[CSRF] Token generation failed:", e.message);
+      res.locals.csrfToken = "";
+    }
   } else {
-    res.locals.csrfToken = "GLOBAL_POST_DUMMY_TOKEN";
+    // For non-GET or API, try to reuse existing token if available (for forms/AJAX)
+    res.locals.csrfToken = req.body?._csrf || req.headers["x-csrf-token"] || "";
   }
 
   // Default SEO Tags
