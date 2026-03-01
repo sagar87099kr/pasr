@@ -216,11 +216,19 @@ app.use((req, res, next) => {
   res.locals.error = req.flash("error");
   res.locals.currUser = req.user;
 
-  // Generate CSRF token (runs after session/passport — safe to call here)
-  try {
-    res.locals.csrfToken = generateToken(req, res);
-  } catch (e) {
-    res.locals.csrfToken = "";
+  // Generate CSRF token only for non-AJAX GET requests to prevent rotating cookies on background operations
+  const isAjax = req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest' || (req.headers['accept'] && req.headers['accept'].includes('application/json'));
+
+  if (req.method === "GET" && !isAjax && !req.path.startsWith('/api')) {
+    try {
+      res.locals.csrfToken = generateToken(req, res);
+    } catch (e) {
+      console.error("[CSRF] Token generation failed:", e.message);
+      res.locals.csrfToken = "";
+    }
+  } else {
+    // For non-GET or AJAX, attempt to use existing token from headers/body if available
+    res.locals.csrfToken = req.body?._csrf || req.headers["x-csrf-token"] || "";
   }
 
   // Default SEO Tags
@@ -272,7 +280,14 @@ app.use((req, res, next) => {
 });
 app.use((err, req, res, next) => {
   if (err.code === "EBADCSRFTOKEN" || err === invalidCsrfTokenError) {
+    console.warn(`[CSRF] Validation failed for ${req.method} ${req.path}`);
+    console.debug(`[CSRF] Headers:`, JSON.stringify(req.headers));
+
     req.flash("danger", "Form security expired. Please try again.");
+    // If it's an AJAX request, return JSON instead of redirecting
+    if (req.xhr || req.headers['accept']?.includes('application/json')) {
+      return res.status(403).json({ success: false, message: "Form security expired. Please refresh." });
+    }
     return res.status(403).redirect("back");
   }
   let { statusCode = Number(err.statusCode) || 500, message = "Something Went wrong!" } = err;
