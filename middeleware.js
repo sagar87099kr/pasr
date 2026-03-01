@@ -21,6 +21,12 @@ module.exports.isNotBlocked = async (req, res, next) => {
     try {
         if (!req.user || !req.user._id) return next();
 
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+            console.warn(`[Middleware] Invalid user ID for isNotBlocked: ${req.user._id}`);
+            return next();
+        }
+
         const customer = await Customer.findById(req.user._id);
         if (customer && customer.isBlocked) {
             req.flash("danger", "You are blocked because of your suspicious activity.");
@@ -106,6 +112,13 @@ module.exports.isVerifiedCustomer = async (req, res, next) => {
         if (!customerId) {
             req.flash("danger", "Please login first.");
             return res.redirect("/login");
+        }
+
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(customerId)) {
+            console.error(`[Middleware] Invalid customer ID for verification: ${customerId}`);
+            req.flash("danger", "Invalid account state. Please contact support.");
+            return res.redirect("/home");
         }
 
         const customer = await Customer.findById(customerId);

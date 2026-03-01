@@ -50,7 +50,14 @@ router.get("/search", isLogedin, wrapAsync(async (req, res) => {
         }
     }
 
-    const providers = await Provider.find(filter).populate("owner");
+    let providers = await Provider.find(filter).populate("owner");
+
+    if (req.user) {
+        providers = providers.filter(p => p.verified || p.owner._id.equals(req.user._id));
+    } else {
+        providers = providers.filter(p => p.verified);
+    }
+
     res.render("pages/search_results.ejs", { providers, query });
 }));
 

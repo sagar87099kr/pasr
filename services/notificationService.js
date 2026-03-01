@@ -10,7 +10,13 @@ orderBus.on("ORDER_CREATED", async (order) => {
         const shop = await Shop.findById(order.shopId).populate("owner");
         if (!shop || !shop.owner) return;
 
-        const customer = await Customer.findById(order.customerId);
+        const mongoose = require('mongoose');
+        let customer = null;
+        if (mongoose.Types.ObjectId.isValid(order.customerId)) {
+            customer = await Customer.findById(order.customerId);
+        } else {
+            console.warn(`[Notification] Invalid customerId in order ${order._id}: ${order.customerId}`);
+        }
         const customerName = customer ? customer.name : "A customer";
         const itemsList = order.items.map(i => `${i.name} (x${i.quantity})`).join(", ");
 
@@ -56,7 +62,13 @@ const statusEvents = [
 statusEvents.forEach(event => {
     orderBus.on(event, async (order) => {
         try {
-            const customer = await Customer.findById(order.customerId);
+            const mongoose = require('mongoose');
+            let customer = null;
+            if (mongoose.Types.ObjectId.isValid(order.customerId)) {
+                customer = await Customer.findById(order.customerId);
+            } else {
+                console.warn(`[Notification] Invalid customerId in order ${order._id} for event ${event}: ${order.customerId}`);
+            }
             if (!customer) return;
 
             let title, body;
@@ -113,7 +125,12 @@ statusEvents.forEach(event => {
 // Listen for Broadcast (to Delivery Partners)
 orderBus.on("ORDER_BROADCAST", async ({ order, partners }) => {
     try {
+        const mongoose = require('mongoose');
         const notifPromises = partners.map(async (p) => {
+            if (!mongoose.Types.ObjectId.isValid(p.user)) {
+                console.warn(`[Notification] Invalid partner user ID in broadcast: ${p.user}`);
+                return;
+            }
             const customer = await Customer.findById(p.user);
             if (!customer || !customer.fcmToken) return;
 
@@ -170,7 +187,13 @@ orderBus.on("ORDER_CLAIMED", async ({ order, partner }) => {
 // Listen for generic status update objects
 orderBus.on("ORDER_STATUS_UPDATE", async ({ order, event }) => {
     try {
-        const customer = await Customer.findById(order.customerId);
+        const mongoose = require('mongoose');
+        let customer = null;
+        if (mongoose.Types.ObjectId.isValid(order.customerId)) {
+            customer = await Customer.findById(order.customerId);
+        } else {
+            console.warn(`[Notification] Invalid customerId in status update for order ${order._id}: ${order.customerId}`);
+        }
         if (!customer) return;
 
         let title, body;

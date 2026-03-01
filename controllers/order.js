@@ -95,10 +95,10 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 }
                 return res.status(400).json({
                     success: false,
-                    message: `Item '${item.itemName}' is out of stock or quantity exceeds available inventory.`
+                    message: `Item '${item.name}' is out of stock or quantity exceeds available inventory.`
                 });
             }
-            inventoryUpdates.push({ id: item.itemId, qty: item.quantity });
+            inventoryUpdates.push({ id: item.itemId, qty: item.quantity, name: item.name });
         }
 
         // 3. Calculate amounts based on delivery type
@@ -236,7 +236,8 @@ module.exports.checkoutOrder = async (req, res, next) => {
         cart.items = cart.items.filter(item => item.shopId !== shopId);
         cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-        const itemsSummary = shopItems.map(i => i.itemName).join(", ");
+        const sellerDetails = await getOrderSellerDetails(order);
+        const itemsSummary = shopItems.map(i => i.name).join(", ");
 
         res.status(201).json({
             success: true,

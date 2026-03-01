@@ -183,12 +183,32 @@ passport.deserializeUser(async function (obj, done) {
   try {
     // Handle both new (id string) and legacy ({id, type} object) session formats
     const id = (typeof obj === 'object' && obj.id) ? obj.id : obj;
-    const user = await Customer.findById(id);
-    done(null, user);
+
+    if (!id) return done(null, null);
+
+    const mongoose = require('mongoose');
+    // Try to find by MongoDB ObjectId first (standard format)
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      const user = await Customer.findById(id);
+      if (user) return done(null, user);
+    }
+
+    // Fallback: id might be a phone number (number or string)
+    // This happens when passport-local-mongoose serialized the username field instead of _id in older versions or specific configs
+    console.warn(`[Passport] Non-ObjectId session ID encountered: ${id}. Attempting lookup by username.`);
+    const userByUsername = await Customer.findOne({ username: id });
+
+    if (!userByUsername) {
+      console.warn(`[Passport] User lookup failed for ID/Username: ${id}`);
+    }
+
+    return done(null, userByUsername || null);
   } catch (err) {
-    done(err, null);
+    console.error(`[Passport] Deserialization error for ${JSON.stringify(obj)}:`, err);
+    done(null, null); // Don't propagate — just treat as logged-out
   }
 });
+
 
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
