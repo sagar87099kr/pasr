@@ -163,7 +163,6 @@
                                                     <form action="/kisan-sabha/<%= post._id %>?_method=DELETE"
                                                         method="POST" class="m-0 p-0"
                                                         onsubmit="return confirm('Are you sure you want to delete this post?');">
-                                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
                                                         <button type="submit"
                                                             class="btn btn-link text-danger p-0 m-0 text-decoration-none"
@@ -284,7 +283,6 @@
             <div class="modal-dialog modal-lg modal-dialog-scrollable">
                 <form class="modal-content needs-validation create-post-form" action="/kisan-sabha" method="POST"
                     enctype="multipart/form-data" novalidate>
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
                     <div class="modal-header">
                         <h5 class="modal-title" id="createPostModalLabel"><i
@@ -400,7 +398,6 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <form id="reportForm" action="" method="POST">
-                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
                             <div class="modal-header">
                                 <h5 class="modal-title">Report Post</h5>
@@ -633,7 +630,6 @@
                             const res = await fetch(`/kisan-sabha/${id}/like`, {
                                 method: 'POST',
                                 headers: {
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                                 }
                             });
 

@@ -288,7 +288,6 @@
                 const res = await fetch(`/api/orders/${orderId}/claim`, {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': csrfToken
                     }
                 });
 
@@ -322,7 +321,6 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify({ isActive: isOnline })
                 });
@@ -351,7 +349,6 @@
                 const res = await fetch(`/delivery/order/${orderId}/picked-up`, {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': csrfToken
                     }
                 });
 
@@ -393,7 +390,6 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify({ otp })
                 });
@@ -422,7 +418,6 @@
             const res = await fetch('/delivery/request-payout', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': csrfToken
                 }
             });
 
@@ -441,7 +436,6 @@
             const res = await fetch('/delivery/confirm-receipt', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': csrfToken
                 }
             });
 

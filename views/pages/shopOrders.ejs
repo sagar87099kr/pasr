@@ -731,7 +731,6 @@
                                 const res = await fetch(`/api/orders/${id}/verify-payment`, {
                                     method: 'POST',
                                     headers: {
-                                        'X-CSRF-TOKEN': csrfToken
                                     }
                                 });
 
@@ -745,7 +744,6 @@
                                 const res = await fetch(`/api/orders/${id}/accept`, {
                                     method: 'POST',
                                     headers: {
-                                        'X-CSRF-TOKEN': csrfToken
                                     }
                                 });
 
@@ -759,7 +757,6 @@
                                 const res = await fetch(`/api/orders/${id}/self-deliver`, {
                                     method: 'POST',
                                     headers: {
-                                        'X-CSRF-TOKEN': csrfToken
                                     }
                                 });
 
@@ -775,7 +772,6 @@
                                 const res = await fetch(`/api/orders/${id}/broadcast-delivery`, {
                                     method: 'POST',
                                     headers: {
-                                        'X-CSRF-TOKEN': csrfToken
                                     }
                                 });
 

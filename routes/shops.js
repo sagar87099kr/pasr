@@ -11,7 +11,6 @@ const { storage, cloudinary, upload, itemUpload } = require("../cloud_con.js");
 const ItemImageRegistry = require("../data/itemImageRegistry");
 const { normalizeItemName } = require("../utils/normalization");
 const MasterProduct = require("../data/masterProduct");
-const { doubleCsrfProtection } = require("../utils/csrf");
 
 
 // Define a middleware specifically for Shop ownership if isOwner is strictly for Providers
@@ -43,7 +42,7 @@ router.get("/shops/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
 }));
 
 // Verify Shop Action
-router.put("/shops/:id/verify", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.put("/shops/:id/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
 
     const { id } = req.params;
     const { verifiedBy } = req.body;
@@ -53,7 +52,7 @@ router.put("/shops/:id/verify", isLogedin, isadmin, doubleCsrfProtection, wrapAs
 }));
 
 // Fail/Delete Shop Action
-router.delete("/shops/:id/verifyfail", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.delete("/shops/:id/verifyfail", isLogedin, isadmin, wrapAsync(async (req, res) => {
 
     const { id } = req.params;
     const shop = await Shop.findById(id);
@@ -181,7 +180,7 @@ router.get("/shops/new", isLogedin, isVerifiedCustomer, (req, res) => {
 });
 
 // Create Shop
-router.post("/shops", isLogedin, isNotBlocked, doubleCsrfProtection, upload.single("shopImage"), validateShop, wrapAsync(async (req, res) => {
+router.post("/shops", isLogedin, isNotBlocked, upload.single("shopImage"), validateShop, wrapAsync(async (req, res) => {
 
     const shopData = req.body.shop;
     const geoData = await forwardGeocode(shopData.location);
@@ -363,7 +362,7 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
 }));
 
 // Create Review Route
-router.post("/shops/:id/reviews", isLogedin, isNotBlocked, doubleCsrfProtection, validatereview, wrapAsync(async (req, res) => {
+router.post("/shops/:id/reviews", isLogedin, isNotBlocked, validatereview, wrapAsync(async (req, res) => {
 
     let { id } = req.params;
     let shop = await Shop.findById(id);
@@ -395,7 +394,7 @@ const isShopReviewAuthor = async (req, res, next) => {
 };
 
 // Delete Review Route
-router.delete("/shops/:id/reviews/:reviewId", isLogedin, isShopReviewAuthor, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.delete("/shops/:id/reviews/:reviewId", isLogedin, isShopReviewAuthor, wrapAsync(async (req, res) => {
 
     let { id, reviewId } = req.params;
     await Shop.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
@@ -416,7 +415,7 @@ router.get("/shops/:id/edit", isLogedin, isShopOwner, wrapAsync(async (req, res)
 }));
 
 // Update Shop
-router.put("/shops/:id", isLogedin, isShopOwner, doubleCsrfProtection, validateShop, wrapAsync(async (req, res) => {
+router.put("/shops/:id", isLogedin, isShopOwner, validateShop, wrapAsync(async (req, res) => {
 
     let { id } = req.params;
     const { shopName, shopDescription, category, location, openingTime, closingTime } = req.body.shop;
@@ -433,7 +432,7 @@ router.put("/shops/:id", isLogedin, isShopOwner, doubleCsrfProtection, validateS
 }));
 
 // Delete Shop
-router.delete("/shops/:id", isLogedin, isShopOwner, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.delete("/shops/:id", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
 
     let { id } = req.params;
     const shop = await Shop.findById(id);
@@ -451,7 +450,7 @@ router.delete("/shops/:id", isLogedin, isShopOwner, doubleCsrfProtection, wrapAs
 
 
 // Create Item
-router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, doubleCsrfProtection, itemUpload.single("itemImage"), validateItem, wrapAsync(async (req, res) => {
+router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, itemUpload.single("itemImage"), validateItem, wrapAsync(async (req, res) => {
 
     console.log("Create Item Route Hit");
     console.log("Body:", req.body);
@@ -521,7 +520,7 @@ router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, doubleCsrf
 }));
 
 // Update Item
-router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, doubleCsrfProtection, itemUpload.single("itemImage"), wrapAsync(async (req, res) => {
+router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, itemUpload.single("itemImage"), wrapAsync(async (req, res) => {
 
     const { id, itemId } = req.params;
     const { name, price, quantity, itemCategory, description } = req.body.item;
@@ -596,7 +595,7 @@ router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, doubleCsrfProtect
 }));
 
 // Delete Item
-router.delete("/shops/:id/items/:itemId", isLogedin, isShopOwner, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.delete("/shops/:id/items/:itemId", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
 
     const { id, itemId } = req.params;
     const item = await Item.findById(itemId);
@@ -621,7 +620,7 @@ router.delete("/shops/:id/items/:itemId", isLogedin, isShopOwner, doubleCsrfProt
 }));
 
 // Upload/Update UPI Scanner
-router.put("/shops/:id/upi", isLogedin, isShopOwner, doubleCsrfProtection, upload.single("upiImage"), wrapAsync(async (req, res) => {
+router.put("/shops/:id/upi", isLogedin, isShopOwner, upload.single("upiImage"), wrapAsync(async (req, res) => {
 
     const { id } = req.params;
     const shop = await Shop.findById(id);
@@ -641,7 +640,7 @@ router.put("/shops/:id/upi", isLogedin, isShopOwner, doubleCsrfProtection, uploa
 }));
 
 // Delete UPI Scanner
-router.delete("/shops/:id/upi", isLogedin, isShopOwner, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.delete("/shops/:id/upi", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
 
     const { id } = req.params;
     const shop = await Shop.findById(id);

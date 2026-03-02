@@ -42,7 +42,6 @@ const clientPromise = mongoose.connect(dbUrl)
   });
 
 const cookieParser = require("cookie-parser");
-const { doubleCsrf } = require("csrf-csrf");
 
 const helmet = require("helmet");
 // express-mongo-sanitize replaced with inline middleware below (Express 5 compatibility)
@@ -54,11 +53,7 @@ app.set("views", path.join(__dirname, "views"));
 // Compression middleware — gzip/brotli all responses (biggest TTFB win)
 app.use(compression());
 
-const {
-  doubleCsrfProtection,
-  generateToken,
-  invalidCsrfTokenError,
-} = require("./utils/csrf");
+
 
 
 // Serve assetlinks.json explicitly since express.static ignores dotfiles by default
@@ -87,6 +82,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.socket.io", "https://www.googletagmanager.com", "https://maps.googleapis.com", "https://cdn.jsdelivr.net", "https://translate.googleapis.com", "https://translate.google.com"],
+      scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://maps.gstatic.com", "https://maps.googleapis.com", "https://www.facebook.com"],
       connectSrc: ["'self'", "https://maps.googleapis.com", "https://api.mapbox.com", "https://events.mapbox.com"],
@@ -210,24 +206,13 @@ passport.deserializeUser(async function (obj, done) {
 });
 
 
+// Global middleware
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
   res.locals.danger = req.flash("danger");
   res.locals.error = req.flash("error");
   res.locals.currUser = req.user;
-
-  // Generate CSRF token for all standard page GET requests
-  if (req.method === "GET" && !req.path.startsWith('/api')) {
-    try {
-      res.locals.csrfToken = generateToken(req, res);
-    } catch (e) {
-      console.error("[CSRF] Token generation failed:", e.message);
-      res.locals.csrfToken = "";
-    }
-  } else {
-    // For non-GET or API, try to reuse existing token if available (for forms/AJAX)
-    res.locals.csrfToken = req.body?._csrf || req.headers["x-csrf-token"] || "";
-  }
+  res.locals.csrfToken = ""; // Placeholder for views that still expect this variable
 
   // Default SEO Tags
   res.locals.seo = {
@@ -238,7 +223,7 @@ app.use((req, res, next) => {
     url: "https://www.pasr.in" + req.originalUrl,
   };
 
-  // Default UI Flags (Restores styling for profile and category pages)
+  // Default UI Flags
   res.locals.useProfileCss = true;
   res.locals.useInsideCateCss = true;
   res.locals.useMaps = false;
@@ -276,28 +261,10 @@ app.use("/api/fcm", require("./routes/fcm.js"));
 app.use((req, res, next) => {
   next(new ExpressError(404, "Page not found!"));
 });
-app.use((err, req, res, next) => {
-  if (err.code === "EBADCSRFTOKEN" || err === invalidCsrfTokenError) {
-    console.warn(`[CSRF] Validation failed for ${req.method} ${req.path}`);
-    console.debug(`[CSRF] Headers:`, JSON.stringify(req.headers));
 
-    req.flash("danger", "Form security expired. Please try again.");
-    // If it's an AJAX request, return JSON instead of redirecting
-    if (req.xhr || req.headers['accept']?.includes('application/json')) {
-      return res.status(403).json({ success: false, message: "Form security expired. Please refresh." });
-    }
-    const backURL = req.header('Referer') || '/home';
-    return res.status(403).redirect(backURL);
-  }
+app.use((err, req, res, next) => {
   let { statusCode = Number(err.statusCode) || 500, message = "Something Went wrong!" } = err;
-  // Ensure csrfToken is available even in error views
-  if (!res.locals.csrfToken) {
-    try {
-      res.locals.csrfToken = generateToken(req, res);
-    } catch (e) {
-      res.locals.csrfToken = "";
-    }
-  }
+  res.locals.csrfToken = "";
   res.status(statusCode).render("pages/error.ejs", { message });
 });
 

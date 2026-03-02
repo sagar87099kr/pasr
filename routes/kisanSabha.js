@@ -11,7 +11,6 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const { cloudinary } = require("../cloud_con.js");
 const statesDistricts = require("../data/statesDistricts.js");
 const { reverseGeocode } = require("../utils/geocoder");
-const { doubleCsrfProtection } = require("../utils/csrf");
 
 
 // ── Cloudinary storage for images + videos ─────────────────────
@@ -188,7 +187,7 @@ router.get("/kisan-sabha/:id/comments-ui", wrapAsync(async (req, res) => {
 // ══════════════════════════════════════════════════════════════════
 
 // POST  /kisan-sabha  → Submit new post (pending admin approval)
-router.post("/kisan-sabha", isLogedin, isNotBlocked, doubleCsrfProtection, upload.array("media", 1), wrapAsync(async (req, res) => {
+router.post("/kisan-sabha", isLogedin, isNotBlocked, upload.array("media", 1), wrapAsync(async (req, res) => {
 
     const { description } = req.body;
 
@@ -243,7 +242,7 @@ router.get("/kisan-sabha/my-posts", isLogedin, wrapAsync(async (req, res) => {
 }));
 
 // DELETE  /kisan-sabha/:id  → Delete own post
-router.delete("/kisan-sabha/:id", isLogedin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.delete("/kisan-sabha/:id", isLogedin, wrapAsync(async (req, res) => {
 
     const post = await Post.findOne({ _id: req.params.id, author: req.user._id });
     if (!post) {
@@ -267,7 +266,7 @@ router.delete("/kisan-sabha/:id", isLogedin, doubleCsrfProtection, wrapAsync(asy
 }));
 
 // POST  /kisan-sabha/:id/like  → Toggle like
-router.post("/kisan-sabha/:id/like", isLogedin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.post("/kisan-sabha/:id/like", isLogedin, wrapAsync(async (req, res) => {
 
     const post = await Post.findOne({ _id: req.params.id, status: "approved", isDeleted: false }).select("likes likeCount");
     if (!post) return res.status(404).json({ success: false, message: "Post not found" });
@@ -285,7 +284,7 @@ router.post("/kisan-sabha/:id/like", isLogedin, doubleCsrfProtection, wrapAsync(
 }));
 
 // POST  /kisan-sabha/:id/share  → Increment share counter
-router.post("/kisan-sabha/:id/share", isLogedin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.post("/kisan-sabha/:id/share", isLogedin, wrapAsync(async (req, res) => {
 
     const post = await Post.findByIdAndUpdate(req.params.id, { $inc: { shareCount: 1 } }, { new: true }).select("shareCount");
     if (!post) return res.status(404).json({ success: false, message: "Post not found" });
@@ -293,7 +292,7 @@ router.post("/kisan-sabha/:id/share", isLogedin, doubleCsrfProtection, wrapAsync
 }));
 
 // POST  /kisan-sabha/:id/comments  → Add top-level comment
-router.post("/kisan-sabha/:id/comments", isLogedin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.post("/kisan-sabha/:id/comments", isLogedin, wrapAsync(async (req, res) => {
 
     const { text } = req.body;
     const post = await Post.findOne({ _id: req.params.id, status: "approved", isDeleted: false });
@@ -307,7 +306,7 @@ router.post("/kisan-sabha/:id/comments", isLogedin, doubleCsrfProtection, wrapAs
 }));
 
 // POST  /kisan-sabha/:id/comments/:cid/reply  → Reply to a comment
-router.post("/kisan-sabha/:id/comments/:cid/reply", isLogedin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.post("/kisan-sabha/:id/comments/:cid/reply", isLogedin, wrapAsync(async (req, res) => {
 
     const { text } = req.body;
     const parent = await Comment.findById(req.params.cid);
@@ -321,7 +320,7 @@ router.post("/kisan-sabha/:id/comments/:cid/reply", isLogedin, doubleCsrfProtect
 }));
 
 // DELETE  /kisan-sabha/comments/:cid  → Delete own comment
-router.delete("/kisan-sabha/comments/:cid", isLogedin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.delete("/kisan-sabha/comments/:cid", isLogedin, wrapAsync(async (req, res) => {
 
     const comment = await Comment.findOne({ _id: req.params.cid, author: req.user._id });
     if (!comment) {
@@ -334,7 +333,7 @@ router.delete("/kisan-sabha/comments/:cid", isLogedin, doubleCsrfProtection, wra
 }));
 
 // POST  /kisan-sabha/:id/report  → Report a post
-router.post("/kisan-sabha/:id/report", isLogedin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.post("/kisan-sabha/:id/report", isLogedin, wrapAsync(async (req, res) => {
 
     const { reason, details } = req.body;
     try {
@@ -375,7 +374,7 @@ router.get("/admin/kisan-sabha", isLogedin, isadmin, wrapAsync(async (req, res) 
 }));
 
 // PUT  /admin/kisan-sabha/:id/approve  → Approve a post
-router.put("/admin/kisan-sabha/:id/approve", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.put("/admin/kisan-sabha/:id/approve", isLogedin, isadmin, wrapAsync(async (req, res) => {
 
     await Post.findByIdAndUpdate(req.params.id, {
         status: "approved",
@@ -387,7 +386,7 @@ router.put("/admin/kisan-sabha/:id/approve", isLogedin, isadmin, doubleCsrfProte
 }));
 
 // PUT  /admin/kisan-sabha/:id/reject  → Reject with reason
-router.put("/admin/kisan-sabha/:id/reject", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.put("/admin/kisan-sabha/:id/reject", isLogedin, isadmin, wrapAsync(async (req, res) => {
 
     const { reason } = req.body;
     await Post.findByIdAndUpdate(req.params.id, { status: "rejected", rejectionReason: reason });
@@ -396,7 +395,7 @@ router.put("/admin/kisan-sabha/:id/reject", isLogedin, isadmin, doubleCsrfProtec
 }));
 
 // DELETE  /admin/kisan-sabha/:id  → Hard delete any post (admin)
-router.delete("/admin/kisan-sabha/:id", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.delete("/admin/kisan-sabha/:id", isLogedin, isadmin, wrapAsync(async (req, res) => {
 
     const post = await Post.findById(req.params.id);
     if (post) {
@@ -415,7 +414,7 @@ router.delete("/admin/kisan-sabha/:id", isLogedin, isadmin, doubleCsrfProtection
 }));
 
 // PUT  /admin/kisan-sabha/block-user/:authorId  → Block User permanently
-router.put("/admin/kisan-sabha/block-user/:authorId", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.put("/admin/kisan-sabha/block-user/:authorId", isLogedin, isadmin, wrapAsync(async (req, res) => {
 
     await Customer.findByIdAndUpdate(req.params.authorId, { isBlocked: true });
     req.flash("success", "User has been permanently blocked from posting, selling, and reviewing.");
@@ -423,7 +422,7 @@ router.put("/admin/kisan-sabha/block-user/:authorId", isLogedin, isadmin, double
 }));
 
 // PUT  /admin/kisan-sabha/reports/:rid  → Update report status
-router.put("/admin/kisan-sabha/reports/:rid", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.put("/admin/kisan-sabha/reports/:rid", isLogedin, isadmin, wrapAsync(async (req, res) => {
 
     const { status } = req.body;
     await Report.findByIdAndUpdate(req.params.rid, { status });

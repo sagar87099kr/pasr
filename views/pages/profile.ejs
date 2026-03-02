@@ -221,7 +221,6 @@
           <!-- Separate place to create review -->
           <form class="review-form" id="reviewForm" action="/<%= providerData._id %>/reviews" method="POST" novalidate
             class="needs-validation">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
             <div class="row">
               <div class="field">
@@ -285,7 +284,6 @@
                     <%=review.comment%>
                   </p>
                   <form action="/provider/<%=providerData._id%>/review/<%= review._id %>?_method=DELETE" method="POST">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
                     <button class="btn btn-sm btn-danger" style="color: red;"><i class="fa-solid fa-trash"></i></button>
                   </form>
@@ -329,7 +327,6 @@
             <!-- Owner Actions -->
             <% if (currUser && providerData.owner._id.equals(currUser._id)) { %>
               <form id="calendarForm" method="POST" action="/shedule/<%= providerData._id %>">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
                 <input type="hidden" name="daysJson" id="daysJsonInput">
                 <button type="submit" class="btn-save">Save Changes</button>
@@ -350,7 +347,6 @@
           <% if (currUser && providerData.owner._id.equals(currUser._id)) { %>
             <form action="/provider/<%= providerData._id %>/add-image" method="POST" enctype="multipart/form-data"
               class="gallery-upload-form">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
               <div class="upload-group">
                 <div class="field">
@@ -451,7 +447,6 @@
         <div id="modalDeleteBtnContainer" style="display: none; margin-top: 15px;">
           <form id="modalDeleteForm" method="POST"
             onsubmit="return confirm(`Are you sure you want to delete ${this.getAttribute('data-desc') || 'this image'}? This action cannot be undone.`);">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
             <button type="submit" class="btn btn-danger">
               <i class="fa-solid fa-trash"></i> Delete Image

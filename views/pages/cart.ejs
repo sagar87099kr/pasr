@@ -721,7 +721,7 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken
+                                headers: { 'Content-Type': 'application/json' },
                             },
                             body: JSON.stringify({ lat, lng, shopId })
                         });
@@ -798,7 +798,7 @@
                             method: 'PUT',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken
+                                headers: { 'Content-Type': 'application/json' },
                             },
                             body: JSON.stringify({ action })
                         });
@@ -815,7 +815,7 @@
                         const res = await fetch(`/api/cart/remove/${itemId}`, {
                             method: 'DELETE',
                             headers: {
-                                'X-CSRF-TOKEN': csrfToken
+                                headers: { 'Content-Type': 'application/json' },
                             }
                         });
 
@@ -830,7 +830,6 @@
                     const res = await fetch('/api/cart/clear', {
                         method: 'POST',
                         headers: {
-                            'X-CSRF-TOKEN': csrfToken
                         }
                     });
 
@@ -866,7 +865,7 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken
+                                headers: { 'Content-Type': 'application/json' },
                             },
                             body: JSON.stringify(payload)
                         });

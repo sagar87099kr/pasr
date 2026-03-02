@@ -71,14 +71,10 @@
             console.log('[FCM] Token obtained:', token.substring(0, 20) + '...');
 
             // Save token to server — determine endpoint based on user type
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-
-            // Try saving as customer token (all logged-in users)
             const res = await fetch('/api/fcm/save-customer-token', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ fcmToken: token })
             });

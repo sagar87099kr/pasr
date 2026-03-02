@@ -148,7 +148,7 @@
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 const res = await fetch(`/api/orders/${orderId}/verify-payment`, {
                     method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': csrfToken }
+                    headers: { 'Content-Type': 'application/json' }
                 });
                 const data = await res.json();
                 if (res.ok) {
@@ -168,7 +168,7 @@
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 const res = await fetch(`/api/orders/${orderId}/accept`, {
                     method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': csrfToken }
+                    headers: { 'Content-Type': 'application/json' }
                 });
                 const data = await res.json();
                 if (res.ok) {
@@ -188,7 +188,7 @@
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 const res = await fetch(`/api/orders/${orderId}/request-delivery`, {
                     method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': csrfToken }
+                    headers: { 'Content-Type': 'application/json' }
                 });
                 const data = await res.json();
                 if (res.ok) {

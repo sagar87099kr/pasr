@@ -6,7 +6,6 @@ const { isLogedin, isVerifiedCustomer, isOwner, isadmin, isProductOwner } = requ
 const wrapAsync = require("../utils/wrapAsync.js");
 const { forwardGeocode } = require("../utils/geocoder");
 const { storage, cloudinary, upload, itemUpload } = require("../cloud_con.js");
-const { doubleCsrfProtection } = require("../utils/csrf");
 
 
 router.get("/localMarket", wrapAsync(async (req, res) => {
@@ -104,7 +103,7 @@ router.get("/product/seller", isLogedin, isVerifiedCustomer, wrapAsync(async (re
     res.render("pages/productSeller.ejs");
 }));
 
-router.post("/product/seller", isLogedin, doubleCsrfProtection, itemUpload.fields([
+router.post("/product/seller", isLogedin, itemUpload.fields([
 
     { name: 'productImage', maxCount: 5 },
     { name: 'upiScanner', maxCount: 1 }
@@ -131,7 +130,7 @@ router.post("/product/seller", isLogedin, doubleCsrfProtection, itemUpload.field
 }));
 
 // Verification Routes (Admin Only)
-router.put("/:id/verifyproduct", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.put("/:id/verifyproduct", isLogedin, isadmin, wrapAsync(async (req, res) => {
 
     let { id } = req.params;
     let product = await Product.findByIdAndUpdate(id, { ...req.body.product });
@@ -139,7 +138,7 @@ router.put("/:id/verifyproduct", isLogedin, isadmin, doubleCsrfProtection, wrapA
     res.redirect("/product/verify");
 }));
 
-router.delete("/:id/verifyfailproduct", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.delete("/:id/verifyfailproduct", isLogedin, isadmin, wrapAsync(async (req, res) => {
 
     let { id } = req.params;
     let product = await Product.findById(id);
@@ -169,7 +168,7 @@ router.get("/products/:id", wrapAsync(async (req, res) => {
 }));
 
 // Update Product
-router.put("/products/:id/edit", isLogedin, isProductOwner, doubleCsrfProtection, itemUpload.fields([{ name: 'productImage', maxCount: 1 }, { name: 'upiScanner', maxCount: 1 }]), wrapAsync(async (req, res) => {
+router.put("/products/:id/edit", isLogedin, isProductOwner, itemUpload.fields([{ name: 'productImage', maxCount: 1 }, { name: 'upiScanner', maxCount: 1 }]), wrapAsync(async (req, res) => {
 
     let { id } = req.params;
     const { productName, productDescription, price, quantity, categories } = req.body.product;
@@ -200,7 +199,7 @@ router.put("/products/:id/edit", isLogedin, isProductOwner, doubleCsrfProtection
 }));
 
 // Delete Product
-router.delete("/products/:id/delete", isLogedin, isProductOwner, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.delete("/products/:id/delete", isLogedin, isProductOwner, wrapAsync(async (req, res) => {
 
     let { id } = req.params;
     const product = await Product.findById(id);

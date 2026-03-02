@@ -84,8 +84,7 @@
 
         <!-- Comment Form -->
         <% if(currUser) { %>
-            <form action="/kisan-sabha/<%= post._id %>/comments" method="POST" class="mb-4">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <form action="/kisan-sabha/<%= post._id %>/comment" method="POST">
 
                 <div class="d-flex gap-2">
                     <div class="comment-avatar" style="width:38px; height:38px;">
@@ -129,10 +128,9 @@
                                                 </span>
                                                 <% if(currUser && currUser._id.toString()===c.author._id.toString()) {
                                                     %>
-                                                    <form action="/kisan-sabha/comments/<%= c._id %>?_method=DELETE"
-                                                        method="POST" class="d-inline"
-                                                        onsubmit="return confirm('Delete comment?');">
-                                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                    <form
+                                                        action="/kisan-sabha/<%= post._id %>/comment/<%= c._id %>?_method=DELETE"
+                                                        method="POST" onsubmit="return confirm('Delete comment?');">
 
                                                         <button class="btn btn-sm text-danger p-0 border-0"><i
                                                                 class="fa-solid fa-trash"></i></button>
@@ -154,7 +152,6 @@
                                             <form action="/kisan-sabha/<%= post._id %>/comments/<%= c._id %>/reply"
                                                 method="POST" id="replyForm<%= c._id %>" class="mt-2"
                                                 style="display:none;">
-                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
                                                 <div class="input-group input-group-sm">
                                                     <input type="text" name="text"
@@ -199,12 +196,11 @@
                                                                                     action="/kisan-sabha/comments/<%= r._id %>?_method=DELETE"
                                                                                     method="POST" class="d-inline"
                                                                                     onsubmit="return confirm('Delete reply?');">
-                                                                                    <input type="hidden" name="_csrf"
-                                                                                        value="<%= csrfToken %>">
+                                                                                    value="<%= csrfToken %>">
 
-                                                                                    <button
-                                                                                        class="btn btn-sm text-danger p-0 border-0"><i
-                                                                                            class="fa-solid fa-trash"></i></button>
+                                                                                        <button
+                                                                                            class="btn btn-sm text-danger p-0 border-0"><i
+                                                                                                class="fa-solid fa-trash"></i></button>
                                                                                 </form>
                                                                                 <% } %>
                                                                         </div>

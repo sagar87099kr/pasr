@@ -8,7 +8,6 @@ const wrapAsync = require("../utils/wrapAsync.js");
 const { forwardGeocode } = require("../utils/geocoder");
 const multer = require("multer");
 const { storage, cloudinary } = require("../cloud_con.js");
-const { doubleCsrfProtection } = require("../utils/csrf");
 const upload = multer({ storage });
 
 
@@ -159,7 +158,7 @@ router.get("/become/provider", isLogedin, isVerifiedCustomer, (req, res) => {
     res.render("pages/create.ejs")
 });
 
-router.post("/become/provider", isLogedin, isNotBlocked, isVerifiedCustomer, doubleCsrfProtection, validateprovider, upload.array('provider[personImage]', 4), wrapAsync(async (req, res) => {
+router.post("/become/provider", isLogedin, isNotBlocked, isVerifiedCustomer, validateprovider, upload.array('provider[personImage]', 4), wrapAsync(async (req, res) => {
 
     let { company, experience, location, phoneNO } = req.body.provider;
     let categories = req.body.provider.categories;
@@ -205,7 +204,6 @@ router.get("/provider/:id/edit",
 router.put("/update/:id",
     isLogedin,
     isOwner,
-    doubleCsrfProtection,
     wrapAsync(async (req, res) => {
 
         let { id } = req.params;
@@ -226,7 +224,7 @@ router.get("/provider/verify", isLogedin, isadmin, async (req, res) => {
     res.render("pages/providerverify.ejs", { providers });
 });
 
-router.put("/:id/verifyprovider", isLogedin, isadmin, doubleCsrfProtection, async (req, res) => {
+router.put("/:id/verifyprovider", isLogedin, isadmin, async (req, res) => {
 
     let { id } = req.params;
     const { verified, verifedBy } = req.body.provider;
@@ -235,7 +233,7 @@ router.put("/:id/verifyprovider", isLogedin, isadmin, doubleCsrfProtection, asyn
     console.log("provider is verifed");
 });
 
-router.delete("/provider/:id/verifyfail", isLogedin, isadmin, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.delete("/provider/:id/verifyfail", isLogedin, isadmin, wrapAsync(async (req, res) => {
 
     try {
         let { id } = req.params;
@@ -275,7 +273,7 @@ router.delete("/provider/:id/verifyfail", isLogedin, isadmin, doubleCsrfProtecti
 }));
 
 // Add image to provider gallery
-router.post("/provider/:id/add-image", isLogedin, isOwner, doubleCsrfProtection, upload.single('image'), wrapAsync(async (req, res) => {
+router.post("/provider/:id/add-image", isLogedin, isOwner, upload.single('image'), wrapAsync(async (req, res) => {
 
     try {
         const { id } = req.params;
@@ -307,7 +305,7 @@ router.post("/provider/:id/add-image", isLogedin, isOwner, doubleCsrfProtection,
 }));
 
 // Delete image from provider gallery
-router.delete("/provider/:id/delete-image/:imageIndex", isLogedin, isOwner, doubleCsrfProtection, wrapAsync(async (req, res) => {
+router.delete("/provider/:id/delete-image/:imageIndex", isLogedin, isOwner, wrapAsync(async (req, res) => {
 
     try {
         const { id, imageIndex } = req.params;

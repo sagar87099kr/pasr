@@ -2,25 +2,24 @@ const express = require("express");
 const router = express.Router();
 const catchAsync = require("../utils/wrapAsync");
 const cartController = require("../controllers/cart");
-const { doubleCsrfProtection } = require("../utils/csrf");
 
 // View Cart
 router.get("/", cartController.viewCart);
 
 // Add to Cart
-router.post("/add", doubleCsrfProtection, catchAsync(cartController.addToCart));
+router.post("/add", catchAsync(cartController.addToCart));
 
 // Remove from Cart
-router.delete("/remove/:itemId", doubleCsrfProtection, cartController.removeFromCart);
+router.delete("/remove/:itemId", cartController.removeFromCart);
 
 // Update Quantity in Cart
-router.put("/update/:itemId", doubleCsrfProtection, cartController.updateQuantity);
+router.put("/update/:itemId", cartController.updateQuantity);
 
 // Clear Cart
-router.post("/clear", doubleCsrfProtection, cartController.clearCart);
+router.post("/clear", cartController.clearCart);
 
 // Calculate Delivery Fee Preview
-router.post("/delivery-fee", doubleCsrfProtection, cartController.calculateDeliveryFee);
+router.post("/delivery-fee", cartController.calculateDeliveryFee);
 
 
 module.exports = router;

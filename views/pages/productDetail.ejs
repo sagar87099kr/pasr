@@ -61,7 +61,6 @@
                                     </button>
                                     <form method="POST" action="/products/<%= product._id %>/delete?_method=DELETE"
                                         style="margin: 0;">
-                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
                                         <button type="submit" class="btn btn-danger">
                                             <i class="fa-solid fa-trash"></i> Delete
@@ -79,7 +78,6 @@
                             <h3 class="section-heading" style="font-size: 18px;">Edit Product Details</h3>
                             <form method="POST" action="/products/<%= product._id %>/edit?_method=PUT"
                                 enctype="multipart/form-data" class="needs-validation">
-                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
                                 <div class="mb-3">
                                     <label for="productName" class="form-label">Product Name</label>
@@ -287,12 +285,10 @@
                     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
                     try {
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                         const res = await fetch('/api/cart/add', {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken
+                                'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
                                 itemId: '<%= product._id %>',
