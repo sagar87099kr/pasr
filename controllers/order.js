@@ -386,12 +386,7 @@ module.exports.getCustomerOrders = async (req, res, next) => {
         const ownedShops = await Shop.find({ owner: req.user._id }).select('_id');
         const shopIds = ownedShops.map(s => s._id);
 
-        const orders = await Order.find({
-            $or: [
-                { customerId: req.user._id },
-                { shopId: { $in: [...shopIds, req.user._id] } }
-            ]
-        })
+        const orders = await Order.find({ customerId: req.user._id })
             .sort({ createdAt: -1 });
 
         // Resolve seller details for each order to handle both Shops and Local Bazar
@@ -430,14 +425,22 @@ module.exports.getShopOrders = async (req, res, next) => {
 
         const orders = await Order.find({
             shopId: { $in: allShopIds }
-        }).sort({ createdAt: -1 });
+        })
+            .populate({
+                path: 'items.itemId',
+                populate: { path: 'product', select: 'img' },
+                select: 'img product'
+            })
+            .sort({ createdAt: -1 });
 
         // Resolve customer & shop details
         const processedOrders = await Promise.all(orders.map(async (order) => {
             const orderObj = order.toObject();
+
             // Resolve seller (shop) info
             const sellerDetails = await getOrderSellerDetails(order);
             if (sellerDetails) orderObj.resolvedSeller = sellerDetails;
+
             // Resolve customer info
             try {
                 const customer = await Customer.findById(order.customerId).select('name username');
@@ -445,6 +448,23 @@ module.exports.getShopOrders = async (req, res, next) => {
                     orderObj.resolvedCustomer = { name: customer.name, mobile: customer.username };
                 }
             } catch (_) { }
+
+            // Resolve item images
+            if (orderObj.items) {
+                orderObj.items = orderObj.items.map(item => {
+                    let imageUrl = '';
+                    if (item.itemId) {
+                        if (item.itemId.img && item.itemId.img.url) {
+                            imageUrl = item.itemId.img.url;
+                        } else if (item.itemId.product && item.itemId.product.img && item.itemId.product.img.url) {
+                            imageUrl = item.itemId.product.img.url;
+                        }
+                    }
+                    item.imageUrl = imageUrl;
+                    return item;
+                });
+            }
+
             return orderObj;
         }));
 

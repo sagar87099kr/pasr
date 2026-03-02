@@ -45,9 +45,30 @@ module.exports.blockPartner = async (req, res, next) => {
 module.exports.getAllOrders = async (req, res, next) => {
     try {
         const orders = await Order.find({})
-            .populate('customerId shopId deliveryPartnerId')
+            .populate('customerId')
+            .populate({
+                path: 'shopId',
+                populate: { path: 'owner' }
+            })
+            .populate('deliveryPartnerId')
             .sort({ createdAt: -1 });
-        res.status(200).json({ success: true, orders });
+        // Compute stats
+        let totalOrders = orders.length;
+        let deliveredOrders = 0;
+        let cancelledOrders = 0;
+        let activeOrders = 0;
+
+        orders.forEach(o => {
+            if (o.orderStatus === 'COMPLETED') deliveredOrders++;
+            else if (o.orderStatus === 'CANCELLED') cancelledOrders++;
+            else activeOrders++;
+        });
+
+        res.locals.containerClass = 'container-fluid w-100 p-3 p-md-5 m-0';
+        res.render('pages/adminOrders.ejs', {
+            orders,
+            stats: { totalOrders, deliveredOrders, cancelledOrders, activeOrders }
+        });
     } catch (e) {
         next(e);
     }
