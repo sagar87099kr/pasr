@@ -152,6 +152,17 @@
             color: #0f172a;
         }
 
+        /* Fix Google Places Autocomplete dropdown visibility in Bootstrap modals */
+        .pac-container {
+            z-index: 2000 !important;
+        }
+
+        .checkout-container {
+            padding: 40px 10px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
         .checkout-btn {
             padding: 12px;
             font-size: 15px;
@@ -294,6 +305,58 @@
             text-decoration: underline;
             margin-top: 4px;
             display: inline-block;
+        }
+
+        /* User Info Card */
+        .user-info-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .user-info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .user-info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .user-info-item i {
+            color: #6366f1;
+            width: 16px;
+        }
+
+        .user-info-label {
+            font-weight: 700;
+            color: #1e293b;
+            min-width: 60px;
+        }
+
+        .btn-change-addr {
+            background: #eef2ff;
+            color: #4338ca;
+            border: 1.5px dashed #6366f1;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .btn-change-addr:hover {
+            background: #e0e7ff;
         }
 
         @media (max-width: 576px) {
@@ -445,32 +508,32 @@
 
                                     <!-- Delivery Address Panel (visible only for HOME_DELIVERY) -->
                                     <div class="delivery-address-panel" id="addr-panel-<%= shopId %>">
-                                        <div class="panel-title">
-                                            <i class="fa-solid fa-location-dot" style="color:#6366f1"></i>
-                                            Enter your delivery address
+                                        <div class="user-info-card" id="user-info-<%= shopId %>">
+                                            <div class="user-info-item">
+                                                <i class="fa-solid fa-user"></i>
+                                                <span class="user-info-label">Name:</span>
+                                                <span>
+                                                    <%= currUser.name %>
+                                                </span>
+                                            </div>
+                                            <div class="user-info-item">
+                                                <i class="fa-solid fa-phone"></i>
+                                                <span class="user-info-label">Phone:</span>
+                                                <span>+91 <%= currUser.username %></span>
+                                            </div>
+                                            <div class="user-info-item">
+                                                <i class="fa-solid fa-location-dot"></i>
+                                                <span class="user-info-label">Deliver to:</span>
+                                                <span class="current-address-text">
+                                                    <%= currUser.address || 'Address not set' %>
+                                                </span>
+                                            </div>
+                                            <button type="button" class="btn-change-addr open-addr-modal"
+                                                data-shopid="<%= shopId %>">
+                                                <i class="fa-solid fa-pen-to-square me-1"></i> Change Delivery Address
+                                            </button>
                                         </div>
 
-                                        <!-- Google Places Autocomplete Input -->
-                                        <div style="position:relative;">
-                                            <span
-                                                style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#6366f1;font-size:16px;pointer-events:none;">
-                                                <i class="fa-solid fa-magnifying-glass"></i>
-                                            </span>
-                                            <input type="text" id="places-input-<%= shopId %>" class="places-addr-input"
-                                                placeholder="Search your delivery address…" autocomplete="off"
-                                                style="width:100%;padding:11px 12px 11px 38px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;outline:none;transition:border-color .2s;"
-                                                onfocus="this.style.borderColor='#6366f1'"
-                                                onblur="this.style.borderColor='#e2e8f0'" />
-                                        </div>
-
-                                        <!-- Confirmed address shown after selection -->
-                                        <div class="detected-address-box" id="addr-box-<%= shopId %>"
-                                            style="display:none;">
-                                            <span class="addr-label">📍 Delivering to:</span>
-                                            <span class="addr-text"></span>
-                                            <span class="change-loc-link" id="change-loc-<%= shopId %>">Change
-                                                address</span>
-                                        </div>
                                         <div class="addr-error text-danger mt-2" style="font-size:13px; display:none;">
                                         </div>
                                     </div>
@@ -579,6 +642,49 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Change Address Modal -->
+                                <div class="modal fade" id="addressEditModal" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content" style="border-radius: 20px;">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fw-bold">Set Delivery Address</h5>
+                                                <button type="button" class="btn-close"
+                                                    data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="text-muted small mb-3">Search and select your exact delivery
+                                                    location.</p>
+                                                <div style="position:relative;">
+                                                    <span
+                                                        style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#6366f1;font-size:16px;pointer-events:none;">
+                                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                                    </span>
+                                                    <input type="text" id="modal-places-input" class="form-control"
+                                                        placeholder="Search your address (e.g. Doranda Giridih)"
+                                                        style="padding-left: 38px; border-radius: 12px; height: 50px;" />
+                                                </div>
+                                                <div id="modal-addr-preview"
+                                                    class="mt-3 p-3 border rounded-3 bg-light d-none">
+                                                    <small class="text-primary fw-bold d-block mb-1">Selected
+                                                        Address:</small>
+                                                    <span id="modal-selected-addr-text" class="small"></span>
+                                                </div>
+                                                <input type="hidden" id="modal-lat">
+                                                <input type="hidden" id="modal-lng">
+                                                <input type="hidden" id="modal-pincode">
+                                            </div>
+                                            <div class="modal-footer border-0 p-3">
+                                                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                                                    style="border-radius: 12px; padding: 10px 20px;">Cancel</button>
+                                                <button type="button" id="save-address-btn" class="btn btn-primary"
+                                                    disabled
+                                                    style="border-radius: 12px; padding: 10px 25px; font-weight: 700;">Save
+                                                    Address</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <% } %>
         </div>
 
@@ -589,6 +695,10 @@
 
                 const upiModal = new bootstrap.Modal(document.getElementById('upiPaymentModal'));
                 let currentShopContext = null;
+
+                const addressModal = new bootstrap.Modal(document.getElementById('addressEditModal'));
+                let addressEditTargetShop = null;
+                let tempSelectedAddress = null;
 
                 // --- Init all sections as SELF_PICKUP ---
                 document.querySelectorAll('.shop-section').forEach(section => {
@@ -612,10 +722,11 @@
                         section.dataset.deliveryType = type;
 
                         const addrPanel = document.getElementById(`addr-panel-${shopId}`);
+                        const userInfo = document.getElementById(`user-info-${shopId}`);
 
                         if (type === 'SELF_PICKUP') {
-                            // Hide address panel, reset summary
                             addrPanel.style.display = 'none';
+                            userInfo.style.display = 'none';
                             subCard.querySelector('.delivery-row').style.display = 'none';
                             subCard.querySelector('.first-order-badge').style.display = 'none';
                             const subtotalEl = section.querySelector('.summary-row span:last-child');
@@ -625,89 +736,101 @@
                             section.dataset.total = subtotal;
                             updateCodVisibility(shopId, subtotal);
                         } else {
-                            // Show address panel — wait for user to detect location
                             addrPanel.style.display = 'block';
-                            section.dataset.deliveryOk = 'false';
+                            userInfo.style.display = 'block';
 
-                            // If location was already detected for this shop, re-use it
+                            // Load current user location if available
+                            <% if (currUser && currUser.geometry && currUser.geometry.coordinates) { %>
+                                if (!shopLocState[shopId]) {
+                                    shopLocState[shopId] = {
+                                        lat: <%= currUser.geometry.coordinates[1] %>,
+                                        lng: <%= currUser.geometry.coordinates[0] %>,
+                                        address: `<%= currUser.address || '' %>`
+                                    };
+                                }
+                            <% } %>
+
                             if (shopLocState[shopId]) {
                                 fetchDeliveryFeeForSection(section, shopLocState[shopId].lat, shopLocState[shopId].lng);
+                            } else {
+                                section.dataset.deliveryOk = 'false';
+                                // Prompt to set address
+                                addressEditTargetShop = shopId;
+                                addressModal.show();
                             }
                         }
                     });
                 });
 
-                // --- Google Places Autocomplete (per shop) ---
-                // Initialized after Google Maps API loads via initPlacesForCart()
-                window.initPlacesForCart = function () {
-                    document.querySelectorAll('.places-addr-input').forEach(inputEl => {
-                        const shopId = inputEl.id.replace('places-input-', '');
-                        const section = document.getElementById(`shop-section-${shopId}`);
-                        const addrBox = document.getElementById(`addr-box-${shopId}`);
-                        const addrErrorEl = section.querySelector('.addr-error');
+                // --- Address Modal Logic ---
+                const modalInput = document.getElementById('modal-places-input');
+                const saveAddrBtn = document.getElementById('save-address-btn');
+                let autocompleteInst = null;
 
-                        const autocomplete = new google.maps.places.Autocomplete(inputEl, {
-                            componentRestrictions: { country: 'IN' },
-                            fields: ['formatted_address', 'geometry', 'name']
-                        });
-
-                        autocomplete.addListener('place_changed', () => {
-                            const place = autocomplete.getPlace();
-                            addrErrorEl.style.display = 'none';
-
-                            if (!place.geometry || !place.geometry.location) {
-                                addrErrorEl.innerText = 'Please select an address from the suggestions dropdown.';
-                                addrErrorEl.style.display = 'block';
-                                return;
-                            }
-
-                            const lat = place.geometry.location.lat();
-                            const lng = place.geometry.location.lng();
-                            const addressText = place.formatted_address || place.name || inputEl.value;
-
-                            // Store state
-                            shopLocState[shopId] = { lat, lng, address: addressText };
-
-                            // Show confirmed address box, hide input
-                            inputEl.style.display = 'none';
-                            addrBox.querySelector('.addr-text').innerText = addressText;
-                            addrBox.style.display = 'flex';
-
-                            // Fetch delivery fee
-                            fetchDeliveryFeeForSection(section, lat, lng);
-                        });
+                document.querySelectorAll('.open-addr-modal').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        addressEditTargetShop = btn.dataset.shopid;
+                        addressModal.show();
                     });
-                };
+                });
 
-                // If Maps already loaded (e.g. page was cached), init right away
+                // The initPlacesForCart function is now defined globally and called below.
+                // The original code had it defined here, but the instruction moved it.
+
+                saveAddrBtn.addEventListener('click', async () => {
+                    const lat = document.getElementById('modal-lat').value;
+                    const lng = document.getElementById('modal-lng').value;
+                    const pincode = document.getElementById('modal-pincode').value;
+                    const address = tempSelectedAddress;
+
+                    if (!lat || !lng || !address) {
+                        alert('Please select a valid address from recommendations.');
+                        return;
+                    }
+
+                    saveAddrBtn.disabled = true;
+                    saveAddrBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+                    try {
+                        const res = await fetch('/api/user/update-address', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ address, lat, lng, pincode })
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            // Update shop state
+                            shopLocState[addressEditTargetShop] = { lat: parseFloat(lat), lng: parseFloat(lng), address };
+
+                            // Update display in all sections
+                            document.querySelectorAll('.current-address-text').forEach(el => el.innerText = address);
+
+                            // Recalculate fee for current section
+                            const section = document.getElementById(`shop-section-${addressEditTargetShop}`);
+                            fetchDeliveryFeeForSection(section, lat, lng);
+
+                            addressModal.hide();
+                            // Reset modal
+                            modalInput.value = '';
+                            document.getElementById('modal-addr-preview').classList.add('d-none');
+                            saveAddrBtn.disabled = true;
+                            alert('Delivery address saved successfully!');
+                        } else {
+                            alert('Failed to save address. Please try again.');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert('Error saving address.');
+                    } finally {
+                        saveAddrBtn.innerHTML = 'Save Address';
+                        saveAddrBtn.disabled = false;
+                    }
+                });
+
                 if (window.google && window.google.maps && window.google.maps.places) {
                     window.initPlacesForCart();
                 }
-
-                // --- Change Address link (per shop) ---
-                document.querySelectorAll('.change-loc-link').forEach(link => {
-                    const shopId = link.id.replace('change-loc-', '');
-                    link.addEventListener('click', function () {
-                        const section = document.getElementById(`shop-section-${shopId}`);
-                        const addrBox = document.getElementById(`addr-box-${shopId}`);
-                        const inputEl = document.getElementById(`places-input-${shopId}`);
-                        const subCard = section.querySelector('.shop-summary-card');
-
-                        // Reset location state
-                        delete shopLocState[shopId];
-
-                        // Show input again, clear address box
-                        inputEl.value = '';
-                        inputEl.style.display = '';
-                        inputEl.focus();
-                        addrBox.style.display = 'none';
-
-                        subCard.querySelector('.delivery-row').style.display = 'none';
-                        subCard.querySelector('.first-order-badge').style.display = 'none';
-                        subCard.querySelector('.grand-total').innerText = section.querySelector('.summary-row span:last-child').innerText;
-                        section.dataset.deliveryOk = 'false';
-                    });
-                });
 
                 // --- Fetch & display delivery fee for a section ---
                 async function fetchDeliveryFeeForSection(section, lat, lng) {
@@ -716,13 +839,9 @@
                     const addrErrorEl = section.querySelector('.addr-error');
 
                     try {
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                         const res = await fetch('/api/cart/delivery-fee', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                headers: { 'Content-Type': 'application/json' },
-                            },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ lat, lng, shopId })
                         });
 
@@ -793,13 +912,9 @@
                 document.querySelectorAll('.update-qty-btn').forEach(btn => {
                     btn.addEventListener('click', async function () {
                         const itemId = this.dataset.itemid, action = this.dataset.action;
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                         const res = await fetch(`/api/cart/update/${itemId}`, {
                             method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                headers: { 'Content-Type': 'application/json' },
-                            },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ action })
                         });
 
@@ -809,14 +924,10 @@
 
                 document.querySelectorAll('.delete-item-btn').forEach(btn => {
                     btn.addEventListener('click', async function () {
-                        if (!confirm("Remove item?")) return;
                         const itemId = this.dataset.itemid;
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                         const res = await fetch(`/api/cart/remove/${itemId}`, {
                             method: 'DELETE',
-                            headers: {
-                                headers: { 'Content-Type': 'application/json' },
-                            }
+                            headers: { 'Content-Type': 'application/json' }
                         });
 
                         if (res.ok) window.location.reload();
@@ -825,12 +936,9 @@
 
                 const clearBtn = document.getElementById('clearCartBtn');
                 if (clearBtn) clearBtn.addEventListener('click', async () => {
-                    if (!confirm("Clear entire cart?")) return;
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                     const res = await fetch('/api/cart/clear', {
                         method: 'POST',
-                        headers: {
-                        }
+                        headers: { 'Content-Type': 'application/json' }
                     });
 
                     if (res.ok) window.location.reload();
@@ -860,13 +968,9 @@
                     };
 
                     try {
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                         const res = await fetch('/api/orders/checkout', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                headers: { 'Content-Type': 'application/json' },
-                            },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
 
@@ -946,8 +1050,54 @@
                     if (currentShopContext) placeOrder(currentShopContext, 'PREPAID');
                 });
             });
-            // Wire the global initMap callback to our Places initializer
             window.initMap = function () {
                 if (window.initPlacesForCart) window.initPlacesForCart();
             };
+
+            window.initPlacesForCart = function () {
+                const input = document.getElementById('modal-places-input');
+                if (!input) {
+                    console.error("Autocomplete input NOT found!");
+                    return;
+                }
+
+                // Explicitly set options for better recommendations
+                const options = {
+                    componentRestrictions: { country: "in" },
+                    fields: ["address_components", "geometry", "formatted_address", "name"],
+                    types: ["geocode", "establishment"] // Broader types for better suggestions
+                };
+
+                const autocomplete = new google.maps.places.Autocomplete(input, options);
+
+                autocomplete.addListener('place_changed', () => {
+                    const place = autocomplete.getPlace();
+                    if (!place.geometry) {
+                        console.log("No geometry for selected place");
+                        return;
+                    }
+
+                    const lat = place.geometry.location.lat();
+                    const lng = place.geometry.location.lng();
+                    const address = place.formatted_address || place.name;
+
+                    document.getElementById('modal-lat').value = lat;
+                    document.getElementById('modal-lng').value = lng;
+
+                    let pincode = '';
+                    if (place.address_components) {
+                        const pc = place.address_components.find(c => c.types.includes('postal_code'));
+                        if (pc) pincode = pc.short_name;
+                    }
+                    document.getElementById('modal-pincode').value = pincode;
+
+                    document.getElementById('modal-selected-addr-text').innerText = address;
+                    document.getElementById('modal-addr-preview').classList.remove('d-none');
+                    tempSelectedAddress = address;
+                    saveAddrBtn.disabled = false;
+                });
+            };
         </script>
+        <script
+            src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&libraries=places&callback=initMap"
+            async defer></script>

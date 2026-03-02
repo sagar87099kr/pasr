@@ -188,8 +188,8 @@ module.exports.verifyOTPAndComplete = async (req, res, next) => {
             await shop.save();
         }
 
-        // Partner earns 70% of delivery charge
-        const earnings = Number((deliveryCharge * 0.7).toFixed(2));
+        // Partner earns delivery charge minus 5 rupees
+        const earnings = Math.max(0, Number((deliveryCharge - 5).toFixed(2)));
         partner.totalEarnings = (partner.totalEarnings || 0) + earnings;
         partner.pendingPayout = (partner.pendingPayout || 0) + earnings;
         partner.currentOrders = Math.max(0, (partner.currentOrders || 1) - 1);

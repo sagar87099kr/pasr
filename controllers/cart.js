@@ -112,7 +112,7 @@ module.exports.removeFromCart = (req, res) => {
     const { itemId } = req.params;
 
     const cart = req.session.cart;
-    cart.items = cart.items.filter(i => i.itemId !== itemId);
+    cart.items = cart.items.filter(i => String(i.itemId) !== String(itemId));
 
     // Clear shopId if cart is completely empty
     if (cart.items.length === 0) {
@@ -120,7 +120,10 @@ module.exports.removeFromCart = (req, res) => {
     }
 
     calculateSubtotal(cart);
-    res.status(200).json({ success: true, message: "Item removed", cart });
+    req.flash("success", "Item removed from cart");
+    req.session.save(() => {
+        res.status(200).json({ success: true, message: "Item removed", cart });
+    });
 };
 
 // Update item quantity in cart
@@ -130,7 +133,7 @@ module.exports.updateQuantity = (req, res) => {
     const { action } = req.body; // 'increase' or 'decrease'
 
     const cart = req.session.cart;
-    const itemIndex = cart.items.findIndex(i => i.itemId === itemId);
+    const itemIndex = cart.items.findIndex(i => String(i.itemId) === String(itemId));
 
     if (itemIndex > -1) {
         if (action === 'increase') {
@@ -149,7 +152,9 @@ module.exports.updateQuantity = (req, res) => {
         }
 
         calculateSubtotal(cart);
-        res.status(200).json({ success: true, message: "Quantity updated", cart });
+        req.session.save(() => {
+            res.status(200).json({ success: true, message: "Quantity updated", cart });
+        });
     } else {
         res.status(404).json({ success: false, message: "Item not found in cart" });
     }
@@ -162,7 +167,10 @@ module.exports.clearCart = (req, res) => {
         items: [],
         subtotal: 0
     };
-    res.status(200).json({ success: true, message: "Cart cleared" });
+    req.flash("success", "All items removed from cart");
+    req.session.save(() => {
+        res.status(200).json({ success: true, message: "Cart cleared" });
+    });
 };
 
 // Calculate delivery fee dynamically for the cart preview

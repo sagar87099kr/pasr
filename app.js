@@ -81,11 +81,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.socket.io", "https://www.googletagmanager.com", "https://maps.googleapis.com", "https://cdn.jsdelivr.net", "https://translate.googleapis.com", "https://translate.google.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.socket.io", "https://www.googletagmanager.com", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://cdn.jsdelivr.net", "https://translate.googleapis.com", "https://translate.google.com", "https://connect.facebook.net"],
       scriptSrcAttr: ["'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
-      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://maps.gstatic.com", "https://maps.googleapis.com", "https://www.facebook.com"],
-      connectSrc: ["'self'", "https://maps.googleapis.com", "https://api.mapbox.com", "https://events.mapbox.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://www.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://maps.gstatic.com", "https://maps.googleapis.com", "https://www.facebook.com", "https://fonts.gstatic.com", "*.googleapis.com", "*.gstatic.com"],
+      connectSrc: ["'self'", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://translate.googleapis.com", "https://api.mapbox.com", "https://events.mapbox.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "https://ka-f.fontawesome.com"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],

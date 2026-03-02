@@ -504,14 +504,17 @@
 
             .item-modal-card {
                 background: white;
-                border-radius: 20px;
-                width: 90%;
-                max-width: 500px;
-                max-height: 90vh;
+                border-radius: 24px;
+                width: 400px;
+                height: 600px;
+                max-width: 95vw;
+                max-height: 95vh;
                 overflow: hidden;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-                animation: modalSlideIn 0.3s ease-out;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
                 position: relative;
+                display: flex;
+                flex-direction: column;
             }
 
             @keyframes modalSlideIn {
@@ -538,7 +541,7 @@
                 border-radius: 50%;
                 font-size: 20px;
                 cursor: pointer;
-                z-index: 10;
+                z-index: 1001;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -550,177 +553,192 @@
             }
 
             .item-modal-header {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                padding: 25px 20px;
-                text-align: center;
-                color: white;
+                padding: 15px 20px;
+                background: white !important;
+                border-bottom: 1px solid #e2e8f0;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                flex-shrink: 0;
             }
 
             .item-modal-title {
                 margin: 0;
-                font-size: 22px;
+                font-size: 18px;
                 font-weight: 700;
+                color: #1e293b;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 70%;
+            }
+
+            .item-modal-price {
+                font-size: 20px;
+                font-weight: 800;
+                color: #059669;
+                white-space: nowrap;
             }
 
             .item-modal-body {
                 padding: 0;
                 overflow-y: auto;
-                max-height: calc(90vh - 150px);
+                flex-grow: 1;
+                background: #f8fafc;
             }
 
             .item-modal-img-wrapper {
                 position: relative;
                 width: 100%;
-                aspect-ratio: 8 / 12;
-                background-color: #e5e7eb;
-                /* Gray background */
+                aspect-ratio: 9 / 16;
+                background-color: white !important;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 overflow: hidden;
+                flex-shrink: 0;
             }
 
             .item-modal-img {
                 width: 100%;
                 height: 100%;
-                object-fit: contain;
+                object-fit: contain !important;
                 display: block;
             }
 
-            .item-modal-price-overlay {
-                position: absolute;
-                bottom: 15px;
-                right: 15px;
-                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-                color: white;
-                font-size: 24px;
-                font-weight: 700;
-                padding: 12px 20px;
-                border-radius: 12px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+            .item-modal-footer {
+                padding: 12px 15px;
+                background: white;
+                border-top: 1px solid #e2e8f0;
+                display: flex;
+                flex-direction: column;
+                flex-shrink: 0;
+                position: sticky;
+                bottom: 0;
+                z-index: 100;
+            }
+
+            .item-modal-footer-buttons {
+                display: flex;
+                flex-direction: row;
+                gap: 10px;
+                width: 100%;
             }
 
             .item-modal-action-btn {
-                display: block;
-                width: 100%;
+                flex: 1;
                 color: white;
-                padding: 18px;
+                padding: 12px 5px;
                 border: none;
-                border-radius: 0;
-                font-size: 18px;
-                font-weight: 600;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: 700;
                 cursor: pointer;
-                text-decoration: none;
-                text-align: center;
-                transition: 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+                transition: all 0.2s;
             }
 
-            .item-modal-action-btn:hover {
-                transform: translateY(-2px);
+            }
+
+            /* Image Suggestion System */
+            .suggestions-container {
+                display: none;
+                background: white;
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                margin-top: 8px;
+                max-height: 300px;
+                overflow-y: auto;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                position: absolute;
+                width: 100%;
+                z-index: 100;
+            }
+
+            .suggestion-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 10px;
+                cursor: pointer;
+                border-bottom: 1px solid #f3f4f6;
+                transition: background 0.2s;
+            }
+
+            .suggestion-item:hover {
+                background: #f9fafb;
+            }
+
+            .suggestion-item img {
+                width: 70px;
+                height: 70px;
+                border-radius: 6px;
+                object-fit: cover;
+                background: #f3f4f6;
+            }
+
+            .suggestion-info {
+                flex: 1;
+            }
+
+            .suggestion-name {
+                font-weight: 600;
+                font-size: 14px;
+                color: #1f2937;
+            }
+
+            .suggestion-desc {
+                font-size: 12px;
+                color: #6b7280;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 200px;
+            }
+
+            .selected-suggestion-preview {
+                display: none;
+                position: relative;
+                width: 100%;
+                margin: 15px 0;
+                border-radius: 12px;
+                overflow: hidden;
+                border: 2px solid #6366f1;
+            }
+
+            .selected-suggestion-preview img {
+                width: 100%;
+                height: 200px;
+                object-fit: contain;
+                background: #f3f4f6;
+                display: block;
+            }
+
+            .remove-selected-img {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                background: rgba(239, 68, 68, 0.9);
                 color: white;
+                border: none;
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 14px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             }
-
-            @media (max-width: 600px) {
-                .item-modal-card {
-                    width: 95%;
-                }
-
-                .item-modal-price-overlay {
-                    font-size: 20px;
-                    padding: 10px 16px;
-                }
-
-                /* Image Suggestion System */
-                .suggestions-container {
-                    display: none;
-                    background: white;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 12px;
-                    margin-top: 8px;
-                    max-height: 300px;
-                    overflow-y: auto;
-                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-                    position: absolute;
-                    width: 100%;
-                    z-index: 100;
-                }
-
-                .suggestion-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 10px;
-                    cursor: pointer;
-                    border-bottom: 1px solid #f3f4f6;
-                    transition: background 0.2s;
-                }
-
-                .suggestion-item:hover {
-                    background: #f9fafb;
-                }
-
-                .suggestion-item img {
-                    width: 70px;
-                    height: 70px;
-                    border-radius: 6px;
-                    object-fit: cover;
-                    background: #f3f4f6;
-                }
-
-                .suggestion-info {
-                    flex: 1;
-                }
-
-                .suggestion-name {
-                    font-weight: 600;
-                    font-size: 14px;
-                    color: #1f2937;
-                }
-
-                .suggestion-desc {
-                    font-size: 12px;
-                    color: #6b7280;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    max-width: 200px;
-                }
-
-                .selected-suggestion-preview {
-                    display: none;
-                    position: relative;
-                    width: 100%;
-                    margin: 15px 0;
-                    border-radius: 12px;
-                    overflow: hidden;
-                    border: 2px solid #6366f1;
-                }
-
-                .selected-suggestion-preview img {
-                    width: 100%;
-                    height: 200px;
-                    object-fit: contain;
-                    background: #f3f4f6;
-                    display: block;
-                }
-
-                .remove-selected-img {
-                    position: absolute;
-                    top: 8px;
-                    right: 8px;
-                    background: rgba(239, 68, 68, 0.9);
-                    color: white;
-                    border: none;
-                    width: 28px;
-                    height: 28px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    font-size: 14px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                }
         </style>
 
         <body>
@@ -1619,22 +1637,35 @@
                         <h2 class="item-modal-title" id="modalItemName"></h2>
                     </div>
                     <div class="item-modal-body">
-                        <div class="item-modal-img-wrapper">
-                            <img id="modalItemImage" class="item-modal-img" alt="Item">
-                            <div class="item-modal-price-overlay" id="modalItemPrice"></div>
+                        <div class="item-modal-img-wrapper" style="background-color: white !important;">
+                            <img id="modalItemImage" class="item-modal-img" alt="Item"
+                                style="object-fit: contain !important;">
                         </div>
                         <div class="item-modal-desc" id="modalItemDescription"
-                            style="padding: 15px; font-size: 14px; color: #4b5563; line-height: 1.5; background: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                            style="padding: 20px; font-size: 15px; color: #475569; line-height: 1.6; background: white;">
                         </div>
-                        <div style="display: flex; gap: 0; width: 100%;">
-                            <button id="modalAddToCartBtn" class="item-modal-action-btn"
-                                style="background:#f59e0b; flex:1; border-right:1px solid rgba(255,255,255,0.2);">
-                                <i class="fa-solid fa-cart-plus"></i> Add to Cart
-                            </button>
-                            <button id="modalOrderNowBtn" class="item-modal-action-btn"
-                                style="background:#10b981; flex:1;">
-                                <i class="fa-solid fa-bolt"></i> Order Now
-                            </button>
+                    </div>
+                    <div class="item-modal-footer">
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 5px;">
+                            <div class="item-modal-price" id="modalItemPrice"></div>
+                        </div>
+                        <div class="item-modal-footer-buttons">
+                            <% if (typeof currUser !=='undefined' && currUser) { %>
+                                <button id="modalAddToCartBtn" class="item-modal-action-btn"
+                                    style="background: #1e293b;">
+                                    <i class="fa-solid fa-cart-plus"></i> Add
+                                </button>
+                                <button id="modalOrderNowBtn" class="item-modal-action-btn"
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                    <i class="fa-solid fa-bolt"></i> Order
+                                </button>
+                                <% } else { %>
+                                    <a href="/alreadyLogin?redirect=/shops/<%= shop._id %>"
+                                        class="item-modal-action-btn"
+                                        style="background: #1e293b; width: 100%; justify-content: center; text-decoration: none; display: flex; align-items: center;">
+                                        Login to Add to Cart
+                                    </a>
+                                    <% } %>
                         </div>
                     </div>
                 </div>
@@ -1706,35 +1737,6 @@
                     nameEl.textContent = name;
                     imgEl.src = imgUrl || '/images/placeholder.jpg';
                     priceEl.textContent = '₹' + price;
-
-                    const descEl = document.getElementById('modalItemDescription');
-                    if (descEl) {
-                        const desc = element.getAttribute('data-description');
-                        descEl.textContent = desc || 'No description available.';
-                    }
-
-                    const cartBtn = document.getElementById('modalAddToCartBtn');
-                    const orderBtn = document.getElementById('modalOrderNowBtn');
-
-                    // Store data attributes on the buttons directly
-                    if (cartBtn) {
-                        cartBtn.setAttribute('data-itemid', itemId);
-                        cartBtn.setAttribute('data-name', name);
-                        cartBtn.setAttribute('data-img', imgUrl);
-                        cartBtn.setAttribute('data-price', price);
-                        cartBtn.setAttribute('data-shopid', shopId);
-                        cartBtn.setAttribute('data-shopname', shopName);
-                        cartBtn.setAttribute('data-description', description);
-                    }
-                    if (orderBtn) {
-                        orderBtn.setAttribute('data-itemid', itemId);
-                        orderBtn.setAttribute('data-name', name);
-                        orderBtn.setAttribute('data-img', imgUrl);
-                        orderBtn.setAttribute('data-price', price);
-                        orderBtn.setAttribute('data-shopid', shopId);
-                        orderBtn.setAttribute('data-shopname', shopName);
-                        orderBtn.setAttribute('data-description', description);
-                    }
 
                     modal.style.display = 'flex';
                 }

@@ -625,10 +625,10 @@ module.exports.completeOrder = async (req, res, next) => {
                 await shop.save();
             }
 
-            // Partner earns 70% of delivery charge
+            // Partner earns delivery charge minus 5 rupees
             const partner = await DeliveryPartner.findById(order.deliveryPartnerId);
             if (partner) {
-                const earnings = Number((deliveryCharge * 0.7).toFixed(2));
+                const earnings = Math.max(0, Number((deliveryCharge - 5).toFixed(2)));
                 partner.totalEarnings = (partner.totalEarnings || 0) + earnings;
                 partner.pendingPayout = (partner.pendingPayout || 0) + earnings;
                 partner.currentOrders = Math.max(0, (partner.currentOrders || 1) - 1);
@@ -637,9 +637,9 @@ module.exports.completeOrder = async (req, res, next) => {
             }
         } else if (order.selfDelivery) {
             // Case 2: Shop Owner delivered (Self Delivery)
-            // Shop owes PASR 30% commission on delivery charge
+            // Shop owes PASR a flat 5 rupees commission
             if (shop) {
-                shop.dueToPasr = (shop.dueToPasr || 0) + Number((deliveryCharge * 0.3).toFixed(2));
+                shop.dueToPasr = (shop.dueToPasr || 0) + 5;
                 await shop.save();
             }
         }

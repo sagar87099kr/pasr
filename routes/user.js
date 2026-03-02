@@ -8,6 +8,7 @@ const KeshanSabhaPost = require("../data/keshanSabhaPost.js");
 const passport = require("passport");
 const { validatecustomer, saveRedirectUrl, isLogedin, isadmin } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
+const userController = require("../controllers/user.js");
 const { forwardGeocode } = require("../utils/geocoder");
 
 
@@ -125,6 +126,9 @@ router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
 
 // If a person has already logedin before and trying to re login for that is this the route
 router.get("/alreadyLogin", (req, res) => {
+    if (req.query.redirect) {
+        req.session.redirectUrl = req.query.redirect;
+    }
     const failedAttempts = req.session.failedLoginAttempts || 0;
     res.render("pages/relogin.ejs", { failedAttempts });
 });
@@ -534,5 +538,8 @@ router.post("/customer/delete-account", isLogedin, wrapAsync(async (req, res) =>
         res.redirect("/customer/delete-account");
     }
 }));
+
+// API: Update Address
+router.post("/api/user/update-address", isLogedin, wrapAsync(userController.updateAddress));
 
 module.exports = router;

@@ -2,6 +2,10 @@ const express = require("express");
 const router = express.Router();
 const catchAsync = require("../utils/wrapAsync");
 const cartController = require("../controllers/cart");
+const { isLogedin } = require("../middeleware");
+
+// Apply login protection to all cart routes
+router.use(isLogedin);
 
 // View Cart
 router.get("/", cartController.viewCart);
