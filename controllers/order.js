@@ -2,6 +2,7 @@ const Order = require("../data/order");
 const Shop = require("../data/shops");
 const distanceUtil = require("../utils/distance");
 const chargeUtil = require("../utils/deliveryCharge");
+const { calculateDeliveryPricing } = require("../utils/deliveryPricing");
 const otpUtil = require("../utils/otpGenerator");
 const { createNotification } = require("../utils/notificationHelper");
 const FreeDeliveryUsage = require("../data/freeDeliveryUsage");
@@ -105,6 +106,13 @@ module.exports.checkoutOrder = async (req, res, next) => {
         const subtotalAmount = shopItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
         let deliveryCharge = 0;
         let distanceInKm = 0;
+
+        let deliveryDistance = 0;
+        let pasrCommission = 0;
+        let partnerEarning = 0;
+        let estimatedFuelCost = 0;
+        let partnerProfit = 0;
+
         let firstOrderDiscount = 0;
         let grantFreeDelivery = false;
         let deliveryAddress = '';
@@ -163,11 +171,24 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 for (let revert of inventoryUpdates) {
                     await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
                 }
-                return res.status(400).json({ success: false, message: "Unable to deliver to your location for now" });
+                return res.status(400).json({ success: false, message: "Delivery not available beyond 5 km." });
             }
 
-            // Calculate Delivery Charge
-            deliveryCharge = chargeUtil.calculateDeliveryCharge(distanceInKm);
+            // Calculate Delivery Pricing metrics
+            try {
+                const pricing = calculateDeliveryPricing(distanceInKm);
+                deliveryCharge = pricing.customerCharge;
+                deliveryDistance = pricing.distance;
+                pasrCommission = pricing.pasrCommission;
+                partnerEarning = pricing.partnerEarning;
+                estimatedFuelCost = pricing.estimatedFuelCost;
+                partnerProfit = pricing.partnerProfit;
+            } catch (pricingError) {
+                for (let revert of inventoryUpdates) {
+                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                }
+                return res.status(400).json({ success: false, message: pricingError.message });
+            }
 
             // Reverse-geocode to get human-readable delivery address
             try {
@@ -214,6 +235,13 @@ module.exports.checkoutOrder = async (req, res, next) => {
             deliveryType,
             deliveryAddress,
             firstOrderDiscount,
+
+            deliveryDistance,
+            pasrCommission,
+            partnerEarning,
+            estimatedFuelCost,
+            partnerProfit,
+
             paymentType,
             paymentStatus: 'PENDING',
             deliveryOTP: otpUtil.generateOTP(),
@@ -625,10 +653,11 @@ module.exports.completeOrder = async (req, res, next) => {
                 await shop.save();
             }
 
-            // Partner earns delivery charge minus 5 rupees
+            // Partner earns the dynamically calculated partnerEarning
             const partner = await DeliveryPartner.findById(order.deliveryPartnerId);
             if (partner) {
-                const earnings = Math.max(0, Number((deliveryCharge - 5).toFixed(2)));
+                // Backward compatibility fallback to (deliveryCharge - 5) if old order is processed
+                let earnings = order.partnerEarning || Math.max(0, Number((deliveryCharge - 5).toFixed(2)));
                 partner.totalEarnings = (partner.totalEarnings || 0) + earnings;
                 partner.pendingPayout = (partner.pendingPayout || 0) + earnings;
                 partner.currentOrders = Math.max(0, (partner.currentOrders || 1) - 1);
@@ -637,9 +666,11 @@ module.exports.completeOrder = async (req, res, next) => {
             }
         } else if (order.selfDelivery) {
             // Case 2: Shop Owner delivered (Self Delivery)
-            // Shop owes PASR a flat 5 rupees commission
+            // Shop owes PASR the dynamically calculated commission
             if (shop) {
-                shop.dueToPasr = (shop.dueToPasr || 0) + 5;
+                // Backward compatibility fallback to 5 rupees if old order is processed
+                let commission = order.pasrCommission || 5;
+                shop.dueToPasr = (shop.dueToPasr || 0) + commission;
                 await shop.save();
             }
         }

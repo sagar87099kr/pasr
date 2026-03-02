@@ -1738,6 +1738,26 @@
                     imgEl.src = imgUrl || '/images/placeholder.jpg';
                     priceEl.textContent = '₹' + price;
 
+                    const addBtn = document.getElementById('modalAddToCartBtn');
+                    if (addBtn) {
+                        addBtn.setAttribute('data-itemid', itemId);
+                        addBtn.setAttribute('data-name', name);
+                        addBtn.setAttribute('data-img', imgUrl);
+                        addBtn.setAttribute('data-price', price);
+                        addBtn.setAttribute('data-shopid', shopId);
+                        addBtn.setAttribute('data-shopname', shopName);
+                    }
+
+                    const orderBtn = document.getElementById('modalOrderNowBtn');
+                    if (orderBtn) {
+                        orderBtn.setAttribute('data-itemid', itemId);
+                        orderBtn.setAttribute('data-name', name);
+                        orderBtn.setAttribute('data-img', imgUrl);
+                        orderBtn.setAttribute('data-price', price);
+                        orderBtn.setAttribute('data-shopid', shopId);
+                        orderBtn.setAttribute('data-shopname', shopName);
+                    }
+
                     modal.style.display = 'flex';
                 }
 

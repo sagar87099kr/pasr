@@ -2,6 +2,7 @@ const DeliveryPartner = require("../data/deliveryPartner");
 const Order = require("../data/order");
 const User = require("../data/customers"); // Using Customer model as User reference
 const { createNotification } = require("../utils/notificationHelper");
+const { calculateDeliveryPricing } = require("../utils/deliveryPricing");
 
 // Render Registration Form
 module.exports.renderRegisterForm = (req, res) => {
@@ -188,8 +189,9 @@ module.exports.verifyOTPAndComplete = async (req, res, next) => {
             await shop.save();
         }
 
-        // Partner earns delivery charge minus 5 rupees
-        const earnings = Math.max(0, Number((deliveryCharge - 5).toFixed(2)));
+        // Partner earns the dynamically calculated partnerEarning
+        // Backward compatibility fallback to (deliveryCharge - 5) if old order is processed
+        const earnings = order.partnerEarning || Math.max(0, Number((deliveryCharge - 5).toFixed(2)));
         partner.totalEarnings = (partner.totalEarnings || 0) + earnings;
         partner.pendingPayout = (partner.pendingPayout || 0) + earnings;
         partner.currentOrders = Math.max(0, (partner.currentOrders || 1) - 1);
@@ -231,5 +233,20 @@ module.exports.confirmReceipt = async (req, res, next) => {
         res.status(200).json({ success: true, message: "Receipt confirmed. Pending balance reset." });
     } catch (e) {
         next(e);
+    }
+};
+
+// Handle client-side fetch for dynamic delivery calculation
+module.exports.calculateDeliveryAPI = async (req, res, next) => {
+    try {
+        const { distance } = req.query;
+        if (!distance || isNaN(distance)) {
+            return res.status(400).json({ success: false, message: "Valid distance in km is required." });
+        }
+
+        const pricing = calculateDeliveryPricing(parseFloat(distance));
+        res.status(200).json({ success: true, pricing });
+    } catch (e) {
+        res.status(400).json({ success: false, message: e.message });
     }
 };

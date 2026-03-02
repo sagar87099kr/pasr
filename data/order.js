@@ -15,6 +15,14 @@ const orderSchema = new Schema({
     deliveryCharge: { type: Number, default: 0 },
     totalAmount: { type: Number, required: true },
     distanceInKm: { type: Number, default: 0 },
+
+    // Rural Delivery Pricing Metrics
+    deliveryDistance: { type: Number, default: 0 }, // Distance rounded up for pricing
+    pasrCommission: { type: Number, default: 0 },
+    partnerEarning: { type: Number, default: 0 },
+    estimatedFuelCost: { type: Number, default: 0 },
+    partnerProfit: { type: Number, default: 0 },
+
     deliveryType: { type: String, enum: ['HOME_DELIVERY', 'SELF_PICKUP'], required: true },
     deliveryAddress: { type: String, default: '' }, // human-readable address for home delivery
     firstOrderDiscount: { type: Number, default: 0 },

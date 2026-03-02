@@ -53,4 +53,8 @@ router.post("/request-payout", isDeliveryPartner, catchAsync(deliveryController.
 router.post("/confirm-receipt", isDeliveryPartner, catchAsync(deliveryController.confirmReceipt));
 
 
+// Delivery calculation endpoint based on distance
+router.get("/api/calculate", catchAsync(deliveryController.calculateDeliveryAPI));
+
 module.exports = router;
+
