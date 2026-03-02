@@ -6,7 +6,7 @@
 // Delivery pricing tiers based on distance (km)
 const PRICING_TIERS = [
     { maxDistance: 1, customerCharge: 10, pasrCommission: 0 },
-    { maxDistance: 2, customerCharge: 16, pasrCommission: 2 },
+    { maxDistance: 2, customerCharge: 15, pasrCommission: 1 },
     { maxDistance: 3, customerCharge: 22, pasrCommission: 2 },
     { maxDistance: 4, customerCharge: 28, pasrCommission: 3 },
     { maxDistance: 5, customerCharge: 35, pasrCommission: 4 }

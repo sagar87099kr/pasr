@@ -336,7 +336,13 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
                 return bVal - aVal;
             });
 
-        res.render("pages/shopDetail.ejs", { shop, displayItems: filteredMergedItems });
+        // Query active orders for this shop
+        const activeOrderCount = await Order.countDocuments({
+            shopId: shop._id,
+            orderStatus: { $in: ['CREATED', 'ACCEPTED', 'READY_FOR_DELIVERY', 'BROADCAST', 'ASSIGNED', 'OUT_FOR_DELIVERY'] }
+        });
+
+        res.render("pages/shopDetail.ejs", { shop, displayItems: filteredMergedItems, activeOrderCount });
     } else {
         // Customer View: Only items with quantity > 0 AND having an image
         const sellableItems = (shop.items || [])
@@ -356,7 +362,8 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
         res.render("pages/shopDetail.ejs", {
             shop,
             displayItems: sellableItems,
-            availableCategories
+            availableCategories,
+            activeOrderCount: 0 // Customers don't see active orders
         });
     }
 }));

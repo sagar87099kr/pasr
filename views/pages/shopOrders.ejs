@@ -469,7 +469,7 @@
                         <div>
                             <div class="sec-label">👤 Customer</div>
                             <div class="customer-block">
-                                <div class="avatar"><%= (order.resolvedCustomer ? order.resolvedCustomer.name : '
+                                <div class="avatar"><%= (order.resolvedCustomer && order.resolvedCustomer.name ? order.resolvedCustomer.name : 'C').charAt(0).toUpperCase() %> </div>
                                                 C').charAt(0).toUpperCase() %>
                                     </div>
                                     <div>
@@ -727,10 +727,10 @@
 
                             async function verifyPayment(id) {
                                 if (!confirm("Have you confirmed the UPI payment in your bank/app?")) return;
-                                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                                 const res = await fetch(`/api/orders/${id}/verify-payment`, {
                                     method: 'POST',
                                     headers: {
+                                        'Content-Type': 'application/json'
                                     }
                                 });
 
@@ -740,10 +740,10 @@
                             }
                             async function acceptCOD(id) {
                                 if (!confirm("Accept this COD order?")) return;
-                                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                                 const res = await fetch(`/api/orders/${id}/accept`, {
                                     method: 'POST',
                                     headers: {
+                                        'Content-Type': 'application/json'
                                     }
                                 });
 
@@ -753,10 +753,10 @@
                             }
                             async function selfDeliver(id) {
                                 if (!confirm("You will deliver this order yourself. Confirm?")) return;
-                                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                                 const res = await fetch(`/api/orders/${id}/self-deliver`, {
                                     method: 'POST',
                                     headers: {
+                                        'Content-Type': 'application/json'
                                     }
                                 });
 
@@ -768,10 +768,10 @@
                                 if (!confirm("Send a notification to all available delivery partners nearby. The first one to accept will get this order.")) return;
                                 const btn = event.target;
                                 btn.disabled = true; btn.textContent = '📡 Broadcasting...';
-                                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                                 const res = await fetch(`/api/orders/${id}/broadcast-delivery`, {
                                     method: 'POST',
                                     headers: {
+                                        'Content-Type': 'application/json'
                                     }
                                 });
 
