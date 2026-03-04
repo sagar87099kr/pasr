@@ -35,15 +35,15 @@
         });
     }
 
-    async function initFCM() {
+    async function initFCM(isSilent = false) {
         try {
             if (!('serviceWorker' in navigator)) {
-                if (typeof showToast === 'function') showToast('Error: Your browser is blocking Service Workers because it is an INSECURE context (e.g. Incognito or plain HTTP without localhost).', 'danger');
+                if (!isSilent && typeof showToast === 'function') showToast('Error: Your browser is blocking Service Workers because it is an INSECURE context (e.g. Incognito or plain HTTP without localhost).', 'danger');
                 return;
             }
 
             if (!('Notification' in window)) {
-                if (typeof showToast === 'function') showToast('Error: This browser does not support Notifications.', 'danger');
+                if (!isSilent && typeof showToast === 'function') showToast('Error: This browser does not support Notifications.', 'danger');
                 return;
             }
 
@@ -65,13 +65,13 @@
             // Request notification permission
             const permission = await Notification.requestPermission();
             if (permission !== 'granted') {
-                if (typeof showToast === "function") showToast('[FCM] Notification permission denied.');
-                if (typeof showToast === 'function') showToast('Please allow Notification settings in your browser', 'warning');
+                if (!isSilent && typeof showToast === "function") showToast('[FCM] Notification permission denied.');
+                if (!isSilent && typeof showToast === 'function') showToast('Please allow Notification settings in your browser', 'warning');
                 return;
             }
 
             // check if showToast is available
-            if (typeof showToast === 'function') {
+            if (!isSilent && typeof showToast === 'function') {
                 showToast('Getting push token...', 'info');
             }
 
@@ -82,12 +82,12 @@
             });
 
             if (!token) {
-                if (typeof showToast === "function") showToast('[FCM] Could not get FCM token.');
-                showToast('Failed to generate device token', 'danger');
+                if (!isSilent && typeof showToast === "function") showToast('[FCM] Could not get FCM token.');
+                if (!isSilent) showToast('Failed to generate device token', 'danger');
                 return;
             }
 
-            if (typeof showToast === "function") showToast('[FCM] Token obtained:', token.substring(0, 20) + '...');
+            if (!isSilent && typeof showToast === "function") showToast('[FCM] Token obtained:', token.substring(0, 20) + '...');
 
             // Save token to server — determine endpoint based on user type
             const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
@@ -103,11 +103,11 @@
             });
 
             if (res.ok) {
-                if (typeof showToast === "function") showToast('[FCM] Token saved to server successfully.');
-                showToast('Push Notifications enabled!', 'success');
+                if (!isSilent && typeof showToast === "function") showToast('[FCM] Token saved to server successfully.');
+                if (!isSilent) showToast('Push Notifications enabled!', 'success');
             } else {
                 console.warn('[FCM] Failed to save token:', res.status);
-                showToast('API Error saving token: ' + res.status, 'danger');
+                if (!isSilent) showToast('API Error saving token: ' + res.status, 'danger');
             }
 
             // Handle foreground messages (app open)
@@ -230,7 +230,7 @@
             if (isLoggedIn) {
                 if (Notification.permission === 'granted') {
                     // Silently refresh token in background
-                    initFCM();
+                    initFCM(true);
                 } else if (Notification.permission === 'default') {
                     if (localStorage.getItem('fcm_prompt_dismissed') !== 'true') {
                         // Show our custom prompt slightly after page load to not be overwhelming

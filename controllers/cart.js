@@ -93,7 +93,13 @@ module.exports.addToCart = async (req, res, next) => {
 
         calculateSubtotal(cart);
         req.flash("success", "Item added to cart");
-        res.status(200).json({ success: true, message: "Item added to cart", cart });
+        console.log("[CART] Adding item. Current session ID:", req.sessionID);
+        console.log("[CART] Cart to save:", JSON.stringify(cart, null, 2));
+        req.session.save((err) => {
+            if (err) console.error("[CART] Save error:", err);
+            else console.log("[CART] Save callback success!");
+            res.status(200).json({ success: true, message: "Item added to cart", cart });
+        });
     } catch (e) {
         next(e);
     }
@@ -101,7 +107,10 @@ module.exports.addToCart = async (req, res, next) => {
 
 // View Cart
 module.exports.viewCart = (req, res) => {
+    console.log("[CART] Viewing cart. Current session ID:", req.sessionID);
+    console.log("[CART] Before initCart:", req.session.cart ? JSON.stringify(req.session.cart.items.length) + " items" : "No cart");
     initCart(req);
+    console.log("[CART] After initCart:", JSON.stringify(req.session.cart, null, 2));
     // Render an EJS page
     res.render("pages/cart", { cart: req.session.cart });
 };
