@@ -33,6 +33,11 @@ const orderSchema = new Schema({
     deliveryPartnerId: { type: Schema.Types.ObjectId, ref: 'DeliveryPartner' },
     deliveryOTP: { type: String },
 
+    // Razorpay Fields
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String },
+    razorpaySignature: { type: String },
+
     orderStatus: {
         type: String,
         enum: ['CREATED', 'ACCEPTED', 'READY_FOR_DELIVERY', 'BROADCAST', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED'],

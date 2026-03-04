@@ -264,6 +264,30 @@ module.exports.checkoutOrder = async (req, res, next) => {
         cart.items = cart.items.filter(item => item.shopId !== shopId);
         cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
+        let razorpayOrderData = null;
+        if (paymentType === 'PREPAID') {
+            const Razorpay = require('razorpay');
+            const rzp = new Razorpay({
+                key_id: process.env.RAZORPAY_KEY_ID,
+                key_secret: process.env.RAZORPAY_KEY_SECRET
+            });
+            const rzpOrder = await rzp.orders.create({
+                amount: Math.round(totalAmount * 100), // amount in paise
+                currency: 'INR',
+                receipt: order.orderId
+            });
+            order.razorpayOrderId = rzpOrder.id;
+            await order.save(); // Save the newly attached razorpay ID
+
+            razorpayOrderData = {
+                id: rzpOrder.id,
+                amount: rzpOrder.amount,
+                currency: rzpOrder.currency,
+                keyId: process.env.RAZORPAY_KEY_ID
+            };
+        }
+        cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+
         const sellerDetails = await getOrderSellerDetails(order);
         const itemsSummary = shopItems.map(i => i.name).join(", ");
 
@@ -276,7 +300,8 @@ module.exports.checkoutOrder = async (req, res, next) => {
             itemsSummary,
             totalAmount: order.totalAmount,
             paymentType: order.paymentType,
-            deliveryType: order.deliveryType
+            deliveryType: order.deliveryType,
+            razorpay: razorpayOrderData
         });
 
     } catch (e) {

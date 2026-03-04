@@ -543,9 +543,8 @@
                                         <div class="row g-2">
                                             <div class="col-6">
                                                 <button class="btn btn-success checkout-btn upi-pay-btn"
-                                                    data-shopid="<%= shopId %>" data-shopname="<%= group.shopName %>"
-                                                    data-upi="<%= group.shopUpiUrl %>">
-                                                    <i class="fa-solid fa-qrcode me-1"></i> Pay UPI
+                                                    data-shopid="<%= shopId %>" data-shopname="<%= group.shopName %>">
+                                                    <i class="fa-solid fa-credit-card me-1"></i> Pay Online
                                                 </button>
                                             </div>
                                             <div class="col-6">
@@ -976,43 +975,77 @@
 
                         const data = await res.json();
                         if (res.ok) {
-                            // Prepare Success Modal
-                            document.getElementById('successOrderId').innerText = data.orderId;
-
-                            const whatsappBtn = document.getElementById('whatsappNotifyBtn');
-                            whatsappBtn.onclick = () => {
-                                const phone = `91${data.shopOwnerPhone}`;
-                                const baseUrl = window.location.origin;
-                                const orderLink = `${baseUrl}/api/orders/my-orders`;
-
-                                // Items Summary (shortened if too long)
-                                let items = data.itemsSummary;
-                                if (items.length > 30) items = items.substring(0, 27) + "...";
-
-                                let message = `📦 Order #${data.orderId} (${items})\n`;
-                                if (data.paymentType === 'COD') {
-                                    message += `मुझे सामान घर चाहिए, पहुँचने पर पैसे दूँगा।\nI want products at home, will pay on delivery.`;
-                                } else {
-                                    message += `मैंने UPI से पैसे भेज दिए हैं, सामान घर भेज दें।\nI sent money via UPI, please send my products home.`;
-                                }
-                                message += `\nView: ${orderLink}`;
-
-                                const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-                                window.open(whatsappUrl, '_blank');
-
-                                // Redirect after a short delay
-                                setTimeout(() => { window.location.href = '/api/orders/my-orders'; }, 1500);
+                            const showSuccessModal = () => {
+                                document.getElementById('successOrderId').innerText = data.orderId;
+                                const whatsappBtn = document.getElementById('whatsappNotifyBtn');
+                                whatsappBtn.onclick = () => {
+                                    const phone = `91${data.shopOwnerPhone}`;
+                                    const baseUrl = window.location.origin;
+                                    const orderLink = `${baseUrl}/api/orders/my-orders`;
+                                    let items = data.itemsSummary;
+                                    if (items.length > 30) items = items.substring(0, 27) + "...";
+                                    let message = `📦 Order #${data.orderId} (${items})\n`;
+                                    if (data.paymentType === 'COD') {
+                                        message += `मुझे सामान घर चाहिए, पहुँचने पर पैसे दूँगा।\nI want products at home, will pay on delivery.`;
+                                    } else {
+                                        message += `मैंने ऑनलाइन पैसे भेज दिए हैं, सामान घर भेज दें।\nI paid online, please send my products home.`;
+                                    }
+                                    message += `\nView: ${orderLink}`;
+                                    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                                    window.open(whatsappUrl, '_blank');
+                                    setTimeout(() => { window.location.href = '/api/orders/my-orders'; }, 1500);
+                                };
+                                const successModal = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
+                                successModal.show();
                             };
 
-                            // Close UPI modal if open
-                            if (paymentType === 'PREPAID') {
-                                const upiModalEl = document.getElementById('upiPaymentModal');
-                                const upiInst = bootstrap.Modal.getInstance(upiModalEl);
-                                if (upiInst) upiInst.hide();
+                            if (paymentType === 'PREPAID' && data.razorpay) {
+                                const options = {
+                                    key: data.razorpay.keyId,
+                                    amount: data.razorpay.amount,
+                                    currency: data.razorpay.currency,
+                                    order_id: data.razorpay.id,
+                                    name: "PASR Checkout",
+                                    description: "Order Processing",
+                                    handler: async function (response) {
+                                        try {
+                                            const bodyPayload = JSON.stringify({
+                                                razorpay_order_id: response.razorpay_order_id,
+                                                razorpay_payment_id: response.razorpay_payment_id,
+                                                razorpay_signature: response.razorpay_signature,
+                                                orderId: data.orderDbId
+                                            });
+                                            const vRes = await fetch('/api/payment/verify-payment', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: bodyPayload
+                                            });
+                                            const vData = await vRes.json();
+                                            if (vData.success) {
+                                                showSuccessModal();
+                                            } else {
+                                                alert("Payment verification failed! " + vData.message);
+                                                window.location.reload();
+                                            }
+                                        } catch (e) {
+                                            alert("Error verifying payment.");
+                                            window.location.reload();
+                                        }
+                                    },
+                                    prefill: {
+                                        name: "<%= currUser.name %>",
+                                        contact: "<%= currUser.username %>"
+                                    },
+                                    theme: { color: "#6366f1" }
+                                };
+                                const rzp1 = new window.Razorpay(options);
+                                rzp1.on('payment.failed', function (response) {
+                                    alert("Payment Failed: " + response.error.description);
+                                });
+                                rzp1.open();
+                            } else {
+                                showSuccessModal();
                             }
-
-                            const successModal = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
-                            successModal.show();
                         } else alert(data.message || 'Order failed.');
                     } catch (e) { alert('Error: ' + e.message); }
                 }
@@ -1025,29 +1058,16 @@
 
                 document.querySelectorAll('.upi-pay-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
-                        const { shopid, shopname, upi } = btn.dataset;
-                        const section = document.getElementById(`shop-section-${shopid}`);
+                        const { shopid } = btn.dataset;
+                        const originalHtml = btn.innerHTML;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
+                        btn.disabled = true;
 
-                        currentShopContext = shopid;
-                        document.getElementById('modalShopName').innerText = shopname;
-                        document.getElementById('modalUpiAmount').innerText = section.dataset.total || section.querySelector('.grand-total').innerText.replace('₹', '');
-
-                        if (upi && upi !== 'null') {
-                            document.getElementById('modalQrImg').src = upi;
-                            document.getElementById('qrContainer').classList.remove('d-none');
-                            document.getElementById('noQrMsg').classList.add('d-none');
-                            document.getElementById('confirmUpiPaidBtn').disabled = false;
-                        } else {
-                            document.getElementById('qrContainer').classList.add('d-none');
-                            document.getElementById('noQrMsg').classList.remove('d-none');
-                            document.getElementById('confirmUpiPaidBtn').disabled = true;
-                        }
-                        upiModal.show();
+                        placeOrder(shopid, 'PREPAID').finally(() => {
+                            btn.innerHTML = originalHtml;
+                            btn.disabled = false;
+                        });
                     });
-                });
-
-                document.getElementById('confirmUpiPaidBtn').addEventListener('click', () => {
-                    if (currentShopContext) placeOrder(currentShopContext, 'PREPAID');
                 });
             });
             window.initMap = function () {
@@ -1101,3 +1121,6 @@
         <script
             src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&libraries=places&callback=initMap"
             async defer></script>
+
+        <!-- Razorpay Checkout Widget -->
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>

@@ -33,7 +33,7 @@ orderBus.on("ORDER_CREATED", async (order) => {
         if (shop.owner.fcmToken) {
             const message = {
                 notification: {
-                    title: "New Order Received!",
+                    title: "🔔 New Order Received!",
                     body: `${customerName} ordered: ${itemsList}`
                 },
                 data: {
@@ -43,7 +43,22 @@ orderBus.on("ORDER_CREATED", async (order) => {
                 token: shop.owner.fcmToken
             };
             await admin.messaging().send(message);
-            console.log("FCM notification sent to shop owner.");
+        }
+
+        // 3. Send Push Notification to Customer (for COD)
+        if (order.paymentType === 'COD' && customer && customer.fcmToken) {
+            const cMessage = {
+                notification: {
+                    title: "🎯 Order Placed Successfully!",
+                    body: `Your COD order from ${shop.shopName} for ₹${order.totalAmount} has been sent to the shop.`
+                },
+                data: {
+                    orderId: String(order._id),
+                    type: "ORDER_CREATED"
+                },
+                token: customer.fcmToken
+            };
+            await admin.messaging().send(cMessage);
         }
     } catch (err) {
         console.error("Error in ORDER_CREATED notification:", err);
@@ -52,6 +67,7 @@ orderBus.on("ORDER_CREATED", async (order) => {
 
 // Listen for Status Updates
 const statusEvents = [
+    "PAYMENT_VERIFIED",
     "ORDER_ACCEPTED",
     "ORDER_READY",
     "ORDER_OUT_FOR_DELIVERY",
@@ -73,6 +89,10 @@ statusEvents.forEach(event => {
 
             let title, body;
             switch (event) {
+                case "PAYMENT_VERIFIED":
+                    title = "Payment Successful";
+                    body = `Your secure online payment of ₹${order.totalAmount} for order ${order.orderId} was verified!`;
+                    break;
                 case "ORDER_ACCEPTED":
                     title = "Order Accepted";
                     body = `Your order ${order.orderId} has been accepted by the seller.`;
@@ -104,7 +124,7 @@ statusEvents.forEach(event => {
                 body
             );
 
-            // 2. FCM Push
+            // 2. FCM Push for Customer
             if (customer.fcmToken) {
                 const message = {
                     notification: { title, body },
@@ -115,7 +135,22 @@ statusEvents.forEach(event => {
                     token: customer.fcmToken
                 };
                 await admin.messaging().send(message);
-                console.log(`FCM notification sent to customer for ${event}`);
+            }
+
+            // 3. IF PAYMENT_VERIFIED, ALSO NOTIFY SHOP OWNER!
+            if (event === "PAYMENT_VERIFIED") {
+                const Shop = require("../data/shops");
+                const shop = await Shop.findById(order.shopId).populate("owner");
+                if (shop && shop.owner && shop.owner.fcmToken) {
+                    await admin.messaging().send({
+                        notification: {
+                            title: "💸 Payment Verified!",
+                            body: `Customer paid ₹${order.totalAmount} online for Order ${order.orderId}. Please start packing!`
+                        },
+                        data: { orderId: String(order._id), type: "PAYMENT_VERIFIED" },
+                        token: shop.owner.fcmToken
+                    });
+                }
             }
         } catch (err) {
             console.error(`Error in ${event} notification:`, err);

@@ -81,12 +81,13 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.socket.io", "https://www.googletagmanager.com", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://cdn.jsdelivr.net", "https://translate.googleapis.com", "https://translate.google.com", "https://connect.facebook.net"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.socket.io", "https://www.googletagmanager.com", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://cdn.jsdelivr.net", "https://translate.googleapis.com", "https://translate.google.com", "https://connect.facebook.net", "https://www.gstatic.com", "https://apis.google.com", "https://checkout.razorpay.com"],
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://www.gstatic.com"],
       imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://maps.gstatic.com", "https://maps.googleapis.com", "https://www.facebook.com", "https://fonts.gstatic.com", "*.googleapis.com", "*.gstatic.com"],
-      connectSrc: ["'self'", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://translate.googleapis.com", "https://api.mapbox.com", "https://events.mapbox.com"],
+      connectSrc: ["'self'", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://translate.googleapis.com", "https://api.mapbox.com", "https://events.mapbox.com", "https://*.googleapis.com", "https://*.firebaseio.com", "wss://*.firebaseio.com", "https://*.gstatic.com", "https://*.razorpay.com", "https://checkout.razorpay.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "https://ka-f.fontawesome.com"],
+      frameSrc: ["'self'", "https://*.razorpay.com", "https://checkout.razorpay.com"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
     },
@@ -256,6 +257,7 @@ app.use("/api/products", require("./routes/apiProduct.js"));
 app.use("/api", require("./routes/itemRegistry.js"));
 app.use("/api/notifications", require("./routes/apiNotification.js"));
 app.use("/api/fcm", require("./routes/fcm.js"));
+app.use("/api/payment", require("./routes/payment.js"));
 
 
 app.use((req, res, next) => {
