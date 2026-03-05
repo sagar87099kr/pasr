@@ -1,5 +1,5 @@
 const Provider = require("./data/serviceproviders.js");
-const { providerSchema, customerSchema, reviewSchema, shopSchema, itemSchema, deliveryPartnerSchema } = require("./schema.js");
+const { providerSchema, customerSchema, reviewSchema, shopSchema, itemSchema, deliveryPartnerSchema, productSchema } = require("./schema.js");
 const DeliveryPartner = require("./data/deliveryPartner.js");
 const ExpressError = require("./utils/expressError.js");
 const Review = require("./data/review.js");
@@ -211,6 +211,15 @@ module.exports.validateDeliveryPartner = (req, res, next) => {
     }
 }
 
+module.exports.validateProduct = (req, res, next) => {
+    let { error } = productSchema.validate(req.body);
+    if (error) {
+        let errMsg = error.details.map((el) => el.message).join(",");
+        req.flash('error', errMsg);
+        return res.redirect('/product/seller');
+    }
+    next();
+}
 
 module.exports.isReviewAuthor = async (req, res, next) => {
     try {

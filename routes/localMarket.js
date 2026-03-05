@@ -2,11 +2,11 @@ const express = require("express");
 const router = express.Router();
 const Product = require("../data/product.js");
 const Order = require("../data/order.js");
-const { isLogedin, isVerifiedCustomer, isOwner, isadmin, isProductOwner } = require("../middeleware.js");
+const { isLogedin, isVerifiedCustomer, isOwner, isadmin, isProductOwner, validateProduct } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const { forwardGeocode } = require("../utils/geocoder");
 const { storage, cloudinary, upload, itemUpload } = require("../cloud_con.js");
-
+const { productSchema } = require("../schema.js");
 
 router.get("/localMarket", wrapAsync(async (req, res) => {
     let { lat, lng, range } = req.query;
@@ -105,7 +105,7 @@ router.get("/product/seller", isLogedin, isVerifiedCustomer, wrapAsync(async (re
 
 router.post("/product/seller", isLogedin, itemUpload.fields([
     { name: 'productImage', maxCount: 5 }
-]), wrapAsync(async (req, res) => {
+]), validateProduct, wrapAsync(async (req, res) => {
     const productData = req.body.product;
     const geoData = await forwardGeocode(productData.location);
 

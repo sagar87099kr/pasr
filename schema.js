@@ -102,3 +102,14 @@ module.exports.deliveryPartnerSchema = Joi.object({
     vehicleType: Joi.string().valid('bike', 'scooter', 'bicycle', 'tempo', 'four_wheeler').required(),
     vehicleNumber: Joi.string().allow("")
 });
+
+module.exports.productSchema = Joi.object({
+    product: Joi.object({
+        productName: Joi.string().required(),
+        price: Joi.number().required().min(0),
+        quantity: Joi.number().required().min(0),
+        categories: Joi.string().required(),
+        location: Joi.string().required(),
+        description: Joi.string().allow(""),
+    }).required()
+});
