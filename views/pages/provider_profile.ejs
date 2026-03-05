@@ -323,10 +323,20 @@
               <!-- Products Section -->
               <% if (products && products.length> 0) { %>
                 <section class="profile-card">
-                  <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
-                    <div class="user-info">
+                  <div class="card-header d-flex flex-wrap justify-content-between align-items-center"
+                    style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
+                    <div class="user-info mb-2 mb-md-0">
                       <h2>My Products</h2>
-                      <span class="user-type">Manage your products</span>
+                      <span class="user-type">Manage your local bazzar inventory</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                      <a href="/api/orders/my-shop-orders" class="btn btn-outline-primary"
+                        style="border-radius: 8px; font-weight: 600;">
+                        <i class="fa-solid fa-box-open"></i> Manage Orders
+                      </a>
+                      <a href="/product/seller" class="btn btn-success" style="border-radius: 8px; font-weight: 600;">
+                        <i class="fa-solid fa-plus"></i> Add Product
+                      </a>
                     </div>
                   </div>
 
@@ -347,9 +357,23 @@
                             </p>
                           </div>
                         </div>
-                        <a href="/products/<%= product._id %>" class="btn btn-view">
-                          View Product <i class="fa-solid fa-arrow-right"></i>
-                        </a>
+                        <div class="d-flex gap-2 mt-3 p-2">
+                          <a href="/products/<%= product._id %>" class="btn btn-view flex-grow-1">
+                            <i class="fa-solid fa-eye"></i> View
+                          </a>
+                          <button type="button" class="btn btn-secondary flex-grow-0" style="padding: 0.5rem 0.8rem;"
+                            onclick="window.location.href='/products/<%= product._id %>?edit=true'">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                          </button>
+                          <form method="POST" action="/products/<%= product._id %>/delete?_method=DELETE"
+                            style="margin: 0;"
+                            onsubmit="return confirm('Are you sure you want to delete this product?');">
+                            <button type="submit" class="btn btn-danger flex-grow-0"
+                              style="padding: 0.5rem 0.8rem; border-radius: 8px;">
+                              <i class="fa-solid fa-trash"></i>
+                            </button>
+                          </form>
+                        </div>
                       </div>
                       <% }) %>
                   </div>

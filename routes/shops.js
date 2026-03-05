@@ -342,7 +342,32 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             orderStatus: { $in: ['CREATED', 'ACCEPTED', 'READY_FOR_DELIVERY', 'BROADCAST', 'ASSIGNED', 'OUT_FOR_DELIVERY'] }
         });
 
-        res.render("pages/shopDetail.ejs", { shop, displayItems: filteredMergedItems, activeOrderCount });
+        // Calculate Financial Ledger Balances
+        const unsettledOrders = await Order.find({
+            shopId: shop._id,
+            orderStatus: 'COMPLETED',
+            settlementStatus: 'PENDING'
+        });
+
+        let totalPendingPayout = 0; // PASR owes Shop
+        let totalDueToPasr = 0;     // Shop owes PASR
+
+        unsettledOrders.forEach(order => {
+            if (order.selfDelivery) {
+                if (order.paymentType === 'PREPAID') {
+                    // PASR collected everything online; Shop did the delivery
+                    totalPendingPayout += (order.subtotalAmount + order.deliveryCharge - (order.pasrCommission || 0));
+                } else if (order.paymentType === 'COD') {
+                    // Shop collected cash; PASR takes commission
+                    totalDueToPasr += (order.pasrCommission || 0);
+                }
+            } else {
+                // Partner Delivered (both PREPAID and COD means PASR gets/handles the money)
+                totalPendingPayout += order.subtotalAmount;
+            }
+        });
+
+        res.render("pages/shopDetail.ejs", { shop, displayItems: filteredMergedItems, activeOrderCount, totalPendingPayout, totalDueToPasr });
     } else {
         // Customer View: Only items with quantity > 0 AND having an image
         const sellableItems = (shop.items || [])
@@ -363,7 +388,9 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             shop,
             displayItems: sellableItems,
             availableCategories,
-            activeOrderCount: 0 // Customers don't see active orders
+            activeOrderCount: 0, // Customers don't see active orders
+            totalPendingPayout: 0,
+            totalDueToPasr: 0
         });
     }
 }));
@@ -425,14 +452,14 @@ router.get("/shops/:id/edit", isLogedin, isShopOwner, wrapAsync(async (req, res)
 router.put("/shops/:id", isLogedin, isShopOwner, validateShop, wrapAsync(async (req, res) => {
 
     let { id } = req.params;
-    const { shopName, shopDescription, category, location, openingTime, closingTime } = req.body.shop;
+    const { shopName, shopDescription, category, location, openingTime, closingTime, upiId } = req.body.shop;
 
     // Geocode the new location
     const geoData = await forwardGeocode(location);
 
     const geometry = geoData.body.features[0].geometry;
 
-    await Shop.findByIdAndUpdate(id, { shopName, shopDescription, category, location, geometry, openingTime, closingTime });
+    await Shop.findByIdAndUpdate(id, { shopName, shopDescription, category, location, geometry, openingTime, closingTime, upiId });
 
     req.flash("success", "Shop updated successfully");
     res.redirect(`/shops/${id}`);

@@ -5,5 +5,9 @@ const { isLogedin } = require("../middeleware.js");
 
 // Verify payment initiated from the frontend widget
 router.post("/verify-payment", isLogedin, paymentController.verifyPayment);
+// Payout and Commission Settlement
+router.post("/request-payout", isLogedin, paymentController.requestPayout);
+router.post("/pay-commission", isLogedin, paymentController.payCommission);
+router.post("/verify-commission", isLogedin, paymentController.verifyCommissionPayment);
 
 module.exports = router;

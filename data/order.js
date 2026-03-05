@@ -52,7 +52,10 @@ const orderSchema = new Schema({
     }, // captured at assignment time so shopkeeper always sees it
 
     deliveredAt: { type: Date },
-    cancellationReason: { type: String }
+    cancellationReason: { type: String },
+
+    // Financial Settlement
+    settlementStatus: { type: String, enum: ['PENDING', 'SETTLED'], default: 'PENDING' }
 }, { timestamps: true });
 
 module.exports = mongoose.model("Order", orderSchema);

@@ -89,11 +89,12 @@
                             </div>
                         </div>
                         <div class="col-md-6 form-group mt-4">
-                            <label class="form-label">UPI QR Code (Optional)</label>
+                            <label class="form-label">UPI ID for Payouts (Optional)</label>
                             <div
                                 class="p-3 border rounded bg-light text-center h-100 d-flex flex-column justify-content-center">
-                                <input type="file" name="upiScanner" class="form-control">
-                                <div class="form-text mt-2">Allows customers to pay you via UPI.</div>
+                                <input type="text" name="product[upiId]" class="form-control"
+                                    placeholder="e.g. 9876543210@paytm">
+                                <div class="form-text mt-2">PASR will use this UPI ID to send your earnings.</div>
                             </div>
                         </div>
                     </div>

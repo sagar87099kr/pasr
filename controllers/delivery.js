@@ -90,12 +90,18 @@ module.exports.getDashboard = async (req, res, next) => {
         const assignedOrders = await Order.find({
             deliveryPartnerId: partnerId,
             orderStatus: { $in: ['ASSIGNED', 'OUT_FOR_DELIVERY'] }
-        }).populate('shopId customerId');
+        }).populate({
+            path: 'shopId',
+            populate: { path: 'owner', select: 'name username' }
+        }).populate('customerId');
 
         // Fetch all BROADCAST orders that are still unclaimed (any partner can claim them)
         const broadcastOrders = await Order.find({
             orderStatus: 'BROADCAST'
-        }).populate('shopId customerId');
+        }).populate({
+            path: 'shopId',
+            populate: { path: 'owner', select: 'name username' }
+        }).populate('customerId');
 
         res.render("pages/deliveryDashboard.ejs", { partner, activeOrders: assignedOrders, broadcastOrders });
     } catch (e) {

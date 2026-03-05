@@ -865,6 +865,91 @@
                                     </a>
                                 </div>
                                 <% } %>
+
+                                    <!-- Financial Ledger Section -->
+                                    <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                        <div class="financial-ledger-card mt-4 p-4"
+                                            style="background: white; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                                            <h3
+                                                style="font-size: 1.1rem; font-weight: 700; color: #1f2937; margin-bottom: 15px; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px;">
+                                                <i class="fa-solid fa-wallet text-success"></i> Financial Ledger
+                                            </h3>
+
+                                            <div
+                                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                                <div
+                                                    style="background: #ecfdf5; padding: 12px; border-radius: 8px; border: 1px solid #a7f3d0; text-align: center;">
+                                                    <div
+                                                        style="font-size: 0.8rem; color: #065f46; font-weight: 600; text-transform: uppercase;">
+                                                        Pending Payout</div>
+                                                    <div
+                                                        style="font-size: 1.2rem; font-weight: 800; color: #059669; margin: 5px 0;">
+                                                        ₹<%= parseFloat(totalPendingPayout || 0).toFixed(2) %>
+                                                    </div>
+                                                    <div style="font-size: 0.75rem; color: #047857;">PASR owes you</div>
+                                                </div>
+                                                <div
+                                                    style="background: #fef2f2; padding: 12px; border-radius: 8px; border: 1px solid #fecaca; text-align: center;">
+                                                    <div
+                                                        style="font-size: 0.8rem; color: #991b1b; font-weight: 600; text-transform: uppercase;">
+                                                        Due Commission</div>
+                                                    <div
+                                                        style="font-size: 1.2rem; font-weight: 800; color: #dc2626; margin: 5px 0;">
+                                                        ₹<%= parseFloat(totalDueToPasr || 0).toFixed(2) %>
+                                                    </div>
+                                                    <div style="font-size: 0.75rem; color: #b91c1c;">You owe PASR</div>
+                                                </div>
+                                            </div>
+
+                                            <div style="display: flex; gap: 10px;">
+                                                <button class="btn btn-success"
+                                                    style="flex: 1; padding: 8px; font-size: 0.9rem; font-weight: 600;"
+                                                    <%=(totalPendingPayout || 0) <=0 ? 'disabled' : '' %>
+                                                    onclick="requestPayout()">
+                                                    <i class="fa-solid fa-money-bill-transfer"></i> Request Payout
+                                                </button>
+                                                <button class="btn btn-danger"
+                                                    style="flex: 1; padding: 8px; font-size: 0.9rem; font-weight: 600;"
+                                                    <%=(totalDueToPasr || 0) <=0 ? 'disabled' : '' %>
+                                                    onclick="payCommission()">
+                                                    <i class="fa-brands fa-razorpay"></i> Pay Commission
+                                                </button>
+                                            </div>
+                                            <div class="mt-2 text-center" style="font-size: 0.75rem; color: #6b7280;">
+                                                Earnings target: <strong>
+                                                    <%= shop.upiId ? shop.upiId : 'UPI ID Not Set' %>
+                                                </strong>
+                                                <a href="/shops/<%= shop._id %>/edit"
+                                                    style="color: #2563eb; text-decoration: none; margin-left: 5px;">(Edit)</a>
+                                            </div>
+                                        </div>
+
+                                        <form id="requestPayoutForm" action="/api/payment/request-payout" method="POST"
+                                            style="display: none;">
+                                            <input type="hidden" name="shopId" value="<%= shop._id %>">
+                                            <input type="hidden" name="amount" value="<%= totalPendingPayout || 0 %>">
+                                        </form>
+                                        <form id="payCommissionForm" action="/api/payment/pay-commission" method="POST"
+                                            style="display: none;">
+                                            <input type="hidden" name="shopId" value="<%= shop._id %>">
+                                            <input type="hidden" name="amount" value="<%= totalDueToPasr || 0 %>">
+                                        </form>
+                                        <script>
+                                            function requestPayout() {
+                                        <% if (!shop.upiId) { %>
+                                                    alert("Please set your UPI ID in the shop profile (Edit Shop) before requesting a payout.");
+                                                    return;
+                                        <% } %>
+                                        if (confirm("Request payout of ₹<%= parseFloat(totalPendingPayout || 0).toFixed(2) %> to your configured UPI ID?")) {
+                                                    document.getElementById('requestPayoutForm').submit();
+                                                }
+                                            }
+                                            function payCommission() {
+                                                document.getElementById('payCommissionForm').submit();
+                                            }
+                                        </script>
+                                        <% } %>
+
                         </div>
                     </div>
 

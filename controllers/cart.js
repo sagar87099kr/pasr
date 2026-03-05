@@ -51,12 +51,12 @@ module.exports.addToCart = async (req, res, next) => {
             return res.status(404).json({ success: false, message: "Item not found." });
         }
 
-        let shopId, finalShopName, shopUpiUrl, shopOwnerUsername;
+        let shopId, finalShopName, shopUpiId, shopOwnerUsername;
 
         if (isProduct) {
             shopId = item.owner._id.toString();
             finalShopName = `Local Bazar: ${item.owner.name}`;
-            shopUpiUrl = item.upiScanner ? item.upiScanner.url : null;
+            shopUpiId = item.upiId || null;
             shopOwnerUsername = item.owner.username;
         } else {
             if (!item.shop) {
@@ -64,7 +64,7 @@ module.exports.addToCart = async (req, res, next) => {
             }
             shopId = item.shop._id.toString();
             finalShopName = shopName || item.shop.shopName || 'Local Shop';
-            shopUpiUrl = item.shop.upiScanner ? item.shop.upiScanner.url : null;
+            shopUpiId = item.shop.upiId || null;
             shopOwnerUsername = item.shop.owner ? item.shop.owner.username : null;
         }
 
@@ -86,7 +86,7 @@ module.exports.addToCart = async (req, res, next) => {
                 image: itemImage || (isProduct ? (item.productImage[0] ? item.productImage[0].url : '') : (item.img && item.img.url ? item.img.url : '')),
                 shopId: shopId,
                 shopName: finalShopName,
-                shopUpiUrl: shopUpiUrl,
+                shopUpiId: shopUpiId,
                 shopOwnerUsername: shopOwnerUsername
             });
         }

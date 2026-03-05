@@ -397,7 +397,7 @@
                         if (!groupedItems[item.shopId]) {
                         groupedItems[item.shopId] = {
                         shopName: item.shopName,
-                        shopUpiUrl: item.shopUpiUrl,
+                        shopUpiId: item.shopUpiId,
                         items: [],
                         subtotal: 0
                         };
@@ -471,15 +471,18 @@
                                         receive this order?</p>
                                     <div class="delivery-toggle">
                                         <button class="delivery-opt-btn active" data-shopid="<%= shopId %>"
-                                            data-type="SELF_PICKUP">
+                                            data-type="SELF_PICKUP"
+                                            style="border-radius: <%= group.subtotal > 2500 ? '14px' : '14px 0 0 14px' %>;">
                                             <span class="opt-icon">🏪</span>
                                             I'll Pick Up
                                         </button>
-                                        <button class="delivery-opt-btn" data-shopid="<%= shopId %>"
-                                            data-type="HOME_DELIVERY">
-                                            <span class="opt-icon">🚚</span>
-                                            Home Delivery
-                                        </button>
+                                        <% if (group.subtotal <=2500) { %>
+                                            <button class="delivery-opt-btn" data-shopid="<%= shopId %>"
+                                                data-type="HOME_DELIVERY" style="border-radius: 0 14px 14px 0;">
+                                                <span class="opt-icon">🚚</span>
+                                                Home Delivery
+                                            </button>
+                                            <% } %>
                                     </div>
 
                                     <!-- Summary Rows -->
@@ -540,31 +543,46 @@
 
 
                                     <div class="d-grid gap-2 mt-4">
-                                        <div class="row g-2">
-                                            <div class="col-6">
-                                                <button class="btn btn-success checkout-btn upi-pay-btn"
-                                                    data-shopid="<%= shopId %>" data-shopname="<%= group.shopName %>">
-                                                    <i class="fa-solid fa-credit-card me-1"></i> Pay Online
-                                                </button>
+                                        <% if (group.subtotal> 2500) { %>
+                                            <!-- High Value Order: Pay at Shop Only -->
+                                            <div class="alert alert-warning p-2 mb-2 text-center"
+                                                style="font-size: 13px; border-radius: 12px; background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a;">
+                                                <i class="fa-solid fa-circle-exclamation"></i> Orders over ₹2500 must be
+                                                picked up and paid directly at the shop.
                                             </div>
-                                            <div class="col-6">
-                                                <button class="btn btn-primary checkout-btn cod-btn"
-                                                    data-shopid="<%= shopId %>" <%=group.subtotal>= 1000 ?
-                                                    'style="display:none"' : '' %>>
-                                                    <i class="fa-solid fa-money-bill me-1"></i> COD
-                                                    <span
-                                                        class="badge bg-success-subtle text-success border border-success-subtle ms-2 <%= group.subtotal >= 1000 ? 'd-none' : '' %>"
-                                                        style="font-size: 10px;">COD
-                                                        Available</span>
-                                                </button>
-                                                <small
-                                                    class="text-danger d-block text-center mt-1 cod-limit-msg <%= group.subtotal >= 1000 ? '' : 'd-none' %>"
-                                                    style="font-size: 10px;">COD
-                                                    not available for ₹1000+
-                                                    orders</small>
+                                            <button class="btn btn-warning checkout-btn pay-at-shop-btn cod-btn"
+                                                data-shopid="<%= shopId %>"
+                                                style="color: #000; font-weight: 800; background-color: #fbbf24; border: none; padding: 14px;">
+                                                <i class="fa-solid fa-store me-1"></i> Place Order (Pay at Shop)
+                                            </button>
+                                            <% } else { %>
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <button class="btn btn-success checkout-btn upi-pay-btn"
+                                                            data-shopid="<%= shopId %>"
+                                                            data-shopname="<%= group.shopName %>">
+                                                            <i class="fa-solid fa-credit-card me-1"></i> Pay Online
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <button class="btn btn-primary checkout-btn cod-btn"
+                                                            data-shopid="<%= shopId %>" <%=group.subtotal>= 1000 ?
+                                                            'style="display:none"' : '' %>>
+                                                            <i class="fa-solid fa-money-bill me-1"></i> COD
+                                                            <span
+                                                                class="badge bg-success-subtle text-success border border-success-subtle ms-2 <%= group.subtotal >= 1000 ? 'd-none' : '' %>"
+                                                                style="font-size: 10px;">COD
+                                                                Available</span>
+                                                        </button>
+                                                        <small
+                                                            class="text-danger d-block text-center mt-1 cod-limit-msg <%= group.subtotal >= 1000 ? '' : 'd-none' %>"
+                                                            style="font-size: 10px;">COD
+                                                            not available for ₹1000+
+                                                            orders</small>
 
-                                            </div>
-                                        </div>
+                                                    </div>
+                                                </div>
+                                                <% } %>
                                     </div>
                                 </div>
                             </div>

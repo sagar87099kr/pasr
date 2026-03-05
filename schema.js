@@ -47,7 +47,8 @@ module.exports.shopSchema = Joi.object({
                 'string.pattern.base': 'Closing time must be in HH:MM format (e.g., 21:00)',
                 'string.empty': 'Closing time is optional but if provided must be valid'
             })
-            .allow("")
+            .allow(""),
+        upiId: Joi.string().allow("")
     }).required()
         .custom((value, helpers) => {
             // If both times are provided, validate that closing is after opening

@@ -1,87 +1,98 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
+  <link rel="stylesheet" href="/css/auth.css">
 
   <body>
-    <div>
-      <div class="mb-3">
-        <span class="text-danger notranslate">Please fill details in English / कृपया अंग्रेजी में भरें</span>
+    <div class="auth-container">
+      <div class="auth-card seller-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Edit Your Profile</h1>
+          <p class="auth-subtitle">Update your provider information</p>
+          <div class="text-danger small mt-2 notranslate">
+            Please fill details in English / कृपया अंग्रेजी में भरें
+          </div>
+        </div>
+
+        <form action="/update/<%=data._id%>?_method=PUT" method="POST" novalidate class="needs-validation notranslate">
+
+          <div class="form-group">
+            <label for="exampleInputEmail1" class="form-label">Write about your description</label>
+            <textarea type="number" class="form-control" id="exampleInputEmail1" required="True"
+              name="provider[discription]"><%= data.discription%></textarea>
+            <div class="invalid-feedback">It will help customer to know you.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="exampleInputEmail1" class="form-label">Change Your Company name *</label>
+            <input type="text" class="form-control" id="exampleInputEmail1" required="True" name="provider[company]"
+              value="<%= data.company%>">
+            <div class="invalid-feedback">You need to write your name.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="exampleInputEmail1" class="form-label">Year of experience</label>
+            <input type="number" class="form-control" id="exampleInputEmail1" required="True"
+              name="provider[experience]" value="<%= data.experience%>">
+            <div class="invalid-feedback">It will help customer to choose you.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="locationInput" class="form-label">Change Your Company location *</label>
+            <input type="text" class="form-control" id="locationInput" required="True" name="provider[location]"
+              value="<%= data.location%>" placeholder="Start typing address...">
+            <div class="invalid-feedback">You need to enter your company location.</div>
+          </div>
+
+          <script>
+            function initAutocomplete() {
+              const input = document.getElementById("locationInput");
+              const options = {
+                fields: ["formatted_address", "geometry", "name"],
+                strictBounds: false,
+              };
+
+              const autocomplete = new google.maps.places.Autocomplete(input, options);
+
+              autocomplete.addListener("place_changed", () => {
+                const place = autocomplete.getPlace();
+                if (!place.geometry || !place.geometry.location) {
+                  return;
+                }
+                // The input value is already updated
+              });
+            }
+          </script>
+          <script
+            src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&libraries=places&callback=initAutocomplete"
+            async defer></script>
+
+          <div class="form-group mt-4">
+            <label class="form-label">Select the service you want to give service *</label>
+            <select class="form-control form-select" aria-label="Default select example" required
+              name="provider[categories]">
+              <option value="" disabled> Select the category in which you want to give service </option>
+              <option value="Farming Vehicles" <%=data.categories==='Farming Vehicles' ? 'selected' : '' %>>🚜 Farming
+                Vehicles</option>
+              <option value="Four Wheelers" <%=data.categories==='Four Wheelers' ? 'selected' : '' %>>🚗 Four Wheelers
+              </option>
+              <option value="HMV (Bus)" <%=data.categories==='HMV (Bus)' ? 'selected' : '' %>>🚌 HMV (Bus)</option>
+              <option value="Three Wheelers" <%=data.categories==='Three Wheelers' ? 'selected' : '' %>>🛺 Three
+                Wheelers</option>
+              <option value="Caterings" <%=data.categories==='Caterings' ? 'selected' : '' %>>🍽️ Caterings</option>
+              <option value="Filming" <%=data.categories==='Filming' ? 'selected' : '' %>>🎥 Filming</option>
+              <option value="Decoration" <%=data.categories==='Decoration' ? 'selected' : '' %>>✨ Decoration</option>
+              <option value="DJ and Tent" <%=data.categories==='DJ and Tent' ? 'selected' : '' %>>🎵 DJ and Tent
+              </option>
+              <option value="Band Party" <%=data.categories==='Band Party' ? 'selected' : '' %>>🎺 Band Party</option>
+              <option value="Home Service provider" <%=data.categories==='Home Service provider' ? 'selected' : '' %>
+                >🛠️ Home Service Provider</option>
+              <option value="Heavy Equipments" <%=data.categories==='Heavy Equipments' ? 'selected' : '' %>>🏗️ Heavy
+                Equipments</option>
+              <option value="Others" <%=data.categories==='Others' ? 'selected' : '' %>>🔹 Others</option>
+            </select>
+          </div>
+
+          <button class="btn-submit mt-4">Confirm Update</button>
+        </form>
       </div>
-      <form action="/update/<%=data._id%>?_method=PUT" method="POST" novalidate class="needs-validation notranslate">
-
-        <div class="mb-3 rows-8">
-          <label for="exampleInputEmail1" class="form-label">write about your discription</label>
-          <textarea type="number" class="form-control" id="exampleInputEmail1" required="True"
-            name="provider[discription]"><%= data.discription%></textarea>
-          <div class="invalid-feedback">It will help customer to know you.</div>
-        </div>
-        <div class="mb-3">
-          <label for="exampleInputEmail1" class="form-label">Change Your Company name*</label>
-          <input type="text" class="form-control" id="exampleInputEmail1" required="True" name="provider[company]"
-            value="<%= data.company%>">
-          <div class="invalid-feedback">You need to write your name.</div>
-        </div>
-        <div class="mb-3">
-          <label for="exampleInputEmail1" class="form-label">Year of experience</label>
-          <input type="number" class="form-control" id="exampleInputEmail1" required="True" name="provider[experience]"
-            value="<%= data.experience%>">
-          <div class="invalid-feedback">It will help customer to choose you.</div>
-        </div>
-        <div class="mb-3">
-          <label for="locationInput" class="form-label">Change Your Company location*</label>
-          <input type="text" class="form-control" id="locationInput" required="True" name="provider[location]"
-            value="<%= data.location%>" placeholder="Start typing address...">
-          <div class="invalid-feedback">You need to enter your company location.</div>
-        </div>
-
-        <script>
-          function initAutocomplete() {
-            const input = document.getElementById("locationInput");
-            const options = {
-              fields: ["formatted_address", "geometry", "name"],
-              strictBounds: false,
-            };
-
-            const autocomplete = new google.maps.places.Autocomplete(input, options);
-
-            autocomplete.addListener("place_changed", () => {
-              const place = autocomplete.getPlace();
-              if (!place.geometry || !place.geometry.location) {
-                return;
-              }
-              // The input value is already updated
-            });
-          }
-        </script>
-        <script
-          src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&libraries=places&callback=initAutocomplete"
-          async defer></script>
-        <hr>
-        <br>
-        <h4> Select the service you want to give service * </h4>
-        <select class="form-select" aria-label="Default select example" required name="provider[categories]">
-          <option value="" disabled> Select the category in which you want to give service </option>
-          <option value="Farming Vehicles" <%=data.categories==='Farming Vehicles' ? 'selected' : '' %>>🚜 Farming
-            Vehicles</option>
-          <option value="Four Wheelers" <%=data.categories==='Four Wheelers' ? 'selected' : '' %>>🚗 Four Wheelers
-          </option>
-          <option value="HMV (Bus)" <%=data.categories==='HMV (Bus)' ? 'selected' : '' %>>🚌 HMV (Bus)</option>
-          <option value="Three Wheelers" <%=data.categories==='Three Wheelers' ? 'selected' : '' %>>🛺 Three Wheelers
-          </option>
-          <option value="Caterings" <%=data.categories==='Caterings' ? 'selected' : '' %>>🍽️ Caterings</option>
-          <option value="Filming" <%=data.categories==='Filming' ? 'selected' : '' %>>🎥 Filming</option>
-          <option value="Decoration" <%=data.categories==='Decoration' ? 'selected' : '' %>>✨ Decoration</option>
-          <option value="DJ and Tent" <%=data.categories==='DJ and Tent' ? 'selected' : '' %>>🎵 DJ and Tent</option>
-          <option value="Band Party" <%=data.categories==='Band Party' ? 'selected' : '' %>>🎺 Band Party</option>
-          <option value="Home Service provider" <%=data.categories==='Home Service provider' ? 'selected' : '' %>>🛠️
-            Home Service Provider</option>
-          <option value="Heavy Equipments" <%=data.categories==='Heavy Equipments' ? 'selected' : '' %>>🏗️ Heavy
-            Equipments</option>
-          <option value="Others" <%=data.categories==='Others' ? 'selected' : '' %>>🔹 Others</option>
-        </select>
-        <hr>
-        <div>
-          <button class="btn btn-success"> Confirm Update</button>
-        </div>
-      </form>
     </div>
-
   </body>

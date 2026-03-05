@@ -71,9 +71,9 @@ const productSchema = new Schema({
         type: Boolean,
         default: false
     },
-    upiScanner: {
-        url: String,
-        filename: String
+    upiId: {
+        type: String,
+        default: ""
     },
     createdAt: {
         type: Date,

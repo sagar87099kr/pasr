@@ -74,7 +74,8 @@ const shopSchema = new Schema({
         type: Date,
         default: Date.now
     },
-    dueToPasr: { type: Number, default: 0 }
+    dueToPasr: { type: Number, default: 0 },
+    upiId: { type: String, default: "" }
 });
 
 shopSchema.index({ geometry: '2dsphere' });

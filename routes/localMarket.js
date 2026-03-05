@@ -104,9 +104,7 @@ router.get("/product/seller", isLogedin, isVerifiedCustomer, wrapAsync(async (re
 }));
 
 router.post("/product/seller", isLogedin, itemUpload.fields([
-
-    { name: 'productImage', maxCount: 5 },
-    { name: 'upiScanner', maxCount: 1 }
+    { name: 'productImage', maxCount: 5 }
 ]), wrapAsync(async (req, res) => {
     const productData = req.body.product;
     const geoData = await forwardGeocode(productData.location);
@@ -117,11 +115,6 @@ router.post("/product/seller", isLogedin, itemUpload.fields([
 
     if (req.files['productImage']) {
         product.productImage = req.files['productImage'].map(f => ({ url: f.path, filename: f.filename }));
-    }
-
-    if (req.files['upiScanner']) {
-        const upiFile = req.files['upiScanner'][0];
-        product.upiScanner = { url: upiFile.path, filename: upiFile.filename };
     }
 
     await product.save();
@@ -154,6 +147,35 @@ router.delete("/:id/verifyfailproduct", isLogedin, isadmin, wrapAsync(async (req
     res.redirect("/product/verify");
 }));
 
+// Public Seller Profile Page
+router.get("/seller/:id", wrapAsync(async (req, res) => {
+    let { id } = req.params;
+
+    // Fetch the seller (customer) details
+    const Customer = require("../data/customers.js");
+    const seller = await Customer.findById(id);
+
+    if (!seller) {
+        req.flash("error", "Seller not found");
+        return res.redirect("/localMarket");
+    }
+
+    // Fetch all products owned by this seller
+    let products = await Product.find({ owner: id }).populate("owner");
+
+    // Filter logic: Only show verified products publicly, unless the logged-in user is the owner
+    const isOwnerViewing = req.user && seller._id.equals(req.user._id);
+
+    products = products.filter(p => p.verified || isOwnerViewing).map(p => {
+        const prodObj = p.toObject();
+        prodObj.isPendingVerification = !p.verified && isOwnerViewing;
+        prodObj.hasPendingOrders = false; // Simplified for profile view
+        return prodObj;
+    });
+
+    res.render("pages/sellerProfile.ejs", { seller, products });
+}));
+
 // Product Detail Page
 router.get("/products/:id", wrapAsync(async (req, res) => {
     let { id } = req.params;
@@ -168,11 +190,11 @@ router.get("/products/:id", wrapAsync(async (req, res) => {
 }));
 
 // Update Product
-router.put("/products/:id/edit", isLogedin, isProductOwner, itemUpload.fields([{ name: 'productImage', maxCount: 1 }, { name: 'upiScanner', maxCount: 1 }]), wrapAsync(async (req, res) => {
+router.put("/products/:id/edit", isLogedin, isProductOwner, itemUpload.fields([{ name: 'productImage', maxCount: 1 }]), wrapAsync(async (req, res) => {
 
     let { id } = req.params;
-    const { productName, productDescription, price, quantity, categories } = req.body.product;
-    const updateData = { productName, productDescription, price, quantity, categories };
+    const { productName, productDescription, price, quantity, categories, upiId } = req.body.product;
+    const updateData = { productName, productDescription, price, quantity, categories, upiId };
 
     if (req.files && req.files.productImage && req.files.productImage[0]) {
         const product = await Product.findById(id);
@@ -182,14 +204,6 @@ router.put("/products/:id/edit", isLogedin, isProductOwner, itemUpload.fields([{
             }
         }
         updateData.productImage = [{ url: req.files.productImage[0].path, filename: req.files.productImage[0].filename }];
-    }
-
-    if (req.files && req.files.upiScanner && req.files.upiScanner[0]) {
-        const product = await Product.findById(id);
-        if (product.upiScanner && product.upiScanner.filename) {
-            await cloudinary.uploader.destroy(product.upiScanner.filename);
-        }
-        updateData.upiScanner = { url: req.files.upiScanner[0].path, filename: req.files.upiScanner[0].filename };
     }
 
     await Product.findByIdAndUpdate(id, updateData);

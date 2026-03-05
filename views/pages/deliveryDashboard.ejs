@@ -217,8 +217,18 @@
                                                             <%= order.shopId.shopName %>
                                                         </div>
                                                         <div class="small text-muted">
+                                                            <i class="fa-solid fa-location-dot me-1 text-danger"></i>
                                                             <%= order.shopId.address %>
                                                         </div>
+                                                        <% if (order.shopId.owner && order.shopId.owner.username) { %>
+                                                            <div class="small fw-semibold mt-1">
+                                                                <i class="fa-solid fa-phone me-1 text-success"></i><a
+                                                                    href="tel:<%= order.shopId.owner.username %>"
+                                                                    class="text-decoration-none text-dark">
+                                                                    <%= order.shopId.owner.username %>
+                                                                </a>
+                                                            </div>
+                                                            <% } %>
                                                     </div>
                                                 </div>
 

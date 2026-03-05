@@ -44,7 +44,9 @@ module.exports.blockPartner = async (req, res, next) => {
 // View all orders
 module.exports.getAllOrders = async (req, res, next) => {
     try {
-        const orders = await Order.find({})
+        const orders = await Order.find({
+            $nor: [{ paymentType: 'PREPAID', paymentStatus: 'PENDING' }]
+        })
             .populate('customerId')
             .populate({
                 path: 'shopId',

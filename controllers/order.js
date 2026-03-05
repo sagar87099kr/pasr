@@ -81,25 +81,69 @@ module.exports.checkoutOrder = async (req, res, next) => {
 
         // 2. ATOMIC INVENTORY CHECK & UPDATE
         const Item = require("../data/item");
+        const Product = require("../data/product");
         const inventoryUpdates = [];
+        const isProductItemCache = {}; // Cache to avoid duplicate checks
 
-        for (let item of shopItems) {
-            const result = await Item.updateOne(
-                { _id: item.itemId, quantity: { $gte: item.quantity } },
-                { $inc: { quantity: -item.quantity } }
-            );
+        // Helper function to check and decrement either Item or Product
+        const checkAndDecrement = async (item, isTestingOnly = false) => {
+            // First, try finding as standard Item
+            let dbModel = Item;
+            let dbResult = isTestingOnly ?
+                await Item.findById(item.itemId) :
+                await Item.updateOne(
+                    { _id: item.itemId, quantity: { $gte: item.quantity } },
+                    { $inc: { quantity: -item.quantity } }
+                );
 
-            if (result.modifiedCount === 0) {
-                // Out of stock. Rollback any previously updated items in this order loop.
-                for (let revert of inventoryUpdates) {
-                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+            // If it failed/not found, try finding as a Product
+            if ((isTestingOnly && !dbResult) || (!isTestingOnly && dbResult.modifiedCount === 0)) {
+                dbModel = Product;
+                dbResult = isTestingOnly ?
+                    await Product.findById(item.itemId) :
+                    await Product.updateOne(
+                        { _id: item.itemId, quantity: { $gte: item.quantity } },
+                        { $inc: { quantity: -item.quantity } }
+                    );
+                if ((isTestingOnly && !dbResult) || (!isTestingOnly && dbResult.modifiedCount === 0)) {
+                    return { success: false, reason: 'NOT_FOUND_OR_OUT_OF_STOCK' };
                 }
-                return res.status(400).json({
-                    success: false,
-                    message: `Item '${item.name}' is out of stock or quantity exceeds available inventory.`
-                });
+                isProductItemCache[item.itemId] = true;
+            } else {
+                isProductItemCache[item.itemId] = false;
             }
-            inventoryUpdates.push({ id: item.itemId, qty: item.quantity, name: item.name });
+
+            return { success: true, model: dbModel };
+        };
+
+        if (paymentType === 'COD') {
+            for (let item of shopItems) {
+                const decResult = await checkAndDecrement(item, false);
+
+                if (!decResult.success) {
+                    // Revert what we've taken so far
+                    for (let revert of inventoryUpdates) {
+                        const modelToRevert = isProductItemCache[revert.id] ? Product : Item;
+                        await modelToRevert.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                    }
+                    return res.status(400).json({
+                        success: false,
+                        message: `Item '${item.name}' is out of stock or quantity exceeds available inventory.`
+                    });
+                }
+                inventoryUpdates.push({ id: item.itemId, qty: item.quantity, name: item.name });
+            }
+        } else {
+            // For PREPAID, just check inventory now. Decrement happens after payment verification.
+            for (let item of shopItems) {
+                const testResult = await checkAndDecrement(item, true);
+                if (!testResult.success) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Item '${item.name}' is out of stock or quantity exceeds available inventory.`
+                    });
+                }
+            }
         }
 
         // 3. Calculate amounts based on delivery type
@@ -118,14 +162,12 @@ module.exports.checkoutOrder = async (req, res, next) => {
         let deliveryAddress = '';
 
         if (deliveryType === 'SELF_PICKUP') {
-            // Self-pickup: no delivery charge, no distance calculation needed
             deliveryCharge = 0;
             distanceInKm = 0;
         } else {
-            // HOME_DELIVERY: location and distance logic
             let cLoc = null;
             if (lat && lng) {
-                cLoc = [parseFloat(lng), parseFloat(lat)]; // [lng, lat]
+                cLoc = [parseFloat(lng), parseFloat(lat)];
             } else if (req.user.geometry && req.user.geometry.coordinates) {
                 cLoc = req.user.geometry.coordinates;
             }
@@ -137,14 +179,12 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 return res.status(400).json({ success: false, message: "Please enable location services or update your profile." });
             }
 
-            // Fetch Shop location
             let shop = await Shop.findById(shopId);
             let sLoc;
 
             if (shop && shop.geometry && shop.geometry.coordinates) {
-                sLoc = shop.geometry.coordinates; // [lng, lat]
+                sLoc = shop.geometry.coordinates;
             } else {
-                // Check if it's a Local Bazar Seller
                 const Product = require("../data/product");
                 const product = await Product.findOne({ owner: shopId });
                 if (product && product.geometry && product.geometry.coordinates) {
@@ -159,14 +199,12 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 return res.status(404).json({ success: false, message: "Shop or Seller location is unavailable." });
             }
 
-            // Calculate distance
             distanceInKm = await distanceUtil.calculateDistance(
                 cLoc[1], cLoc[0],
                 sLoc[1], sLoc[0],
                 true
             );
 
-            // Validate Distance (Max 5km)
             if (distanceInKm > 5) {
                 for (let revert of inventoryUpdates) {
                     await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
@@ -174,7 +212,6 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 return res.status(400).json({ success: false, message: "Delivery not available beyond 5 km." });
             }
 
-            // Calculate Delivery Pricing metrics
             try {
                 const pricing = calculateDeliveryPricing(distanceInKm);
                 deliveryCharge = pricing.customerCharge;
@@ -190,40 +227,55 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 return res.status(400).json({ success: false, message: pricingError.message });
             }
 
-            // Reverse-geocode to get human-readable delivery address
             try {
-                const geoRes = await reverseGeocode(cLoc); // cLoc is [lng, lat]
+                const geoRes = await reverseGeocode(cLoc);
                 if (geoRes.body.features.length > 0) {
                     deliveryAddress = geoRes.body.features[0].place_name;
                 }
             } catch (_) {
-                // Address lookup is non-critical — continue without it
                 deliveryAddress = `Near ${cLoc[1].toFixed(4)}, ${cLoc[0].toFixed(4)}`;
             }
 
-            // Check first-order free delivery eligibility (by mobile number)
             const mobile = String(req.user.username);
             const existingFreeDelivery = await FreeDeliveryUsage.findOne({ mobile });
             if (!existingFreeDelivery) {
-                // First home-delivery order — waive delivery charge
                 firstOrderDiscount = deliveryCharge;
                 deliveryCharge = 0;
-                grantFreeDelivery = true; // flag to save usage record after order is saved
+                grantFreeDelivery = true;
             }
         }
 
         const totalAmount = subtotalAmount + deliveryCharge;
 
-        // Validate Payment rules (>= ₹1000 requires PREPAID)
-        if (totalAmount >= 1000 && paymentType !== 'PREPAID') {
-            for (let revert of inventoryUpdates) {
-                await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+        // High Value Order Restriction (>2500)
+        if (totalAmount > 2500) {
+            if (deliveryType !== 'SELF_PICKUP') {
+                // Revert inventory
+                for (let revert of inventoryUpdates) {
+                    const modelToRevert = isProductItemCache[revert.id] ? Product : Item;
+                    await modelToRevert.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                }
+                return res.status(400).json({ success: false, message: "Orders over ₹2500 are only available for Self-Pickup." });
             }
-            return res.status(400).json({ success: false, message: "Orders of ₹1000 or above must be PREPAID." });
+            if (paymentType !== 'COD') {
+                // Revert inventory
+                for (let revert of inventoryUpdates) {
+                    const modelToRevert = isProductItemCache[revert.id] ? Product : Item;
+                    await modelToRevert.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                }
+                return res.status(400).json({ success: false, message: "Orders over ₹2500 must be paid directly at the shop." });
+            }
+        }
+        // Standard Prepaid Requirement (1000 - 2500)
+        else if (totalAmount >= 1000 && paymentType !== 'PREPAID') {
+            for (let revert of inventoryUpdates) {
+                const modelToRevert = isProductItemCache[revert.id] ? Product : Item;
+                await modelToRevert.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+            }
+            return res.status(400).json({ success: false, message: "Orders between ₹1000 and ₹2500 must be PREPAID." });
         }
 
-        // Create Order Document
-        const order = new Order({
+        const orderData = {
             orderId: clientOrderId || generateOrderId(),
             customerId,
             shopId: shopId,
@@ -246,25 +298,11 @@ module.exports.checkoutOrder = async (req, res, next) => {
             paymentStatus: 'PENDING',
             deliveryOTP: otpUtil.generateOTP(),
             orderStatus: 'CREATED'
-        });
+        };
 
-        await order.save();
+        const sellerDetails = await getOrderSellerDetails({ shopId });
+        const itemsSummary = shopItems.map(i => i.name).join(", ");
 
-        // Record free delivery usage AFTER order is saved (so failed orders don't consume the free delivery)
-        if (grantFreeDelivery) {
-            await FreeDeliveryUsage.create({ mobile: String(req.user.username), usedAt: new Date() });
-        }
-
-        // Create Event for Seller
-        orderBus.emit("ORDER_CREATED", order);
-
-
-
-        // Partial Clear cart (remove items for this shop)
-        cart.items = cart.items.filter(item => item.shopId !== shopId);
-        cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-
-        let razorpayOrderData = null;
         if (paymentType === 'PREPAID') {
             const Razorpay = require('razorpay');
             const rzp = new Razorpay({
@@ -272,36 +310,63 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 key_secret: process.env.RAZORPAY_KEY_SECRET
             });
             const rzpOrder = await rzp.orders.create({
-                amount: Math.round(totalAmount * 100), // amount in paise
+                amount: Math.round(totalAmount * 100),
                 currency: 'INR',
-                receipt: order.orderId
+                receipt: orderData.orderId
             });
-            order.razorpayOrderId = rzpOrder.id;
-            await order.save(); // Save the newly attached razorpay ID
 
-            razorpayOrderData = {
-                id: rzpOrder.id,
-                amount: rzpOrder.amount,
-                currency: rzpOrder.currency,
-                keyId: process.env.RAZORPAY_KEY_ID
-            };
+            orderData.razorpayOrderId = rzpOrder.id;
+            orderData.grantFreeDelivery = grantFreeDelivery;
+
+            req.session.pendingOrders = req.session.pendingOrders || {};
+            req.session.pendingOrders[rzpOrder.id] = orderData;
+
+            req.session.save(() => {
+                res.status(200).json({
+                    success: true,
+                    message: "Payment initiated",
+                    orderDbId: null,
+                    orderId: orderData.orderId,
+                    shopOwnerPhone: sellerDetails ? sellerDetails.phone : null,
+                    itemsSummary,
+                    razorpay: {
+                        id: rzpOrder.id,
+                        amount: rzpOrder.amount,
+                        currency: rzpOrder.currency,
+                        keyId: process.env.RAZORPAY_KEY_ID
+                    }
+                });
+            });
+            return;
         }
+
+        // --- COD ONLY ---
+        const order = new Order(orderData);
+        await order.save();
+
+        if (grantFreeDelivery) {
+            await FreeDeliveryUsage.create({ mobile: String(req.user.username), usedAt: new Date() });
+        }
+
+        orderBus.emit("ORDER_CREATED", order);
+
+        cart.items = cart.items.filter(item => item.shopId !== shopId);
         cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+        cart.shopId = cart.items.length === 0 ? null : cart.shopId;
 
-        const sellerDetails = await getOrderSellerDetails(order);
-        const itemsSummary = shopItems.map(i => i.name).join(", ");
-
-        res.status(201).json({
-            success: true,
-            message: "Order created successfully",
-            orderId: order.orderId,
-            orderDbId: order._id,
-            shopOwnerPhone: sellerDetails ? sellerDetails.phone : null,
-            itemsSummary,
-            totalAmount: order.totalAmount,
-            paymentType: order.paymentType,
-            deliveryType: order.deliveryType,
-            razorpay: razorpayOrderData
+        req.session.save(() => {
+            res.status(201).json({
+                success: true,
+                message: "Order created successfully",
+                orderId: order.orderId,
+                orderDbId: order._id,
+                shopOwnerPhone: sellerDetails ? sellerDetails.phone : null,
+                itemsSummary,
+                totalAmount: order.totalAmount,
+                paymentType: order.paymentType,
+                deliveryType: order.deliveryType,
+                razorpay: null
+            });
         });
 
     } catch (e) {
@@ -409,9 +474,16 @@ module.exports.getCustomerOrders = async (req, res, next) => {
     try {
         // Find if this user owns any shops
         const ownedShops = await Shop.find({ owner: req.user._id }).select('_id');
-        const shopIds = ownedShops.map(s => s._id);
-
-        const orders = await Order.find({ customerId: req.user._id })
+        const orders = await Order.find({
+            customerId: req.user._id,
+            // Exclude orders that are PREPAID and still PENDING
+            $nor: [{ paymentType: 'PREPAID', paymentStatus: 'PENDING' }]
+        })
+            .populate({
+                path: 'items.itemId',
+                populate: { path: 'product', select: 'img' },
+                select: 'img product'
+            })
             .sort({ createdAt: -1 });
 
         // Resolve seller details for each order to handle both Shops and Local Bazar
@@ -421,6 +493,23 @@ module.exports.getCustomerOrders = async (req, res, next) => {
             if (sellerDetails) {
                 orderObj.resolvedSeller = sellerDetails;
             }
+
+            // Resolve item images
+            if (orderObj.items) {
+                orderObj.items = orderObj.items.map(item => {
+                    let imageUrl = '';
+                    if (item.itemId) {
+                        if (item.itemId.img && item.itemId.img.url) {
+                            imageUrl = item.itemId.img.url;
+                        } else if (item.itemId.product && item.itemId.product.img && item.itemId.product.img.url) {
+                            imageUrl = item.itemId.product.img.url;
+                        }
+                    }
+                    item.imageUrl = imageUrl;
+                    return item;
+                });
+            }
+
             return orderObj;
         }));
 
@@ -449,7 +538,8 @@ module.exports.getShopOrders = async (req, res, next) => {
         const allShopIds = [...shopIds.map(id => require('mongoose').Types.ObjectId.createFromHexString(id)), req.user._id];
 
         const orders = await Order.find({
-            shopId: { $in: allShopIds }
+            shopId: { $in: allShopIds },
+            $nor: [{ paymentType: 'PREPAID', paymentStatus: 'PENDING' }]
         })
             .populate({
                 path: 'items.itemId',

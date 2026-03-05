@@ -92,6 +92,16 @@
                             placeholder="Describe what you sell..."></textarea>
                     </div>
 
+                    <!-- UPI ID -->
+                    <div class="form-group mt-3">
+                        <label for="upiId" class="form-label">UPI ID for Payouts *</label>
+                        <input type="text" name="shop[upiId]" id="upiId" class="form-control"
+                            placeholder="e.g. 9876543210@paytm" required>
+                        <div class="invalid-feedback">Please provide a valid UPI ID for platform payouts.</div>
+                        <div class="form-text mt-1"><i class="fa-solid fa-money-bill-transfer text-success"></i> PASR
+                            will use this UPI ID to send your earnings.</div>
+                    </div>
+
                     <!-- Image Upload -->
                     <div class="form-group mt-4">
                         <label class="form-label">Shop Image (Single Photo) *</label>
