@@ -1018,6 +1018,11 @@
                             };
 
                             if (paymentType === 'PREPAID' && data.razorpay) {
+                                // Safety check — if key is missing, show useful error
+                                if (!data.razorpay.keyId) {
+                                    alert('Online payment is temporarily unavailable. Please use COD or contact the shop owner.');
+                                    return;
+                                }
                                 const options = {
                                     key: data.razorpay.keyId,
                                     amount: data.razorpay.amount,
