@@ -16,12 +16,28 @@ module.exports.verifyPayment = async (req, res, next) => {
 
         // Verify the signature
         const secret = process.env.RAZORPAY_KEY_SECRET;
+
+        // Safety check: if secret is missing, fail fast with a clear error
+        if (!secret) {
+            console.error("[Payment] RAZORPAY_KEY_SECRET is not set in environment variables!");
+            return res.status(500).json({ success: false, message: "Payment configuration error. Please contact support." });
+        }
+
+        const signatureInput = razorpay_order_id + "|" + razorpay_payment_id;
         const generated_signature = crypto
             .createHmac('sha256', secret)
-            .update(razorpay_order_id + "|" + razorpay_payment_id)
+            .update(signatureInput)
             .digest('hex');
 
+        // Debug log — safe to keep in production (no full secret exposed)
+        console.log(`[Payment] Verifying: order=${razorpay_order_id}, payment=${razorpay_payment_id}`);
+        console.log(`[Payment] Secret key length=${secret.length}, ends_with=...${secret.slice(-4)}`);
+        console.log(`[Payment] Received sig (first 16): ${razorpay_signature.slice(0, 16)}...`);
+        console.log(`[Payment] Generated sig (first 16): ${generated_signature.slice(0, 16)}...`);
+        console.log(`[Payment] Signatures match: ${generated_signature === razorpay_signature}`);
+
         if (generated_signature !== razorpay_signature) {
+            console.error(`[Payment] MISMATCH — Key ends with: ...${secret.slice(-4)}, full order: ${razorpay_order_id}`);
             return res.status(400).json({ success: false, message: "Payment verification failed. Invalid signature." });
         }
 

@@ -767,13 +767,23 @@
                                 <%= shop.shopName %>
                             </h1>
 
-                            <% // Compute current open/closed status let shopIsCurrentlyOpen=false; if (shop.isActive &&
-                                !shop.isHoliday) { if (shop.openingTime && shop.closingTime) { const now=new Date();
-                                const [oh, om]=shop.openingTime.split(':').map(Number); const [ch,
-                                cm]=shop.closingTime.split(':').map(Number); const nowMin=now.getHours() * 60 +
-                                now.getMinutes(); const openMin=oh * 60 + om; const closeMin=ch * 60 + cm;
-                                shopIsCurrentlyOpen=nowMin>= openMin && nowMin < closeMin; } else {
-                                    shopIsCurrentlyOpen=true; // No hours set=always open if active } } %>
+                            <%
+                                // Compute current open/closed status
+                                let shopIsCurrentlyOpen = false;
+                                if (shop.isActive && !shop.isHoliday) {
+                                    if (shop.openingTime && shop.closingTime) {
+                                        const now = new Date();
+                                        const [oh, om] = shop.openingTime.split(':').map(Number);
+                                        const [ch, cm] = shop.closingTime.split(':').map(Number);
+                                        const nowMin = now.getHours() * 60 + now.getMinutes();
+                                        const openMin = oh * 60 + om;
+                                        const closeMin = ch * 60 + cm;
+                                        shopIsCurrentlyOpen = nowMin >= openMin && nowMin < closeMin;
+                                    } else {
+                                        shopIsCurrentlyOpen = true; // No hours set = always open if active
+                                    }
+                                }
+                            %>
 
                                     <% if (shop.isHoliday) { %>
                                         <span
