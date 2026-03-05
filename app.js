@@ -266,6 +266,10 @@ app.use((req, res, next) => {
 
 app.use((err, req, res, next) => {
   let { statusCode = Number(err.statusCode) || 500, message = "Something Went wrong!" } = err;
+  // For API routes, always return JSON so fetch() can parse it
+  if (req.path.startsWith('/api/') || req.xhr || req.headers.accept?.includes('application/json')) {
+    return res.status(statusCode).json({ success: false, message });
+  }
   res.locals.csrfToken = "";
   res.status(statusCode).render("pages/error.ejs", { message });
 });

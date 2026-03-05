@@ -207,10 +207,11 @@
                             <% for (let shop of shops) { var istOffsetMs=5.5 * 60 * 60 * 1000; var nowIST=new Date(new
                                 Date().getTime() + istOffsetMs); var istH=nowIST.getUTCHours(); var
                                 istM=nowIST.getUTCMinutes(); var nowStr=(istH < 10 ? '0' : '' ) + istH + ':' + (istM <
-                                10 ? '0' : '' ) + istM; var shopIsClosed=false; if (shop.openingTime &&
-                                shop.closingTime) { shopIsClosed=!(nowStr>= shop.openingTime && nowStr <=
-                                    shop.closingTime); } var isOwner=currUser && shop.owner._id.equals(currUser._id);
-                                    var isOpenNow=!shopIsClosed && !!(shop.openingTime && shop.closingTime); %>
+                                10 ? '0' : '' ) + istM; var shopIsClosed=false; if (!shop.isActive || shop.isHoliday) {
+                                shopIsClosed=true; } else if (shop.openingTime && shop.closingTime) {
+                                shopIsClosed=!(nowStr>= shop.openingTime && nowStr <= shop.closingTime); } var
+                                    isOwner=currUser && shop.owner._id.equals(currUser._id); var
+                                    isOpenNow=!shopIsClosed; %>
                                     <a href="/shops/<%= shop._id %>" class="product-card-link" <% if (!isOwner &&
                                         shopIsClosed) { %>data-closed="true" data-opening-time="<%= shop.openingTime %>"
                                             data-shop-name="<%= shop.shopName %>"<% } %>
@@ -229,14 +230,19 @@
                                                                         <div class="product-img-wrap">
                                                                             <img src="<%= optimizeImage(shop.shopImage[0].url) %>"
                                                                                 alt="<%= shop.shopName %>">
-                                                                            <% if (shop.openingTime && shop.closingTime)
-                                                                                { %>
+                                                                            <% if (shop.isHoliday) { %>
                                                                                 <span class="badge position-absolute"
-                                                                                    style="top:10px;right:10px;z-index:10;background:<%= isOpenNow ? '#16a34a' : '#dc2626' %>;">
-                                                                                    <%= isOpenNow ? 'Open Now'
-                                                                                        : 'Closed' %>
+                                                                                    style="top:10px;right:10px;z-index:10;background:#b45309;">
+                                                                                    🏖️ Holiday
                                                                                 </span>
-                                                                                <% } %>
+                                                                                <% } else { %>
+                                                                                    <span
+                                                                                        class="badge position-absolute"
+                                                                                        style="top:10px;right:10px;z-index:10;background:<%= isOpenNow ? '#16a34a' : '#dc2626' %>;">
+                                                                                        <%= isOpenNow ? 'Open Now'
+                                                                                            : 'Closed' %>
+                                                                                    </span>
+                                                                                    <% } %>
                                                                         </div>
                                                                         <div class="card-body-custom">
                                                                             <h5 class="prod-title">

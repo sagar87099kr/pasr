@@ -465,6 +465,17 @@ router.put("/shops/:id", isLogedin, isShopOwner, validateShop, wrapAsync(async (
     res.redirect(`/shops/${id}`);
 }));
 
+// Toggle Shop Status (Active / Holiday)
+router.patch("/shops/:id/status", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
+    const { id } = req.params;
+    const { isActive, isHoliday } = req.body;
+    const update = {};
+    if (typeof isActive === 'boolean') update.isActive = isActive;
+    if (typeof isHoliday === 'boolean') update.isHoliday = isHoliday;
+    const shop = await Shop.findByIdAndUpdate(id, update, { new: true });
+    res.json({ success: true, isActive: shop.isActive, isHoliday: shop.isHoliday });
+}));
+
 // Delete Shop
 router.delete("/shops/:id", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
 

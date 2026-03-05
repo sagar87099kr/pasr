@@ -767,188 +767,301 @@
                                 <%= shop.shopName %>
                             </h1>
 
-                            <div class="shop-meta-badges">
-                                <div class="meta-badge" onclick="openUpiModal()"
-                                    style="cursor:pointer; background:#dbeafe; color:#1e40af;">
-                                    <i class="fa-solid fa-qrcode"></i> UPI / QR
-                                </div>
-                                <% if(currentShopCats && currentShopCats.length> 0) { %>
-                                    <div class="meta-badge">
-                                        Shop Category
-                                    </div>
-                                    <% } %>
-                                        <button class="meta-badge" id="shareBtn" style="border:none; cursor:pointer;">
-                                            <i class="fa-solid fa-share-nodes"></i> Share
-                                        </button>
-                            </div>
+                            <% // Compute current open/closed status let shopIsCurrentlyOpen=false; if (shop.isActive &&
+                                !shop.isHoliday) { if (shop.openingTime && shop.closingTime) { const now=new Date();
+                                const [oh, om]=shop.openingTime.split(':').map(Number); const [ch,
+                                cm]=shop.closingTime.split(':').map(Number); const nowMin=now.getHours() * 60 +
+                                now.getMinutes(); const openMin=oh * 60 + om; const closeMin=ch * 60 + cm;
+                                shopIsCurrentlyOpen=nowMin>= openMin && nowMin < closeMin; } else {
+                                    shopIsCurrentlyOpen=true; // No hours set=always open if active } } %>
 
-                            <div class="shop-info-grid">
-                                <div class="info-card">
-                                    <div class="info-card-header">
-                                        <i class="fa-solid fa-location-dot"></i> Location
-                                    </div>
-                                    <div class="info-card-content">
-                                        <%= shop.location || "Location not available" %>
-                                    </div>
-                                </div>
+                                    <% if (shop.isHoliday) { %>
+                                        <span
+                                            style="display: inline-flex; align-items: center; gap: 6px; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
+                                            🏖️ On Holiday Today
+                                        </span>
+                                        <% } else if (shopIsCurrentlyOpen) { %>
+                                            <span
+                                                style="display: inline-flex; align-items: center; gap: 6px; background: #dcfce7; color: #166534; border: 1px solid #86efac; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
+                                                <span
+                                                    style="width:8px; height:8px; background:#22c55e; border-radius:50%; display:inline-block; animation: shopPulse 1.5s infinite;"></span>
+                                                Open Now
+                                                <% if (shop.closingTime) { %> · Closes at <%= shop.closingTime %>
+                                                        <% } %>
+                                            </span>
+                                            <% } else { %>
+                                                <span
+                                                    style="display: inline-flex; align-items: center; gap: 6px; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
+                                                    🔴 Closed
+                                                    <% if (shop.openingTime && !shop.isHoliday) { %> · Opens at <%=
+                                                            shop.openingTime %>
+                                                            <% } %>
+                                                </span>
+                                                <% } %>
 
-                                <div class="info-card">
-                                    <div class="info-card-header">
-                                        <i class="fa-solid fa-user"></i> Owner
-                                    </div>
-                                    <div class="info-card-content">
-                                        <strong>
-                                            <%= shop.owner.name %>
-                                        </strong>
-                                        <div style="display:flex; gap:10px; margin-top:8px;">
-                                            <a href="/action/call/<%= shop.owner.username %>" class="btn btn-primary"
-                                                style="flex:1; padding:8px 12px; font-size:14px; text-decoration:none; justify-content:center;">
-                                                <i class="fa-solid fa-phone"></i> Call
-                                            </a>
-                                            <a href="/action/whatsapp/<%= shop.owner.username %>" target="_blank"
-                                                class="btn"
-                                                style="flex:1; padding:8px 12px; font-size:14px; background:#25D366; color:white; text-decoration:none; justify-content:center;">
-                                                <i class="fa-brands fa-whatsapp"></i> Chat
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="info-card" style="grid-column: 1 / -1;">
-                                    <div class="info-card-header">
-                                        <i class="fa-solid fa-circle-info"></i> About
-                                    </div>
-                                    <div class="info-card-content">
-                                        <%= shop.shopDescription || "No description provided." %>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Owner Actions -->
-                            <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                                <div class="owner-actions"
-                                    style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
-                                    <style>
-                                        .notification-dot {
-                                            position: absolute;
-                                            top: -6px;
-                                            right: -6px;
-                                            width: 14px;
-                                            height: 14px;
-                                            background-color: #ef4444;
-                                            border-radius: 50%;
-                                            border: 2px solid white;
-                                            animation: blink 1.5s infinite;
-                                        }
-
-                                        @keyframes blink {
-
-                                            0%,
-                                            100% {
-                                                opacity: 1;
-                                            }
-
-                                            50% {
-                                                opacity: 0.5;
-                                            }
-                                        }
-                                    </style>
-                                    <a href="/api/orders/my-shop-orders" class="btn btn-primary"
-                                        style="flex:1; position: relative;">
-                                        <i class="fa-solid fa-box-open"></i> Shop Orders
-                                        <% if (typeof activeOrderCount !=='undefined' && activeOrderCount> 0) { %>
-                                            <span class="notification-dot"></span>
-                                            <% } %>
-                                    </a>
-                                    <a href="/shops/<%= shop._id %>/edit" class="btn btn-warning" style="flex:1;">
-                                        <i class="fa-solid fa-edit"></i> Edit Shop
-                                    </a>
-                                </div>
-                                <% } %>
-
-                                    <!-- Financial Ledger Section -->
-                                    <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                                        <div class="financial-ledger-card mt-4 p-4"
-                                            style="background: white; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-                                            <h3
-                                                style="font-size: 1.1rem; font-weight: 700; color: #1f2937; margin-bottom: 15px; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px;">
-                                                <i class="fa-solid fa-wallet text-success"></i> Financial Ledger
-                                            </h3>
-
-                                            <div
-                                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                                                <div
-                                                    style="background: #ecfdf5; padding: 12px; border-radius: 8px; border: 1px solid #a7f3d0; text-align: center;">
-                                                    <div
-                                                        style="font-size: 0.8rem; color: #065f46; font-weight: 600; text-transform: uppercase;">
-                                                        Pending Payout</div>
-                                                    <div
-                                                        style="font-size: 1.2rem; font-weight: 800; color: #059669; margin: 5px 0;">
-                                                        ₹<%= parseFloat(totalPendingPayout || 0).toFixed(2) %>
+                                                    <div class="shop-meta-badges">
+                                                        <div class="meta-badge" onclick="openUpiModal()"
+                                                            style="cursor:pointer; background:#dbeafe; color:#1e40af;">
+                                                            <i class="fa-solid fa-qrcode"></i> UPI / QR
+                                                        </div>
+                                                        <% if(currentShopCats && currentShopCats.length> 0) { %>
+                                                            <div class="meta-badge">
+                                                                Shop Category
+                                                            </div>
+                                                            <% } %>
+                                                                <button class="meta-badge" id="shareBtn"
+                                                                    style="border:none; cursor:pointer;">
+                                                                    <i class="fa-solid fa-share-nodes"></i> Share
+                                                                </button>
                                                     </div>
-                                                    <div style="font-size: 0.75rem; color: #047857;">PASR owes you</div>
-                                                </div>
-                                                <div
-                                                    style="background: #fef2f2; padding: 12px; border-radius: 8px; border: 1px solid #fecaca; text-align: center;">
-                                                    <div
-                                                        style="font-size: 0.8rem; color: #991b1b; font-weight: 600; text-transform: uppercase;">
-                                                        Due Commission</div>
-                                                    <div
-                                                        style="font-size: 1.2rem; font-weight: 800; color: #dc2626; margin: 5px 0;">
-                                                        ₹<%= parseFloat(totalDueToPasr || 0).toFixed(2) %>
+
+                                                    <div class="shop-info-grid">
+                                                        <div class="info-card">
+                                                            <div class="info-card-header">
+                                                                <i class="fa-solid fa-location-dot"></i> Location
+                                                            </div>
+                                                            <div class="info-card-content">
+                                                                <%= shop.location || "Location not available" %>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="info-card">
+                                                            <div class="info-card-header">
+                                                                <i class="fa-solid fa-user"></i> Owner
+                                                            </div>
+                                                            <div class="info-card-content">
+                                                                <strong>
+                                                                    <%= shop.owner.name %>
+                                                                </strong>
+                                                                <div style="display:flex; gap:10px; margin-top:8px;">
+                                                                    <a href="/action/call/<%= shop.owner.username %>"
+                                                                        class="btn btn-primary"
+                                                                        style="flex:1; padding:8px 12px; font-size:14px; text-decoration:none; justify-content:center;">
+                                                                        <i class="fa-solid fa-phone"></i> Call
+                                                                    </a>
+                                                                    <a href="/action/whatsapp/<%= shop.owner.username %>"
+                                                                        target="_blank" class="btn"
+                                                                        style="flex:1; padding:8px 12px; font-size:14px; background:#25D366; color:white; text-decoration:none; justify-content:center;">
+                                                                        <i class="fa-brands fa-whatsapp"></i> Chat
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="info-card" style="grid-column: 1 / -1;">
+                                                            <div class="info-card-header">
+                                                                <i class="fa-solid fa-circle-info"></i> About
+                                                            </div>
+                                                            <div class="info-card-content">
+                                                                <%= shop.shopDescription || "No description provided."
+                                                                    %>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div style="font-size: 0.75rem; color: #b91c1c;">You owe PASR</div>
-                                                </div>
-                                            </div>
 
-                                            <div style="display: flex; gap: 10px;">
-                                                <button class="btn btn-success"
-                                                    style="flex: 1; padding: 8px; font-size: 0.9rem; font-weight: 600;"
-                                                    <%=(totalPendingPayout || 0) <=0 ? 'disabled' : '' %>
-                                                    onclick="requestPayout()">
-                                                    <i class="fa-solid fa-money-bill-transfer"></i> Request Payout
-                                                </button>
-                                                <button class="btn btn-danger"
-                                                    style="flex: 1; padding: 8px; font-size: 0.9rem; font-weight: 600;"
-                                                    <%=(totalDueToPasr || 0) <=0 ? 'disabled' : '' %>
-                                                    onclick="payCommission()">
-                                                    <i class="fa-brands fa-razorpay"></i> Pay Commission
-                                                </button>
-                                            </div>
-                                            <div class="mt-2 text-center" style="font-size: 0.75rem; color: #6b7280;">
-                                                Earnings target: <strong>
-                                                    <%= shop.upiId ? shop.upiId : 'UPI ID Not Set' %>
-                                                </strong>
-                                                <a href="/shops/<%= shop._id %>/edit"
-                                                    style="color: #2563eb; text-decoration: none; margin-left: 5px;">(Edit)</a>
-                                            </div>
-                                        </div>
+                                                    <!-- Owner Actions -->
+                                                    <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                                        <div class="owner-actions"
+                                                            style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+                                                            <style>
+                                                                .notification-dot {
+                                                                    position: absolute;
+                                                                    top: -6px;
+                                                                    right: -6px;
+                                                                    width: 14px;
+                                                                    height: 14px;
+                                                                    background-color: #ef4444;
+                                                                    border-radius: 50%;
+                                                                    border: 2px solid white;
+                                                                    animation: blink 1.5s infinite;
+                                                                }
 
-                                        <form id="requestPayoutForm" action="/api/payment/request-payout" method="POST"
-                                            style="display: none;">
-                                            <input type="hidden" name="shopId" value="<%= shop._id %>">
-                                            <input type="hidden" name="amount" value="<%= totalPendingPayout || 0 %>">
-                                        </form>
-                                        <form id="payCommissionForm" action="/api/payment/pay-commission" method="POST"
-                                            style="display: none;">
-                                            <input type="hidden" name="shopId" value="<%= shop._id %>">
-                                            <input type="hidden" name="amount" value="<%= totalDueToPasr || 0 %>">
-                                        </form>
-                                        <script>
-                                            function requestPayout() {
+                                                                @keyframes blink {
+
+                                                                    0%,
+                                                                    100% {
+                                                                        opacity: 1;
+                                                                    }
+
+                                                                    50% {
+                                                                        opacity: 0.5;
+                                                                    }
+                                                                }
+                                                            </style>
+                                                            <a href="/api/orders/my-shop-orders" class="btn btn-primary"
+                                                                style="flex:1; position: relative;">
+                                                                <i class="fa-solid fa-box-open"></i> Shop Orders
+                                                                <% if (typeof activeOrderCount !=='undefined' &&
+                                                                    activeOrderCount> 0) { %>
+                                                                    <span class="notification-dot"></span>
+                                                                    <% } %>
+                                                            </a>
+                                                            <a href="/shops/<%= shop._id %>/edit"
+                                                                class="btn btn-warning" style="flex:1;">
+                                                                <i class="fa-solid fa-edit"></i> Edit Shop
+                                                            </a>
+                                                        </div>
+
+                                                        <!-- Shop Status Toggle (Owner Only) -->
+                                                        <div class="mt-3" id="shopStatusCard"
+                                                            style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px;">
+                                                            <p class="fw-bold mb-3"
+                                                                style="color: #0f172a; font-size: 15px; margin: 0 0 12px 0;">
+                                                                <i class="fa-solid fa-toggle-on me-2 text-success"></i>
+                                                                Shop Status
+                                                            </p>
+
+                                                            <!-- Active / Closed Toggle -->
+                                                            <div class="d-flex align-items-center justify-content-between mb-2 p-2"
+                                                                style="background: white; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                                                <span
+                                                                    style="font-size: 14px; font-weight: 600; color: #374151;">
+                                                                    <i class="fa-solid fa-store me-1"></i>
+                                                                    Shop is <strong id="activeLabel">
+                                                                        <%= shop.isActive ? 'Open' : 'Closed' %>
+                                                                    </strong>
+                                                                </span>
+                                                                <div class="form-check form-switch mb-0">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        role="switch" id="isActiveToggle"
+                                                                        style="width: 48px; height: 24px; cursor: pointer;"
+                                                                        <%=shop.isActive ? 'checked' : '' %>>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Holiday Toggle -->
+                                                            <div class="d-flex align-items-center justify-content-between p-2"
+                                                                style="background: white; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                                                <span
+                                                                    style="font-size: 14px; font-weight: 600; color: #374151;">
+                                                                    <i class="fa-solid fa-umbrella-beach me-1"></i>
+                                                                    On Holiday Today: <strong id="holidayLabel">
+                                                                        <%= shop.isHoliday ? 'Yes' : 'No' %>
+                                                                    </strong>
+                                                                </span>
+                                                                <div class="form-check form-switch mb-0">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        role="switch" id="isHolidayToggle"
+                                                                        style="width: 48px; height: 24px; cursor: pointer;"
+                                                                        <%=shop.isHoliday ? 'checked' : '' %>>
+                                                                </div>
+                                                            </div>
+
+                                                            <small class="text-muted d-block mt-2"
+                                                                style="font-size: 11px;">
+                                                                <i class="fa-solid fa-circle-info me-1"></i>
+                                                                Changes save automatically. Customers will see your shop
+                                                                as open/closed based on
+                                                                this status.
+                                                            </small>
+                                                        </div>
+
+                                                        <% } %>
+
+
+                                                            <!-- Financial Ledger Section -->
+                                                            <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                                                <div class="financial-ledger-card mt-4 p-4"
+                                                                    style="background: white; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                                                                    <h3
+                                                                        style="font-size: 1.1rem; font-weight: 700; color: #1f2937; margin-bottom: 15px; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px;">
+                                                                        <i class="fa-solid fa-wallet text-success"></i>
+                                                                        Financial Ledger
+                                                                    </h3>
+
+                                                                    <div
+                                                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                                                        <div
+                                                                            style="background: #ecfdf5; padding: 12px; border-radius: 8px; border: 1px solid #a7f3d0; text-align: center;">
+                                                                            <div
+                                                                                style="font-size: 0.8rem; color: #065f46; font-weight: 600; text-transform: uppercase;">
+                                                                                Pending Payout</div>
+                                                                            <div
+                                                                                style="font-size: 1.2rem; font-weight: 800; color: #059669; margin: 5px 0;">
+                                                                                ₹<%= parseFloat(totalPendingPayout ||
+                                                                                    0).toFixed(2) %>
+                                                                            </div>
+                                                                            <div
+                                                                                style="font-size: 0.75rem; color: #047857;">
+                                                                                PASR owes you</div>
+                                                                        </div>
+                                                                        <div
+                                                                            style="background: #fef2f2; padding: 12px; border-radius: 8px; border: 1px solid #fecaca; text-align: center;">
+                                                                            <div
+                                                                                style="font-size: 0.8rem; color: #991b1b; font-weight: 600; text-transform: uppercase;">
+                                                                                Due Commission</div>
+                                                                            <div
+                                                                                style="font-size: 1.2rem; font-weight: 800; color: #dc2626; margin: 5px 0;">
+                                                                                ₹<%= parseFloat(totalDueToPasr ||
+                                                                                    0).toFixed(2) %>
+                                                                            </div>
+                                                                            <div
+                                                                                style="font-size: 0.75rem; color: #b91c1c;">
+                                                                                You owe PASR</div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div style="display: flex; gap: 10px;">
+                                                                        <button class="btn btn-success"
+                                                                            style="flex: 1; padding: 8px; font-size: 0.9rem; font-weight: 600;"
+                                                                            <%=(totalPendingPayout || 0) <=0
+                                                                            ? 'disabled' : '' %>
+                                                                            onclick="requestPayout()">
+                                                                            <i
+                                                                                class="fa-solid fa-money-bill-transfer"></i>
+                                                                            Request Payout
+                                                                        </button>
+                                                                        <button class="btn btn-danger"
+                                                                            style="flex: 1; padding: 8px; font-size: 0.9rem; font-weight: 600;"
+                                                                            <%=(totalDueToPasr || 0) <=0 ? 'disabled'
+                                                                            : '' %>
+                                                                            onclick="payCommission()">
+                                                                            <i class="fa-brands fa-razorpay"></i> Pay
+                                                                            Commission
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="mt-2 text-center"
+                                                                        style="font-size: 0.75rem; color: #6b7280;">
+                                                                        Earnings target: <strong>
+                                                                            <%= shop.upiId ? shop.upiId
+                                                                                : 'UPI ID Not Set' %>
+                                                                        </strong>
+                                                                        <a href="/shops/<%= shop._id %>/edit"
+                                                                            style="color: #2563eb; text-decoration: none; margin-left: 5px;">(Edit)</a>
+                                                                    </div>
+                                                                </div>
+
+                                                                <form id="requestPayoutForm"
+                                                                    action="/api/payment/request-payout" method="POST"
+                                                                    style="display: none;">
+                                                                    <input type="hidden" name="shopId"
+                                                                        value="<%= shop._id %>">
+                                                                    <input type="hidden" name="amount"
+                                                                        value="<%= totalPendingPayout || 0 %>">
+                                                                </form>
+                                                                <form id="payCommissionForm"
+                                                                    action="/api/payment/pay-commission" method="POST"
+                                                                    style="display: none;">
+                                                                    <input type="hidden" name="shopId"
+                                                                        value="<%= shop._id %>">
+                                                                    <input type="hidden" name="amount"
+                                                                        value="<%= totalDueToPasr || 0 %>">
+                                                                </form>
+                                                                <script>
+                                                                    function requestPayout() {
                                         <% if (!shop.upiId) { %>
-                                                    alert("Please set your UPI ID in the shop profile (Edit Shop) before requesting a payout.");
-                                                    return;
+                                                                            alert("Please set your UPI ID in the shop profile (Edit Shop) before requesting a payout.");
+                                                                            return;
                                         <% } %>
                                         if (confirm("Request payout of ₹<%= parseFloat(totalPendingPayout || 0).toFixed(2) %> to your configured UPI ID?")) {
-                                                    document.getElementById('requestPayoutForm').submit();
-                                                }
-                                            }
-                                            function payCommission() {
-                                                document.getElementById('payCommissionForm').submit();
-                                            }
-                                        </script>
-                                        <% } %>
+                                                                            document.getElementById('requestPayoutForm').submit();
+                                                                        }
+                                                                    }
+                                                                    function payCommission() {
+                                                                        document.getElementById('payCommissionForm').submit();
+                                                                    }
+                                                                </script>
+                                                                <% } %>
 
                         </div>
                     </div>
@@ -2447,12 +2560,47 @@
                         editForm.addEventListener('submit', function (e) {
                             const fileInput = editForm.querySelector('input[type="file"]');
                             const hasFile = fileInput && fileInput.files.length > 0;
-
-                            // For edit, we don't strictly require a NEW image if it already has one.
-                            // But since the user wants "No image, No item", we should ensure the item being edited HAS an image.
-                            // The edit modal opening logic should ensure an image exists or is being uploaded.
                         });
                     }
+
+                    // --- Shop Status Toggle Logic ---
+                    const SHOP_ID_FOR_TOGGLE = '<%= shop._id %>';
+                    const isActiveToggle = document.getElementById('isActiveToggle');
+                    const isHolidayToggle = document.getElementById('isHolidayToggle');
+
+                    async function saveShopStatus(update) {
+                        try {
+                            const res = await fetch(`/shops/${SHOP_ID_FOR_TOGGLE}/status`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(update)
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                const activeLabel = document.getElementById('activeLabel');
+                                const holidayLabel = document.getElementById('holidayLabel');
+                                if (activeLabel) activeLabel.textContent = data.isActive ? 'Open' : 'Closed';
+                                if (holidayLabel) holidayLabel.textContent = data.isHoliday ? 'Yes' : 'No';
+                            } else {
+                                alert('Could not save shop status.');
+                            }
+                        } catch (e) {
+                            console.error('Toggle error', e);
+                        }
+                    }
+
+                    if (isActiveToggle) {
+                        isActiveToggle.addEventListener('change', function () {
+                            saveShopStatus({ isActive: this.checked });
+                        });
+                    }
+
+                    if (isHolidayToggle) {
+                        isHolidayToggle.addEventListener('change', function () {
+                            saveShopStatus({ isHoliday: this.checked });
+                        });
+                    }
+
                 });
             </script>
         </body>
