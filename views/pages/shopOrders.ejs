@@ -3,32 +3,35 @@
 
         <style>
             .orders-header {
-                background: linear-gradient(135deg, #1e1b4b, #4338ca);
+                background: linear-gradient(135deg, #0f172a, #3b82f6);
                 color: #fff;
-                border-radius: 18px;
-                padding: 22px 26px;
-                margin-bottom: 22px;
+                border-radius: 20px;
+                padding: 24px 30px;
+                margin-bottom: 24px;
+                box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
             }
 
             .orders-header h2 {
                 font-weight: 800;
                 margin: 0 0 4px;
-                font-size: 1.5rem;
+                font-size: 1.75rem;
+                letter-spacing: -0.5px;
             }
 
             .orders-header p {
-                opacity: .8;
+                opacity: .85;
                 margin: 0;
-                font-size: 13px;
+                font-size: 14px;
             }
 
             .active-pill {
                 background: #fef3c7;
                 color: #92400e;
                 border-radius: 999px;
-                padding: 4px 14px;
-                font-size: 13px;
+                padding: 6px 16px;
+                font-size: 14px;
                 font-weight: 800;
+                box-shadow: 0 2px 10px rgba(254, 243, 199, 0.5);
             }
 
             .live-dot {
@@ -53,71 +56,80 @@
                 }
             }
 
+
             .order-card {
-                border-radius: 16px;
-                border: none;
-                box-shadow: 0 4px 20px rgba(15, 23, 42, .09);
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: 20px;
+                padding: 10px 8px;
+                /* Extra padding overall wrapper */
+                margin-bottom: 10px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
                 overflow: hidden;
-                height: 100%;
-                transition: transform .15s, box-shadow .15s;
+                transition: transform 0.2s, box-shadow 0.2s;
             }
 
             .order-card:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 10px 32px rgba(15, 23, 42, .14);
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+                border-color: #cbd5e1;
             }
 
+
             .sec-label {
-                font-size: 10px;
+                font-size: 11px;
                 font-weight: 800;
-                color: #94a3b8;
+                color: #64748b;
                 text-transform: uppercase;
-                letter-spacing: 1px;
-                margin-bottom: 5px;
+                letter-spacing: 1.2px;
+                margin-bottom: 8px;
             }
 
             .customer-block {
                 display: flex;
                 align-items: center;
-                gap: 10px;
-                background: #f0f4ff;
-                border-radius: 12px;
-                padding: 10px 12px;
+                gap: 12px;
+                background: #f8fafc;
+                border: 1px solid #f1f5f9;
+                border-radius: 14px;
+                padding: 12px 16px;
             }
 
             .avatar {
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
+                width: 44px;
+                height: 44px;
+                border-radius: 12px;
                 flex-shrink: 0;
-                background: linear-gradient(135deg, #6366f1, #4f46e5);
+                background: linear-gradient(135deg, #6366f1, #8b5cf6);
                 color: #fff;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-weight: 800;
-                font-size: 17px;
+                font-size: 18px;
+                box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
             }
 
             .small-item-img {
-                width: 40px;
-                height: 40px;
+                width: 48px;
+                height: 48px;
                 object-fit: cover;
-                border-radius: 6px;
+                border-radius: 10px;
                 border: 1px solid #e2e8f0;
-                margin-right: 8px;
+                margin-right: 12px;
                 flex-shrink: 0;
             }
 
             .customer-name {
-                font-weight: 700;
-                font-size: 14px;
-                color: #1e293b;
+                font-weight: 800;
+                font-size: 15px;
+                color: #0f172a;
             }
 
             .customer-phone {
-                font-size: 12px;
-                color: #6366f1;
+                font-size: 13px;
+                color: #64748b;
+                font-weight: 500;
             }
 
             .wa-btn {
@@ -125,117 +137,89 @@
                 background: #25d366;
                 color: #fff;
                 border: none;
-                border-radius: 8px;
-                padding: 6px 11px;
-                font-size: 12px;
+                border-radius: 10px;
+                padding: 8px 14px;
+                font-size: 13px;
                 font-weight: 700;
                 text-decoration: none;
                 display: inline-flex;
                 align-items: center;
-                gap: 4px;
+                gap: 6px;
                 flex-shrink: 0;
+                transition: transform 0.2s, box-shadow 0.2s;
+            }
+
+            .wa-btn:hover {
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+                color: #fff;
             }
 
             .address-block {
                 background: #fff7ed;
-                border: 1px solid #fed7aa;
-                border-radius: 10px;
-                padding: 9px 12px;
-                font-size: 13px;
-                color: #7c2d12;
+                border: 1px solid #ffedd5;
+                border-radius: 14px;
+                padding: 12px 16px;
+                font-size: 14px;
+                color: #9a3412;
                 line-height: 1.5;
+                font-weight: 500;
             }
 
             .dtype-pill {
                 display: inline-flex;
                 align-items: center;
-                gap: 5px;
-                font-size: 11px;
+                gap: 6px;
+                font-size: 12px;
                 font-weight: 700;
-                padding: 3px 10px;
+                padding: 6px 14px;
                 border-radius: 999px;
             }
 
             .dtype-pickup {
                 background: #f1f5f9;
-                color: #475569;
-            }
-
-            .items-wrap {
-                border-radius: 10px;
-                overflow: hidden;
+                color: #334155;
                 border: 1px solid #e2e8f0;
             }
 
-            .items-table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 13px;
+            .items-wrap {
+                border-radius: 14px;
+                overflow: hidden;
+                border: 1px solid #e2e8f0;
+                background: #fff;
             }
 
-            .items-table thead {
-                background: #f8fafc;
-            }
-
-            .items-table th {
-                padding: 6px 10px;
-                font-weight: 700;
-                color: #64748b;
-                text-align: left;
-                font-size: 11px;
-                text-transform: uppercase;
-                letter-spacing: .5px;
-            }
-
-            .items-table td {
-                padding: 8px 10px;
-                border-top: 1px solid #f1f5f9;
-            }
-
-            .items-table .item-name {
-                font-weight: 600;
-                color: #1e293b;
-            }
-
-            .items-table .qty-badge {
-                background: #e2e8f0;
-                border-radius: 6px;
-                padding: 2px 8px;
-                font-weight: 700;
-                font-size: 12px;
-            }
-
-            .items-table .price-cell {
-                font-weight: 700;
-                text-align: right;
-            }
 
             .totals-block {
                 background: #f8fafc;
-                border-radius: 10px;
-                padding: 11px 14px;
+                border-radius: 16px;
+                padding: 20px;
+                border: 1px solid #e2e8f0;
+                margin-top: 10px;
             }
+
 
             .total-row {
                 display: flex;
                 justify-content: space-between;
-                font-size: 13px;
+                font-size: 14px;
                 color: #64748b;
-                margin-bottom: 3px;
+                margin-bottom: 6px;
+                font-weight: 500;
             }
 
             .total-row.grand {
-                font-size: 15px;
+                font-size: 18px;
                 font-weight: 800;
                 color: #16a34a;
-                border-top: 1px solid #e2e8f0;
-                padding-top: 7px;
-                margin-top: 4px;
+                border-top: 1px dashed #cbd5e1;
+                padding-top: 12px;
+                margin-top: 8px;
             }
 
             .payment-block {
-                border-radius: 12px;
-                padding: 12px 14px;
+                border-radius: 14px;
+                padding: 14px 18px;
             }
 
             .payment-block.cod {
@@ -254,95 +238,110 @@
             }
 
             .pay-type-label {
-                font-size: 12px;
+                font-size: 13px;
                 font-weight: 800;
                 text-transform: uppercase;
                 letter-spacing: .5px;
             }
 
             .pay-status-msg {
-                font-size: 13px;
-                margin-top: 3px;
-                font-weight: 600;
-            }
-
-            .otp-wrap {
-                background: linear-gradient(135deg, #fef3c7, #fde68a);
-                border-radius: 10px;
-                text-align: center;
-                padding: 8px 12px;
-            }
-
-            .otp-val {
-                font-size: 24px;
-                font-weight: 900;
-                color: #78350f;
-                letter-spacing: 8px;
+                font-size: 14px;
+                margin-top: 4px;
+                font-weight: 500;
+                line-height: 1.4;
             }
 
             .filter-tabs {
                 display: flex;
-                gap: 8px;
+                gap: 10px;
                 flex-wrap: wrap;
-                margin-bottom: 18px;
+                margin-bottom: 24px;
             }
 
             .filter-tab {
-                padding: 6px 14px;
+                padding: 8px 18px;
                 border-radius: 999px;
-                border: 2px solid #e2e8f0;
+                border: 1px solid #e2e8f0;
                 background: #fff;
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 700;
-                color: #475569;
+                color: #64748b;
                 cursor: pointer;
-                transition: all .15s;
+                transition: all .2s;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
             }
 
             .filter-tab.active,
             .filter-tab:hover {
-                border-color: #6366f1;
-                background: #eef2ff;
-                color: #4338ca;
+                border-color: #3b82f6;
+                background: #eff6ff;
+                color: #1d4ed8;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
             }
 
             .empty-state {
                 text-align: center;
-                padding: 60px 20px;
+                padding: 80px 20px;
                 color: #94a3b8;
+                background: #f8fafc;
+                border-radius: 20px;
+                border: 1px dashed #cbd5e1;
             }
 
             .empty-state i {
-                font-size: 52px;
-                margin-bottom: 14px;
+                font-size: 64px;
+                margin-bottom: 20px;
+                color: #cbd5e1;
             }
 
             .partner-box {
                 background: #f0fdf4;
-                border: 1px solid #86efac;
-                border-radius: 12px;
-                padding: 12px 14px;
+                border: 1px solid #bbf7d0;
+                border-radius: 14px;
+                padding: 14px 18px;
             }
 
             .broadcast-box {
                 background: #fff7ed;
                 border: 1px solid #fed7aa;
-                border-radius: 10px;
-                padding: 10px 14px;
+                border-radius: 14px;
+                padding: 14px 18px;
                 text-align: center;
             }
 
             .delivery-choice-btns {
                 display: flex;
-                gap: 8px;
+                gap: 10px;
                 flex-wrap: wrap;
             }
 
             .delivery-choice-btns .btn {
                 flex: 1;
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 700;
-                min-width: 120px;
+                min-width: 140px;
+                padding: 10px 16px;
+                border-radius: 12px;
+            }
+
+            /* Enhanced Buttons inside Action Block */
+            .action-btn-primary {
+                background: linear-gradient(135deg, #3b82f6, #2563eb);
+                border: none;
+                color: #fff;
+            }
+
+            .action-btn-success {
+                background: linear-gradient(135deg, #22c55e, #16a34a);
+                border: none;
+                color: #fff;
+            }
+
+            .action-btn-warning {
+                background: linear-gradient(135deg, #f59e0b, #d97706);
+                border: none;
+                color: #fff;
             }
         </style>
 
@@ -440,7 +439,7 @@
                     <button class="filter-tab" data-filter="CANCELLED">❌ Cancelled</button>
                 </div>
 
-                <div class="row" id="ordersGrid">
+                <div class="d-flex flex-column align-items-center gap-4" id="ordersGrid">
                     <% orders.forEach(order=> { %>
                         <% let statusColor='bg-secondary' ; if (order.orderStatus==='CREATED' )
                             statusColor='bg-warning text-dark' ; else if (order.orderStatus==='ACCEPTED' )
@@ -450,7 +449,8 @@
                             statusColor='bg-info text-dark' ; else if (order.orderStatus==='COMPLETED' )
                             statusColor='bg-success' ; else if (order.orderStatus==='CANCELLED' )
                             statusColor='bg-danger' ; %>
-                            <div class="col-md-6 col-lg-4 mb-4 order-col" data-status="<%= order.orderStatus %>">
+                            <div class="w-100 order-col" style="max-width: 800px;"
+                                data-status="<%= order.orderStatus %>">
                                 <div class="card order-card">
 
                                     <!-- Card header -->
@@ -459,8 +459,8 @@
                                         <div>
                                             <div
                                                 style="font-size:11px;font-weight:800;color:#6366f1;letter-spacing:.5px;">
-                                                #<%= order.orderId ? order.orderId.replace('PASR-ORD-','') :
-                                                    order._id.toString().slice(-8).toUpperCase() %>
+                                                <%= (order.orderId ? order.orderId.replace('PASR-ORD-','') :
+                                                    order._id.toString()).slice(-6).toUpperCase() %>
                                             </div>
                                             <div style="font-size:11px;color:#94a3b8;">
                                                 <%= new
@@ -530,42 +530,39 @@
                                 <!-- ③ Items -->
                                 <div>
                                     <div class="sec-label">🛒 Items Ordered</div>
-                                    <div class="items-wrap">
-                                        <table class="items-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Item</th>
-                                                    <th style="text-align:center">Qty</th>
-                                                    <th style="text-align:right">Amount</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <% order.items.forEach(item=> { %>
-                                                    <tr>
-                                                        <td class="item-name">
-                                                            <div class="d-flex align-items-center">
-                                                                <% if (item.imageUrl) { %>
-                                                                    <img src="<%= item.imageUrl %>"
-                                                                        class="small-item-img" alt="<%= item.name %>">
-                                                                    <% } else { %>
-                                                                        <div class="small-item-img d-flex justify-content-center align-items-center"
-                                                                            style="background:#f1f5f9; color:#94a3b8; font-size:16px;">
-                                                                            📦</div>
-                                                                        <% } %>
-                                                                            <span>
-                                                                                <%= item.name %>
-                                                                            </span>
+                                    <div class="items-wrap"
+                                        style="border: none; background: transparent; padding: 0 10px;">
+                                        <% order.items.forEach(item=> { %>
+                                            <div
+                                                style="display: flex; align-items: center; padding: 14px 0; border-bottom: 1px dashed #e2e8f0;">
+                                                <% if (item.imageUrl) { %>
+                                                    <img src="<%= item.imageUrl %>"
+                                                        style="width: 64px; height: 64px; object-fit: cover; border-radius: 12px; margin-right: 16px; border: 1px solid #f1f5f9; box-shadow: 0 2px 5px rgba(0,0,0,0.03);"
+                                                        alt="<%= item.name %>">
+                                                    <% } else { %>
+                                                        <div
+                                                            style="width: 64px; height: 64px; border-radius: 12px; margin-right: 16px; background: #f8fafc; color: #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1px solid #e2e8f0;">
+                                                            📦</div>
+                                                        <% } %>
+                                                            <div style="flex: 1; min-width: 0;">
+                                                                <div
+                                                                    style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                                    <%= item.name %>
+                                                                </div>
+                                                                <div
+                                                                    style="font-size: 13px; color: #64748b; font-weight: 600;">
+                                                                    Qty: <span
+                                                                        style="background: #f1f5f9; padding: 2px 8px; border-radius: 6px; color: #475569; border: 1px solid #e2e8f0;">
+                                                                        <%= item.quantity %>
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                        </td>
-                                                        <td style="text-align:center;"><span class="qty-badge">× <%=
-                                                                    item.quantity %>
-                                                            </span></td>
-                                                        <td class="price-cell">₹<%= item.price * item.quantity %>
-                                                        </td>
-                                                    </tr>
-                                                    <% }) %>
-                                            </tbody>
-                                        </table>
+                                                            <div
+                                                                style="font-size: 16px; font-weight: 800; color: #10b981; text-align: right; padding-left: 10px;">
+                                                                ₹<%= item.price * item.quantity %>
+                                                            </div>
+                                            </div>
+                                            <% }) %>
                                     </div>
                                 </div>
 
@@ -616,11 +613,13 @@
                                                         <div class="pay-type-label" style="color:#c2410c;">⏳ UPI —
                                                             PAYMENT
                                                             PENDING</div>
-                                                        <div class="pay-status-msg" style="color:#92400e;">Customer
-                                                            claims
-                                                            to have paid ₹<%= order.totalAmount %> via UPI. Verify in
-                                                                your
-                                                                bank/app before preparing the order.</div>
+                                                        <div class="pay-status-msg" style="color:#92400e;">
+                                                            <% if (order.orderStatus === 'COMPLETED') { %>
+                                                                Payment verification pending. Please check your shop profile to confirm ₹<%= order.totalAmount %> was received via UPI.
+                                                            <% } else { %>
+                                                                Customer claims to have paid ₹<%= order.totalAmount %> via UPI. Verify in your bank/app before preparing the order.
+                                                            <% } %>
+                                                        </div>
                                                     </div>
                                                     <% } %>
                                                         <% } %>
@@ -677,22 +676,26 @@
                                                     <% } %>
 
                                                         <!-- ⑩ Action Buttons -->
-                                                        <% const needsPayVerify=(order.paymentType==='PREPAID' &&
+                                                        <% const needsPayVerify=( order.paymentType==='PREPAID' &&
                                                             order.paymentStatus==='PENDING' ); const
-                                                            needsAccept=(order.orderStatus==='CREATED' &&
-                                                            order.paymentType==='COD' ); const isDeliverableHomeOrder=(
+                                                            needsOtpSelfPickup=( order.deliveryType==='SELF_PICKUP' &&
+                                                            ['CREATED', 'ACCEPTED' , 'READY_FOR_DELIVERY'
+                                                            ].includes(order.orderStatus) ); const needsOtpSelfDeliver=(
                                                             order.deliveryType==='HOME_DELIVERY' &&
-                                                            ['CREATED','ACCEPTED','READY_FOR_DELIVERY'].includes(order.orderStatus)
-                                                            && !order.selfDelivery && order.orderStatus !=='BROADCAST'
-                                                            && !(order.partnerSnapshot && order.partnerSnapshot.name) );
-                                                            const needsShopOwnerCompletion=(
-                                                            ['ACCEPTED', 'READY_FOR_DELIVERY' , 'OUT_FOR_DELIVERY'
-                                                            ].includes(order.orderStatus) &&
-                                                            (order.deliveryType==='SELF_PICKUP' || order.selfDelivery)
-                                                            ); %>
-                                                            <% if (needsPayVerify || needsAccept ||
-                                                                isDeliverableHomeOrder || needsShopOwnerCompletion) { %>
+                                                            order.selfDelivery===true && ['CREATED', 'ACCEPTED'
+                                                            , 'READY_FOR_DELIVERY' , 'OUT_FOR_DELIVERY'
+                                                            ].includes(order.orderStatus) ); const
+                                                            isDeliverableHomeOrder=(
+                                                            order.deliveryType==='HOME_DELIVERY' &&
+                                                            ['CREATED', 'ACCEPTED' , 'READY_FOR_DELIVERY'
+                                                            ].includes(order.orderStatus) && !order.selfDelivery &&
+                                                            order.orderStatus !=='BROADCAST' && !(order.partnerSnapshot
+                                                            && order.partnerSnapshot.name) ); const
+                                                            hasActions=needsPayVerify || needsOtpSelfPickup ||
+                                                            needsOtpSelfDeliver || isDeliverableHomeOrder; %>
+                                                            <% if (hasActions) { %>
                                                                 <div class="d-flex flex-column gap-2">
+
                                                                     <% if (needsPayVerify) { %>
                                                                         <button class="btn btn-success fw-bold"
                                                                             onclick="verifyPayment('<%= order._id %>')">
@@ -700,61 +703,99 @@
                                                                             Confirm UPI Payment Received
                                                                         </button>
                                                                         <% } %>
-                                                                            <% if (needsAccept) { %>
-                                                                                <button class="btn btn-primary fw-bold"
-                                                                                    onclick="acceptCOD('<%= order._id %>')">
-                                                                                    <i
-                                                                                        class="fa-solid fa-thumbs-up"></i>
-                                                                                    Accept Order
-                                                                                </button>
+
+                                                                            <% if (needsOtpSelfPickup) { %>
+                                                                                <div class="p-3"
+                                                                                    style="background:linear-gradient(135deg,#fef9ec,#fef3c7);border:1.5px solid #fde68a;border-radius:12px;">
+                                                                                    <div
+                                                                                        style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:6px;">
+                                                                                        🏪 Self Pickup — Ask Customer
+                                                                                        for OTP
+                                                                                    </div>
+                                                                                    <div
+                                                                                        style="font-size:12px;color:#78350f;margin-bottom:8px;">
+                                                                                        Customer will show you their
+                                                                                        OTP. Enter it below to complete
+                                                                                        the order.
+                                                                                    </div>
+                                                                                    <div
+                                                                                        class="input-group input-group-sm">
+                                                                                        <input type="number"
+                                                                                            class="form-control fw-bold"
+                                                                                            id="otp-<%= order._id %>"
+                                                                                            placeholder="Enter OTP"
+                                                                                            maxlength="6"
+                                                                                            style="letter-spacing:4px;font-size:18px;text-align:center;">
+                                                                                        <button
+                                                                                            class="btn btn-success fw-bold"
+                                                                                            onclick="completeOrder('<%= order._id %>')">
+                                                                                            ✅ Verify & Complete
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </div>
                                                                                 <% } %>
+
                                                                                     <% if (isDeliverableHomeOrder) { %>
-                                                                                        <div class="sec-label mt-1">
-                                                                                            📦 How will this be
-                                                                                            delivered?</div>
-                                                                                        <div
-                                                                                            class="delivery-choice-btns">
-                                                                                            <button
-                                                                                                class="btn btn-outline-primary"
-                                                                                                onclick="selfDeliver('<%= order._id %>')">
-                                                                                                🛵 I'll Deliver
-                                                                                                Myself
-                                                                                            </button>
-                                                                                            <button
-                                                                                                class="btn btn-warning"
-                                                                                                onclick="broadcastDelivery('<%= order._id %>')">
-                                                                                                📢 Call Delivery
-                                                                                                Partner
-                                                                                            </button>
+                                                                                        <div class="p-2"
+                                                                                            style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
+                                                                                            <div class="sec-label mb-2">
+                                                                                                📦 How will this be
+                                                                                                delivered?</div>
+                                                                                            <div
+                                                                                                class="delivery-choice-btns">
+                                                                                                <button
+                                                                                                    class="btn btn-outline-primary"
+                                                                                                    onclick="selfDeliver('<%= order._id %>')">
+                                                                                                    🛵 I'll Deliver
+                                                                                                    Myself
+                                                                                                </button>
+                                                                                                <button
+                                                                                                    class="btn btn-warning"
+                                                                                                    onclick="broadcastDelivery('<%= order._id %>')">
+                                                                                                    📢 Find Delivery
+                                                                                                    Partner
+                                                                                                </button>
+                                                                                            </div>
                                                                                         </div>
                                                                                         <% } %>
-                                                                                            <% if
-                                                                                                (needsShopOwnerCompletion)
+
+                                                                                            <% if (needsOtpSelfDeliver)
                                                                                                 { %>
-                                                                                                <div class="mt-2 p-2"
-                                                                                                    style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+                                                                                                <div class="p-3"
+                                                                                                    style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1.5px solid #bfdbfe;border-radius:12px;">
                                                                                                     <div
-                                                                                                        class="sec-label mb-2">
-                                                                                                        ✅
-                                                                                                        Complete
-                                                                                                        Delivery
+                                                                                                        style="font-size:13px;font-weight:800;color:#1e40af;margin-bottom:6px;">
+                                                                                                        🛵 Self Delivery
+                                                                                                        — Ask Customer
+                                                                                                        for OTP
+                                                                                                    </div>
+                                                                                                    <div
+                                                                                                        style="font-size:12px;color:#1d4ed8;margin-bottom:8px;">
+                                                                                                        When you reach
+                                                                                                        the customer,
+                                                                                                        ask for their
+                                                                                                        OTP to confirm
+                                                                                                        delivery.
                                                                                                     </div>
                                                                                                     <div
                                                                                                         class="input-group input-group-sm">
                                                                                                         <input
-                                                                                                            type="text"
+                                                                                                            type="number"
                                                                                                             class="form-control fw-bold"
                                                                                                             id="otp-<%= order._id %>"
-                                                                                                            placeholder="Enter customer OTP"
-                                                                                                            style="letter-spacing: 2px;">
+                                                                                                            placeholder="Enter OTP"
+                                                                                                            maxlength="6"
+                                                                                                            style="letter-spacing:4px;font-size:18px;text-align:center;">
                                                                                                         <button
                                                                                                             class="btn btn-success fw-bold"
-                                                                                                            onclick="completeOrder('<%= order._id %>')">Verify
-                                                                                                            &
-                                                                                                            Complete</button>
+                                                                                                            onclick="completeOrder('<%= order._id %>')">
+                                                                                                            ✅ Verify &
+                                                                                                            Complete
+                                                                                                        </button>
                                                                                                     </div>
                                                                                                 </div>
                                                                                                 <% } %>
+
                                                                 </div>
                                                                 <% } %>
 

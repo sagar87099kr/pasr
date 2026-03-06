@@ -145,7 +145,7 @@ module.exports.requestPayout = async (req, res) => {
         const unsettledOrders = await Order.find({
             shopId: shop._id,
             orderStatus: 'COMPLETED',
-            settlementStatus: 'PENDING'
+            settlementStatus: { $in: ['PENDING', 'REQUESTED'] }
         });
 
         // Filter orders that actually owe the shop money
@@ -157,26 +157,97 @@ module.exports.requestPayout = async (req, res) => {
 
         const orderIds = payoutOrders.map(o => o.orderId);
 
-        // 2. Create Transaction History (Simulated Payout)
-        await TransactionHistory.create({
-            shopId: shop._id,
-            type: 'PAYOUT_TO_SHOP',
-            amount: payoutAmount,
-            status: 'PROCESSING',
-            metadata: {
-                upiId: shop.upiId,
-                ordersSettled: orderIds,
-                note: "Simulated Payout Request"
-            }
-        });
+        if (orderIds.length === 0) {
+            req.flash("error", "No eligible completed orders found for payout.");
+            return res.redirect(`/shops/${shopId}`);
+        }
 
-        // 3. Mark Orders as Settled
-        await Order.updateMany(
-            { _id: { $in: payoutOrders.map(o => o._id) } },
-            { $set: { settlementStatus: 'SETTLED' } }
-        );
+        // 2. Initialize Razorpay API
+        const razorpayParams = {
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET
+        };
+        const rzp = new Razorpay(razorpayParams);
 
-        req.flash("success", `Payout request for ₹${payoutAmount} to ${shop.upiId} has been submitted and is processing.`);
+        // We will generate a reference ID for our own tracking
+        const payoutReference = `payout_${shop._id}_${Date.now()}`;
+
+        try {
+            // STEP A: Create a Contact for the Shop Owner
+            // Razorpay limits name to 50 chars natively
+            const contactData = {
+                name: (req.user.name || "Shop Owner").substring(0, 50),
+                contact: req.user.phone || shop.phone || "9999999999",
+                type: "vendor",
+                reference_id: `shop_${shop._id}`
+            };
+            const contact = await rzp.contacts.create(contactData);
+
+            // STEP B: Create a Fund Account using their UPI ID
+            const fundAccountData = {
+                contact_id: contact.id,
+                account_type: "vpa",
+                vpa: {
+                    address: shop.upiId
+                }
+            };
+            const fundAccount = await rzp.fundAccount.create(fundAccountData);
+
+            // STEP C: Issue the Payout
+            const payoutOptions = {
+                account_number: process.env.RAZORPAY_ACCOUNT_NUMBER || "2323230009695627", // Test merchant account for RazorpayX by default for new accts, or should be in ENV
+                fund_account_id: fundAccount.id,
+                amount: Math.round(payoutAmount * 100), // convert to paise
+                currency: "INR",
+                mode: "UPI",
+                purpose: "payout",
+                queue_if_low_balance: true,
+                reference_id: payoutReference,
+                narration: "PASR Shop Earnings"
+            };
+
+            const payoutResponse = await rzp.payouts.create(payoutOptions);
+
+            // 3. Create Transaction History (Successful Request)
+            await TransactionHistory.create({
+                shopId: shop._id,
+                type: 'PAYOUT_TO_SHOP',
+                amount: payoutAmount,
+                status: payoutResponse.status === 'processed' || payoutResponse.status === 'processing' || payoutResponse.status === 'queued' ? 'SUCCESS' : 'PENDING',
+                metadata: {
+                    upiId: shop.upiId,
+                    ordersSettled: orderIds,
+                    razorpayPayoutId: payoutResponse.id,
+                    razorpayFundAccountId: fundAccount.id,
+                    razorpayContactId: contact.id
+                }
+            });
+
+            // 4. Mark Orders as Settled Instantly
+            await Order.updateMany(
+                { _id: { $in: payoutOrders.map(o => o._id) } },
+                { $set: { settlementStatus: 'SETTLED' } }
+            );
+
+            req.flash("success", `Success! ₹${payoutAmount} transferred to ${shop.upiId} via Razorpay.`);
+        } catch (rzpError) {
+            console.error("Razorpay Payout API Error:", rzpError);
+
+            // Log the failure in history but don't settle orders
+            await TransactionHistory.create({
+                shopId: shop._id,
+                type: 'PAYOUT_TO_SHOP',
+                amount: payoutAmount,
+                status: 'FAILED',
+                metadata: {
+                    upiId: shop.upiId,
+                    error: rzpError.message || "Razorpay API Failure"
+                }
+            });
+
+            req.flash("error", "Razorpay Transfer Failed: " + (rzpError.error?.description || rzpError.message || "Check your UPI ID or PASR balance."));
+        }
+
         res.redirect(`/shops/${shopId}`);
 
     } catch (error) {

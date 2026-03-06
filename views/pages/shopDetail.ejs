@@ -73,10 +73,14 @@
         , icon: "🛁" }, { name: "Tools & Accessories" , icon: "💅" }, { name: "General" , icon: "📦" } ], "Coaching" : [
         { name: "Tuition (School)" , icon: "📚" }, { name: "Competitive Exams" , icon: "📝" }, {
         name: "Language Classes" , icon: "🗣️" }, { name: "Arts & Hobbies" , icon: "🎨" }, { name: "Sports Coaching" ,
-        icon: "⚽" }, { name: "Professional Skills" , icon: "💻" }, { name: "General" , icon: "📦" } ] }; function
-        getShopCategoryData(shopCategory) { if (!shopCategory) return null; const
-        key=Object.keys(SHOP_CATEGORIES).find(function(k) { return k.toLowerCase()===shopCategory.toLowerCase(); });
-        return key ? SHOP_CATEGORIES[key] : null; } const currentShopCats=getShopCategoryData(shop.category); %>
+        icon: "⚽" }, { name: "Professional Skills" , icon: "💻" }, { name: "General" , icon: "📦" } ], "Sweet Shop" : [
+        { name: "Traditional Sweets" , icon: "🍮" }, { name: "Mithai" , icon: "🧆" }, { name: "Dry Fruit Sweets" ,
+        icon: "🥜" }, { name: "Chocolates" , icon: "🍫" }, { name: "Ice Cream & Kulfi" , icon: "🍦" }, {
+        name: "Namkeen & Savories" , icon: "🥨" }, { name: "Seasonal Specials" , icon: "🌸" }, { name: "Gift Boxes" ,
+        icon: "🎁" }, { name: "General" , icon: "📦" } ] }; function getShopCategoryData(shopCategory) { if
+        (!shopCategory) return null; const key=Object.keys(SHOP_CATEGORIES).find(function(k) { return
+        k.toLowerCase()===shopCategory.toLowerCase(); }); return key ? SHOP_CATEGORIES[key] : null; } const
+        currentShopCats=getShopCategoryData(shop.category); %>
         <style>
             /* Review styles */
             .reviews-card {
@@ -767,23 +771,13 @@
                                 <%= shop.shopName %>
                             </h1>
 
-                            <%
-                                // Compute current open/closed status
-                                let shopIsCurrentlyOpen = false;
-                                if (shop.isActive && !shop.isHoliday) {
-                                    if (shop.openingTime && shop.closingTime) {
-                                        const now = new Date();
-                                        const [oh, om] = shop.openingTime.split(':').map(Number);
-                                        const [ch, cm] = shop.closingTime.split(':').map(Number);
-                                        const nowMin = now.getHours() * 60 + now.getMinutes();
-                                        const openMin = oh * 60 + om;
-                                        const closeMin = ch * 60 + cm;
-                                        shopIsCurrentlyOpen = nowMin >= openMin && nowMin < closeMin;
-                                    } else {
-                                        shopIsCurrentlyOpen = true; // No hours set = always open if active
-                                    }
-                                }
-                            %>
+                            <% /* Compute current open/closed status */ let shopIsCurrentlyOpen=false; if (shop.isActive
+                                && !shop.isHoliday) { if (shop.openingTime && shop.closingTime) { const now=new Date();
+                                const [oh, om]=shop.openingTime.split(':').map(Number); const [ch,
+                                cm]=shop.closingTime.split(':').map(Number); const nowMin=now.getHours() * 60 +
+                                now.getMinutes(); const openMin=oh * 60 + om; const closeMin=ch * 60 + cm;
+                                shopIsCurrentlyOpen=nowMin>= openMin && nowMin < closeMin; } else {
+                                    shopIsCurrentlyOpen=true; /* No hours set=always open if active */ } } %>
 
                                     <% if (shop.isHoliday) { %>
                                         <span
@@ -980,40 +974,44 @@
                                                                     </h3>
 
                                                                     <div
-                                                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                                                        style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
                                                                         <div
-                                                                            style="background: #ecfdf5; padding: 12px; border-radius: 8px; border: 1px solid #a7f3d0; text-align: center;">
+                                                                            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                                                                             <div
-                                                                                style="font-size: 0.8rem; color: #065f46; font-weight: 600; text-transform: uppercase;">
-                                                                                Pending Payout</div>
-                                                                            <div
-                                                                                style="font-size: 1.2rem; font-weight: 800; color: #059669; margin: 5px 0;">
-                                                                                ₹<%= parseFloat(totalPendingPayout ||
-                                                                                    0).toFixed(2) %>
+                                                                                style="background: #ecfdf5; padding: 12px; border-radius: 8px; border: 1px solid #a7f3d0; text-align: center;">
+                                                                                <div
+                                                                                    style="font-size: 0.8rem; color: #065f46; font-weight: 600; text-transform: uppercase;">
+                                                                                    Available Payout</div>
+                                                                                <div
+                                                                                    style="font-size: 1.2rem; font-weight: 800; color: #059669; margin: 5px 0;">
+                                                                                    ₹<%= parseFloat(totalPendingPayout
+                                                                                        || 0).toFixed(2) %>
+                                                                                </div>
+                                                                                <div
+                                                                                    style="font-size: 0.75rem; color: #047857;">
+                                                                                    Ready to request</div>
                                                                             </div>
                                                                             <div
-                                                                                style="font-size: 0.75rem; color: #047857;">
-                                                                                PASR owes you</div>
-                                                                        </div>
-                                                                        <div
-                                                                            style="background: #fef2f2; padding: 12px; border-radius: 8px; border: 1px solid #fecaca; text-align: center;">
-                                                                            <div
-                                                                                style="font-size: 0.8rem; color: #991b1b; font-weight: 600; text-transform: uppercase;">
-                                                                                Due Commission</div>
-                                                                            <div
-                                                                                style="font-size: 1.2rem; font-weight: 800; color: #dc2626; margin: 5px 0;">
-                                                                                ₹<%= parseFloat(totalDueToPasr ||
-                                                                                    0).toFixed(2) %>
+                                                                                style="background: #fef2f2; padding: 12px; border-radius: 8px; border: 1px solid #fecaca; text-align: center;">
+                                                                                <div
+                                                                                    style="font-size: 0.8rem; color: #991b1b; font-weight: 600; text-transform: uppercase;">
+                                                                                    Due Commission</div>
+                                                                                <div
+                                                                                    style="font-size: 1.2rem; font-weight: 800; color: #dc2626; margin: 5px 0;">
+                                                                                    ₹<%= parseFloat(totalDueToPasr ||
+                                                                                        0).toFixed(2) %>
+                                                                                </div>
+                                                                                <div
+                                                                                    style="font-size: 0.75rem; color: #b91c1c;">
+                                                                                    You owe PASR</div>
                                                                             </div>
-                                                                            <div
-                                                                                style="font-size: 0.75rem; color: #b91c1c;">
-                                                                                You owe PASR</div>
                                                                         </div>
                                                                     </div>
 
-                                                                    <div style="display: flex; gap: 10px;">
+                                                                    <div
+                                                                        style="display: flex; gap: 10px; flex-wrap: wrap;">
                                                                         <button class="btn btn-success"
-                                                                            style="flex: 1; padding: 8px; font-size: 0.9rem; font-weight: 600;"
+                                                                            style="flex: 1; min-width: 140px; padding: 8px; font-size: 0.9rem; font-weight: 600;"
                                                                             <%=(totalPendingPayout || 0) <=0
                                                                             ? 'disabled' : '' %>
                                                                             onclick="requestPayout()">
@@ -1021,6 +1019,13 @@
                                                                                 class="fa-solid fa-money-bill-transfer"></i>
                                                                             Request Payout
                                                                         </button>
+                                                                        <a href="/shops/<%= shop._id %>/transactions"
+                                                                            class="btn btn-outline-secondary"
+                                                                            style="flex: 1; min-width: 140px; padding: 8px; font-size: 0.9rem; font-weight: 600; text-decoration: none;">
+                                                                            <i
+                                                                                class="fa-solid fa-clock-rotate-left"></i>
+                                                                            History
+                                                                        </a>
                                                                         <button class="btn btn-danger"
                                                                             style="flex: 1; padding: 8px; font-size: 0.9rem; font-weight: 600;"
                                                                             <%=(totalDueToPasr || 0) <=0 ? 'disabled'
@@ -1413,8 +1418,7 @@
                             <div class="field" id="addItemCategoryField">
                                 <label>Item Category</label>
                                 <select id="addItemCategorySelect" name="item[itemCategory]" class="form-control"
-                                    style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"
-                                    required>
+                                    style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
                                     <option value="" disabled selected>Select Category</option>
                                     <% currentShopCats.forEach(cat=> { %>
                                         <option value="<%= cat.name %>">
@@ -2613,4 +2617,3 @@
 
                 });
             </script>
-        </body>

@@ -11,7 +11,7 @@ const { storage, cloudinary, upload, itemUpload } = require("../cloud_con.js");
 const ItemImageRegistry = require("../data/itemImageRegistry");
 const { normalizeItemName } = require("../utils/normalization");
 const MasterProduct = require("../data/masterProduct");
-
+const TransactionHistory = require("../data/transactionHistory.js");
 
 // Define a middleware specifically for Shop ownership if isOwner is strictly for Providers
 // Looking at middleware.js: isOwner checks Provider. isProductOwner checks Product.
@@ -261,8 +261,10 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
     }
 
     if (isOwner) {
-        // Owner View: Show all MasterProducts for this category + Local Items
+        // Owner View: Show MasterProducts relevant to this shop's category in the grid.
+        // Note: The image SEARCH (when typing in Add Item) is unfiltered — see itemRegistry.js
         let masterQuery = { isActive: true };
+
         if (shop.category === "Grocery") {
             const grocerySubCats = [
                 "Grocery", "Staples & Grains", "Edible Oil & Ghee",
@@ -280,7 +282,9 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             ];
             masterQuery.category = { $in: generalStoreSubCats };
         } else {
-            masterQuery.category = shop.category;
+            // For all other categories (Footwear, Sweet Shop, Restaurant, etc.)
+            // show NO pre-loaded master products — they use image search to find items
+            masterQuery._id = null; // match nothing
         }
 
         const masterProducts = await MasterProduct.find(masterQuery).lean();
@@ -346,28 +350,45 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
         const unsettledOrders = await Order.find({
             shopId: shop._id,
             orderStatus: 'COMPLETED',
-            settlementStatus: 'PENDING'
+            settlementStatus: { $in: ['PENDING', 'REQUESTED'] }
         });
 
-        let totalPendingPayout = 0; // PASR owes Shop
+        let totalPendingPayout = 0; // PASR owes Shop (Available)
+        let totalRequestedPayout = 0; // PASR owes Shop (Requested but not paid)
         let totalDueToPasr = 0;     // Shop owes PASR
 
         unsettledOrders.forEach(order => {
+            let amount = 0;
             if (order.selfDelivery) {
                 if (order.paymentType === 'PREPAID') {
                     // PASR collected everything online; Shop did the delivery
-                    totalPendingPayout += (order.subtotalAmount + order.deliveryCharge - (order.pasrCommission || 0));
+                    amount = (order.subtotalAmount + order.deliveryCharge - (order.pasrCommission || 0));
                 } else if (order.paymentType === 'COD') {
                     // Shop collected cash; PASR takes commission
                     totalDueToPasr += (order.pasrCommission || 0);
                 }
             } else {
                 // Partner Delivered (both PREPAID and COD means PASR gets/handles the money)
-                totalPendingPayout += order.subtotalAmount;
+                amount = order.subtotalAmount;
+            }
+
+            if (amount > 0) {
+                if (order.settlementStatus === 'REQUESTED') {
+                    totalRequestedPayout += amount;
+                } else {
+                    totalPendingPayout += amount;
+                }
             }
         });
 
-        res.render("pages/shopDetail.ejs", { shop, displayItems: filteredMergedItems, activeOrderCount, totalPendingPayout, totalDueToPasr });
+        res.render("pages/shopDetail.ejs", {
+            shop,
+            displayItems: filteredMergedItems,
+            activeOrderCount,
+            totalPendingPayout,
+            totalRequestedPayout,
+            totalDueToPasr
+        });
     } else {
         // Customer View: Only items with quantity > 0 AND having an image
         const sellableItems = (shop.items || [])
@@ -390,6 +411,7 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             availableCategories,
             activeOrderCount: 0, // Customers don't see active orders
             totalPendingPayout: 0,
+            totalRequestedPayout: 0,
             totalDueToPasr: 0
         });
     }
@@ -435,6 +457,26 @@ router.delete("/shops/:id/reviews/:reviewId", isLogedin, isShopReviewAuthor, wra
     await Review.findByIdAndDelete(reviewId);
     req.flash("success", "Review deleted");
     res.redirect(`/shops/${id}`);
+}));
+
+// Show Transaction History Page
+router.get("/shops/:id/transactions", isLogedin, isShopOwner, wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    const shop = await Shop.findById(id);
+
+    if (!shop) {
+        req.flash("error", "Shop not found");
+        return res.redirect("/shops");
+    }
+
+    const transactions = await TransactionHistory.find({ shopId: shop._id })
+        .sort({ createdAt: -1 })
+        .lean();
+
+    res.render("pages/shopTransactions.ejs", {
+        shop,
+        transactions
+    });
 }));
 
 // Edit Shop Form

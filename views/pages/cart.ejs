@@ -478,9 +478,15 @@
                                         </button>
                                         <% if (group.subtotal <=2500) { %>
                                             <button class="delivery-opt-btn" data-shopid="<%= shopId %>"
-                                                data-type="HOME_DELIVERY" style="border-radius: 0 14px 14px 0;">
+                                                data-type="HOME_DELIVERY"
+                                                style="border-radius: 0 14px 14px 0; opacity: 0.5; cursor: not-allowed; pointer-events: none;"
+                                                disabled
+                                                title="Home Delivery is coming soon! We're onboarding delivery partners.">
                                                 <span class="opt-icon">🚚</span>
                                                 Home Delivery
+                                                <span
+                                                    style="display:block; font-size: 9px; font-weight: 700; color: #6366f1; letter-spacing: 0.5px; margin-top: 2px;">COMING
+                                                    SOON</span>
                                             </button>
                                             <% } %>
                                     </div>
@@ -783,6 +789,51 @@
                 const modalInput = document.getElementById('modal-places-input');
                 const saveAddrBtn = document.getElementById('save-address-btn');
                 let autocompleteInst = null;
+
+                // ---- Google Places Autocomplete (defined here inside DOMContentLoaded so it shares scope) ----
+                window.initPlacesForCart = function () {
+                    const input = document.getElementById('modal-places-input');
+                    if (!input) {
+                        console.error("Autocomplete input NOT found!");
+                        return;
+                    }
+
+                    const options = {
+                        componentRestrictions: { country: "in" },
+                        fields: ["address_components", "geometry", "formatted_address", "name"],
+                        types: ["geocode", "establishment"]
+                    };
+
+                    const autocomplete = new google.maps.places.Autocomplete(input, options);
+
+                    autocomplete.addListener('place_changed', () => {
+                        const place = autocomplete.getPlace();
+                        if (!place.geometry) {
+                            console.log("No geometry for selected place");
+                            return;
+                        }
+
+                        const lat = place.geometry.location.lat();
+                        const lng = place.geometry.location.lng();
+                        const address = place.formatted_address || place.name;
+
+                        document.getElementById('modal-lat').value = lat;
+                        document.getElementById('modal-lng').value = lng;
+
+                        let pincode = '';
+                        if (place.address_components) {
+                            const pc = place.address_components.find(c => c.types.includes('postal_code'));
+                            if (pc) pincode = pc.short_name;
+                        }
+                        document.getElementById('modal-pincode').value = pincode;
+
+                        document.getElementById('modal-selected-addr-text').innerText = address;
+                        document.getElementById('modal-addr-preview').classList.remove('d-none');
+                        tempSelectedAddress = address;
+                        saveAddrBtn.disabled = false; // ← NOW in scope
+                    });
+                };
+                // ------------------------------------------------------------------------------------------
 
                 document.querySelectorAll('.open-addr-modal').forEach(btn => {
                     btn.addEventListener('click', () => {
@@ -1092,53 +1143,10 @@
                         });
                     });
                 });
-            });
+            }); // end DOMContentLoaded
+
             window.initMap = function () {
                 if (window.initPlacesForCart) window.initPlacesForCart();
-            };
-
-            window.initPlacesForCart = function () {
-                const input = document.getElementById('modal-places-input');
-                if (!input) {
-                    console.error("Autocomplete input NOT found!");
-                    return;
-                }
-
-                // Explicitly set options for better recommendations
-                const options = {
-                    componentRestrictions: { country: "in" },
-                    fields: ["address_components", "geometry", "formatted_address", "name"],
-                    types: ["geocode", "establishment"] // Broader types for better suggestions
-                };
-
-                const autocomplete = new google.maps.places.Autocomplete(input, options);
-
-                autocomplete.addListener('place_changed', () => {
-                    const place = autocomplete.getPlace();
-                    if (!place.geometry) {
-                        console.log("No geometry for selected place");
-                        return;
-                    }
-
-                    const lat = place.geometry.location.lat();
-                    const lng = place.geometry.location.lng();
-                    const address = place.formatted_address || place.name;
-
-                    document.getElementById('modal-lat').value = lat;
-                    document.getElementById('modal-lng').value = lng;
-
-                    let pincode = '';
-                    if (place.address_components) {
-                        const pc = place.address_components.find(c => c.types.includes('postal_code'));
-                        if (pc) pincode = pc.short_name;
-                    }
-                    document.getElementById('modal-pincode').value = pincode;
-
-                    document.getElementById('modal-selected-addr-text').innerText = address;
-                    document.getElementById('modal-addr-preview').classList.remove('d-none');
-                    tempSelectedAddress = address;
-                    saveAddrBtn.disabled = false;
-                });
             };
         </script>
         <script

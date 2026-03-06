@@ -583,6 +583,9 @@ module.exports.getShopOrders = async (req, res, next) => {
             return orderObj;
         }));
 
+        // Explicitly sort descending by date to guarantee newest on top
+        processedOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
         const pendingCount = processedOrders.filter(o =>
             ['CREATED', 'ACCEPTED', 'READY_FOR_DELIVERY'].includes(o.orderStatus)
         ).length;

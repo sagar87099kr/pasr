@@ -127,9 +127,9 @@
                     : "📱" , "Stationery" : "📚" , "Salon" : "💇" , "Jewelers" : "💍" , "Non-Veg" : "🍖"
                     , "Vegetables & Fruits" : "🥕" , "Beauty/Cosmetics" : "💄" , "Coaching" : "👨‍🏫" , "General Store"
                     : "🏪" , "Furniture" : "🪑" , "Seeds & Fertilizers" : "🌱" , "Automobile" : "🚗"
-                    , "Printing & Digital" : "🖨️" , "Footwear" : "👟" , "Sports" : "🏏" , "Wholesale" : "🏪" , "Others"
-                    : "📦" }; const currentCat=(typeof queryParams !=='undefined' && queryParams.category) ?
-                    queryParams.category : 'All Shops' ; const makeCatLink=(catName)=> {
+                    , "Printing & Digital" : "🖨️" , "Footwear" : "👟" , "Sports" : "🏏" , "Wholesale" : "🏪"
+                    , "Sweet Shop" : "🍬" , "Others" : "📦" }; const currentCat=(typeof queryParams !=='undefined' &&
+                    queryParams.category) ? queryParams.category : 'All Shops' ; const makeCatLink=(catName)=> {
                     let params = new URLSearchParams();
                     if (lat) params.set('lat', lat);
                     if (lng) params.set('lng', lng);
@@ -196,6 +196,8 @@
                             Fruits</a>
                         <a href="<%= makeCatLink('Wholesale') %>"
                             class="cat-pill <%= currentCat === 'Wholesale' ? 'active' : '' %>">🏪 Wholesale</a>
+                        <a href="<%= makeCatLink('Sweet Shop') %>"
+                            class="cat-pill <%= currentCat === 'Sweet Shop' ? 'active' : '' %>">🍬 Sweet Shop</a>
                         <a href="<%= makeCatLink('Others') %>"
                             class="cat-pill <%= currentCat === 'Others' ? 'active' : '' %>">📦 Others</a>
                     </div>

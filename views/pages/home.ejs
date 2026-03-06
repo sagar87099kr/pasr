@@ -286,39 +286,3 @@
             <p class="prop-desc">Building a stronger local economy by connecting neighbors for rentals and services.</p>
         </div>
     </section>
-
-
-
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            // Location logic remains unchanged
-            const askedForLocation = sessionStorage.getItem('askedForLocation');
-            if (!askedForLocation && navigator.geolocation) {
-                const options = {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                };
-
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        fetch('/set-location', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ latitude, longitude })
-                        }).catch(console.error);
-
-                        sessionStorage.setItem('askedForLocation', 'true');
-                    },
-                    (error) => {
-                        console.error("Geolocation error:", error);
-                        sessionStorage.setItem('askedForLocation', 'true');
-                    },
-                    options
-                );
-            }
-        });
-    </script>

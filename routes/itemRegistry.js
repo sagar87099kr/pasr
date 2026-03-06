@@ -19,27 +19,7 @@ router.get("/item-suggestions", wrapAsync(async (req, res) => {
         ]
     };
 
-    if (req.query.category) {
-        if (req.query.category === "Grocery") {
-            const grocerySubCats = [
-                "Grocery", "Staples & Grains", "Edible Oil & Ghee",
-                "Spices & Masala", "Snacks & Namkeen", "Beverages",
-                "Dairy & Refrigerator", "Bakery Items", "Personal Care",
-                "Home Cleaning & Household", "Baby Care", "Dry Fruits & Sweets",
-                "Instant & Ready to Eat"
-            ];
-            query.itemCategory = { $in: grocerySubCats };
-        } else if (req.query.category === "General Store") {
-            const generalStoreSubCats = [
-                "Daily Essentials", "Snacks & Beverages", "Personal Care",
-                "Household Items", "Stationery", "Cleaning Supplies",
-                "Baby Care", "Snacks & Namkeen"
-            ];
-            query.itemCategory = { $in: generalStoreSubCats };
-        } else {
-            query.itemCategory = req.query.category;
-        }
-    }
+    // No category filtering — all shops can search the full image catalog
 
     const suggestions = await ItemImageRegistry.find(query)
         .limit(8)
