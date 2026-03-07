@@ -24,5 +24,8 @@ router.get("/orders", isLogedin, isadmin, catchAsync(adminController.getAllOrder
 // Admin - Force Cancel Order
 router.post("/orders/:id/cancel", isLogedin, isadmin, catchAsync(adminController.forceCancelOrder));
 
+// Admin - Payouts Management
+router.get("/payouts", isLogedin, isadmin, catchAsync(adminController.getPayoutRequests));
+router.post("/payouts/:id/approve", isLogedin, isadmin, catchAsync(adminController.approvePayout));
 
 module.exports = router;

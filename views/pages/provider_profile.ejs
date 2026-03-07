@@ -54,6 +54,66 @@
   <body>
     <div class="profile-container">
 
+      <!-- Refer & Earn Section -->
+      <section class="profile-card"
+        style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 1px solid #ddd6fe; margin-bottom: 24px;">
+        <div class="card-header"
+          style="border-bottom: 1px solid #ddd6fe; display: flex; justify-content: space-between; align-items: center;">
+          <div class="user-info">
+            <h2 style="color: #5b21b6; margin: 0;"><i class="fa-solid fa-gift me-2"></i>Refer & Earn</h2>
+            <span class="user-type" style="color: #7c3aed;">Share PaSr and earn rewards</span>
+          </div>
+          <div class="coin-balance"
+            style="background: #fff; padding: 8px 16px; border-radius: 24px; border: 1px solid #ddd6fe; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <i class="fa-solid fa-coins" style="color: #f59e0b; font-size: 1.2rem;"></i>
+            <span style="font-weight: 800; color: #1e293b; font-size: 1.1rem;">
+              <%= currUser.coins || 0 %>
+            </span>
+          </div>
+        </div>
+
+        <div class="referral-content" style="padding: 20px;">
+          <p style="color: #4b5563; font-size: 0.95rem; margin-bottom: 20px;">
+            Get <strong>5 coins</strong> for every friend who joins using your code. They'll get <strong>5
+              coins</strong>
+            too!
+          </p>
+
+          <div class="referral-code-box"
+            style="background: #fff; padding: 15px; border-radius: 12px; border: 2px dashed #c084fc; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div>
+              <span
+                style="display: block; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Your
+                Referral Code</span>
+              <span id="referralCodeText"
+                style="font-size: 1.4rem; font-weight: 800; color: #1e293b; letter-spacing: 2px;">
+                <%= currUser.referralCode || 'NOT_SET' %>
+              </span>
+            </div>
+            <button onclick="copyReferralCode()" class="btn btn-sm btn-outline-primary"
+              style="border-radius: 8px; font-weight: 600;">
+              <i class="fa-solid fa-copy me-1"></i> Copy
+            </button>
+          </div>
+
+          <div style="display: flex; gap: 12px;">
+            <% const shareMsg=`Join me on PaSr - The ultimate platform for local shops and services! Use my referral
+              code *${currUser.referralCode}* to get 5 coins on signup.\n\nJoin here:
+              https://pasr.in/customer/signup?ref=${currUser.referralCode}`; %>
+              <a href="https://wa.me/?text=<%= encodeURIComponent(shareMsg) %>" target="_blank" class="btn btn-success"
+                style="flex: 1; border-radius: 12px; font-weight: 700; background: #25D366; border: none; padding: 14px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: white;">
+                <i class="fa-brands fa-whatsapp me-2" style="font-size: 1.2rem;"></i> Share on WhatsApp
+              </a>
+          </div>
+
+          <div style="margin-top: 16px; text-align: center;">
+            <span style="font-size: 0.85rem; color: #6b7280;">Total Friends Referred: <strong>
+                <%= currUser.referralCount || 0 %>
+              </strong></span>
+          </div>
+        </div>
+      </section>
+
       <!-- User Profile Card -->
       <section class="profile-card">
         <div class="card-header">
@@ -503,6 +563,28 @@
 
     </script>
 
+    <script>
+      function copyReferralCode() {
+        const codeText = document.getElementById('referralCodeText').innerText.trim();
+        if (codeText === 'NOT_SET') {
+          alert('Referral code not generated yet.');
+          return;
+        }
+        navigator.clipboard.writeText(codeText).then(() => {
+          alert('Referral code copied to clipboard!');
+        }).catch(err => {
+          console.error('Failed to copy: ', err);
+          // Fallback for older browsers
+          const textArea = document.createElement("textarea");
+          textArea.value = codeText;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textArea);
+          alert('Referral code copied to clipboard!');
+        });
+      }
+    </script>
     <script>
       // Delete account modal functions
       function showDeleteForm() {

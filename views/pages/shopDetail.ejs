@@ -808,6 +808,10 @@
                                                             style="cursor:pointer; background:#dbeafe; color:#1e40af;">
                                                             <i class="fa-solid fa-qrcode"></i> UPI / QR
                                                         </div>
+                                                        <div class="meta-badge" onclick="openShopQrModal()"
+                                                            style="cursor:pointer; background:#fef3c7; color:#92400e; border: 1px solid #fde68a;">
+                                                            <i class="fa-solid fa-store"></i> Store QR
+                                                        </div>
                                                         <% if(currentShopCats && currentShopCats.length> 0) { %>
                                                             <div class="meta-badge">
                                                                 Shop Category
@@ -1897,13 +1901,16 @@
                         <div class="item-modal-footer-buttons">
                             <% if (typeof currUser !=='undefined' && currUser) { %>
                                 <button id="modalAddToCartBtn" class="item-modal-action-btn"
-                                    style="background: #1e293b;">
-                                    <i class="fa-solid fa-cart-plus"></i> Add
+                                    style="background: #1e293b; width: 100%; justify-content: center;">
+                                    <i class="fa-solid fa-cart-plus"></i> Add to Cart
                                 </button>
+                                <!-- Order Now temporarily disabled -->
+                                <!-- 
                                 <button id="modalOrderNowBtn" class="item-modal-action-btn"
                                     style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                                     <i class="fa-solid fa-bolt"></i> Order
                                 </button>
+                                -->
                                 <% } else { %>
                                     <a href="/alreadyLogin?redirect=/shops/<%= shop._id %>"
                                         class="item-modal-action-btn"
@@ -1920,46 +1927,63 @@
             <div id="upiModal" class="modal">
                 <div class="modal-content" style="text-align:center;">
                     <span class="close" onclick="closeUpiModal()">&times;</span>
-                    <h2 style="margin-bottom:20px;">Scan to Pay</h2>
+                    <h2 style="margin-bottom:10px;">Scan to Pay</h2>
+                    <p class="text-muted small mb-4">Pay directly to the shop owner using any UPI app</p>
 
-                    <% if (shop.upiScanner && shop.upiScanner.url) { %>
-                        <div style="margin-bottom:20px;">
-                            <img src="<%= optimizeImage(shop.upiScanner.url) %>" alt="UPI QR Code"
-                                style="max-width:100%; border-radius:12px; border:1px solid #e5e7eb;">
+                    <!-- Generated QR Code (Priority) -->
+                    <% if (shop.upiId) { %>
+                        <div id="generated-qr-container" class="mb-4">
+                            <div id="shop-qrcode" class="d-inline-block p-2 border rounded bg-white"></div>
+                            <div class="mt-2 font-weight-bold text-primary">
+                                <%= shop.upiId %>
+                            </div>
                         </div>
-                        <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                            <form action="/shops/<%= shop._id %>/upi?_method=DELETE" method="POST">
+                        <% } %>
 
-                                <button class="btn btn-danger w-100"><i class="fa-solid fa-trash"></i> Remove QR
-                                    Code</button>
-                            </form>
-                            <% } %>
-                                <% } else if (currUser && shop.owner._id.equals(currUser._id)) { %>
-                                    <div style="padding:20px; border:2px dashed #d1d5db; border-radius:12px;">
-                                        <i class="fa-solid fa-qrcode fa-3x"
-                                            style="color:#9ca3af; margin-bottom:15px;"></i>
-                                        <p style="color:#6b7280; margin-bottom:20px;">Upload your UPI QR Code image.
-                                        </p>
-                                        <form action="/shops/<%= shop._id %>/upi?_method=PUT" method="POST"
-                                            enctype="multipart/form-data" id="upiForm">
-                                            <input type="file" name="upiImage" id="upiModalInput" accept="image/*"
-                                                style="display:none;"
-                                                onchange="document.getElementById('upiForm').submit()">
-                                            <button type="button" class="btn btn-primary w-100"
-                                                onclick="document.getElementById('upiModalInput').click()">
-                                                <i class="fa-solid fa-upload"></i> Upload QR Image
-                                            </button>
+                            <!-- Uploaded QR Image (Fallback/Secondary) -->
+                            <% if (shop.upiScanner && shop.upiScanner.url) { %>
+                                <div style="margin-bottom:20px;">
+                                    <p class="small text-muted mb-2">Shop Owner's Uploaded QR:</p>
+                                    <img src="<%= optimizeImage(shop.upiScanner.url) %>" alt="UPI QR Code"
+                                        style="max-width:100%; border-radius:12px; border:1px solid #e5e7eb;">
+
+                                    <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                        <form action="/shops/<%= shop._id %>/upi?_method=DELETE" method="POST"
+                                            class="mt-2">
+                                            <button class="btn btn-sm btn-outline-danger">Delete QR</button>
                                         </form>
-                                    </div>
-                                    <% } else { %>
-                                        <div style="padding:40px 20px;">
-                                            <i class="fa-solid fa-ban fa-3x"
-                                                style="color:#ef4444; margin-bottom:15px;"></i>
-                                            <h3 style="color:#4b5563;">No QR Code Available</h3>
-                                            <p style="color:#6b7280;">The shop owner hasn't uploaded a UPI QR code
-                                                yet.</p>
-                                        </div>
                                         <% } %>
+                                </div>
+                                <% } %>
+                </div>
+            </div>
+
+            <!-- Shop QR Modal -->
+            <div id="shopQrModal" class="modal">
+                <div class="modal-content text-center" style="max-width: 400px;">
+                    <span class="close" onclick="closeShopQrModal()">&times;</span>
+                    <h2 class="mb-1" style="font-weight: 800;">Store QR Code</h2>
+                    <p class="text-muted small mb-4">Anyone who scans this will be taken directly to your shop and its
+                        items.</p>
+
+                    <div id="shop-qr-main" class="d-inline-block p-4 bg-white border rounded-4 mb-4"
+                        style="box-shadow: 0 10px 25px rgba(0,0,0,0.05); min-width: 256px; min-height: 256px;"></div>
+
+                    <div class="text-center">
+                        <h4 style="font-weight: 700; color: var(--text); margin-bottom: 5px;">
+                            <%= shop.shopName %>
+                        </h4>
+                        <p class="text-muted mb-4" style="font-size: 0.85rem;">
+                            <%= shop.location %>
+                        </p>
+                    </div>
+
+                    <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                        <button class="btn btn-primary w-100 py-3" onclick="downloadShopQr()"
+                            style="border-radius: 12px; font-weight: 700;">
+                            <i class="fa-solid fa-download me-2"></i> Download QR Image
+                        </button>
+                        <% } %>
                 </div>
             </div>
 
@@ -2071,10 +2095,73 @@
 
                 function openUpiModal() {
                     document.getElementById('upiModal').style.display = 'block';
+
+                    // Generate QR if upiId exists and not already generated
+                    setTimeout(() => {
+                        const upiId = "<%= shop.upiId %>";
+                        const qrDiv = document.getElementById('shop-qrcode');
+                        if (upiId && qrDiv && qrDiv.innerHTML.trim() === "") {
+                            new QRCode(qrDiv, {
+                                text: `upi://pay?pa=${upiId}&pn=<%= shop.shopName.replace(/\s/g, '%20') %>&cu=INR`,
+                                width: 200,
+                                height: 200,
+                                colorDark: "#000000",
+                                colorLight: "#ffffff",
+                                correctLevel: QRCode.CorrectLevel.H
+                            });
+                        }
+                    }, 50);
                 }
 
                 function closeUpiModal() {
                     document.getElementById('upiModal').style.display = 'none';
+                }
+
+                // Shop Profile QR Logic
+                function openShopQrModal() {
+                    const modal = document.getElementById('shopQrModal');
+                    const qrContainer = document.getElementById('shop-qr-main');
+                    modal.style.display = 'block';
+
+                    // Use setTimeout to ensure the modal is visible before generating QR
+                    setTimeout(() => {
+                        if (qrContainer && qrContainer.innerHTML.trim() === "") {
+                            try {
+                                if (typeof QRCode === 'undefined') {
+                                    qrContainer.innerHTML = '<p class="text-danger small">QR Library not loaded</p>';
+                                    return;
+                                }
+
+                                const shopUrl = window.location.origin + window.location.pathname; // Direct link to this shop
+                                new QRCode(qrContainer, {
+                                    text: shopUrl,
+                                    width: 256,
+                                    height: 256,
+                                    colorDark: "#0F172A",
+                                    colorLight: "#ffffff",
+                                    correctLevel: QRCode.CorrectLevel.H
+                                });
+                            } catch (err) {
+                                console.error("QR Generation Error:", err);
+                                qrContainer.innerHTML = '<p class="text-danger small">Failed to generate QR</p>';
+                            }
+                        }
+                    }, 50);
+                }
+
+                function closeShopQrModal() {
+                    document.getElementById('shopQrModal').style.display = 'none';
+                }
+
+                function downloadShopQr() {
+                    const qrContainer = document.getElementById('shop-qr-main');
+                    const canvas = qrContainer.querySelector('canvas');
+                    if (!canvas) return;
+
+                    const link = document.createElement('a');
+                    link.download = `<%= shop.shopName.replace(/\s+/g, '_') %>_Store_QR.png`;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
                 }
 
                 // Close modals when clicking outside
@@ -2083,11 +2170,13 @@
                     const addModal = document.getElementById('addItemModal');
                     const deleteModal = document.getElementById('deleteModal');
                     const upiModal = document.getElementById('upiModal');
+                    const shopQrModal = document.getElementById('shopQrModal');
 
                     if (event.target === itemModal) closeItemModal();
                     if (event.target === addModal) addModal.style.display = 'none';
                     if (event.target === deleteModal) deleteModal.style.display = 'none';
                     if (event.target === upiModal) closeUpiModal();
+                    if (event.target === shopQrModal) closeShopQrModal();
                 });
             </script>
 

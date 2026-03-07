@@ -55,6 +55,13 @@
             <div class="invalid-feedback">Please provide your address.</div>
           </div>
 
+          <!-- Referral Code (Optional) -->
+          <div class="form-group">
+            <label for="referralInput" class="form-label">Referral Code (Optional)</label>
+            <input type="text" class="form-control" id="referralInput" name="customer[referralCode]"
+              placeholder="Enter referral code if you have one">
+          </div>
+
           <!-- Agreement -->
           <div class="form-check">
             <input type="checkbox" class="form-check-input" id="agreeCheck" required>
@@ -140,5 +147,17 @@
     <script
       src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&libraries=places&callback=initAutocomplete"
       async defer></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const refCode = urlParams.get('ref');
+        if (refCode) {
+          const referralInput = document.getElementById('referralInput');
+          if (referralInput) {
+            referralInput.value = refCode;
+          }
+        }
+      });
+    </script>
     <script src="/js/script.js"></script>
   </body>

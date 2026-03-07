@@ -11,6 +11,21 @@ const wrapAsync = require("../utils/wrapAsync.js");
 const userController = require("../controllers/user.js");
 const { forwardGeocode } = require("../utils/geocoder");
 
+// Helper to generate a unique referral code
+async function generateReferralCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    while (true) {
+        code = 'PASR';
+        for (let i = 0; i < 4; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        const existing = await Customer.findOne({ referralCode: code });
+        if (!existing) break;
+    }
+    return code;
+}
+
 
 // login route for all 
 // login route for all 
@@ -27,7 +42,7 @@ router.get("/customer/signup", (req, res) => {
 router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, next) => {
 
     try {
-        const { name, username, password, address } = req.body.customer;
+        const { name, username, password, address, referralCode } = req.body.customer;
 
         // Check if this number is already registered
         const existing = await Customer.findOne({ username: Number(username) });
@@ -53,7 +68,7 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
         const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
 
         // Save pending data in session (no DB write yet)
-        req.session.pendingSignup = { name, username, password, address, pincode, geometry, otp, otpExpiry };
+        req.session.pendingSignup = { name, username, password, address, pincode, geometry, otp, otpExpiry, referralCode };
         await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve()));
 
         res.redirect("/customer/verify-otp");
@@ -98,13 +113,30 @@ router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
 
     try {
         // OTP correct — now create the account
+        const referralCodeForNewUser = await generateReferralCode();
+
         const newCustomer = new Customer({
             name: pending.name,
             username: pending.username,
             address: pending.address,
             pincode: pending.pincode,
-            geometry: pending.geometry
+            geometry: pending.geometry,
+            referralCode: referralCodeForNewUser
         });
+
+        // Check if referred by someone
+        if (pending.referralCode) {
+            const referrer = await Customer.findOne({ referralCode: pending.referralCode.toUpperCase() });
+            if (referrer) {
+                newCustomer.referredBy = referrer._id;
+                newCustomer.coins = 5; // Reward new user
+
+                // Reward referrer
+                referrer.coins = (referrer.coins || 0) + 5;
+                referrer.referralCount = (referrer.referralCount || 0) + 1;
+                await referrer.save();
+            }
+        }
 
         const registeredUser = await Customer.register(newCustomer, pending.password);
         req.session.pendingSignup = null; // clear pending data

@@ -74,6 +74,25 @@ const customerSchema = new Schema({
   fcmToken: {
     type: String,
     default: null
+  },
+  referralCode: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true
+  },
+  referredBy: {
+    type: Schema.Types.ObjectId,
+    ref: "Customer",
+    default: null
+  },
+  referralCount: {
+    type: Number,
+    default: 0
+  },
+  coins: {
+    type: Number,
+    default: 0
   }
 });
 

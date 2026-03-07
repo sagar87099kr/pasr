@@ -1,5 +1,6 @@
 const DeliveryPartner = require("../data/deliveryPartner");
 const Order = require("../data/order");
+const orderBus = require("../events/eventBus");
 
 // View all delivery partners
 module.exports.getAllPartners = async (req, res, next) => {
@@ -98,6 +99,7 @@ module.exports.forceCancelOrder = async (req, res, next) => {
             });
         }
 
+        orderBus.emit("ORDER_CANCELLED", order);
         res.status(200).json({ success: true, message: "Order cancelled.", order });
     } catch (e) {
         next(e);
@@ -113,6 +115,63 @@ module.exports.viewKycDocuments = async (req, res, next) => {
             return res.status(404).json({ success: false, message: "Partner not found." });
         }
         res.status(200).json({ success: true, kyc: partner });
+    } catch (e) {
+        next(e);
+    }
+};
+
+const TransactionHistory = require("../data/transactionHistory");
+
+// Admin Payouts Management (Restricted to 8709956547)
+module.exports.getPayoutRequests = async (req, res, next) => {
+    try {
+        if (req.user.username !== '8709956547') {
+            req.flash("error", "Unauthorized: Only the super-admin (8709956547) can manage payouts.");
+            return res.redirect("back");
+        }
+
+        const requests = await TransactionHistory.find({
+            type: 'PAYOUT_TO_SHOP',
+            status: 'PENDING'
+        }).populate('shopId').sort({ createdAt: -1 });
+
+        res.render('pages/adminPayouts.ejs', { requests });
+    } catch (e) {
+        next(e);
+    }
+};
+
+module.exports.approvePayout = async (req, res, next) => {
+    try {
+        if (req.user.username !== '8709956547') {
+            return res.status(403).json({ success: false, message: "Unauthorized." });
+        }
+
+        const { id } = req.params;
+        const transaction = await TransactionHistory.findById(id);
+
+        if (!transaction || transaction.status !== 'PENDING') {
+            return res.status(404).json({ success: false, message: "Pending transaction not found." });
+        }
+
+        // 1. Mark transaction as SUCCESS
+        transaction.status = 'SUCCESS';
+        transaction.metadata = {
+            ...transaction.metadata,
+            approvedAt: new Date(),
+            approvedBy: req.user.username
+        };
+        await transaction.save();
+
+        // 2. Mark associated orders as SETTLED
+        if (transaction.metadata && transaction.metadata.ordersSettled) {
+            await Order.updateMany(
+                { orderId: { $in: transaction.metadata.ordersSettled } },
+                { $set: { settlementStatus: 'SETTLED' } }
+            );
+        }
+
+        res.status(200).json({ success: true, message: "Payout marked as settled." });
     } catch (e) {
         next(e);
     }

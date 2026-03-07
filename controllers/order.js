@@ -45,7 +45,7 @@ const getOrderSellerDetails = async (order) => {
     return null;
 };
 
-// 1. Checkout & Create Order
+// 1. Checkout & Create Order (WhatsApp Direct Flow)
 module.exports.checkoutOrder = async (req, res, next) => {
     try {
         const cart = req.session.cart;
@@ -53,319 +53,119 @@ module.exports.checkoutOrder = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "Cart is empty." });
         }
 
-        // 1. Extract inputs
-        const { paymentType, lat, lng, shopId, orderId: clientOrderId, deliveryType } = req.body;
+        const { shopId, orderId: clientOrderId } = req.body;
         const customerId = req.user._id;
 
         if (!shopId) {
-            return res.status(400).json({ success: false, message: "Shop ID is required for checkout." });
+            return res.status(400).json({ success: false, message: "Shop ID is required." });
         }
 
-        if (!deliveryType || !['HOME_DELIVERY', 'SELF_PICKUP'].includes(deliveryType)) {
-            return res.status(400).json({ success: false, message: "Please specify delivery type: HOME_DELIVERY or SELF_PICKUP." });
-        }
-
-        // 1.5 Order Safety: Prevent duplicate orders
+        // 1.5 Prevent duplicate orders
         if (clientOrderId) {
             const existingOrder = await Order.findOne({ orderId: clientOrderId });
             if (existingOrder) {
-                return res.status(400).json({ success: false, message: "Order processed successfully (duplicate blocked)." });
+                return res.status(400).json({ success: false, message: "Order processed successfully." });
             }
         }
 
-        // Filter items for this specific shop
+        // Filter items for this shop
         const shopItems = cart.items.filter(item => item.shopId === shopId);
         if (shopItems.length === 0) {
-            return res.status(400).json({ success: false, message: "No items found for this shop in your cart." });
+            return res.status(400).json({ success: false, message: "No items for this shop in cart." });
         }
 
-        // 2. ATOMIC INVENTORY CHECK & UPDATE
+        // 2. ATOMIC INVENTORY DECREMENT (Treat WHATSAPP like COD - immediate)
         const Item = require("../data/item");
         const Product = require("../data/product");
         const inventoryUpdates = [];
-        const isProductItemCache = {}; // Cache to avoid duplicate checks
+        const isProductItemCache = {};
 
-        // Helper function to check and decrement either Item or Product
-        const checkAndDecrement = async (item, isTestingOnly = false) => {
-            // First, try finding as standard Item
+        const checkAndDecrement = async (item) => {
             let dbModel = Item;
-            let dbResult = isTestingOnly ?
-                await Item.findById(item.itemId) :
-                await Item.updateOne(
+            let result = await Item.updateOne(
+                { _id: item.itemId, quantity: { $gte: item.quantity } },
+                { $inc: { quantity: -item.quantity } }
+            );
+
+            if (result.modifiedCount === 0) {
+                dbModel = Product;
+                result = await Product.updateOne(
                     { _id: item.itemId, quantity: { $gte: item.quantity } },
                     { $inc: { quantity: -item.quantity } }
                 );
-
-            // If it failed/not found, try finding as a Product
-            if ((isTestingOnly && !dbResult) || (!isTestingOnly && dbResult.modifiedCount === 0)) {
-                dbModel = Product;
-                dbResult = isTestingOnly ?
-                    await Product.findById(item.itemId) :
-                    await Product.updateOne(
-                        { _id: item.itemId, quantity: { $gte: item.quantity } },
-                        { $inc: { quantity: -item.quantity } }
-                    );
-                if ((isTestingOnly && !dbResult) || (!isTestingOnly && dbResult.modifiedCount === 0)) {
-                    return { success: false, reason: 'NOT_FOUND_OR_OUT_OF_STOCK' };
-                }
+                if (result.modifiedCount === 0) return { success: false };
                 isProductItemCache[item.itemId] = true;
             } else {
                 isProductItemCache[item.itemId] = false;
             }
-
-            return { success: true, model: dbModel };
+            return { success: true };
         };
 
-        if (paymentType === 'COD') {
-            for (let item of shopItems) {
-                const decResult = await checkAndDecrement(item, false);
-
-                if (!decResult.success) {
-                    // Revert what we've taken so far
-                    for (let revert of inventoryUpdates) {
-                        const modelToRevert = isProductItemCache[revert.id] ? Product : Item;
-                        await modelToRevert.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-                    }
-                    return res.status(400).json({
-                        success: false,
-                        message: `Item '${item.name}' is out of stock or quantity exceeds available inventory.`
-                    });
+        for (let item of shopItems) {
+            const decResult = await checkAndDecrement(item);
+            if (!decResult.success) {
+                for (let revert of inventoryUpdates) {
+                    const model = isProductItemCache[revert.id] ? Product : Item;
+                    await model.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
                 }
-                inventoryUpdates.push({ id: item.itemId, qty: item.quantity, name: item.name });
+                return res.status(400).json({ success: false, message: `Item '${item.name}' is out of stock.` });
             }
-        } else {
-            // For PREPAID, just check inventory now. Decrement happens after payment verification.
-            for (let item of shopItems) {
-                const testResult = await checkAndDecrement(item, true);
-                if (!testResult.success) {
-                    return res.status(400).json({
-                        success: false,
-                        message: `Item '${item.name}' is out of stock or quantity exceeds available inventory.`
-                    });
-                }
-            }
+            inventoryUpdates.push({ id: item.itemId, qty: item.quantity });
         }
 
-        // 3. Calculate amounts based on delivery type
+        // 3. Totals
         const subtotalAmount = shopItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-        let deliveryCharge = 0;
-        let distanceInKm = 0;
-
-        let deliveryDistance = 0;
-        let pasrCommission = 0;
-        let partnerEarning = 0;
-        let estimatedFuelCost = 0;
-        let partnerProfit = 0;
-
-        let firstOrderDiscount = 0;
-        let grantFreeDelivery = false;
-        let deliveryAddress = '';
-
-        if (deliveryType === 'SELF_PICKUP') {
-            deliveryCharge = 0;
-            distanceInKm = 0;
-        } else {
-            let cLoc = null;
-            if (lat && lng) {
-                cLoc = [parseFloat(lng), parseFloat(lat)];
-            } else if (req.user.geometry && req.user.geometry.coordinates) {
-                cLoc = req.user.geometry.coordinates;
-            }
-
-            if (!cLoc || cLoc.length !== 2) {
-                for (let revert of inventoryUpdates) {
-                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-                }
-                return res.status(400).json({ success: false, message: "Please enable location services or update your profile." });
-            }
-
-            let shop = await Shop.findById(shopId);
-            let sLoc;
-
-            if (shop && shop.geometry && shop.geometry.coordinates) {
-                sLoc = shop.geometry.coordinates;
-            } else {
-                const Product = require("../data/product");
-                const product = await Product.findOne({ owner: shopId });
-                if (product && product.geometry && product.geometry.coordinates) {
-                    sLoc = product.geometry.coordinates;
-                }
-            }
-
-            if (!sLoc) {
-                for (let revert of inventoryUpdates) {
-                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-                }
-                return res.status(404).json({ success: false, message: "Shop or Seller location is unavailable." });
-            }
-
-            distanceInKm = await distanceUtil.calculateDistance(
-                cLoc[1], cLoc[0],
-                sLoc[1], sLoc[0],
-                true
-            );
-
-            if (distanceInKm > 5) {
-                for (let revert of inventoryUpdates) {
-                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-                }
-                return res.status(400).json({ success: false, message: "Delivery not available beyond 5 km." });
-            }
-
-            try {
-                const pricing = calculateDeliveryPricing(distanceInKm);
-                deliveryCharge = pricing.customerCharge;
-                deliveryDistance = pricing.distance;
-                pasrCommission = pricing.pasrCommission;
-                partnerEarning = pricing.partnerEarning;
-                estimatedFuelCost = pricing.estimatedFuelCost;
-                partnerProfit = pricing.partnerProfit;
-            } catch (pricingError) {
-                for (let revert of inventoryUpdates) {
-                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-                }
-                return res.status(400).json({ success: false, message: pricingError.message });
-            }
-
-            try {
-                const geoRes = await reverseGeocode(cLoc);
-                if (geoRes.body.features.length > 0) {
-                    deliveryAddress = geoRes.body.features[0].place_name;
-                }
-            } catch (_) {
-                deliveryAddress = `Near ${cLoc[1].toFixed(4)}, ${cLoc[0].toFixed(4)}`;
-            }
-
-            const mobile = String(req.user.username);
-            const existingFreeDelivery = await FreeDeliveryUsage.findOne({ mobile });
-            if (!existingFreeDelivery) {
-                firstOrderDiscount = deliveryCharge;
-                deliveryCharge = 0;
-                grantFreeDelivery = true;
-            }
-        }
-
-        const totalAmount = subtotalAmount + deliveryCharge;
-
-        // High Value Order Restriction (>2500)
-        if (totalAmount > 2500) {
-            if (deliveryType !== 'SELF_PICKUP') {
-                // Revert inventory
-                for (let revert of inventoryUpdates) {
-                    const modelToRevert = isProductItemCache[revert.id] ? Product : Item;
-                    await modelToRevert.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-                }
-                return res.status(400).json({ success: false, message: "Orders over ₹2500 are only available for Self-Pickup." });
-            }
-            if (paymentType !== 'COD') {
-                // Revert inventory
-                for (let revert of inventoryUpdates) {
-                    const modelToRevert = isProductItemCache[revert.id] ? Product : Item;
-                    await modelToRevert.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-                }
-                return res.status(400).json({ success: false, message: "Orders over ₹2500 must be paid directly at the shop." });
-            }
-        }
-        // Standard Prepaid Requirement (1000 - 2500)
-        else if (totalAmount >= 1000 && paymentType !== 'PREPAID') {
-            for (let revert of inventoryUpdates) {
-                const modelToRevert = isProductItemCache[revert.id] ? Product : Item;
-                await modelToRevert.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-            }
-            return res.status(400).json({ success: false, message: "Orders between ₹1000 and ₹2500 must be PREPAID." });
-        }
+        const totalAmount = subtotalAmount; // No delivery charges in direct shop mode
 
         const orderData = {
             orderId: clientOrderId || generateOrderId(),
             customerId,
-            shopId: shopId,
+            shopId,
             items: shopItems,
             subtotalAmount,
-            deliveryCharge,
             totalAmount,
-            distanceInKm,
-            deliveryType,
-            deliveryAddress,
-            firstOrderDiscount,
-
-            deliveryDistance,
-            pasrCommission,
-            partnerEarning,
-            estimatedFuelCost,
-            partnerProfit,
-
-            paymentType,
+            deliveryType: 'SHOP_PICKUP',
+            paymentType: 'WHATSAPP',
             paymentStatus: 'PENDING',
-            deliveryOTP: otpUtil.generateOTP(),
-            orderStatus: 'CREATED'
+            orderStatus: 'ORDER_SHARED',
+            deliveryOTP: otpUtil.generateOTP() // Keep for verification if needed
         };
 
-        const sellerDetails = await getOrderSellerDetails({ shopId });
-        const itemsSummary = shopItems.map(i => i.name).join(", ");
-
-        if (paymentType === 'PREPAID') {
-            const Razorpay = require('razorpay');
-            const rzp = new Razorpay({
-                key_id: process.env.RAZORPAY_KEY_ID,
-                key_secret: process.env.RAZORPAY_KEY_SECRET
-            });
-            const rzpOrder = await rzp.orders.create({
-                amount: Math.round(totalAmount * 100),
-                currency: 'INR',
-                receipt: orderData.orderId
-            });
-
-            orderData.razorpayOrderId = rzpOrder.id;
-            orderData.grantFreeDelivery = grantFreeDelivery;
-
-            req.session.pendingOrders = req.session.pendingOrders || {};
-            req.session.pendingOrders[rzpOrder.id] = orderData;
-
-            req.session.save(() => {
-                res.status(200).json({
-                    success: true,
-                    message: "Payment initiated",
-                    orderDbId: null,
-                    orderId: orderData.orderId,
-                    shopOwnerPhone: sellerDetails ? sellerDetails.phone : null,
-                    itemsSummary,
-                    razorpay: {
-                        id: rzpOrder.id,
-                        amount: rzpOrder.amount,
-                        currency: rzpOrder.currency,
-                        keyId: process.env.RAZORPAY_KEY_ID
-                    }
-                });
-            });
-            return;
-        }
-
-        // --- COD ONLY ---
         const order = new Order(orderData);
+
+        // 4. Generate WhatsApp Link
+        const sellerDetails = await getOrderSellerDetails(order);
+        const shopPhone = sellerDetails ? sellerDetails.phone : null;
+        const itemsSummary = shopItems.map(i => `${i.name} x${i.quantity}`).join(", ");
+
+        // Base URL for the shareable link (public order view)
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const viewLink = `${baseUrl}/orders/request/${order.orderId}`;
+        order.shareableLink = viewLink;
+
         await order.save();
 
-        if (grantFreeDelivery) {
-            await FreeDeliveryUsage.create({ mobile: String(req.user.username), usedAt: new Date() });
-        }
+        // 5. Build WhatsApp Message
+        let waMessage = `👋 Hello! I want to order from your shop via PASR.\n\n`;
+        waMessage += `📦 *Order #${order.orderId.slice(-6).toUpperCase()}*\n`;
+        waMessage += `🛒 *Items:* ${itemsSummary}\n`;
+        waMessage += `💰 *Total:* ₹${totalAmount}\n\n`;
+        waMessage += `🔗 *View Checklist:* ${viewLink}\n\n`;
+        waMessage += `I will come to your shop to pay and collect. Please pack them. Thank you!`;
 
-        orderBus.emit("ORDER_CREATED", order);
+        const waUrl = shopPhone ? `https://wa.me/91${shopPhone}?text=${encodeURIComponent(waMessage)}` : null;
 
+        // Clear cart for this shop
         cart.items = cart.items.filter(item => item.shopId !== shopId);
-        cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-        cart.shopId = cart.items.length === 0 ? null : cart.shopId;
+        cart.subtotal = cart.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
         req.session.save(() => {
             res.status(201).json({
                 success: true,
-                message: "Order created successfully",
+                message: "Order shared successfully",
                 orderId: order.orderId,
-                orderDbId: order._id,
-                shopOwnerPhone: sellerDetails ? sellerDetails.phone : null,
-                itemsSummary,
-                totalAmount: order.totalAmount,
-                paymentType: order.paymentType,
-                deliveryType: order.deliveryType,
-                razorpay: null
+                waUrl,
+                waMessage
             });
         });
 
@@ -468,6 +268,71 @@ module.exports.shopMarkReady = async (req, res, next) => {
         next(e);
     }
 }
+
+// 4b. Shop Marks Order as PACKED (WhatsApp Flow)
+module.exports.shopPackOrder = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const order = await Order.findById(id);
+        if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+        const sellerDetails = await getOrderSellerDetails(order);
+        if (!sellerDetails || !sellerDetails.sellerId.equals(req.user._id)) {
+            return res.status(403).json({ success: false, message: "Unauthorized." });
+        }
+
+        order.orderStatus = 'PACKED';
+        await order.save();
+
+        // Notify Customer
+        try {
+            const Customer = require("../data/customers");
+            const customer = await Customer.findById(order.customerId);
+            if (customer) {
+                await createNotification(
+                    customer._id,
+                    "Order Packed!",
+                    `Your order #${order.orderId.slice(-6).toUpperCase()} is packed and ready at ${sellerDetails.name}. You can pick it up now.`,
+                    { type: "ORDER_UPDATE", orderId: order._id.toString() }
+                );
+            }
+        } catch (err) {
+            console.error("Notification Error:", err);
+        }
+
+        res.status(200).json({ success: true, message: "Order marked as packed.", order });
+    } catch (e) {
+        next(e);
+    }
+}
+
+// 4c. Render Order Request (Checklist for Shopkeeper)
+module.exports.renderOrderRequest = async (req, res, next) => {
+    try {
+        const { orderId } = req.params;
+        const Order = require("../data/order");
+        const Customer = require("../data/customers");
+
+        const order = await Order.findOne({ orderId })
+            .populate({
+                path: 'items.itemId',
+                select: 'img product'
+            });
+
+        if (!order) return res.status(404).render("error", { message: "Order request not found." });
+
+        const sellerDetails = await getOrderSellerDetails(order);
+        const customer = await Customer.findById(order.customerId).select('name username');
+
+        res.render("pages/orderRequest", {
+            order,
+            customer,
+            shop: sellerDetails
+        });
+    } catch (e) {
+        next(e);
+    }
+};
 
 // 5. Customer Gets their Orders & Shop Orders
 module.exports.getCustomerOrders = async (req, res, next) => {

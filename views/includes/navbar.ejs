@@ -66,25 +66,29 @@
                       , "8873679038" , "7091568049" , "9835780962" ]; if (adminNums.includes(String(currUser.username)))
                       { %>
                       <li><a class="dropdown-item fw-bold text-danger" href="/admin/orders">Admin: Orders</a></li>
-                      <% } %>
+                      <% if (String(currUser.username)==='8709956547' ) { %>
+                        <li><a class="dropdown-item fw-bold text-success" href="/admin/payouts">Admin: Payouts</a></li>
                         <% } %>
-                          <% if (typeof currUser !=='undefined' && currUser) { %>
-                            <% if (currUser.collection.name==='deliverypartners' ) { %>
-                              <li><a class="dropdown-item fw-bold text-primary" href="/delivery/dashboard">Delivery
-                                  Dashboard</a></li>
-                              <% } %>
-                                <% } %>
-                                  <li><a class="dropdown-item" href="#">About us</a> </li>
-                                  <% if (typeof currUser==='undefined' || !currUser){%>
-                                    <li><a class="dropdown-item" href="/alreadyLogin">login</a> </li>
-                                    <li><a class="dropdown-item" href="/customer/signup">SignUp</a> </li>
-                                    <%}%>
-                                      <li>
-                                        <hr class="dropdown-divider">
-                                      </li>
-                                      <% if (typeof currUser !=='undefined' && currUser){%>
-                                        <li><a class="dropdown-item" href="/logout" style="color: red;">logOut</a></li>
+                          <% } %>
+                            <% } %>
+                              <% if (typeof currUser !=='undefined' && currUser) { %>
+                                <% if (currUser.collection.name==='deliverypartners' ) { %>
+                                  <li><a class="dropdown-item fw-bold text-primary" href="/delivery/dashboard">Delivery
+                                      Dashboard</a></li>
+                                  <% } %>
+                                    <% } %>
+                                      <li><a class="dropdown-item" href="#">About us</a> </li>
+                                      <% if (typeof currUser==='undefined' || !currUser){%>
+                                        <li><a class="dropdown-item" href="/alreadyLogin">login</a> </li>
+                                        <li><a class="dropdown-item" href="/customer/signup">SignUp</a> </li>
                                         <%}%>
+                                          <li>
+                                            <hr class="dropdown-divider">
+                                          </li>
+                                          <% if (typeof currUser !=='undefined' && currUser){%>
+                                            <li><a class="dropdown-item" href="/logout" style="color: red;">logOut</a>
+                                            </li>
+                                            <%}%>
                 </ul>
               </div>
 

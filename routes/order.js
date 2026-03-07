@@ -11,11 +11,17 @@ router.post("/checkout", isLogedin, isVerifiedCustomer, catchAsync(orderControll
 // Customer: View their own orders
 router.get("/my-orders", isLogedin, catchAsync(orderController.getCustomerOrders));
 
+// Shopkeeper: View Order Request (Public/Direct Link)
+router.get("/request/:orderId", catchAsync(orderController.renderOrderRequest));
+
 // Shopkeeper: View all orders for their shop(s)
 router.get("/my-shop-orders", isLogedin, catchAsync(orderController.getShopOrders));
 
 // Shop: Accept Order (COD)
 router.post("/:id/accept", isLogedin, catchAsync(orderController.shopAcceptOrder));
+
+// Shop: Mark Order as Packed (WhatsApp Flow)
+router.post("/:id/pack", isLogedin, catchAsync(orderController.shopPackOrder));
 
 
 // Shop: Verify Prepaid Payment

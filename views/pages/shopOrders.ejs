@@ -432,7 +432,9 @@
                     <button class="filter-tab active" data-filter="all">All (<%= orders.length %>)</button>
                     <button class="filter-tab" data-filter="CREATED">🆕 New</button>
                     <button class="filter-tab" data-filter="ACCEPTED">✅ Accepted</button>
-                    <button class="filter-tab" data-filter="READY_FOR_DELIVERY">📦 Ready</button>
+                    <button class="filter-tab" data-filter="ORDER_SHARED">🟣 Shared</button>
+                    <button class="filter-tab" data-filter="PACKED">📦 Packed</button>
+                    <button class="filter-tab" data-filter="READY_FOR_DELIVERY">🚚 Ready</button>
                     <button class="filter-tab" data-filter="BROADCAST">📢 Broadcast</button>
                     <button class="filter-tab" data-filter="ASSIGNED">🛵 Assigned</button>
                     <button class="filter-tab" data-filter="COMPLETED">✔ Done</button>
@@ -443,7 +445,9 @@
                     <% orders.forEach(order=> { %>
                         <% let statusColor='bg-secondary' ; if (order.orderStatus==='CREATED' )
                             statusColor='bg-warning text-dark' ; else if (order.orderStatus==='ACCEPTED' )
-                            statusColor='bg-primary' ; else if (order.orderStatus==='BROADCAST' )
+                            statusColor='bg-primary' ; else if (order.orderStatus==='ORDER_SHARED' )
+                            statusColor='bg-purple text-light' ; else if (order.orderStatus==='PACKED' )
+                            statusColor='bg-success' ; else if (order.orderStatus==='BROADCAST' )
                             statusColor='bg-orange text-dark' ; else if
                             (['READY_FOR_DELIVERY','ASSIGNED','OUT_FOR_DELIVERY'].includes(order.orderStatus))
                             statusColor='bg-info text-dark' ; else if (order.orderStatus==='COMPLETED' )
@@ -569,60 +573,80 @@
                                 <!-- ④ Bill -->
                                 <div>
                                     <div class="sec-label">💰 Bill</div>
-                                    <div class="totals-block">
-                                        <div class="total-row"><span>Items subtotal</span><span>₹<%=
-                                                    order.subtotalAmount %>
-                                            </span></div>
-                                        <% if (order.deliveryType==='HOME_DELIVERY' ) { %>
-                                            <div class="total-row">
-                                                <span>Delivery charge</span>
-                                                <% if (order.firstOrderDiscount> 0) { %>
-                                                    <span><s style="color:#94a3b8">₹<%= order.firstOrderDiscount %></s>
-                                                        <strong class="text-success">FREE</strong></span>
-                                                    <% } else { %>
-                                                        <span>₹<%= order.deliveryCharge %></span>
-                                                        <% } %>
+                                    <% if (order.paymentType==='WHATSAPP' ) { %>
+                                        <div class="bill-row total">
+                                            <span>Total Bill</span>
+                                            <span>₹<%= order.payableAmount %></span>
+                                        </div>
+                                        <% } else { %>
+                                            <div class="bill-row">
+                                                <span>Item Total</span>
+                                                <span>₹<%= order.payableAmount - (order.deliveryCharge || 0) %></span>
+                                            </div>
+                                            <div class="bill-row">
+                                                <span>Delivery</span>
+                                                <span>+₹<%= order.deliveryCharge || 0 %></span>
+                                            </div>
+                                            <div class="bill-row total">
+                                                <span>Total</span>
+                                                <span>₹<%= order.payableAmount %></span>
                                             </div>
                                             <% } %>
-                                                <div class="total-row grand"><span>Total to collect</span><span>₹<%=
-                                                            order.totalAmount %></span></div>
-                                    </div>
                                 </div>
 
                                 <!-- ⑤ Payment -->
                                 <div>
                                     <div class="sec-label">💳 Payment</div>
-                                    <% if (order.paymentType==='COD' ) { %>
-                                        <div class="payment-block cod">
-                                            <div class="pay-type-label" style="color:#15803d;">💵 Cash on Delivery (COD)
+                                    <% if (order.paymentType==='WHATSAPP' ) { %>
+                                        <div
+                                            style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px;">
+                                            <div
+                                                style="font-size:12px;font-weight:700;color:#166534;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+                                                <i class="fa-brands fa-whatsapp" style="font-size:16px;"></i> WHATSAPP
+                                                DIRECT
                                             </div>
-                                            <div class="pay-status-msg" style="color:#166534;">Collect <strong>₹<%=
-                                                        order.totalAmount %>
-                                                </strong> in cash when delivering.</div>
+                                            <div style="font-size:13px;color:#15803d;font-weight:600;">
+                                                Customer will pay ₹<%= order.payableAmount %> at your shop.
+                                            </div>
                                         </div>
-                                        <% } else if (order.paymentType==='PREPAID' ) { %>
-                                            <% if (order.paymentStatus==='VERIFIED' ) { %>
-                                                <div class="payment-block upi-paid">
-                                                    <div class="pay-type-label" style="color:#15803d;">✅ UPI — PAID
-                                                    </div>
-                                                    <div class="pay-status-msg" style="color:#166534;">Payment of ₹<%=
-                                                            order.totalAmount %> verified. No amount to collect.</div>
+                                        <% } else if (order.paymentType==='COD' ) { %>
+                                            <div class="payment-block cod">
+                                                <div class="pay-type-label" style="color:#15803d;">💵 Cash on Delivery
+                                                    (COD)
                                                 </div>
-                                                <% } else { %>
-                                                    <div class="payment-block upi-pending">
-                                                        <div class="pay-type-label" style="color:#c2410c;">⏳ UPI —
-                                                            PAYMENT
-                                                            PENDING</div>
-                                                        <div class="pay-status-msg" style="color:#92400e;">
-                                                            <% if (order.orderStatus === 'COMPLETED') { %>
-                                                                Payment verification pending. Please check your shop profile to confirm ₹<%= order.totalAmount %> was received via UPI.
-                                                            <% } else { %>
-                                                                Customer claims to have paid ₹<%= order.totalAmount %> via UPI. Verify in your bank/app before preparing the order.
-                                                            <% } %>
+                                                <div class="pay-status-msg" style="color:#166534;">Collect <strong>₹<%=
+                                                            order.totalAmount %>
+                                                    </strong> in cash when delivering.</div>
+                                            </div>
+                                            <% } else if (order.paymentType==='PREPAID' ) { %>
+                                                <% if (order.paymentStatus==='VERIFIED' ) { %>
+                                                    <div class="payment-block upi-paid">
+                                                        <div class="pay-type-label" style="color:#15803d;">✅ UPI — PAID
+                                                        </div>
+                                                        <div class="pay-status-msg" style="color:#166534;">Payment of ₹
+                                                            <%= order.totalAmount %> verified. No amount to collect.
                                                         </div>
                                                     </div>
-                                                    <% } %>
+                                                    <% } else { %>
+                                                        <div class="payment-block upi-pending">
+                                                            <div class="pay-type-label" style="color:#c2410c;">⏳ UPI —
+                                                                PAYMENT
+                                                                PENDING</div>
+                                                            <div class="pay-status-msg" style="color:#92400e;">
+                                                                <% if (order.orderStatus==='COMPLETED' ) { %>
+                                                                    Payment verification pending. Please check your shop
+                                                                    profile to confirm ₹<%= order.totalAmount %> was
+                                                                        received via UPI.
+                                                                        <% } else { %>
+                                                                            Customer claims to have paid ₹<%=
+                                                                                order.totalAmount %> via UPI. Verify in
+                                                                                your
+                                                                                bank/app before preparing the order.
+                                                                                <% } %>
+                                                            </div>
+                                                        </div>
                                                         <% } %>
+                                                            <% } %>
                                 </div>
 
 
@@ -676,10 +700,12 @@
                                                     <% } %>
 
                                                         <!-- ⑩ Action Buttons -->
-                                                        <% const needsPayVerify=( order.paymentType==='PREPAID' &&
+                                                        <% const needsPayVerify=(order.paymentType==='PREPAID' &&
                                                             order.paymentStatus==='PENDING' ); const
-                                                            needsOtpSelfPickup=( order.deliveryType==='SELF_PICKUP' &&
-                                                            ['CREATED', 'ACCEPTED' , 'READY_FOR_DELIVERY'
+                                                            needsPackAction=(order.orderStatus==='ORDER_SHARED' ); const
+                                                            needsOtpVerification=( (order.deliveryType==='SELF_PICKUP'
+                                                            || order.orderStatus==='PACKED' ) && ['PACKED', 'CREATED'
+                                                            , 'ACCEPTED' , 'READY_FOR_DELIVERY'
                                                             ].includes(order.orderStatus) ); const needsOtpSelfDeliver=(
                                                             order.deliveryType==='HOME_DELIVERY' &&
                                                             order.selfDelivery===true && ['CREATED', 'ACCEPTED'
@@ -691,110 +717,143 @@
                                                             ].includes(order.orderStatus) && !order.selfDelivery &&
                                                             order.orderStatus !=='BROADCAST' && !(order.partnerSnapshot
                                                             && order.partnerSnapshot.name) ); const
-                                                            hasActions=needsPayVerify || needsOtpSelfPickup ||
-                                                            needsOtpSelfDeliver || isDeliverableHomeOrder; %>
+                                                            hasActions=needsPayVerify || needsPackAction ||
+                                                            needsOtpVerification || needsOtpSelfDeliver ||
+                                                            isDeliverableHomeOrder; %>
                                                             <% if (hasActions) { %>
                                                                 <div class="d-flex flex-column gap-2">
 
-                                                                    <% if (needsPayVerify) { %>
-                                                                        <button class="btn btn-success fw-bold"
-                                                                            onclick="verifyPayment('<%= order._id %>')">
-                                                                            <i class="fa-solid fa-check-circle"></i>
-                                                                            Confirm UPI Payment Received
+                                                                    <% if (needsPackAction) { %>
+                                                                        <button class="btn btn-primary fw-bold py-2"
+                                                                            onclick="packOrder('<%= order._id %>')">
+                                                                            <i class="fa-solid fa-box-archive me-1"></i>
+                                                                            Mark as Packed
                                                                         </button>
+                                                                        <a href="/api/orders/request/<%= order.orderId %>"
+                                                                            class="btn btn-outline-secondary btn-sm fw-bold">
+                                                                            <i class="fa-solid fa-list-check me-1"></i>
+                                                                            View Checklist
+                                                                        </a>
                                                                         <% } %>
 
-                                                                            <% if (needsOtpSelfPickup) { %>
-                                                                                <div class="p-3"
-                                                                                    style="background:linear-gradient(135deg,#fef9ec,#fef3c7);border:1.5px solid #fde68a;border-radius:12px;">
-                                                                                    <div
-                                                                                        style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:6px;">
-                                                                                        🏪 Self Pickup — Ask Customer
-                                                                                        for OTP
-                                                                                    </div>
-                                                                                    <div
-                                                                                        style="font-size:12px;color:#78350f;margin-bottom:8px;">
-                                                                                        Customer will show you their
-                                                                                        OTP. Enter it below to complete
-                                                                                        the order.
-                                                                                    </div>
-                                                                                    <div
-                                                                                        class="input-group input-group-sm">
-                                                                                        <input type="number"
-                                                                                            class="form-control fw-bold"
-                                                                                            id="otp-<%= order._id %>"
-                                                                                            placeholder="Enter OTP"
-                                                                                            maxlength="6"
-                                                                                            style="letter-spacing:4px;font-size:18px;text-align:center;">
-                                                                                        <button
-                                                                                            class="btn btn-success fw-bold"
-                                                                                            onclick="completeOrder('<%= order._id %>')">
-                                                                                            ✅ Verify & Complete
-                                                                                        </button>
-                                                                                    </div>
-                                                                                </div>
+                                                                            <% if (needsPayVerify) { %>
+                                                                                <button class="btn btn-success fw-bold"
+                                                                                    onclick="verifyPayment('<%= order._id %>')">
+                                                                                    <i
+                                                                                        class="fa-solid fa-check-circle"></i>
+                                                                                    Confirm UPI Payment Received
+                                                                                </button>
                                                                                 <% } %>
 
-                                                                                    <% if (isDeliverableHomeOrder) { %>
-                                                                                        <div class="p-2"
-                                                                                            style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
-                                                                                            <div class="sec-label mb-2">
-                                                                                                📦 How will this be
-                                                                                                delivered?</div>
+                                                                                    <% if (needsOtpVerification) { %>
+                                                                                        <div class="p-3"
+                                                                                            style="background:linear-gradient(135deg,#fef9ec,#fef3c7);border:1.5px solid #fde68a;border-radius:12px;">
                                                                                             <div
-                                                                                                class="delivery-choice-btns">
+                                                                                                style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:6px;">
+                                                                                                Pickup Verification —
+                                                                                                Ask Customer
+                                                                                                for OTP
+                                                                                            </div>
+                                                                                            <div
+                                                                                                style="font-size:12px;color:#78350f;margin-bottom:8px;">
+                                                                                                Customer will show you
+                                                                                                their
+                                                                                                OTP. Enter it below to
+                                                                                                complete
+                                                                                                the order.
+                                                                                            </div>
+                                                                                            <div
+                                                                                                class="input-group input-group-sm">
+                                                                                                <input type="number"
+                                                                                                    class="form-control fw-bold"
+                                                                                                    id="otp-<%= order._id %>"
+                                                                                                    placeholder="Enter OTP"
+                                                                                                    maxlength="6"
+                                                                                                    style="letter-spacing:4px;font-size:18px;text-align:center;">
                                                                                                 <button
-                                                                                                    class="btn btn-outline-primary"
-                                                                                                    onclick="selfDeliver('<%= order._id %>')">
-                                                                                                    🛵 I'll Deliver
-                                                                                                    Myself
-                                                                                                </button>
-                                                                                                <button
-                                                                                                    class="btn btn-warning"
-                                                                                                    onclick="broadcastDelivery('<%= order._id %>')">
-                                                                                                    📢 Find Delivery
-                                                                                                    Partner
+                                                                                                    class="btn btn-success fw-bold"
+                                                                                                    onclick="completeOrder('<%= order._id %>')">
+                                                                                                    ✅ Verify & Complete
                                                                                                 </button>
                                                                                             </div>
                                                                                         </div>
                                                                                         <% } %>
 
-                                                                                            <% if (needsOtpSelfDeliver)
+                                                                                            <% if
+                                                                                                (isDeliverableHomeOrder)
                                                                                                 { %>
-                                                                                                <div class="p-3"
-                                                                                                    style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1.5px solid #bfdbfe;border-radius:12px;">
+                                                                                                <div class="p-2"
+                                                                                                    style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
                                                                                                     <div
-                                                                                                        style="font-size:13px;font-weight:800;color:#1e40af;margin-bottom:6px;">
-                                                                                                        🛵 Self Delivery
-                                                                                                        — Ask Customer
-                                                                                                        for OTP
-                                                                                                    </div>
+                                                                                                        class="sec-label mb-2">
+                                                                                                        📦 How will this
+                                                                                                        be
+                                                                                                        delivered?</div>
                                                                                                     <div
-                                                                                                        style="font-size:12px;color:#1d4ed8;margin-bottom:8px;">
-                                                                                                        When you reach
-                                                                                                        the customer,
-                                                                                                        ask for their
-                                                                                                        OTP to confirm
-                                                                                                        delivery.
-                                                                                                    </div>
-                                                                                                    <div
-                                                                                                        class="input-group input-group-sm">
-                                                                                                        <input
-                                                                                                            type="number"
-                                                                                                            class="form-control fw-bold"
-                                                                                                            id="otp-<%= order._id %>"
-                                                                                                            placeholder="Enter OTP"
-                                                                                                            maxlength="6"
-                                                                                                            style="letter-spacing:4px;font-size:18px;text-align:center;">
+                                                                                                        class="delivery-choice-btns">
                                                                                                         <button
-                                                                                                            class="btn btn-success fw-bold"
-                                                                                                            onclick="completeOrder('<%= order._id %>')">
-                                                                                                            ✅ Verify &
-                                                                                                            Complete
+                                                                                                            class="btn btn-outline-primary"
+                                                                                                            onclick="selfDeliver('<%= order._id %>')">
+                                                                                                            🛵 I'll
+                                                                                                            Deliver
+                                                                                                            Myself
+                                                                                                        </button>
+                                                                                                        <button
+                                                                                                            class="btn btn-warning"
+                                                                                                            onclick="broadcastDelivery('<%= order._id %>')">
+                                                                                                            📢 Find
+                                                                                                            Delivery
+                                                                                                            Partner
                                                                                                         </button>
                                                                                                     </div>
                                                                                                 </div>
                                                                                                 <% } %>
+
+                                                                                                    <% if
+                                                                                                        (needsOtpSelfDeliver)
+                                                                                                        { %>
+                                                                                                        <div class="p-3"
+                                                                                                            style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1.5px solid #bfdbfe;border-radius:12px;">
+                                                                                                            <div
+                                                                                                                style="font-size:13px;font-weight:800;color:#1e40af;margin-bottom:6px;">
+                                                                                                                🛵 Self
+                                                                                                                Delivery
+                                                                                                                — Ask
+                                                                                                                Customer
+                                                                                                                for OTP
+                                                                                                            </div>
+                                                                                                            <div
+                                                                                                                style="font-size:12px;color:#1d4ed8;margin-bottom:8px;">
+                                                                                                                When you
+                                                                                                                reach
+                                                                                                                the
+                                                                                                                customer,
+                                                                                                                ask for
+                                                                                                                their
+                                                                                                                OTP to
+                                                                                                                confirm
+                                                                                                                delivery.
+                                                                                                            </div>
+                                                                                                            <div
+                                                                                                                class="input-group input-group-sm">
+                                                                                                                <input
+                                                                                                                    type="number"
+                                                                                                                    class="form-control fw-bold"
+                                                                                                                    id="otp-<%= order._id %>"
+                                                                                                                    placeholder="Enter OTP"
+                                                                                                                    maxlength="6"
+                                                                                                                    style="letter-spacing:4px;font-size:18px;text-align:center;">
+                                                                                                                <button
+                                                                                                                    class="btn btn-success fw-bold"
+                                                                                                                    onclick="completeOrder('<%= order._id %>')">
+                                                                                                                    ✅
+                                                                                                                    Verify
+                                                                                                                    &
+                                                                                                                    Complete
+                                                                                                                </button>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                        <% } %>
 
                                                                 </div>
                                                                 <% } %>
@@ -819,6 +878,20 @@
                                     });
                                 });
                             });
+
+                            async function packOrder(id) {
+                                if (!confirm("Confirm you have packed all items for this order?")) return;
+                                const res = await fetch(`/api/orders/${id}/pack`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+
+                                const d = await res.json();
+                                if (res.ok) { alert("Order marked as packed! Customer has been notified."); window.location.reload(); }
+                                else alert(d.message || "Failed.");
+                            }
 
                             async function verifyPayment(id) {
                                 if (!confirm("Have you confirmed the UPI payment in your bank/app?")) return;

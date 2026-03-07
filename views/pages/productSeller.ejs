@@ -88,13 +88,20 @@
                                 <div class="form-text mt-2">Clear product photos.</div>
                             </div>
                         </div>
-                        <div class="col-md-6 form-group mt-4">
+                        <div class="col-md-6 form-group mt-4 text-center">
                             <label class="form-label">UPI ID for Payouts (Optional)</label>
-                            <div
-                                class="p-3 border rounded bg-light text-center h-100 d-flex flex-column justify-content-center">
-                                <input type="text" name="product[upiId]" class="form-control"
+                            <div class="p-3 border rounded bg-light d-flex flex-column justify-content-center">
+                                <input type="text" name="product[upiId]" id="upiId" class="form-control"
                                     placeholder="e.g. 9876543210@paytm">
                                 <div class="form-text mt-2">PASR will use this UPI ID to send your earnings.</div>
+                            </div>
+
+                            <!-- QR Preview -->
+                            <div id="qr-preview-container" class="mt-3 p-3 border rounded bg-white text-center"
+                                style="display: none;">
+                                <p class="small mb-2 text-muted">Scan to Verify Your UPI ID</p>
+                                <div id="qrcode" class="d-inline-block"></div>
+                                <div class="mt-2 small font-weight-bold text-primary" id="upi-display-id"></div>
                             </div>
                         </div>
                     </div>
@@ -131,6 +138,42 @@
                     // The input value is already updated
                 });
             }
+
+            // UPI QR Preview Logic
+            document.addEventListener('DOMContentLoaded', () => {
+                const upiInput = document.getElementById('upiId');
+                const qrContainer = document.getElementById('qr-preview-container');
+                const qrDiv = document.getElementById('qrcode');
+                const upiDisplay = document.getElementById('upi-display-id');
+                let qrcode = null;
+
+                if (upiInput) {
+                    upiInput.addEventListener('input', (e) => {
+                        const val = e.target.value.trim();
+                        if (val && val.includes('@')) {
+                            qrContainer.style.display = 'block';
+                            upiDisplay.innerText = val;
+                            const upiString = `upi://pay?pa=${val}&pn=Product%20Seller&cu=INR`;
+
+                            if (!qrcode) {
+                                qrcode = new QRCode(qrDiv, {
+                                    text: upiString,
+                                    width: 128,
+                                    height: 128,
+                                    colorDark: "#000000",
+                                    colorLight: "#ffffff",
+                                    correctLevel: QRCode.CorrectLevel.H
+                                });
+                            } else {
+                                qrcode.clear();
+                                qrcode.makeCode(upiString);
+                            }
+                        } else {
+                            qrContainer.style.display = 'none';
+                        }
+                    });
+                }
+            });
         </script>
         <script
             src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&libraries=places&callback=initAutocomplete"
