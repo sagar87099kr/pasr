@@ -92,7 +92,7 @@ const customerSchema = new Schema({
   },
   coins: {
     type: Number,
-    default: 0
+    default: 5
   }
 });
 
