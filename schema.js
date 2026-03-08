@@ -14,10 +14,13 @@ module.exports.providerSchema = Joi.object({
 module.exports.customerSchema = Joi.object({
     customer: Joi.object({
         name: Joi.string().required().max(100).min(3),
-        username: Joi.number().required().min(10),
-        password: Joi.string().required(),
+        username: Joi.string().pattern(/^[0-9]{10}$/).required().messages({
+            'string.pattern.base': 'WhatsApp number must be exactly 10 digits'
+        }),
+        password: Joi.string().required().min(4),
         confirm: Joi.ref("password"),
         address: Joi.string().required(),
+        referralCode: Joi.string().allow("").optional()
     })
 });
 

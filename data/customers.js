@@ -24,7 +24,7 @@ const customerSchema = new Schema({
   },
   password: {
     type: String,
-    minLegth: 4,
+    minLength: 4,
     trim: true,
   },
   address: {
