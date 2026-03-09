@@ -24,55 +24,172 @@
 
     <body>
         <section class="search-header">
-            <h1>Search Results</h1>
+            <h1 class="display-4 fw-bold mb-3">Discovery</h1>
             <% if (query) { %>
-                <p>Showing results for: <span class="search-query">"<%= query %>"</span></p>
+                <p class="lead text-muted">Searching for <span class="search-query text-success">"<%= query %>"</span>
+                    across all services</p>
                 <% } %>
         </section>
 
-        <div class="content">
-            <% if (providers && providers.length> 0) { %>
-                <div class="placeholder">
-                    <% for (let provider of providers) { %>
-                        <div class="info">
-                            <a class="search-card" href="/provider/<%= provider._id %>/profile">
-                                <div class="search-avatar">
-                                    <% if(provider.personImage && provider.personImage.length> 0) { %>
-                                        <img src="<%= provider.personImage[0].path %>" alt="Provider photo">
-                                        <% } else { %>
-                                            <img src="https://via.placeholder.com/150" alt="No image">
-                                            <% } %>
-                                </div>
+        <div class="container pb-5">
+            <!-- Results Container -->
+            <div class="row">
+                <div class="col-12">
 
-                                <div class="search-info">
-                                    <h3 class="search-name">
-                                        <%= provider.company %>
-                                    </h3>
-                                    <p class="search-address"><i class="fa-solid fa-location-dot"></i>
-                                        <%= provider.location %>
-                                    </p>
-                                    <% if(provider.phoneNO) { %>
-                                        <p class="search-phone"><i class="fa-solid fa-phone"></i>
-                                            <%= provider.phoneNO %>
-                                        </p>
-                                        <% } %>
-                                            <% if(provider.categories) { %>
-                                                <p class="search-category"><small>
-                                                        <%= provider.categories %>
-                                                    </small></p>
-                                                <% } %>
+                    <!-- Service Providers Section -->
+                    <% if (providers && providers.length> 0) { %>
+                        <div class="section-divider mb-4 mt-2">
+                            <h3 class="fw-bold"><i class="fa-solid fa-user-tie me-2 text-primary"></i>Service Providers
+                            </h3>
+                            <hr>
+                        </div>
+                        <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
+                            <% for (let provider of providers) { %>
+                                <div class="col">
+                                    <a class="search-card h-100" href="/provider/<%= provider._id %>/profile">
+                                        <div class="search-avatar">
+                                            <% if(provider.personImage && provider.personImage.length> 0) { %>
+                                                <img src="<%= provider.personImage[0].path %>" alt="Provider photo">
+                                                <% } else { %>
+                                                    <img src="https://via.placeholder.com/150" alt="No image">
+                                                    <% } %>
+                                        </div>
+                                        <div class="search-info">
+                                            <h5 class="search-name mb-1">
+                                                <%= provider.company %>
+                                            </h5>
+                                            <p class="search-address mb-1"><i class="fa-solid fa-location-dot me-1"></i>
+                                                <%= provider.location %>
+                                            </p>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <% if(provider.phoneNO) { %>
+                                                    <span class="small text-muted"><i
+                                                            class="fa-solid fa-phone me-1"></i>
+                                                        <%= provider.phoneNO %>
+                                                    </span>
+                                                    <% } %>
+                                                        <% if(provider.categories) { %>
+                                                            <span class="badge bg-light text-dark border">
+                                                                <%= provider.categories %>
+                                                            </span>
+                                                            <% } %>
+                                            </div>
+                                        </div>
+                                        <div class="search-action d-none d-sm-block">View</div>
+                                    </a>
                                 </div>
-
-                            </a>
+                                <% } %>
                         </div>
                         <% } %>
+
+                            <!-- Local Shops Section -->
+                            <% if (shops && shops.length> 0) { %>
+                                <div class="section-divider mb-4">
+                                    <h3 class="fw-bold"><i class="fa-solid fa-store me-2 text-success"></i>Local Shops
+                                    </h3>
+                                    <hr>
+                                </div>
+                                <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
+                                    <% for (let shop of shops) { %>
+                                        <div class="col">
+                                            <a class="search-card h-100" href="/shops/<%= shop._id %>">
+                                                <div class="search-avatar">
+                                                    <% if(shop.shopImage && shop.shopImage.length> 0) { %>
+                                                        <img src="<%= typeof optimizeImage === 'function' ? optimizeImage(shop.shopImage[0].url) : shop.shopImage[0].url %>"
+                                                            alt="Shop photo">
+                                                        <% } else { %>
+                                                            <img src="https://via.placeholder.com/150" alt="No image">
+                                                            <% } %>
+                                                </div>
+                                                <div class="search-info">
+                                                    <h5 class="search-name mb-1">
+                                                        <%= shop.shopName %>
+                                                    </h5>
+                                                    <p class="search-address mb-1"><i
+                                                            class="fa-solid fa-location-dot me-1"></i>
+                                                        <%= shop.location %>
+                                                    </p>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span
+                                                            class="badge bg-success-subtle text-success border border-success-subtle">
+                                                            <%= shop.category %>
+                                                        </span>
+                                                        <span class="small text-muted"><i
+                                                                class="fa-solid fa-user me-1"></i>
+                                                            <%= shop.owner.name %>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="search-action d-none d-sm-block">Visit</div>
+                                            </a>
+                                        </div>
+                                        <% } %>
+                                </div>
+                                <% } %>
+
+                                    <!-- Products Section -->
+                                    <% if (products && products.length> 0) { %>
+                                        <div class="section-divider mb-4">
+                                            <h3 class="fw-bold"><i class="fa-solid fa-box me-2 text-warning"></i>Direct
+                                                Products</h3>
+                                            <hr>
+                                        </div>
+                                        <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
+                                            <% for (let product of products) { %>
+                                                <div class="col">
+                                                    <a class="search-card h-100" href="/products/<%= product._id %>">
+                                                        <div class="search-avatar">
+                                                            <% if(product.productImage && product.productImage.length>
+                                                                0) { %>
+                                                                <img src="<%= product.productImage[0].url %>"
+                                                                    alt="Product photo">
+                                                                <% } else { %>
+                                                                    <img src="https://via.placeholder.com/150"
+                                                                        alt="No image">
+                                                                    <% } %>
+                                                        </div>
+                                                        <div class="search-info">
+                                                            <h5 class="search-name mb-1">
+                                                                <%= product.productName %>
+                                                            </h5>
+                                                            <p class="search-address mb-1"><i
+                                                                    class="fa-solid fa-location-dot me-1"></i>
+                                                                <%= product.location %>
+                                                            </p>
+                                                            <div
+                                                                class="d-flex align-items-center justify-content-between">
+                                                                <span class="fw-bold text-success">₹<%= product.price %>
+                                                                        </span>
+                                                                <span
+                                                                    class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                                                                    <%= product.categories %>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="search-action d-none d-sm-block">Details</div>
+                                                    </a>
+                                                </div>
+                                                <% } %>
+                                        </div>
+                                        <% } %>
+
+                                            <!-- No Results -->
+                                            <% if ((!providers || providers.length==0) && (!shops || shops.length==0) &&
+                                                (!products || products.length==0)) { %>
+                                                <div class="no-results py-5">
+                                                    <div class="mb-4">
+                                                        <i
+                                                            class="fa-solid fa-magnifying-glass-chart fa-4x text-muted opacity-50"></i>
+                                                    </div>
+                                                    <h3>No results found</h3>
+                                                    <p class="text-muted">We couldn't find anything matching "<%= query
+                                                            %>". Try different keywords or browse categories.</p>
+                                                    <a href="/home" class="btn btn-primary rounded-pill px-4 mt-3">Back
+                                                        to Home</a>
+                                                </div>
+                                                <% } %>
+
                 </div>
-                <% } else { %>
-                    <div class="no-results">
-                        <i class="fa-solid fa-magnifying-glass fa-2x mb-3"></i>
-                        <p>No providers found matching your search.</p>
-                        <a href="/home" class="btn btn-primary mt-3">Go Home</a>
-                    </div>
-                    <% } %>
+            </div>
         </div>
     </body>

@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const Provider = require("../data/serviceproviders.js");
+const Shop = require("../data/shops.js");
+const Product = require("../data/product.js");
 const Shedule = require("../data/clander.js");
 const Review = require("../data/review.js");
 const { isLogedin, isNotBlocked, isVerifiedCustomer, validateprovider, isOwner, isadmin, findNearbyProviders } = require("../middeleware.js");
@@ -25,39 +27,64 @@ router.get("/others", findNearbyProviders("Others"), wrapAsync(async (req, res) 
 }));
 
 // this will redirect into farmer page
+// Unified Search Route
 router.get("/search", isLogedin, wrapAsync(async (req, res) => {
     const { q } = req.query;
     let query = q || "";
-    let filter = {};
+    let providerFilter = {};
+    let shopFilter = {};
+    let productFilter = {};
 
     if (query) {
         const isNumber = /^\d+$/.test(query);
         if (isNumber) {
-            // Exact match for phone number or partial match if you prefer (but phoneNO is Number type)
-            // Since phoneNO is Number, we can only do exact match easily or need aggregation for partial
-            // Let's do exact match for now as planned
-            filter = { phoneNO: parseInt(query) };
+            const num = parseInt(query);
+            providerFilter = { phoneNO: num };
+            // Shops and Products don't have phoneNO in their schema directly, 
+            // but we can search by owner's WhatsApp (username)
+            // For now, let's keep it simple as per original logic or expand if needed.
         } else {
-            const regex = new RegExp(query, 'i'); // case-insensitive regex
-            filter = {
+            const regex = new RegExp(query, 'i');
+            providerFilter = {
                 $or: [
                     { company: regex },
                     { categories: regex },
                     { location: regex }
                 ]
             };
+            shopFilter = {
+                $or: [
+                    { shopName: regex },
+                    { category: regex },
+                    { location: regex },
+                    { shopDescription: regex }
+                ]
+            };
+            productFilter = {
+                $or: [
+                    { productName: regex },
+                    { categories: regex },
+                    { location: regex },
+                    { productDescription: regex }
+                ]
+            };
         }
     }
 
-    let providers = await Provider.find(filter).populate("owner");
+    let [providers, shops, products] = await Promise.all([
+        Provider.find(providerFilter).populate("owner"),
+        Shop.find(shopFilter).populate("owner"),
+        Product.find(productFilter).populate("owner")
+    ]);
 
-    if (req.user) {
-        providers = providers.filter(p => p.verified || p.owner._id.equals(req.user._id));
-    } else {
-        providers = providers.filter(p => p.verified);
+    // Apply verification filtering
+    if (!req.user || !req.user.isAdmin) {
+        providers = providers.filter(p => p.verified || (req.user && p.owner._id.equals(req.user._id)));
+        shops = shops.filter(s => s.verified || (req.user && s.owner._id.equals(req.user._id)));
+        products = products.filter(p => p.verified || (req.user && p.owner._id.equals(req.user._id)));
     }
 
-    res.render("pages/search_results.ejs", { providers, query });
+    res.render("pages/search_results.ejs", { providers, shops, products, query });
 }));
 
 // this will redirect into farmer page
