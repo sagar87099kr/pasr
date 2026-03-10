@@ -21,6 +21,20 @@
                         <div class="invalid-feedback">Please provide a shop name.</div>
                     </div>
 
+                    <!-- GST Number -->
+                    <div class="form-group">
+                        <label for="gstNumber" class="form-label">GST Number (Optional) - <span
+                                class="text-success small fw-bold">Get More Priority</span></label>
+                        <div class="input-group">
+                            <input type="text" name="shop[gstNumber]" id="gstNumber" class="form-control"
+                                value="<%= shop.gstNumber || '' %>" placeholder="15-digit GSTIN" maxlength="15">
+                            <span class="input-group-text d-none" id="gst-loader">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                            </span>
+                        </div>
+                        <div id="gst-feedback" class="mt-1 small" style="min-height: 1.25rem;"></div>
+                    </div>
+
                     <!-- Category -->
                     <div class="form-group">
                         <label for="category" class="form-label">Category *</label>
@@ -163,6 +177,57 @@
 
                 // On Input
                 upiInput.addEventListener('input', (e) => updateQR(e.target.value.trim()));
+            });
+
+            // GST Verification Logic
+            document.addEventListener('DOMContentLoaded', () => {
+                const gstInput = document.getElementById('gstNumber');
+                const feedback = document.getElementById('gst-feedback');
+                const loader = document.getElementById('gst-loader');
+                let debounceTimer;
+
+                const verifyGST = async (val) => {
+                    if (val.length < 15) {
+                        feedback.innerHTML = '';
+                        return;
+                    }
+
+                    loader.classList.remove('d-none');
+                    feedback.innerHTML = '<span class="text-muted">Verifying...</span>';
+
+                    try {
+                        const response = await fetch(`/api/v1/gst-lookup?gstin=${val}`);
+                        const result = await response.json();
+
+                        if (result.valid) {
+                            feedback.innerHTML = `
+                                <div class="alert alert-success d-flex align-items-center p-2 mb-0 mt-2" style="border-radius: 12px; border: 1px solid #d1e7dd; background-color: #f8fff9;">
+                                    <i class="fa-solid fa-circle-check text-success me-2" style="font-size: 1.1rem;"></i>
+                                    <div>
+                                        <div class="text-success small fw-bold">GST Received</div>
+                                        <div class="text-dark small">We will verify it and notify you.</div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            feedback.innerHTML = `<span class="text-danger small fw-bold">${result.message}</span>`;
+                        }
+                    } catch (e) {
+                        feedback.innerHTML = '';
+                    } finally {
+                        loader.classList.add('d-none');
+                    }
+                };
+
+                // Check on load if value exists
+                if (gstInput.value) verifyGST(gstInput.value.trim());
+
+                gstInput.addEventListener('input', (e) => {
+                    const val = e.target.value.toUpperCase().trim();
+                    gstInput.value = val;
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => verifyGST(val), 500);
+                });
             });
         </script>
         <script

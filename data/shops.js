@@ -77,7 +77,8 @@ const shopSchema = new Schema({
     dueToPasr: { type: Number, default: 0 },
     upiId: { type: String, default: "" },
     isActive: { type: Boolean, default: true },   // Owner manually sets shop open/closed
-    isHoliday: { type: Boolean, default: false }  // Owner sets holiday today
+    isHoliday: { type: Boolean, default: false },  // Owner sets holiday today
+    gstNumber: { type: String, default: "" }
 });
 
 shopSchema.index({ geometry: '2dsphere' });

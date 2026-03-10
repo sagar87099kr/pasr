@@ -51,7 +51,13 @@ module.exports.shopSchema = Joi.object({
                 'string.empty': 'Closing time is optional but if provided must be valid'
             })
             .allow(""),
-        upiId: Joi.string().allow("")
+        upiId: Joi.string().allow(""),
+        gstNumber: Joi.string()
+            .pattern(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9A-Z]{1}Z[0-9A-Z]{1}$/)
+            .messages({
+                'string.pattern.base': 'Invalid GST format (e.g., 22AAAAA0000A1Z5)'
+            })
+            .allow("")
     }).required()
         .custom((value, helpers) => {
             // If both times are provided, validate that closing is after opening

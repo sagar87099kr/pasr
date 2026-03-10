@@ -12,6 +12,7 @@ const ItemImageRegistry = require("../data/itemImageRegistry");
 const { normalizeItemName } = require("../utils/normalization");
 const MasterProduct = require("../data/masterProduct");
 const TransactionHistory = require("../data/transactionHistory.js");
+const { verifyGST } = require("../utils/gstHelper");
 
 // Define a middleware specifically for Shop ownership if isOwner is strictly for Providers
 // Looking at middleware.js: isOwner checks Provider. isProductOwner checks Product.
@@ -64,6 +65,16 @@ router.delete("/shops/:id/verifyfail", isLogedin, isadmin, wrapAsync(async (req,
     await Shop.findByIdAndDelete(id);
     req.flash("success", "Shop verification failed and deleted");
     res.redirect("/shops/verify");
+}));
+
+// API: GST Lookup
+router.get("/api/v1/gst-lookup", isLogedin, wrapAsync(async (req, res) => {
+    const { gstin } = req.query;
+    if (!gstin) {
+        return res.status(400).json({ valid: false, message: "GSTIN is required" });
+    }
+    const result = await verifyGST(gstin);
+    res.json(result);
 }));
 
 // Index Route - List Shops
@@ -494,14 +505,14 @@ router.get("/shops/:id/edit", isLogedin, isShopOwner, wrapAsync(async (req, res)
 router.put("/shops/:id", isLogedin, isShopOwner, validateShop, wrapAsync(async (req, res) => {
 
     let { id } = req.params;
-    const { shopName, shopDescription, category, location, openingTime, closingTime, upiId } = req.body.shop;
+    const { shopName, shopDescription, category, location, openingTime, closingTime, upiId, gstNumber } = req.body.shop;
 
     // Geocode the new location
     const geoData = await forwardGeocode(location);
 
     const geometry = geoData.body.features[0].geometry;
 
-    await Shop.findByIdAndUpdate(id, { shopName, shopDescription, category, location, geometry, openingTime, closingTime, upiId });
+    await Shop.findByIdAndUpdate(id, { shopName, shopDescription, category, location, geometry, openingTime, closingTime, upiId, gstNumber });
 
     req.flash("success", "Shop updated successfully");
     res.redirect(`/shops/${id}`);
