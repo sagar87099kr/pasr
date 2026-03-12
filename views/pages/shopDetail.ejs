@@ -1,6 +1,6 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
     <script>
-        window.allData = <% -JSON.stringify(shop) %>;
+        window.allData = <%- JSON.stringify(shop) %>;
     </script>
     <link rel="stylesheet" href="/css/product_detail.css">
     <% const SHOP_CATEGORIES={ "Electronics" : [ { name: "Wiring & Cables" , icon: "🔌" }, {
@@ -169,10 +169,17 @@
         { name: "Traditional Sweets" , icon: "🍮" }, { name: "Mithai" , icon: "🧆" }, { name: "Dry Fruit Sweets" ,
         icon: "🥜" }, { name: "Chocolates" , icon: "🍫" }, { name: "Ice Cream & Kulfi" , icon: "🍦" }, {
         name: "Namkeen & Savories" , icon: "🥨" }, { name: "Seasonal Specials" , icon: "🌸" }, { name: "Gift Boxes" ,
-        icon: "🎁" }, { name: "General" , icon: "📦" } ] }; function getShopCategoryData(shopCategory) { if
-        (!shopCategory) return null; const key=Object.keys(SHOP_CATEGORIES).find(function(k) { return
-        k.toLowerCase()===shopCategory.toLowerCase(); }); return key ? SHOP_CATEGORIES[key] : null; } const
-        currentShopCats=getShopCategoryData(shop.category); %>
+        icon: "🎁" }, { name: "General" , icon: "📦" } ] }; 
+        function getShopCategoryData(shopCategory) { 
+            if (!shopCategory) return null; 
+            const sc = shopCategory.toString().trim().toLowerCase();
+            const key = Object.keys(SHOP_CATEGORIES).find(function(k) { 
+                const tk = k.trim().toLowerCase();
+                return tk === sc || (tk === 'footwear' && sc === 'footwears') || (tk === 'fashion' && sc === 'fashions');
+            }); 
+            return key ? SHOP_CATEGORIES[key] : null; 
+        } 
+        const currentShopCats = getShopCategoryData(shop.category); %>
         <style>
             /* Review styles */
             .reviews-card {
@@ -1218,19 +1225,26 @@
                                 <% } %>
                         </div>
 
-                        <% let categoriesToDisplay=[]; const isOwnerView=currUser &&
-                            shop.owner._id.equals(currUser._id); if (!isOwnerView && typeof availableCategories
-                            !=='undefined' ) { // Customer view: only show categories with in-stock items const
-                            masterCats=getShopCategoryData(shop.category) || [];
-                            categoriesToDisplay=availableCategories.map(catName=> {
-                            const found = masterCats.find(c => c.name === catName);
-                            return found || { name: catName, icon: "📦" };
-                            }).sort((a,b) => a.name.localeCompare(b.name));
-                            } else if (currentShopCats) {
-                            // Owner view: show all possible categories for setup
+                        <% 
+                        let categoriesToDisplay = []; 
+                        const isOwnerView = currUser && shop.owner._id.equals(currUser._id); 
+                        const scPills = (shop.category || "").toString().trim().toLowerCase();
+                        const masterCats = getShopCategoryData(shop.category) || [];
+
+                        if (!isOwnerView && typeof availableCategories !== 'undefined') { 
+                            // Customer view: show categories with in-stock items
+                            categoriesToDisplay = availableCategories.map(catName => {
+                                const found = masterCats.find(c => c.name === catName);
+                                return found || { name: catName, icon: "📦" };
+                            }).sort((a, b) => a.name.localeCompare(b.name));
+                        } else if (scPills === 'fashion' || scPills === 'footwear' || scPills === 'footwears') {
+                            // Fashion/Footwear: show defined master categories
+                            categoriesToDisplay = masterCats;
+                        } else if (currentShopCats) {
+                            // Other shops: show current category data
                             categoriesToDisplay = currentShopCats;
-                            }
-                            %>
+                        }
+                        %>
 
                             <% if(categoriesToDisplay && categoriesToDisplay.length> 0) { %>
                                 <!-- Dynamic Category Slider -->
@@ -1530,15 +1544,16 @@
                         </div>
 
                         <!-- 6 & 7. Categories -->
-                        <% if(shop.category === 'Fashion' || shop.category === 'Footwear') { %>
+                        <% const scAdd = (shop.category || "").toString().trim().toLowerCase(); %>
+                        <% if(scAdd === 'fashion' || scAdd === 'footwear' || scAdd === 'footwears') { %>
                             <div class="field" id="addPrimaryCategoryField">
                                 <label>Primary Category</label>
                                 <select id="addPrimaryCategorySelect" class="form-control"
                                     style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
                                     <option value="" disabled selected>Select Primary Category</option>
-                                    <option value="men"><%= shop.category === 'Footwear' ? "Men's Footwear" : "Mens Wear" %></option>
-                                    <option value="women"><%= shop.category === 'Footwear' ? "Women's Footwear" : "Womens Wear" %></option>
-                                    <option value="kids"><%= shop.category === 'Footwear' ? "Kids' Footwear" : "Kids Wear" %></option>
+                                    <option value="men"><%= (scAdd === 'footwear' || scAdd === 'footwears') ? "Men's Footwear" : "Mens Wear" %></option>
+                                    <option value="women"><%= (scAdd === 'footwear' || scAdd === 'footwears') ? "Women's Footwear" : "Womens Wear" %></option>
+                                    <option value="kids"><%= (scAdd === 'footwear' || scAdd === 'footwears') ? "Kids' Footwear" : "Kids Wear" %></option>
                                     <option value="none">Others & Accessories</option>
                                 </select>
                             </div>
@@ -1633,9 +1648,9 @@
                                             }
                                         </style>
 
-                                        <!-- Kids Infant (UK 1–9 | EU 17–26) -->
-                                        <div class="size-group">
-                                            <div class="size-group-label">👶 Kids – Infant (UK 1–9 | EU 17–26)</div>
+                                        <!-- Kids Infant (UK 1–9) -->
+                                        <div class="size-group" data-size-group="kids-infant">
+                                            <div class="size-group-label">👶 Kids – Infant (UK 1–9)</div>
                                             <div class="size-chips">
                                                 <% ['1','2','3','4','5','6','7','8','9'].forEach(function(s){ %>
                                                     <span class="size-chip">
@@ -1647,9 +1662,9 @@
                                             </div>
                                         </div>
 
-                                        <!-- Kids Junior (UK 10–3 | EU 28–35) -->
-                                        <div class="size-group">
-                                            <div class="size-group-label">🧒 Kids – Junior (UK 10–3 | EU 28–35)</div>
+                                        <!-- Kids Junior (UK 10–3) -->
+                                        <div class="size-group" data-size-group="kids-junior">
+                                            <div class="size-group-label">🧒 Kids – Junior (UK 10–3)</div>
                                             <div class="size-chips">
                                                 <% ['10','11','12','13','1j','2j','3j'].forEach(function(s){ var
                                                     label=s.endsWith('j') ? 'UK ' +s.replace('j','') : 'UK ' +s; var
@@ -1666,7 +1681,7 @@
                                         </div>
 
                                         <!-- Women (UK 3–11) -->
-                                        <div class="size-group">
+                                        <div class="size-group" data-size-group="women">
                                             <div class="size-group-label">👠 Women (UK 3–11)</div>
                                             <div class="size-chips">
                                                 <% ['3','4','5','6','7','8','9','10','11'].forEach(function(s){ %>
@@ -1682,7 +1697,7 @@
                                         </div>
 
                                         <!-- Men (UK 5–12) -->
-                                        <div class="size-group">
+                                        <div class="size-group" data-size-group="men">
                                             <div class="size-group-label">👞 Men (UK 5–12)</div>
                                             <div class="size-chips">
                                                 <% ['5','6','7','8','9','10','11','12'].forEach(function(s){ %>
@@ -1804,15 +1819,16 @@
                         </div>
 
                         <!-- 6 & 7. Categories -->
-                        <% if(shop.category === 'Fashion' || shop.category === 'Footwear') { %>
+                        <% const scEdit = (shop.category || "").toString().trim().toLowerCase(); %>
+                        <% if(scEdit === 'fashion' || scEdit === 'footwear' || scEdit === 'footwears') { %>
                             <div class="field" id="editPrimaryCategoryField">
                                 <label>Primary Category</label>
                                 <select id="editPrimaryCategorySelect" class="form-control"
                                     style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
                                     <option value="" disabled selected>Select Primary Category</option>
-                                    <option value="men"><%= shop.category === 'Footwear' ? "Men's Footwear" : "Mens Wear" %></option>
-                                    <option value="women"><%= shop.category === 'Footwear' ? "Women's Footwear" : "Womens Wear" %></option>
-                                    <option value="kids"><%= shop.category === 'Footwear' ? "Kids' Footwear" : "Kids Wear" %></option>
+                                    <option value="men"><%= (scEdit === 'footwear' || scEdit === 'footwears') ? "Men's Footwear" : "Mens Wear" %></option>
+                                    <option value="women"><%= (scEdit === 'footwear' || scEdit === 'footwears') ? "Women's Footwear" : "Womens Wear" %></option>
+                                    <option value="kids"><%= (scEdit === 'footwear' || scEdit === 'footwears') ? "Kids' Footwear" : "Kids Wear" %></option>
                                     <option value="none">Others & Accessories</option>
                                 </select>
                             </div>
@@ -1860,7 +1876,7 @@
                                             Sizes</label>
 
                                         <!-- Kids Infant -->
-                                        <div class="size-group">
+                                        <div class="size-group" data-size-group="kids-infant">
                                             <div class="size-group-label">👶 Kids – Infant (UK 1–9)</div>
                                             <div class="size-chips">
                                                 <% ['1','2','3','4','5','6','7','8','9'].forEach(function(s){ %>
@@ -1873,7 +1889,7 @@
                                             </div>
                                         </div>
                                         <!-- Kids Junior -->
-                                        <div class="size-group">
+                                        <div class="size-group" data-size-group="kids-junior">
                                             <div class="size-group-label">🧒 Kids – Junior (UK 10–3)</div>
                                             <div class="size-chips">
                                                 <% ['10','11','12','13','1j','2j','3j'].forEach(function(s){ var
@@ -1889,7 +1905,7 @@
                                             </div>
                                         </div>
                                         <!-- Women (UK 3–11) -->
-                                        <div class="size-group">
+                                        <div class="size-group" data-size-group="women">
                                             <div class="size-group-label">👠 Women (UK 3–11)</div>
                                             <div class="size-chips">
                                                 <% ['3','4','5','6','7','8','9','10','11'].forEach(function(s){ %>
@@ -1904,7 +1920,7 @@
                                             </div>
                                         </div>
                                         <!-- Men (UK 5–12) -->
-                                        <div class="size-group">
+                                        <div class="size-group" data-size-group="men">
                                             <div class="size-group-label">👞 Men (UK 5–12)</div>
                                             <div class="size-chips">
                                                 <% ['5','6','7','8','9','10','11','12'].forEach(function(s){ %>
@@ -2556,78 +2572,58 @@
                         const modal = document.getElementById(modalPrefix + 'ItemModal');
                         if (!modal) return;
 
-                        // 1. FOOTWEAR LOGIC (Preserving old behavior if shop is 'Footwear')
+                        const selectEl = modal.querySelector('select[name="item[itemCategory]"]');
+                        if (!selectEl) return;
+
+                        const selectedOption = selectEl.options[selectEl.selectedIndex];
+                        if (!selectedOption) return;
+
+                        const sizeGroup = selectedOption.getAttribute('data-size-group');
+
+                        // 1. FOOTWEAR SPECIFIC MODAL (Using shoeSizeField)
                         const shoeSizeField = modal.querySelector('.field#shoeSizeField');
                         if (shoeSizeField) {
                             const sizeGroups = shoeSizeField.querySelectorAll('.size-group');
-                            if (sizeGroups && sizeGroups.length > 0) {
-                                if (!selectedCategoryName || selectedCategoryName.toLowerCase().includes('general') || selectedCategoryName.toLowerCase().includes('other')) {
-                                    sizeGroups.forEach(group => {
-                                        group.style.display = 'none';
-                                        const checkboxes = group.querySelectorAll('input[type="checkbox"]');
-                                        checkboxes.forEach(cb => cb.checked = false);
-                                    });
+                            sizeGroups.forEach(group => {
+                                const groupName = group.getAttribute('data-size-group');
+                                let shouldShow = false;
+
+                                // Allow showing specific groups based on mapping
+                                if (sizeGroup === 'men' && groupName === 'men') shouldShow = true;
+                                if (sizeGroup === 'women' && groupName === 'women') shouldShow = true;
+                                if (sizeGroup === 'kids' && (groupName === 'kids-infant' || groupName === 'kids-junior')) shouldShow = true;
+                                
+                                // Reset or show
+                                if (shouldShow) {
+                                    group.style.display = 'block';
                                 } else {
-                                    const catLower = selectedCategoryName.toLowerCase();
-                                    const isMens = catLower.includes('men') && !catLower.includes('women');
-                                    const isWomens = catLower.includes('women');
-                                    const isKids = catLower.includes('kid') || catLower.includes('infant') || catLower.includes('baby') || catLower.includes('boy') || catLower.includes('girl');
-
-                                    sizeGroups.forEach(group => {
-                                        const labelText = group.querySelector('.size-group-label').innerText.toLowerCase();
-                                        let shouldShow = false;
-
-                                        const isBroadAdult = catLower.includes('sport') || catLower.includes('active') ||
-                                            catLower.includes('premium') || catLower.includes('brand') ||
-                                            catLower.includes('ethnic') || catLower.includes('winter') ||
-                                            catLower.includes('innerwear') || catLower.includes('lingerie');
-
-                                        if (isBroadAdult) {
-                                            if (labelText.includes('men') || labelText.includes('women')) shouldShow = true;
-                                        } else {
-                                            if (isMens && (labelText.includes('men') && !labelText.includes('women'))) shouldShow = true;
-                                            if (isWomens && labelText.includes('women')) shouldShow = true;
-                                            if (isKids && (labelText.includes('kid') || labelText.includes('infant') || labelText.includes('junior'))) shouldShow = true;
-                                        }
-
-                                        if (shouldShow) {
-                                            group.style.display = 'block';
-                                        } else {
-                                            group.style.display = 'none';
-                                            const checkboxes = group.querySelectorAll('input[type="checkbox"]');
-                                            checkboxes.forEach(cb => cb.checked = false);
-                                        }
-                                    });
+                                    group.style.display = 'none';
+                                    const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+                                    checkboxes.forEach(cb => cb.checked = false);
                                 }
-                            }
+                            });
                         }
 
-                        // 2. FASHION LOGIC (Using new dynamic categories)
-                        const selectEl = modal.querySelector('select[name="item[itemCategory]"]');
-                        if (selectEl) {
-                            const selectedOption = selectEl.options[selectEl.selectedIndex];
-                            if (selectedOption) {
-                                const sizeGroup = selectedOption.getAttribute('data-size-group');
+                        // 2. FASHION SPECIFIC MODAL (Using separate ID-based fields)
+                        const menField = modal.querySelector('#' + modalPrefix + '-sizes-men');
+                        const womField = modal.querySelector('#' + modalPrefix + '-sizes-women');
+                        const kidField = modal.querySelector('#' + modalPrefix + '-sizes-kids');
 
-                                const menField = modal.querySelector('#' + modalPrefix + '-sizes-men');
-                                const womField = modal.querySelector('#' + modalPrefix + '-sizes-women');
-                                const kidField = modal.querySelector('#' + modalPrefix + '-sizes-kids');
+                        const hideAndClear = (field) => {
+                            if (!field) return;
+                            field.style.display = 'none';
+                            const checkboxes = field.querySelectorAll('input[type="checkbox"]');
+                            checkboxes.forEach(cb => cb.checked = false);
+                        };
 
-                                const hideAndClear = (field) => {
-                                    if (!field) return;
-                                    field.style.display = 'none';
-                                    const checkboxes = field.querySelectorAll('input[type="checkbox"]');
-                                    checkboxes.forEach(cb => cb.checked = false);
-                                };
+                        if (menField || womField || kidField) {
+                            hideAndClear(menField);
+                            hideAndClear(womField);
+                            hideAndClear(kidField);
 
-                                hideAndClear(menField);
-                                hideAndClear(womField);
-                                hideAndClear(kidField);
-
-                                if (sizeGroup === 'men' && menField) menField.style.display = 'block';
-                                if (sizeGroup === 'women' && womField) womField.style.display = 'block';
-                                if (sizeGroup === 'kids' && kidField) kidField.style.display = 'block';
-                            }
+                            if (sizeGroup === 'men' && menField) menField.style.display = 'block';
+                            if (sizeGroup === 'women' && womField) womField.style.display = 'block';
+                            if (sizeGroup === 'kids' && kidField) kidField.style.display = 'block';
                         }
                     }
 
@@ -3114,7 +3110,8 @@
                         }
                     }
 
-                    <% if (shop.category === 'Fashion' || shop.category === 'Footwear') { %>
+                    <% const scScript = (shop.category || "").toString().trim().toLowerCase(); %>
+                    <% if (scScript === 'fashion' || scScript === 'footwear' || scScript === 'footwears') { %>
                         setupCascadingCategory('addPrimaryCategorySelect', 'addItemCategoryField', 'addItemCategorySelect', 'add');
                         setupCascadingCategory('editPrimaryCategorySelect', 'editItemCategoryField', 'editItemCategory', 'edit');
                     <% } %>
