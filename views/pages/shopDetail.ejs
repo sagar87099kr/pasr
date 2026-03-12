@@ -89,10 +89,10 @@
         name: "Snacks & Namkeen" , icon: "🥨" }, { name: "Personal Care" , icon: "🧴" }, { name: "Household Items" ,
         icon: "🏠" }, { name: "Stationery" , icon: "✏️" }, { name: "Cleaning Supplies" , icon: "🧹" }, {
         name: "Baby Care" , icon: "👶" }, { name: "General" , icon: "📦" } ], "Footwear" : [ { name: "Men's Footwear" ,
-        icon: "👞" }, { name: "Women's Footwear" , icon: "👠" }, { name: "Kids' Footwear" , icon: "👟" }, {
-        name: "Sports & Active Footwear" , icon: "🏃" }, { name: "Seasonal Footwear" , icon: "👢" }, {
-        name: "Premium / Branded" , icon: "🏷️" }, { name: "Footwear Accessories" , icon: "🧦" }, { name: "General" ,
-        icon: "📦" } ], "Automobile" : [ { name: "Parts & Accessories" , icon: "🔧" }, { name: "Oils & Lubricants" ,
+        icon: "👞", group: "men" }, { name: "Women's Footwear" , icon: "👠", group: "women" }, { name: "Kids' Footwear" , icon: "👟", group: "kids" }, {
+        name: "Sports & Active Footwear" , icon: "🏃", group: "none" }, { name: "Seasonal Footwear" , icon: "👢", group: "none" }, {
+        name: "Premium / Branded" , icon: "🏷️", group: "none" }, { name: "Footwear Accessories" , icon: "🧦", group: "none" }, { name: "General" ,
+        icon: "📦", group: "none" } ], "Automobile" : [ { name: "Parts & Accessories" , icon: "🔧" }, { name: "Oils & Lubricants" ,
         icon: "🛢️" }, { name: "Batteries" , icon: "🔋" }, { name: "Tires & Wheels" , icon: "⚙️" }, {
         name: "Car Care & Cleaning" , icon: "✨" }, { name: "Tools & Equipment" , icon: "🧰" }, { name: "General" ,
         icon: "📦" } ], "Bakery" : [ { name: "Breads" , icon: "🍞" }, { name: "Cakes & Pastries" , icon: "🎂" }, {
@@ -1506,16 +1506,16 @@
                         </div>
 
                         <!-- 6 & 7. Categories -->
-                        <% if(shop.category === 'Fashion') { %>
+                        <% if(shop.category === 'Fashion' || shop.category === 'Footwear') { %>
                             <div class="field" id="addPrimaryCategoryField">
                                 <label>Primary Category</label>
                                 <select id="addPrimaryCategorySelect" class="form-control"
                                     style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
                                     <option value="" disabled selected>Select Primary Category</option>
-                                    <option value="men">Mens Wear</option>
-                                    <option value="women">Womens Wear</option>
-                                    <option value="kids">Kids Wear</option>
-                                    <option value="none">Accessories & Essentials</option>
+                                    <option value="men"><%= shop.category === 'Footwear' ? "Men's Footwear" : "Mens Wear" %></option>
+                                    <option value="women"><%= shop.category === 'Footwear' ? "Women's Footwear" : "Womens Wear" %></option>
+                                    <option value="kids"><%= shop.category === 'Footwear' ? "Kids' Footwear" : "Kids Wear" %></option>
+                                    <option value="none">Others & Accessories</option>
                                 </select>
                             </div>
 
@@ -1524,11 +1524,14 @@
                                 <select id="addItemCategorySelect" name="item[itemCategory]" class="form-control"
                                     style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
                                     <option value="" disabled selected>Select Sub Category</option>
-                                    <% SHOP_CATEGORIES['Fashion'].forEach(cat => { %>
-                                        <option value="<%= cat.name %>" data-size-group="<%= cat.group || 'none' %>">
-                                            <%= cat.icon %> <%= cat.name %>
-                                        </option>
-                                    <% }) %>
+                                    <% const catData = getShopCategoryData(shop.category); %>
+                                    <% if(catData) { %>
+                                        <% catData.forEach(cat => { %>
+                                            <option value="<%= cat.name %>" data-size-group="<%= cat.group || 'none' %>">
+                                                <%= cat.icon %> <%= cat.name %>
+                                            </option>
+                                        <% }) %>
+                                    <% } %>
                                 </select>
                             </div>
                         <% } else { %>
@@ -1544,11 +1547,6 @@
                                             </option>
                                         <% }) %>
                                     <% } else { %>
-                                        <% SHOP_CATEGORIES['Fashion'].forEach(cat => { %>
-                                            <option value="<%= cat.name %>" data-size-group="<%= cat.group || 'none' %>">
-                                                <%= cat.icon %> <%= cat.name %>
-                                            </option>
-                                        <% }) %>
                                         <option value="General">📦 General</option>
                                         <option value="Others">📦 Others</option>
                                     <% } %>
@@ -1782,16 +1780,16 @@
                         </div>
 
                         <!-- 6 & 7. Categories -->
-                        <% if(shop.category === 'Fashion') { %>
+                        <% if(shop.category === 'Fashion' || shop.category === 'Footwear') { %>
                             <div class="field" id="editPrimaryCategoryField">
                                 <label>Primary Category</label>
                                 <select id="editPrimaryCategorySelect" class="form-control"
                                     style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
                                     <option value="" disabled selected>Select Primary Category</option>
-                                    <option value="men">Mens Wear</option>
-                                    <option value="women">Womens Wear</option>
-                                    <option value="kids">Kids Wear</option>
-                                    <option value="none">Accessories & Essentials</option>
+                                    <option value="men"><%= shop.category === 'Footwear' ? "Men's Footwear" : "Mens Wear" %></option>
+                                    <option value="women"><%= shop.category === 'Footwear' ? "Women's Footwear" : "Womens Wear" %></option>
+                                    <option value="kids"><%= shop.category === 'Footwear' ? "Kids' Footwear" : "Kids Wear" %></option>
+                                    <option value="none">Others & Accessories</option>
                                 </select>
                             </div>
 
@@ -1801,11 +1799,14 @@
                                     style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"
                                     required>
                                     <option value="" disabled>Select Sub Category</option>
-                                    <% SHOP_CATEGORIES['Fashion'].forEach(cat => { %>
-                                        <option value="<%= cat.name %>" data-size-group="<%= cat.group || 'none' %>">
-                                            <%= cat.icon %> <%= cat.name %>
-                                        </option>
-                                    <% }) %>
+                                    <% const editCatData = getShopCategoryData(shop.category); %>
+                                    <% if(editCatData) { %>
+                                        <% editCatData.forEach(cat => { %>
+                                            <option value="<%= cat.name %>" data-size-group="<%= cat.group || 'none' %>">
+                                                <%= cat.icon %> <%= cat.name %>
+                                            </option>
+                                        <% }) %>
+                                    <% } %>
                                 </select>
                             </div>
                         <% } else { %>
@@ -1822,11 +1823,6 @@
                                             </option>
                                         <% }) %>
                                     <% } else { %>
-                                        <% SHOP_CATEGORIES['Fashion'].forEach(cat => { %>
-                                            <option value="<%= cat.name %>" data-size-group="<%= cat.group || 'none' %>">
-                                                <%= cat.icon %> <%= cat.name %>
-                                            </option>
-                                        <% }) %>
                                         <option value="General">📦 General</option>
                                         <option value="Others">📦 Others</option>
                                     <% } %>
@@ -3094,8 +3090,10 @@
                         }
                     }
 
-                    setupCascadingCategory('addPrimaryCategorySelect', 'addItemCategoryField', 'addItemCategorySelect', 'add');
-                    setupCascadingCategory('editPrimaryCategorySelect', 'editItemCategoryField', 'editItemCategory', 'edit');
+                    <% if (shop.category === 'Fashion' || shop.category === 'Footwear') { %>
+                        setupCascadingCategory('addPrimaryCategorySelect', 'addItemCategoryField', 'addItemCategorySelect', 'add');
+                        setupCascadingCategory('editPrimaryCategorySelect', 'editItemCategoryField', 'editItemCategory', 'edit');
+                    <% } %>
 
                 });
             </script>
