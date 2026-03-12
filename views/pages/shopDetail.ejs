@@ -88,11 +88,35 @@
         { name: "General" , icon: "📦", group: "none" } ], "General Store" : [ { name: "Daily Essentials" , icon: "🧼" }, {
         name: "Snacks & Namkeen" , icon: "🥨" }, { name: "Personal Care" , icon: "🧴" }, { name: "Household Items" ,
         icon: "🏠" }, { name: "Stationery" , icon: "✏️" }, { name: "Cleaning Supplies" , icon: "🧹" }, {
-        name: "Baby Care" , icon: "👶" }, { name: "General" , icon: "📦" } ], "Footwear" : [ { name: "Men's Footwear" ,
-        icon: "👞", group: "men" }, { name: "Women's Footwear" , icon: "👠", group: "women" }, { name: "Kids' Footwear" , icon: "👟", group: "kids" }, {
-        name: "Sports & Active Footwear" , icon: "🏃", group: "none" }, { name: "Seasonal Footwear" , icon: "👢", group: "none" }, {
-        name: "Premium / Branded" , icon: "🏷️", group: "none" }, { name: "Footwear Accessories" , icon: "🧦", group: "none" }, { name: "General" ,
-        icon: "📦", group: "none" } ], "Automobile" : [ { name: "Parts & Accessories" , icon: "🔧" }, { name: "Oils & Lubricants" ,
+        name: "Baby Care" , icon: "👶" }, { name: "General" , icon: "📦" } ], "Footwear" : [ 
+        { name: "Sports Shoes", icon: "👟", group: "men" },
+        { name: "Casual Shoes", icon: "👞", group: "men" },
+        { name: "Formal Shoes", icon: "👞", group: "men" },
+        { name: "Sneakers", icon: "👟", group: "men" },
+        { name: "Sandals", icon: "👡", group: "men" },
+        { name: "Slippers / Flip Flops", icon: "🩴", group: "men" },
+        { name: "Boots", icon: "🥾", group: "men" },
+        { name: "Ethnic Footwear (Mojari / Jutti)", icon: "👘", group: "men" },
+
+        { name: "Heels", icon: "👠", group: "women" },
+        { name: "Flats", icon: "🥿", group: "women" },
+        { name: "Women Casual Shoes", icon: "👞", group: "women" },
+        { name: "Women Sneakers", icon: "👟", group: "women" },
+        { name: "Women Sandals", icon: "👡", group: "women" },
+        { name: "Women Slippers / Flip Flops", icon: "🩴", group: "women" },
+        { name: "Women Boots", icon: "🥾", group: "women" },
+        { name: "Women Ethnic Footwear (Jutti / Mojari)", icon: "👘", group: "women" },
+
+        { name: "Kids Sports Shoes", icon: "👟", group: "kids" },
+        { name: "Kids Casual Shoes", icon: "👞", group: "kids" },
+        { name: "Kids School Shoes", icon: "👟", group: "kids" },
+        { name: "Kids Sandals", icon: "👡", group: "kids" },
+        { name: "Kids Slippers", icon: "🩴", group: "kids" },
+        { name: "Kids Boots", icon: "🥾", group: "kids" },
+        
+        { name: "Footwear Accessories", icon: "🧦", group: "none" },
+        { name: "General", icon: "📦", group: "none" }
+        ], "Automobile" : [ { name: "Parts & Accessories" , icon: "🔧" }, { name: "Oils & Lubricants" ,
         icon: "🛢️" }, { name: "Batteries" , icon: "🔋" }, { name: "Tires & Wheels" , icon: "⚙️" }, {
         name: "Car Care & Cleaning" , icon: "✨" }, { name: "Tools & Equipment" , icon: "🧰" }, { name: "General" ,
         icon: "📦" } ], "Bakery" : [ { name: "Breads" , icon: "🍞" }, { name: "Cakes & Pastries" , icon: "🎂" }, {
@@ -1641,11 +1665,11 @@
                                             </div>
                                         </div>
 
-                                        <!-- Women (UK 3–8 | EU 36–42) -->
+                                        <!-- Women (UK 3–11) -->
                                         <div class="size-group">
-                                            <div class="size-group-label">👠 Women (UK 3–8 | EU 36–42)</div>
+                                            <div class="size-group-label">👠 Women (UK 3–11)</div>
                                             <div class="size-chips">
-                                                <% ['3','4','5','6','7','8'].forEach(function(s){ %>
+                                                <% ['3','4','5','6','7','8','9','10','11'].forEach(function(s){ %>
                                                     <span class="size-chip">
                                                         <input type="checkbox" name="item[sizes][]"
                                                             value="Women-UK<%= s %>"
@@ -1657,11 +1681,11 @@
                                             </div>
                                         </div>
 
-                                        <!-- Men (UK 6–12 | EU 40–47) -->
+                                        <!-- Men (UK 5–12) -->
                                         <div class="size-group">
-                                            <div class="size-group-label">👞 Men (UK 6–12 | EU 40–47)</div>
+                                            <div class="size-group-label">👞 Men (UK 5–12)</div>
                                             <div class="size-chips">
-                                                <% ['6','7','8','9','10','11','12'].forEach(function(s){ %>
+                                                <% ['5','6','7','8','9','10','11','12'].forEach(function(s){ %>
                                                     <span class="size-chip">
                                                         <input type="checkbox" name="item[sizes][]"
                                                             value="Men-UK<%= s %>"
@@ -1864,11 +1888,11 @@
                                                     <% }); %>
                                             </div>
                                         </div>
-                                        <!-- Women -->
+                                        <!-- Women (UK 3–11) -->
                                         <div class="size-group">
-                                            <div class="size-group-label">👠 Women (UK 3–8)</div>
+                                            <div class="size-group-label">👠 Women (UK 3–11)</div>
                                             <div class="size-chips">
-                                                <% ['3','4','5','6','7','8'].forEach(function(s){ %>
+                                                <% ['3','4','5','6','7','8','9','10','11'].forEach(function(s){ %>
                                                     <span class="size-chip">
                                                         <input type="checkbox" name="item[sizes][]"
                                                             value="Women-UK<%= s %>"
@@ -1879,11 +1903,11 @@
                                                     <% }); %>
                                             </div>
                                         </div>
-                                        <!-- Men -->
+                                        <!-- Men (UK 5–12) -->
                                         <div class="size-group">
-                                            <div class="size-group-label">👞 Men (UK 6–12)</div>
+                                            <div class="size-group-label">👞 Men (UK 5–12)</div>
                                             <div class="size-chips">
-                                                <% ['6','7','8','9','10','11','12'].forEach(function(s){ %>
+                                                <% ['5','6','7','8','9','10','11','12'].forEach(function(s){ %>
                                                     <span class="size-chip">
                                                         <input type="checkbox" name="item[sizes][]"
                                                             value="Men-UK<%= s %>"
