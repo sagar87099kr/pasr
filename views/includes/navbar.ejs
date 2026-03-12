@@ -72,7 +72,7 @@
                           <% } %>
                             <% } %>
                               <% if (typeof currUser !=='undefined' && currUser) { %>
-                                <% if (currUser.collection.name==='deliverypartners' ) { %>
+                                <% if (currUser.collection && currUser.collection.name==='deliverypartners' ) { %>
                                   <li><a class="dropdown-item fw-bold text-primary" href="/delivery/dashboard">Delivery
                                       Dashboard</a></li>
                                   <% } %>

@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Configuration
-    const MAX_SIZE_MB = 1;
-    const MAX_WIDTH_HEIGHT = 1920; // Good balance for quality
+    const MAX_SIZE_MB = 0.15; // 150KB to safely pass the 200KB multer limit
+    const MAX_WIDTH_HEIGHT = 1000; // Good balance for quality and size
 
     // Find all file inputs
     const fileInputs = document.querySelectorAll('input[type="file"]');
@@ -25,15 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
 
-                    // Check if image and size > 1MB
+                    // Check if image and size > 150KB
                     if (file.type.startsWith('image/') && file.size > MAX_SIZE_MB * 1024 * 1024) {
                         hasLargeFile = true;
-                        console.log(`Compressing ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)...`);
+                        console.log(`Compressing ${file.name} (${(file.size / 1024).toFixed(2)} KB)...`);
 
                         const options = {
                             maxSizeMB: MAX_SIZE_MB,
                             maxWidthOrHeight: MAX_WIDTH_HEIGHT,
-                            useWebWorker: true
+                            useWebWorker: true,
+                            initialQuality: 0.7
                         };
 
                         try {

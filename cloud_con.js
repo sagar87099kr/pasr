@@ -15,7 +15,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'pasr_DEV',
-    allowedFormats: ["png", "jpg", "jpeg"],// supports promises as well
+    allowedFormats: ["png", "jpg", "jpeg"],
     transformation: [
       { width: 1200, height: 1200, crop: "limit", quality: "auto" },
     ],
@@ -23,8 +23,21 @@ const storage = new CloudinaryStorage({
 });
 
 const upload = multer({ storage });
+
+// Separate folder for item photos
+const itemStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'pasr_items',
+    allowedFormats: ["png", "jpg", "jpeg"],
+    transformation: [
+      { width: 800, height: 800, crop: "limit", quality: "auto" },
+    ],
+  },
+});
+
 const itemUpload = multer({
-  storage,
+  storage: itemStorage,
   limits: { fileSize: 200 * 1024 } // 200KB limit
 });
 

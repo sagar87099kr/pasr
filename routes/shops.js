@@ -547,8 +547,23 @@ router.delete("/shops/:id", isLogedin, isShopOwner, wrapAsync(async (req, res) =
 }));
 
 
+// Safe Upload Wrapper for Items
+const handleItemUpload = (req, res, next) => {
+    const uploadSingle = itemUpload.single("itemImage");
+    uploadSingle(req, res, function (err) {
+        if (err) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                req.flash("error", "The uploaded file is too large. Please keep it under 200KB.");
+                return res.redirect("back");
+            }
+            return next(err);
+        }
+        next();
+    });
+};
+
 // Create Item
-router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, itemUpload.single("itemImage"), validateItem, wrapAsync(async (req, res) => {
+router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, handleItemUpload, validateItem, wrapAsync(async (req, res) => {
 
     console.log("Create Item Route Hit");
     console.log("Body:", req.body);
@@ -618,7 +633,7 @@ router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, itemUpload
 }));
 
 // Update Item
-router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, itemUpload.single("itemImage"), wrapAsync(async (req, res) => {
+router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, handleItemUpload, wrapAsync(async (req, res) => {
 
     const { id, itemId } = req.params;
     const { name, price, quantity, itemCategory, description } = req.body.item;
