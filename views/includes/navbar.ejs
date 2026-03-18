@@ -10,12 +10,14 @@
       </button>
 
       <!-- Search Bar -->
-      <form class="d-flex flex-grow-1 header-search-form" role="search" action="/search" method="GET">
-        <input class="form-control form-control-sm me-1 notranslate" type="search" name="q"
-          placeholder="Search by name, phone..." aria-label="Search"
+      <form class="d-flex flex-grow-1 header-search-form" role="search" action="/search" method="GET" style="position: relative;">
+        <input class="form-control form-control-sm me-1 notranslate" type="search" name="q" id="navbarSearchInput"
+          placeholder="Search by name, phone..." aria-label="Search" autocomplete="off"
           value="<%= typeof query !== 'undefined' ? query : '' %>" />
         <button class="btn btn-sm btn-outline-success px-2" type="submit"><i
             class="fa-solid fa-magnifying-glass"></i></button>
+        <!-- Suggestions Dropdown -->
+        <div id="searchSuggestionsDropdown" class="search-suggestions-dropdown" style="display: none;"></div>
       </form>
 
 
@@ -219,3 +221,157 @@
     setInterval(fetchNotifications, 30000);
   </script>
   <% } %>
+
+<style>
+  .search-suggestions-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: calc(100% - 38px);
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 5px;
+    font-size: 0.9rem;
+  }
+  .suggestion-group-title {
+    padding: 8px 12px;
+    background: #f8fafc;
+    font-weight: 700;
+    color: #475569;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .suggestion-item {
+    padding: 8px 12px;
+    display: block;
+    color: #1e293b;
+    text-decoration: none;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 0.2s;
+  }
+  .suggestion-item:last-child {
+    border-bottom: none;
+  }
+  .suggestion-item:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
+  .suggestion-item-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .suggestion-item-subtitle {
+    font-size: 0.75rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('navbarSearchInput');
+    const suggestionsDropdown = document.getElementById('searchSuggestionsDropdown');
+    let debounceTimer;
+
+    if (!searchInput || !suggestionsDropdown) return;
+
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.trim();
+      
+      clearTimeout(debounceTimer);
+      
+      if (query.length < 2) {
+        suggestionsDropdown.style.display = 'none';
+        return;
+      }
+      
+      debounceTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          renderSuggestions(data);
+        } catch (err) {
+          console.error('Error fetching search suggestions:', err);
+        }
+      }, 300);
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !suggestionsDropdown.contains(e.target)) {
+        suggestionsDropdown.style.display = 'none';
+      }
+    });
+
+    function renderSuggestions(data) {
+      let html = '';
+      
+      if (data.items && data.items.length > 0) {
+        html += `<div class="suggestion-group-title">Items</div>`;
+        data.items.forEach(item => {
+          html += `
+            <a href="/shops/${item.shop ? item.shop._id : ''}" class="suggestion-item">
+              <div class="suggestion-item-title">${item.name || 'Unnamed Item'} <span style="color:#16a34a; font-size:0.8rem">₹${item.price}</span></div>
+              <div class="suggestion-item-subtitle"><i class="fa-solid fa-store"></i> ${item.shop ? item.shop.shopName : ''}</div>
+            </a>
+          `;
+        });
+      }
+      
+      if (data.shops && data.shops.length > 0) {
+        html += `<div class="suggestion-group-title">Local Shops</div>`;
+        data.shops.forEach(shop => {
+          html += `
+            <a href="/shops/${shop._id}" class="suggestion-item">
+              <div class="suggestion-item-title">${shop.shopName}</div>
+              <div class="suggestion-item-subtitle"><i class="fa-solid fa-location-dot"></i> ${shop.category} &middot; ${shop.location}</div>
+            </a>
+          `;
+        });
+      }
+
+      if (data.products && data.products.length > 0) {
+        html += `<div class="suggestion-group-title">Products</div>`;
+        data.products.forEach(product => {
+          html += `
+            <a href="/products/${product._id}" class="suggestion-item">
+              <div class="suggestion-item-title">${product.productName} <span style="color:#16a34a; font-size:0.8rem">₹${product.price}</span></div>
+              <div class="suggestion-item-subtitle"><i class="fa-solid fa-leaf"></i> ${product.categories} &middot; ${product.location}</div>
+            </a>
+          `;
+        });
+      }
+
+      if (data.providers && data.providers.length > 0) {
+        html += `<div class="suggestion-group-title">Service Providers</div>`;
+        data.providers.forEach(provider => {
+          html += `
+            <a href="/provider/${provider._id}/profile" class="suggestion-item">
+              <div class="suggestion-item-title">${provider.company}</div>
+              <div class="suggestion-item-subtitle"><i class="fa-solid fa-briefcase"></i> ${provider.categories} &middot; ${provider.location}</div>
+            </a>
+          `;
+        });
+      }
+
+      if (html === '') {
+        html = '<div class="suggestion-item"><div class="suggestion-item-subtitle" style="justify-content:center;">No quick results found.<br>Press enter to search all.</div></div>';
+      }
+
+      suggestionsDropdown.innerHTML = html;
+      suggestionsDropdown.style.display = 'block';
+    }
+  });
+</script>

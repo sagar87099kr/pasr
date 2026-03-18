@@ -3,6 +3,7 @@ const router = express.Router();
 const Provider = require("../data/serviceproviders.js");
 const Shop = require("../data/shops.js");
 const Product = require("../data/product.js");
+const Item = require("../data/item.js");
 const Shedule = require("../data/clander.js");
 const Review = require("../data/review.js");
 const { isLogedin, isNotBlocked, isVerifiedCustomer, validateprovider, isOwner, isadmin, findNearbyProviders } = require("../middeleware.js");
@@ -34,6 +35,31 @@ router.get("/search", isLogedin, wrapAsync(async (req, res) => {
     let providerFilter = {};
     let shopFilter = {};
     let productFilter = {};
+    let itemFilter = {};
+
+    let userLocation = req.session.location;
+    if (!userLocation && req.user && req.user.geometry && req.user.geometry.coordinates && req.user.geometry.coordinates.length === 2) {
+        userLocation = req.user.geometry;
+    }
+    const hasValidLocation = userLocation && userLocation.coordinates && userLocation.coordinates.length === 2;
+    let nearbyShopIds = [];
+
+    if (hasValidLocation) {
+        const maxDist = 10000; // 10km
+        const nearbyShops = await Shop.find({
+            geometry: {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: userLocation.coordinates
+                    },
+                    $maxDistance: maxDist
+                }
+            }
+        }).select('_id');
+        nearbyShopIds = nearbyShops.map(s => s._id);
+        itemFilter.shop = { $in: nearbyShopIds };
+    }
 
     if (query) {
         const isNumber = /^\d+$/.test(query);
@@ -68,23 +94,26 @@ router.get("/search", isLogedin, wrapAsync(async (req, res) => {
                     { productDescription: regex }
                 ]
             };
+            itemFilter.name = regex;
         }
     }
 
-    let [providers, shops, products] = await Promise.all([
+    let [providers, shops, products, items] = await Promise.all([
         Provider.find(providerFilter).populate("owner"),
         Shop.find(shopFilter).populate("owner"),
-        Product.find(productFilter).populate("owner")
+        Product.find(productFilter).populate("owner"),
+        Item.find(itemFilter).populate("shop").limit(100) // limit items to 100 to avoid heavy load
     ]);
 
     // Apply verification filtering
     if (!req.user || !req.user.isAdmin) {
-        providers = providers.filter(p => p.verified || (req.user && p.owner._id.equals(req.user._id)));
-        shops = shops.filter(s => s.verified || (req.user && s.owner._id.equals(req.user._id)));
-        products = products.filter(p => p.verified || (req.user && p.owner._id.equals(req.user._id)));
+        providers = providers.filter(p => p.verified || (req.user && p.owner && p.owner._id.equals(req.user._id)));
+        shops = shops.filter(s => s.verified || (req.user && s.owner && s.owner._id.equals(req.user._id)));
+        products = products.filter(p => p.verified || (req.user && p.owner && p.owner._id.equals(req.user._id)));
+        items = items.filter(item => item.shop && (item.shop.verified || (req.user && item.shop.owner && item.shop.owner.equals(req.user._id))));
     }
 
-    res.render("pages/search_results.ejs", { providers, shops, products, query });
+    res.render("pages/search_results.ejs", { providers, shops, products, items, query });
 }));
 
 // this will redirect into farmer page
@@ -377,6 +406,66 @@ router.delete("/provider/:id/delete-image/:imageIndex", isLogedin, isOwner, wrap
         req.flash("danger", "Failed to delete image.");
         res.redirect(`/provider/${req.params.id}/profile`);
     }
+}));
+
+// Search Suggestions API
+router.get("/api/search/suggestions", wrapAsync(async (req, res) => {
+    const { q } = req.query;
+    if (!q || q.length < 2) return res.json({ providers: [], shops: [], products: [], items: [] });
+    
+    let query = q;
+    let providerFilter = {};
+    let shopFilter = {};
+    let productFilter = {};
+    let itemFilter = {};
+
+    let userLocation = req.session.location;
+    if (!userLocation && req.user && req.user.geometry && req.user.geometry.coordinates && req.user.geometry.coordinates.length === 2) {
+        userLocation = req.user.geometry;
+    }
+    const hasValidLocation = userLocation && userLocation.coordinates && userLocation.coordinates.length === 2;
+    let nearbyShopIds = [];
+
+    if (hasValidLocation) {
+        const maxDist = 10000; // 10km
+        const nearbyShops = await Shop.find({
+            geometry: {
+                $near: {
+                    $geometry: { type: "Point", coordinates: userLocation.coordinates },
+                    $maxDistance: maxDist
+                }
+            }
+        }).select('_id');
+        nearbyShopIds = nearbyShops.map(s => s._id);
+        itemFilter.shop = { $in: nearbyShopIds };
+    }
+
+    const regex = new RegExp(query, 'i');
+    
+    const isNumber = /^\d+$/.test(query);
+    if (isNumber) {
+        const num = parseInt(query);
+        providerFilter = { phoneNO: num };
+    } else {
+        providerFilter = { $or: [{ company: regex }, { categories: regex }, { location: regex }] };
+        shopFilter = { $or: [{ shopName: regex }, { category: regex }, { location: regex }, { shopDescription: regex }] };
+        productFilter = { $or: [{ productName: regex }, { categories: regex }, { location: regex }, { productDescription: regex }] };
+        itemFilter.name = regex;
+    }
+
+    let [providers, shops, products, items] = await Promise.all([
+        Provider.find({ ...providerFilter, verified: true }).limit(3).select('company categories location'),
+        Shop.find({ ...shopFilter, verified: true }).limit(3).select('shopName category location'),
+        Product.find({ ...productFilter, verified: true }).limit(3).select('productName price location categories'),
+        Item.find(itemFilter).populate({ path: "shop", match: { verified: true }, select: "shopName location" }).limit(5).select('name price img shop')
+    ]);
+
+    // Filter out items whose populated shop didn't match verification
+    items = items.filter(item => item.shop != null);
+    // Cut down items to 3 after filtering
+    items = items.slice(0, 3);
+
+    res.json({ providers, shops, products, items });
 }));
 
 module.exports = router;
