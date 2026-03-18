@@ -769,4 +769,23 @@ router.delete("/shops/:id/upi", isLogedin, isShopOwner, wrapAsync(async (req, re
     res.redirect(`/shops/${id}`);
 }));
 
+// Individual Item Details Page
+router.get("/items/:id", wrapAsync(async (req, res) => {
+    const { id } = req.params;
+    const item = await Item.findById(id).populate("shop").populate("product");
+    
+    if (!item) {
+        req.flash("danger", "Item not found");
+        return res.redirect("/home");
+    }
+    
+    // Check if shop is verified
+    if (!item.shop || !item.shop.verified) {
+        req.flash("danger", "This shop is not available currently.");
+        return res.redirect("/home");
+    }
+
+    res.render("pages/itemDetail.ejs", { item, shop: item.shop });
+}));
+
 module.exports = router;
