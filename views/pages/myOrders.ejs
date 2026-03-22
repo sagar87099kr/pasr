@@ -227,6 +227,15 @@
                                     <span style="color:#138808">₹<%= order.totalAmount %></span>
                                 </div>
 
+                                <!-- Customer Actions -->
+                                <% if(currUser && order.customerId.toString() === currUser._id.toString() && !['PACKED', 'READY_FOR_DELIVERY', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED'].includes(order.orderStatus)) { %>
+                                    <div class="d-grid gap-2 mt-4 pt-3 border-top">
+                                        <button class="btn btn-sm btn-outline-danger w-100 fw-bold" onclick="cancelOrder('<%= order._id %>')">
+                                            <i class="fa-solid fa-xmark"></i> Cancel Order
+                                        </button>
+                                    </div>
+                                <% } %>
+
                                 <!-- Shop Owner Actions -->
                                 <% if(currUser && order.resolvedSeller &&
                                     order.resolvedSeller.sellerId.toString()===currUser._id.toString()) { %>
@@ -327,4 +336,54 @@
                 alert("Error: " + e.message);
             }
         }
+
+        async function cancelOrder(orderId) {
+            if (!confirm("Are you sure you want to cancel this order? If prepaid, a refund will be initiated automatically.")) return;
+            try {
+                const res = await fetch(`/api/orders/${orderId}/cancel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert(data.message || "Failed to cancel order");
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        // --- Live Order Tracking Polling ---
+        let initialStatusHash = '';
+        <% 
+            const activeStatuses = orders.filter(o => o.orderStatus !== 'COMPLETED' && o.orderStatus !== 'CANCELLED')
+                                       .map(o => o._id + ':' + o.orderStatus)
+                                       .join('|');
+        %>
+        initialStatusHash = '<%= activeStatuses %>';
+
+        async function pollOrderStatuses() {
+            if (!initialStatusHash) return; // No active orders to track
+            try {
+                const res = await fetch('/api/orders/api/my-active-status');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.activeOrders) {
+                        const newHash = data.activeOrders.map(o => o._id + ':' + o.orderStatus).join('|');
+                        if (newHash !== initialStatusHash) {
+                            // Status changed in the background! Reload seamlessly.
+                            window.location.reload();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Tracking polling error:", e);
+            }
+        }
+        
+        // Ping every 15 seconds to check for live delivery/shop updates
+        setInterval(pollOrderStatuses, 15000); 
     </script>

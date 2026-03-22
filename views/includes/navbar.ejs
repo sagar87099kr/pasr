@@ -1,5 +1,109 @@
-<nav class="navbar navbar-expand-sm bg-body-tertiary border-bottom sticky-top pb-1 pt-1">
-  <div class="container-fluid d-flex flex-wrap align-items-center">
+<!-- Tailwind CSS configuration for Premium Styling -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    corePlugins: { preflight: false },
+    theme: {
+      extend: {
+        colors: { primary: '#2563eb' }
+      }
+    }
+  }
+</script>
+<style>
+  /* Premium Nav Effects - No Conflict with Bootstrap */
+  .premium-nav {
+    background: rgba(255, 255, 255, 0.75) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.025);
+    z-index: 1030;
+  }
+  
+  .nav-link-modern {
+    position: relative;
+    color: #475569 !important;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    margin: 0 0.25rem;
+  }
+  .nav-link-modern:hover { color: #2563eb !important; }
+  .nav-link-modern::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #2563eb;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 2px;
+  }
+  .nav-link-modern:hover::after { width: 80%; }
+
+  .glass-dropdown {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 0.75rem !important;
+    padding: 0.5rem !important;
+    animation: dropdownFadeIn 0.2s ease-out;
+  }
+  
+  @keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .premium-btn {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white !important;
+    border: none !important;
+    font-weight: 500;
+    border-radius: 9999px !important;
+    padding: 0.375rem 1rem !important;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+    transition: all 0.2s ease;
+  }
+  .premium-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.4);
+  }
+
+  /* Profile Icon Glow */
+  .profile-icon-hover {
+    transition: all 0.3s ease;
+    color: #475569;
+  }
+  .profile-icon-hover:hover {
+    color: #2563eb;
+    filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.4));
+  }
+  
+  /* Update search bar aesthetics */
+  .header-search-form input[type="search"] {
+    border-radius: 9999px !important;
+    border: 1px solid #cbd5e1 !important;
+    padding-left: 1rem !important;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.02);
+  }
+  .header-search-form input[type="search"]:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+  }
+  .header-search-form button {
+    border-radius: 9999px !important;
+  }
+</style>
+
+<nav class="navbar navbar-expand-sm premium-nav sticky-top py-2">
+  <div class="container-fluid d-flex flex-wrap align-items-center max-w-7xl mx-auto px-lg-4">
 
     <!-- Top Row: Toggler, Search, Auth, Language -->
     <div class="d-flex w-100 justify-content-between align-items-center order-1 gap-1 gap-sm-2">
@@ -15,7 +119,7 @@
 
       <!-- Login / Sign Up button — only shown to guests, opens the welcome modal -->
       <% if (typeof currUser==='undefined' || !currUser) { %>
-        <button type="button" class="btn btn-sm navbar-login-btn ms-1" data-bs-toggle="modal"
+        <button type="button" class="btn btn-sm premium-btn ms-1" data-bs-toggle="modal"
           data-bs-target="#welcomeSignupModal">
           Login / Sign Up
         </button>
@@ -29,7 +133,7 @@
                 <i class="fa-solid fa-bell fs-5"></i>
                 <span class="notification-badge" id="notificationBadge"></span>
               </a>
-              <div class="dropdown-menu dropdown-menu-end notification-dropdown position-absolute"
+              <div class="dropdown-menu dropdown-menu-end notification-dropdown position-absolute glass-dropdown"
                 aria-labelledby="notificationBell">
                 <div id="notificationHeaderWrapper">
                   <div class="notification-header">
@@ -47,21 +151,34 @@
 
               <!-- Auth Dropdown/Profile (Desktop mostly, or kept small on mobile) -->
               <div class="nav-item dropdown list-unstyled mb-0 ms-1">
-                <a class="nav-link dropdown-toggle drop p-0 text-dark" href="#" role="button" data-bs-toggle="dropdown"
+                <a class="nav-link dropdown-toggle drop p-0 text-dark position-relative profile-icon-hover" href="#" role="button" data-bs-toggle="dropdown"
                   aria-expanded="false">
                   <i class="fa-solid fa-circle-user fs-5"></i>
+                  <% if (typeof cartItemCount !== 'undefined' && cartItemCount > 0) { %>
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px; transform: translate(-50%, -50%) !important;">
+                      <span class="visually-hidden">Items in cart</span>
+                    </span>
+                  <% } %>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end position-absolute">
+                <ul class="dropdown-menu dropdown-menu-end position-absolute glass-dropdown">
                   <% if (typeof currUser !=='undefined' && currUser) { %>
                     <li><a class="dropdown-item" href="/user">Profile</a></li>
                     <li><a class="dropdown-item" href="/api/orders/my-orders">My Orders</a></li>
-                    <li><a class="dropdown-item" href="/api/cart">My Cart</a></li>
+                    <li>
+                      <a class="dropdown-item d-flex justify-content-between align-items-center" href="/api/cart">
+                        My Cart
+                        <% if (typeof cartItemCount !== 'undefined' && cartItemCount > 0) { %>
+                          <span class="badge bg-danger rounded-pill"><%= cartItemCount %></span>
+                        <% } %>
+                      </a>
+                    </li>
                     <% const adminNums=["8709956547", "9608812817" , "7091212569" , "7046699074" , "9304703911"
                       , "8873679038" , "7091568049" , "9835780962" ]; if (adminNums.includes(String(currUser.username)))
                       { %>
                       <li><a class="dropdown-item fw-bold text-danger" href="/admin/orders">Admin: Orders</a></li>
                       <% if (String(currUser.username)==='8709956547' ) { %>
                         <li><a class="dropdown-item fw-bold text-success" href="/admin/payouts">Admin: Payouts</a></li>
+                        <li><a class="dropdown-item fw-bold" style="color: #6366f1;" href="/customer/verify">Admin: Verify Users</a></li>
                         <% } %>
                           <% } %>
                             <% } %>
@@ -93,23 +210,23 @@
     <div class="collapse navbar-collapse order-3 w-100 mt-2 mt-sm-0" id="navbarNav">
       <ul class="navbar-nav me-auto">
         <li class="nav-item">
-          <a class="nav-link" aria-current="page" href="/home">Home</a>
+          <a class="nav-link nav-link-modern" aria-current="page" href="/home">Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/product/seller"> Sell Your Products <span
+          <a class="nav-link nav-link-modern" href="/product/seller"> Sell Your Products <span
               class="badge bg-warning text-dark text-wrap d-inline-block"
               style="font-size: 0.65em; max-width: 15ch; line-height: 1.1; vertical-align: middle;">Not for shop
               owners</span></a>
         </li>
 
         <li class="nav-item">
-          <a class="nav-link" href="/become/provider"> Become a Provider </a>
+          <a class="nav-link nav-link-modern" href="/become/provider"> Become a Provider </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/shops/new"> List Your Shop </a>
+          <a class="nav-link nav-link-modern" href="/shops/new"> List Your Shop </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/help"> Help </a>
+          <a class="nav-link nav-link-modern" href="/help"> Help </a>
         </li>
         <li class="nav-item" id="pwa-install-btn" style="display: none;">
           <a class="nav-link" href="#" style="color: #2563eb; font-weight: bold;">

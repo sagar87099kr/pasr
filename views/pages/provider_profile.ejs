@@ -194,6 +194,73 @@
         </div>
       </section>
 
+      <!-- Address Book Section -->
+      <section class="profile-card">
+        <div class="card-header" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+          <div class="user-info mb-2 mb-md-0">
+            <h2><i class="fa-solid fa-book-bookmark text-primary me-2"></i>My Saved Addresses</h2>
+            <span class="user-type">Manage your delivery locations</span>
+          </div>
+          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+            <i class="fa-solid fa-plus me-1"></i> Add New
+          </button>
+        </div>
+        
+        <div class="address-grid" id="addressBookContainer" style="display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+          <% if (currUser.savedAddresses && currUser.savedAddresses.length > 0) { %>
+            <% currUser.savedAddresses.forEach(addr => { %>
+              <div class="address-card" id="address-card-<%= addr._id %>" style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; position: relative; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                  <span class="badge" style="background: #eef2ff; color: #4f46e5; border-radius: 6px; padding: 6px 10px; font-weight: 700; font-size: 0.8rem;"><i class="fa-solid <%= addr.label === 'Home' ? 'fa-house' : addr.label === 'Work' ? 'fa-briefcase' : 'fa-location-dot' %> me-1"></i><%= addr.label %></span>
+                  <button onclick="deleteSavedAddress('<%= addr._id %>')" class="btn btn-sm btn-outline-danger" style="padding: 2px 8px; border: none; border-radius: 6px;" title="Delete Address"><i class="fa-solid fa-trash"></i></button>
+                </div>
+                <p style="color: #4b5563; font-size: 0.95rem; margin: 0; line-height: 1.5;"><%= addr.addressStr %></p>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <div id="emptyAddressState" style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: #6b7280; background: #f9fafb; border-radius: 12px; border: 2px dashed #e5e7eb;">
+              <i class="fa-solid fa-map-location-dot" style="font-size: 2.5rem; color: #9ca3af; margin-bottom: 16px; display: block;"></i>
+              <p style="margin: 0; font-weight: 600; font-size: 1.1rem; color: #4b5563;">No saved addresses yet</p>
+              <p style="font-size: 0.95rem; margin-top: 4px;">Add your home or work address for faster checkout!</p>
+            </div>
+          <% } %>
+        </div>
+      </section>
+
+      <!-- Add Address Modal -->
+      <div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+            <div class="modal-header" style="border-bottom: 1px solid #f3f4f6;">
+              <h5 class="modal-title fw-bold" style="color: #111827;">Add New Address</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+              <form id="addAddressForm">
+                <div class="mb-4">
+                  <label class="form-label fw-bold" style="color: #374151;">Label</label>
+                  <div class="d-flex gap-2">
+                    <input type="radio" class="btn-check" name="addrLabel" id="labelHome" value="Home" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary rounded-pill px-3 py-2 fw-semibold" for="labelHome"><i class="fa-solid fa-house me-1"></i>Home</label>
+
+                    <input type="radio" class="btn-check" name="addrLabel" id="labelWork" value="Work" autocomplete="off">
+                    <label class="btn btn-outline-primary rounded-pill px-3 py-2 fw-semibold" for="labelWork"><i class="fa-solid fa-briefcase me-1"></i>Work</label>
+
+                    <input type="radio" class="btn-check" name="addrLabel" id="labelOther" value="Other" autocomplete="off">
+                    <label class="btn btn-outline-primary rounded-pill px-3 py-2 fw-semibold" for="labelOther"><i class="fa-solid fa-location-dot me-1"></i>Other</label>
+                  </div>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label fw-bold" style="color: #374151;">Search Your Location</label>
+                  <input type="text" id="newAddressInput" class="form-control form-control-lg" name="addressStr" placeholder="Type building, street or area..." required autocomplete="off" style="font-size: 1rem; border-radius: 8px;">
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm" id="saveAddrBtn" style="border-radius: 8px; font-size: 1.05rem;">Save Address</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Delete Account Modal -->
       <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -619,6 +686,12 @@
         };
 
         const autocomplete = new google.maps.places.Autocomplete(input, options);
+        
+        // Add listener to the new Add Address modal input
+        const newAddressInput = document.getElementById("newAddressInput");
+        if (newAddressInput) {
+            new google.maps.places.Autocomplete(newAddressInput, options);
+        }
 
         autocomplete.addListener("place_changed", () => {
           const place = autocomplete.getPlace();
@@ -627,6 +700,76 @@
           }
           // The input value is auto-updated by Google Maps
         });
+      }
+
+      // Address Book Handlers
+      document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById("addAddressForm");
+        if (form) {
+          form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById("saveAddrBtn");
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin border-0 bg-transparent"></i> Saving...';
+            btn.disabled = true;
+
+            const addressStr = document.getElementById("newAddressInput").value;
+            const labelNode = document.querySelector('input[name="addrLabel"]:checked');
+            const label = labelNode ? labelNode.value : 'Other';
+
+            try {
+              const response = await fetch('/api/user/saved-addresses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ label, addressStr })
+              });
+              const data = await response.json();
+              if (data.success) {
+                location.reload(); // Reload to show new address card
+              } else {
+                alert(data.message || "Failed to save address");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+              }
+            } catch (err) {
+              console.error(err);
+              alert("Server error. Please try again.");
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+            }
+          });
+        }
+      });
+
+      async function deleteSavedAddress(addressId) {
+        if (!confirm("Are you sure you want to delete this address?")) return;
+        
+        const card = document.getElementById('address-card-' + addressId);
+        if (card) card.style.opacity = '0.5';
+
+        try {
+          const response = await fetch(`/api/user/saved-addresses/${addressId}`, {
+            method: 'DELETE',
+            headers: { 'Accept': 'application/json' }
+          });
+          const data = await response.json();
+          if (data.success) {
+            if (card) card.remove();
+            // Check if last element was deleted
+            const container = document.getElementById("addressBookContainer");
+            if (container && container.querySelectorAll('.address-card').length === 0) {
+              // Should show empty state, but reloading is safer
+              location.reload(); 
+            }
+          } else {
+            alert(data.message || "Failed to delete address");
+            if (card) card.style.opacity = '1';
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Server error.");
+          if (card) card.style.opacity = '1';
+        }
       }
     </script>
     <script

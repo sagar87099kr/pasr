@@ -126,15 +126,30 @@ router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
 
         // Check if referred by someone
         if (pending.referralCode) {
-            const referrer = await Customer.findOne({ referralCode: pending.referralCode.toUpperCase() });
-            if (referrer) {
-                newCustomer.referredBy = referrer._id;
-                newCustomer.coins = 5; // Reward new user
+            const ReferralUsage = require('../data/referralUsage');
+            
+            // Critical Anti-Fraud Check: Has this mobile number EVER claimed a referral code?
+            const alreadyClaimed = await ReferralUsage.findOne({ mobile: pending.username });
+            
+            if (!alreadyClaimed) {
+                const referrer = await Customer.findOne({ referralCode: pending.referralCode.toUpperCase() });
+                if (referrer) {
+                    newCustomer.referredBy = referrer._id;
+                    newCustomer.coins = 5; // Reward new user
 
-                // Reward referrer
-                referrer.coins = (referrer.coins || 0) + 5;
-                referrer.referralCount = (referrer.referralCount || 0) + 1;
-                await referrer.save();
+                    // Reward referrer
+                    referrer.coins = (referrer.coins || 0) + 5;
+                    referrer.referralCount = (referrer.referralCount || 0) + 1;
+                    await referrer.save();
+                    
+                    // Permanent ledger entry preventing future farming if they delete account
+                    await ReferralUsage.create({ 
+                        mobile: pending.username,
+                        usedCode: pending.referralCode.toUpperCase()
+                    });
+                }
+            } else {
+                console.log(`[Anti-Fraud] Blocked referral claim for mobile ${pending.username}. They already claimed one historically.`);
             }
         }
 
@@ -307,13 +322,20 @@ router.get("/user", isLogedin, saveRedirectUrl, wrapAsync(async (req, res) => {
 
 // these are verification route for customers 
 router.get("/customer/verify", isLogedin, isadmin, async (req, res) => {
+    if (String(req.user.username) !== '8709956547') {
+        req.flash("error", "Unauthorized: Only super-admin can access this page.");
+        return res.redirect("/");
+    }
     let customers = await Customer.find();
     res.render("pages/userverification.ejs", { customers });
 });
 
 // set value true
 router.put("/:id/verifycustomer", isLogedin, isadmin, async (req, res) => {
-
+    if (String(req.user.username) !== '8709956547') {
+        req.flash("error", "Unauthorized access.");
+        return res.redirect("/");
+    }
     let { id } = req.params;
     const { verified, verifedBy } = req.body.customer;
     console.log(verified)
@@ -323,7 +345,10 @@ router.put("/:id/verifycustomer", isLogedin, isadmin, async (req, res) => {
 
 // we anything suspicious delete customer from database
 router.delete("/customer/:id/verifyfail", isLogedin, isadmin, async (req, res) => {
-
+    if (String(req.user.username) !== '8709956547') {
+        req.flash("error", "Unauthorized access.");
+        return res.redirect("/");
+    }
     let { id } = req.params;
     await Customer.findByIdAndDelete(id);
     console.log("customer is deleted");
@@ -573,5 +598,52 @@ router.post("/customer/delete-account", isLogedin, wrapAsync(async (req, res) =>
 
 // API: Update Address
 router.post("/api/user/update-address", isLogedin, wrapAsync(userController.updateAddress));
+
+// API: Add Saved Address
+router.post("/api/user/saved-addresses", isLogedin, wrapAsync(async (req, res) => {
+    const { label, addressStr } = req.body;
+    
+    if (!addressStr) {
+        return res.status(400).json({ success: false, message: "Address is required" });
+    }
+    
+    // Geocode to get coordinates
+    let geometry;
+    try {
+        const coordinate = await forwardGeocode(addressStr);
+        if (!coordinate.body.features.length) {
+            return res.status(400).json({ success: false, message: "No location found for this address. Try being more specific." });
+        }
+        geometry = coordinate.body.features[0].geometry;
+    } catch (e) {
+        return res.status(500).json({ success: false, message: "Geocoding failed" });
+    }
+
+    const customer = await Customer.findById(req.user._id);
+    
+    // Check if it's the first one, make it default
+    const isDefault = customer.savedAddresses.length === 0;
+
+    customer.savedAddresses.push({
+        label: label || 'Other',
+        addressStr,
+        geometry,
+        isDefault
+    });
+
+    await customer.save();
+    res.json({ success: true, message: "Address saved successfully", addresses: customer.savedAddresses });
+}));
+
+// API: Delete Saved Address
+router.delete("/api/user/saved-addresses/:addressId", isLogedin, wrapAsync(async (req, res) => {
+    const { addressId } = req.params;
+    const customer = await Customer.findById(req.user._id);
+    
+    customer.savedAddresses = customer.savedAddresses.filter(addr => addr._id.toString() !== addressId);
+    await customer.save();
+    
+    res.json({ success: true, message: "Address removed", addresses: customer.savedAddresses });
+}));
 
 module.exports = router;

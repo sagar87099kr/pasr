@@ -224,10 +224,10 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
             true
         );
 
-        if (distanceInKm > 5) {
+        if (distanceInKm > 10) {
             return res.status(400).json({
                 success: false,
-                message: "Unable to deliver to your location for now"
+                message: "Unable to deliver to your location for now. Max delivery radius is 10 km."
             });
         }
 

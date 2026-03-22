@@ -710,16 +710,16 @@
                                                             order.deliveryType==='HOME_DELIVERY' &&
                                                             order.selfDelivery===true && ['CREATED', 'ACCEPTED'
                                                             , 'READY_FOR_DELIVERY' , 'OUT_FOR_DELIVERY'
-                                                            ].includes(order.orderStatus) ); const
                                                             isDeliverableHomeOrder=(
                                                             order.deliveryType==='HOME_DELIVERY' &&
                                                             ['CREATED', 'ACCEPTED' , 'READY_FOR_DELIVERY'
                                                             ].includes(order.orderStatus) && !order.selfDelivery &&
                                                             order.orderStatus !=='BROADCAST' && !(order.partnerSnapshot
                                                             && order.partnerSnapshot.name) ); const
+                                                            isCancellable=(['CREATED', 'ACCEPTED', 'ORDER_SHARED'].includes(order.orderStatus)); const
                                                             hasActions=needsPayVerify || needsPackAction ||
                                                             needsOtpVerification || needsOtpSelfDeliver ||
-                                                            isDeliverableHomeOrder; %>
+                                                            isDeliverableHomeOrder || isCancellable; %>
                                                             <% if (hasActions) { %>
                                                                 <div class="d-flex flex-column gap-2">
 
@@ -855,6 +855,12 @@
                                                                                                         </div>
                                                                                                         <% } %>
 
+                                                                                                        <% if (isCancellable) { %>
+                                                                                                            <button class="btn btn-outline-danger fw-bold mt-2" onclick="cancelOrder('<%= order._id %>')">
+                                                                                                                <i class="fa-solid fa-xmark"></i> Cancel Order
+                                                                                                            </button>
+                                                                                                        <% } %>
+
                                                                 </div>
                                                                 <% } %>
 
@@ -966,6 +972,31 @@
                                 const d = await res.json();
                                 if (res.ok) { alert("Order successfully completed!"); window.location.reload(); }
                                 else { alert(d.message || "Failed to complete order. Incorrect OTP?"); btn.disabled = false; btn.textContent = originalText; }
+                            }
+
+                            async function cancelOrder(id) {
+                                if (!confirm("Are you sure you want to cancel this order? If prepaid, a refund will be initiated automatically.")) return;
+                                const btn = event.target;
+                                const originalText = btn.textContent;
+                                btn.disabled = true; btn.textContent = 'Cancelling...';
+
+                                try {
+                                    const res = await fetch(`/api/orders/${id}/cancel`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' }
+                                    });
+                                    const d = await res.json();
+                                    if (res.ok) { 
+                                        alert(d.message); 
+                                        window.location.reload(); 
+                                    } else { 
+                                        alert(d.message || "Failed to cancel."); 
+                                        btn.disabled = false; btn.textContent = originalText; 
+                                    }
+                                } catch (e) {
+                                    alert("Error: " + e.message);
+                                    btn.disabled = false; btn.textContent = originalText;
+                                }
                             }
 
                             // Auto-refresh every 45 seconds to catch claimed/updated orders

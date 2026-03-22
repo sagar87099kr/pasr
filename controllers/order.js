@@ -45,7 +45,7 @@ const getOrderSellerDetails = async (order) => {
     return null;
 };
 
-// 1. Checkout & Create Order (WhatsApp Direct Flow)
+// 1. Checkout & Create Order
 module.exports.checkoutOrder = async (req, res, next) => {
     try {
         const cart = req.session.cart;
@@ -53,120 +53,267 @@ module.exports.checkoutOrder = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "Cart is empty." });
         }
 
-        const { shopId, orderId: clientOrderId } = req.body;
+        // 1. Extract inputs
+        const { paymentType, lat, lng, shopId, orderId: clientOrderId, deliveryType } = req.body;
         const customerId = req.user._id;
 
         if (!shopId) {
-            return res.status(400).json({ success: false, message: "Shop ID is required." });
+            return res.status(400).json({ success: false, message: "Shop ID is required for checkout." });
         }
 
-        // 1.5 Prevent duplicate orders
+        if (!deliveryType || !['HOME_DELIVERY', 'SELF_PICKUP'].includes(deliveryType)) {
+            return res.status(400).json({ success: false, message: "Please specify delivery type: HOME_DELIVERY or SELF_PICKUP." });
+        }
+
+        // 1.5 Order Safety: Prevent duplicate orders
         if (clientOrderId) {
             const existingOrder = await Order.findOne({ orderId: clientOrderId });
             if (existingOrder) {
-                return res.status(400).json({ success: false, message: "Order processed successfully." });
+                return res.status(400).json({ success: false, message: "Order processed successfully (duplicate blocked)." });
             }
         }
 
-        // Filter items for this shop
+        // Filter items for this specific shop
         const shopItems = cart.items.filter(item => item.shopId === shopId);
         if (shopItems.length === 0) {
-            return res.status(400).json({ success: false, message: "No items for this shop in cart." });
+            return res.status(400).json({ success: false, message: "No items found for this shop in your cart." });
         }
 
-        // 2. ATOMIC INVENTORY DECREMENT (Treat WHATSAPP like COD - immediate)
+        // 2. ATOMIC INVENTORY CHECK & UPDATE
         const Item = require("../data/item");
-        const Product = require("../data/product");
         const inventoryUpdates = [];
-        const isProductItemCache = {};
 
-        const checkAndDecrement = async (item) => {
-            let dbModel = Item;
-            let result = await Item.updateOne(
+        for (let item of shopItems) {
+            const result = await Item.updateOne(
                 { _id: item.itemId, quantity: { $gte: item.quantity } },
                 { $inc: { quantity: -item.quantity } }
             );
 
             if (result.modifiedCount === 0) {
-                dbModel = Product;
-                result = await Product.updateOne(
-                    { _id: item.itemId, quantity: { $gte: item.quantity } },
-                    { $inc: { quantity: -item.quantity } }
-                );
-                if (result.modifiedCount === 0) return { success: false };
-                isProductItemCache[item.itemId] = true;
-            } else {
-                isProductItemCache[item.itemId] = false;
-            }
-            return { success: true };
-        };
-
-        for (let item of shopItems) {
-            const decResult = await checkAndDecrement(item);
-            if (!decResult.success) {
+                // Out of stock. Rollback any previously updated items in this order loop.
                 for (let revert of inventoryUpdates) {
-                    const model = isProductItemCache[revert.id] ? Product : Item;
-                    await model.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
                 }
-                return res.status(400).json({ success: false, message: `Item '${item.name}' is out of stock.` });
+                return res.status(400).json({
+                    success: false,
+                    message: `Item '${item.name}' is out of stock or quantity exceeds available inventory.`
+                });
             }
-            inventoryUpdates.push({ id: item.itemId, qty: item.quantity });
+            inventoryUpdates.push({ id: item.itemId, qty: item.quantity, name: item.name });
         }
 
-        // 3. Totals
+        // 3. Calculate amounts based on delivery type
         const subtotalAmount = shopItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-        const totalAmount = subtotalAmount; // No delivery charges in direct shop mode
+        let deliveryCharge = 0;
+        let distanceInKm = 0;
 
-        const orderData = {
+        let deliveryDistance = 0;
+        let pasrCommission = 0;
+        let partnerEarning = 0;
+        let estimatedFuelCost = 0;
+        let partnerProfit = 0;
+
+        let firstOrderDiscount = 0;
+        let grantFreeDelivery = false;
+        let deliveryAddress = '';
+
+        if (deliveryType === 'SELF_PICKUP') {
+            // Self-pickup: no delivery charge, no distance calculation needed
+            deliveryCharge = 0;
+            distanceInKm = 0;
+        } else {
+            // HOME_DELIVERY: location and distance logic
+            let cLoc = null;
+            if (lat && lng) {
+                cLoc = [parseFloat(lng), parseFloat(lat)]; // [lng, lat]
+            } else if (req.user.geometry && req.user.geometry.coordinates) {
+                cLoc = req.user.geometry.coordinates;
+            }
+
+            if (!cLoc || cLoc.length !== 2) {
+                for (let revert of inventoryUpdates) {
+                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                }
+                return res.status(400).json({ success: false, message: "Please enable location services or update your profile." });
+            }
+
+            // Fetch Shop location
+            let shop = await Shop.findById(shopId);
+            let sLoc;
+
+            if (shop && shop.geometry && shop.geometry.coordinates) {
+                sLoc = shop.geometry.coordinates; // [lng, lat]
+            } else {
+                // Check if it's a Local Bazar Seller
+                const Product = require("../data/product");
+                const product = await Product.findOne({ owner: shopId });
+                if (product && product.geometry && product.geometry.coordinates) {
+                    sLoc = product.geometry.coordinates;
+                }
+            }
+
+            if (!sLoc) {
+                for (let revert of inventoryUpdates) {
+                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                }
+                return res.status(404).json({ success: false, message: "Shop or Seller location is unavailable." });
+            }
+
+            // Calculate distance
+            distanceInKm = await distanceUtil.calculateDistance(
+                cLoc[1], cLoc[0],
+                sLoc[1], sLoc[0],
+                true
+            );
+
+            // Validate Distance (Max 10km)
+            if (distanceInKm > 10) {
+                for (let revert of inventoryUpdates) {
+                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                }
+                return res.status(400).json({ success: false, message: "Delivery not available beyond 10 km." });
+            }
+
+            // Calculate Delivery Pricing metrics
+            try {
+                const pricing = calculateDeliveryPricing(distanceInKm);
+                deliveryCharge = pricing.customerCharge;
+                deliveryDistance = pricing.distance;
+                pasrCommission = pricing.pasrCommission;
+                partnerEarning = pricing.partnerEarning;
+                estimatedFuelCost = pricing.estimatedFuelCost;
+                partnerProfit = pricing.partnerProfit;
+            } catch (pricingError) {
+                for (let revert of inventoryUpdates) {
+                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                }
+                return res.status(400).json({ success: false, message: pricingError.message });
+            }
+
+            // Reverse-geocode to get human-readable delivery address
+            try {
+                const geoRes = await reverseGeocode(cLoc); // cLoc is [lng, lat]
+                if (geoRes.body.features.length > 0) {
+                    deliveryAddress = geoRes.body.features[0].place_name;
+                }
+            } catch (_) {
+                // Address lookup is non-critical — continue without it
+                deliveryAddress = `Near ${cLoc[1].toFixed(4)}, ${cLoc[0].toFixed(4)}`;
+            }
+
+            // Check first-order free delivery eligibility (by mobile number)
+            const mobile = String(req.user.username);
+            const existingFreeDelivery = await FreeDeliveryUsage.findOne({ mobile });
+            if (!existingFreeDelivery) {
+                // First home-delivery order — waive delivery charge
+                firstOrderDiscount = deliveryCharge;
+                deliveryCharge = 0;
+                grantFreeDelivery = true; // flag to save usage record after order is saved
+            }
+        }
+
+        const totalAmount = subtotalAmount + deliveryCharge;
+
+        // Validate Payment rules (>= ₹1000 requires PREPAID)
+        if (totalAmount >= 1000 && paymentType !== 'PREPAID') {
+            for (let revert of inventoryUpdates) {
+                await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+            }
+            return res.status(400).json({ success: false, message: "Orders of ₹1000 or above must be PREPAID." });
+        }
+
+        // Create Order Document
+        const order = new Order({
             orderId: clientOrderId || generateOrderId(),
             customerId,
-            shopId,
+            shopId: shopId,
             items: shopItems,
             subtotalAmount,
+            deliveryCharge,
             totalAmount,
-            deliveryType: 'SHOP_PICKUP',
-            paymentType: 'WHATSAPP',
+            distanceInKm,
+            deliveryType,
+            deliveryAddress,
+            firstOrderDiscount,
+
+            deliveryDistance,
+            pasrCommission,
+            partnerEarning,
+            estimatedFuelCost,
+            partnerProfit,
+
+            paymentType,
             paymentStatus: 'PENDING',
-            orderStatus: 'ORDER_SHARED',
-            deliveryOTP: otpUtil.generateOTP() // Keep for verification if needed
-        };
-
-        const order = new Order(orderData);
-
-        // 4. Generate WhatsApp Link
-        const sellerDetails = await getOrderSellerDetails(order);
-        const shopPhone = sellerDetails ? sellerDetails.phone : null;
-        const itemsSummary = shopItems.map(i => `${i.name} x${i.quantity}`).join(", ");
-
-        // Base URL for the shareable link (public order view)
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
-        const viewLink = `${baseUrl}/orders/request/${order.orderId}`;
-        order.shareableLink = viewLink;
+            deliveryOTP: otpUtil.generateOTP(),
+            orderStatus: 'CREATED'
+        });
 
         await order.save();
 
-        // 5. Build WhatsApp Message
-        let waMessage = `👋 Hello! I want to order from your shop via PASR.\n\n`;
-        waMessage += `📦 *Order #${order.orderId.slice(-6).toUpperCase()}*\n`;
-        waMessage += `🛒 *Items:* ${itemsSummary}\n`;
-        waMessage += `💰 *Total:* ₹${totalAmount}\n\n`;
-        waMessage += `🔗 *View Checklist:* ${viewLink}\n\n`;
-        waMessage += `I will come to your shop to pay and collect. Please pack them. Thank you!`;
+        // Record free delivery usage AFTER order is saved (so failed orders don't consume the free delivery)
+        if (grantFreeDelivery) {
+            await FreeDeliveryUsage.create({ mobile: String(req.user.username), usedAt: new Date() });
+        }
 
-        const waUrl = shopPhone ? `https://wa.me/91${shopPhone}?text=${encodeURIComponent(waMessage)}` : null;
+        // Create Event for Seller
+        orderBus.emit("ORDER_CREATED", order);
 
-        // Clear cart for this shop
+        // Notify Seller
+        const sellerInfo = await getOrderSellerDetails(order);
+        if (sellerInfo && sellerInfo.sellerId && typeof createNotification === 'function') {
+            await createNotification(
+                sellerInfo.sellerId,
+                'ORDER_RECEIVED',
+                order._id,
+                'New Order Received',
+                `You have a new order: ${order.orderId}`
+            );
+        }
+
+
+
+        // Partial Clear cart (remove items for this shop)
         cart.items = cart.items.filter(item => item.shopId !== shopId);
-        cart.subtotal = cart.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-        req.session.save(() => {
-            res.status(201).json({
-                success: true,
-                message: "Order shared successfully",
-                orderId: order.orderId,
-                waUrl,
-                waMessage
+        let razorpayOrderData = null;
+        if (paymentType === 'PREPAID') {
+            const Razorpay = require('razorpay');
+            const rzp = new Razorpay({
+                key_id: process.env.RAZORPAY_KEY_ID,
+                key_secret: process.env.RAZORPAY_KEY_SECRET
             });
+            const rzpOrder = await rzp.orders.create({
+                amount: Math.round(totalAmount * 100), // amount in paise
+                currency: 'INR',
+                receipt: order.orderId
+            });
+            order.razorpayOrderId = rzpOrder.id;
+            await order.save(); // Save the newly attached razorpay ID
+
+            razorpayOrderData = {
+                id: rzpOrder.id,
+                amount: rzpOrder.amount,
+                currency: rzpOrder.currency,
+                keyId: process.env.RAZORPAY_KEY_ID
+            };
+        }
+        cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+        const sellerDetails = await getOrderSellerDetails(order);
+        const itemsSummary = shopItems.map(i => i.name).join(", ");
+
+        res.status(201).json({
+            success: true,
+            message: "Order created successfully",
+            orderId: order.orderId,
+            orderDbId: order._id,
+            shopOwnerPhone: sellerDetails ? sellerDetails.phone : null,
+            itemsSummary,
+            totalAmount: order.totalAmount,
+            paymentType: order.paymentType,
+            deliveryType: order.deliveryType,
+            razorpay: razorpayOrderData
         });
 
     } catch (e) {
@@ -196,6 +343,16 @@ module.exports.shopAcceptOrder = async (req, res, next) => {
 
         order.orderStatus = 'ACCEPTED';
         await order.save();
+
+        if (typeof createNotification === 'function') {
+            await createNotification(
+                order.customerId,
+                'ORDER_STATUS_UPDATE',
+                order._id,
+                'Order Accepted',
+                `Your order ${order.orderId} has been accepted and is being prepared.`
+            );
+        }
 
         // Emit Event
         orderBus.emit("ORDER_ACCEPTED", order);
@@ -258,6 +415,16 @@ module.exports.shopMarkReady = async (req, res, next) => {
         order.orderStatus = 'READY_FOR_DELIVERY';
         await order.save();
 
+        if (typeof createNotification === 'function') {
+            await createNotification(
+                order.customerId,
+                'ORDER_STATUS_UPDATE',
+                order._id,
+                'Order Ready',
+                `Your order ${order.orderId} is packed and ready for delivery!`
+            );
+        }
+
         // Emit Event
         orderBus.emit("ORDER_READY", order);
 
@@ -269,7 +436,7 @@ module.exports.shopMarkReady = async (req, res, next) => {
     }
 }
 
-// 4b. Shop Marks Order as PACKED (WhatsApp Flow)
+// 4b. Shop Marks Order as Packed (from WhatsApp Link)
 module.exports.shopPackOrder = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -284,21 +451,19 @@ module.exports.shopPackOrder = async (req, res, next) => {
         order.orderStatus = 'PACKED';
         await order.save();
 
-        // Notify Customer
-        try {
-            const Customer = require("../data/customers");
-            const customer = await Customer.findById(order.customerId);
-            if (customer) {
-                await createNotification(
-                    customer._id,
-                    "Order Packed!",
-                    `Your order #${order.orderId.slice(-6).toUpperCase()} is packed and ready at ${sellerDetails.name}. You can pick it up now.`,
-                    { type: "ORDER_UPDATE", orderId: order._id.toString() }
-                );
-            }
-        } catch (err) {
-            console.error("Notification Error:", err);
+        const { createNotification } = require("../utils/notificationHelper");
+        if (typeof createNotification === 'function') {
+            await createNotification(
+                order.customerId,
+                'ORDER_STATUS_UPDATE',
+                order._id,
+                'Order Packed',
+                `Your order ${order.orderId} is packed by the shop.`
+            );
         }
+
+        // Emit Event
+        orderBus.emit("ORDER_PACKED", order);
 
         res.status(200).json({ success: true, message: "Order marked as packed.", order });
     } catch (e) {
@@ -306,39 +471,13 @@ module.exports.shopPackOrder = async (req, res, next) => {
     }
 }
 
-// 4c. Render Order Request (Checklist for Shopkeeper)
-module.exports.renderOrderRequest = async (req, res, next) => {
-    try {
-        const { orderId } = req.params;
-        const Order = require("../data/order");
-        const Customer = require("../data/customers");
-
-        const order = await Order.findOne({ orderId })
-            .populate({
-                path: 'items.itemId',
-                select: 'img product'
-            });
-
-        if (!order) return res.status(404).render("error", { message: "Order request not found." });
-
-        const sellerDetails = await getOrderSellerDetails(order);
-        const customer = await Customer.findById(order.customerId).select('name username');
-
-        res.render("pages/orderRequest", {
-            order,
-            customer,
-            shop: sellerDetails
-        });
-    } catch (e) {
-        next(e);
-    }
-};
-
 // 5. Customer Gets their Orders & Shop Orders
 module.exports.getCustomerOrders = async (req, res, next) => {
     try {
         // Find if this user owns any shops
         const ownedShops = await Shop.find({ owner: req.user._id }).select('_id');
+        const shopIds = ownedShops.map(s => s._id);
+
         const orders = await Order.find({
             customerId: req.user._id,
             // Exclude orders that are PREPAID and still PENDING
@@ -447,9 +586,6 @@ module.exports.getShopOrders = async (req, res, next) => {
 
             return orderObj;
         }));
-
-        // Explicitly sort descending by date to guarantee newest on top
-        processedOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         const pendingCount = processedOrders.filter(o =>
             ['CREATED', 'ACCEPTED', 'READY_FOR_DELIVERY'].includes(o.orderStatus)
@@ -735,3 +871,129 @@ module.exports.resetPartnerPayout = async (req, res, next) => {
 
 // 6d. Legacy: keep old requestDelivery as alias for broadcastDelivery for backward compatibility
 module.exports.requestDelivery = module.exports.broadcastDelivery;
+
+// Cancel Order (Handles Razorpay Refunds & Inventory Restock)
+module.exports.cancelOrder = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const order = await Order.findById(id).populate('shopId');
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found." });
+        }
+
+        // Authorize: Only the Customer who placed it OR the Shop owner can cancel it
+        const isCustomer = order.customerId.equals(req.user._id);
+        const isShopOwner = order.shopId.owner.equals(req.user._id);
+        
+        if (!isCustomer && !isShopOwner) {
+            return res.status(403).json({ success: false, message: "Unauthorized to cancel this order." });
+        }
+
+        // State Check
+        const nonCancellableStates = ['PACKED', 'READY_FOR_DELIVERY', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED'];
+        if (nonCancellableStates.includes(order.orderStatus)) {
+            return res.status(400).json({ success: false, message: `Cannot cancel order in ${order.orderStatus} state.` });
+        }
+
+        // Process Razorpay Refund if Prepaid
+        if (order.paymentType === 'PREPAID' && order.paymentStatus === 'VERIFIED') {
+            if (order.razorpayPaymentId) {
+                const Razorpay = require('razorpay');
+                const rzp = new Razorpay({
+                    key_id: process.env.RAZORPAY_KEY_ID,
+                    key_secret: process.env.RAZORPAY_KEY_SECRET
+                });
+                
+                try {
+                    // Razorpay accepts amounts in paise
+                    await rzp.payments.refund(order.razorpayPaymentId, { 
+                        amount: Math.round(order.totalAmount * 100) 
+                    });
+                    order.paymentStatus = 'REFUNDED'; // Mark as refunded!
+                } catch (refundError) {
+                    console.error("Razorpay Refund Error:", refundError);
+                    return res.status(500).json({ success: false, message: "Failed to process automated refund via Razorpay. Contact support." });
+                }
+            } else {
+                 return res.status(500).json({ success: false, message: "Missing Razorpay Payment ID to process refund." });
+            }
+        }
+
+        // Restock Inventory
+        const Item = require("../data/item");
+        for (let orderItem of order.items) {
+            await Item.updateOne(
+                { _id: orderItem.itemId }, 
+                { $inc: { quantity: orderItem.quantity } }
+            );
+        }
+
+        order.orderStatus = 'CANCELLED';
+        order.cancellationReason = isCustomer ? "Cancelled by Customer" : "Cancelled by Shop";
+        await order.save();
+        
+        // Push notification (Optional)
+        const NotificationHelper = require("../utils/notificationHelper");
+        const targetUserId = isCustomer ? order.shopId.owner : order.customerId;
+        if (NotificationHelper && typeof NotificationHelper.createNotification === 'function') {
+            await NotificationHelper.createNotification(
+                targetUserId, 
+                'ORDER_STATUS_UPDATE', 
+                order._id, 
+                'Order Cancelled', 
+                `Order ${order.orderId} was cancelled.`
+            );
+        }
+
+        res.status(200).json({ success: true, message: "Order cancelled successfully.", orderStatus: order.orderStatus });
+
+    } catch (e) {
+        next(e);
+    }
+};
+
+// Fetch lightweight statuses for active orders (For polling)
+module.exports.getActiveStatuses = async (req, res, next) => {
+    try {
+        // Find active orders belonging to this user
+        const activeOrders = await Order.find({
+            customerId: req.user._id,
+            orderStatus: { $nin: ['COMPLETED', 'CANCELLED'] }
+        }).select('_id orderStatus paymentStatus');
+
+        res.status(200).json({ success: true, activeOrders });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+};
+
+// Render public order request for Shopkeepers clicking WhatsApp Links
+module.exports.renderOrderRequest = async (req, res, next) => {
+    try {
+        const { orderId } = req.params;
+        const order = await Order.findOne({ orderId }).populate('items.itemId');
+        
+        if (!order) {
+            req.flash("error", "Order not found");
+            return res.redirect("/home");
+        }
+
+        const Customer = require("../data/customers");
+        const customer = await Customer.findById(order.customerId);
+
+        const sellerDetails = await getOrderSellerDetails(order);
+        if (!sellerDetails) {
+            req.flash("error", "Shop not found");
+            return res.redirect("/home");
+        }
+
+        res.render("pages/orderRequest.ejs", { 
+            order, 
+            customer, 
+            shop: sellerDetails 
+        });
+    } catch (e) {
+        next(e);
+    }
+};

@@ -56,5 +56,11 @@ router.post("/confirm-receipt", isDeliveryPartner, catchAsync(deliveryController
 // Delivery calculation endpoint based on distance
 router.get("/api/calculate", catchAsync(deliveryController.calculateDeliveryAPI));
 
+// API: Fetch broadcast orders dynamically
+router.get("/api/available-orders", isDeliveryPartner, catchAsync(deliveryController.getAvailableOrders));
+
+// API: Accept an order
+router.post("/api/accept-order/:orderId", isDeliveryPartner, catchAsync(deliveryController.acceptOrder));
+
 module.exports = router;
 

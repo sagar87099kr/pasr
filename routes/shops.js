@@ -44,10 +44,47 @@ router.get("/shops/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
 
 // Verify Shop Action
 router.put("/shops/:id/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
-
     const { id } = req.params;
     const { verifiedBy } = req.body;
-    const shop = await Shop.findByIdAndUpdate(id, { verified: true, verifiedBy });
+    
+    // Determine if shop was previously unverified
+    const previousShopState = await Shop.findById(id);
+    const wasUnverified = !previousShopState.verified;
+
+    const shop = await Shop.findByIdAndUpdate(id, { verified: true, verifiedBy }, { new: true });
+    
+    // Broadcast notification to nearby customers (3km radius)
+    if (wasUnverified && shop.geometry && shop.geometry.coordinates && shop.geometry.coordinates.length === 2) {
+        const Customer = require("../data/customers");
+        const { createNotification } = require("../utils/notificationHelper");
+        const distanceUtil = require("../utils/distance");
+        
+        const shopLng = shop.geometry.coordinates[0];
+        const shopLat = shop.geometry.coordinates[1];
+        const imageUrl = shop.shopImage && shop.shopImage.url ? shop.shopImage.url : null;
+        
+        const allCustomers = await Customer.find({ "geometry.coordinates": { $exists: true, $ne: [] } });
+        
+        for (const customer of allCustomers) {
+            const custLng = customer.geometry.coordinates[0];
+            const custLat = customer.geometry.coordinates[1];
+            
+            const dist = distanceUtil.calculateDistance(shopLat, shopLng, custLat, custLng);
+            if (dist <= 3.0) {
+                if (typeof createNotification === 'function') {
+                    await createNotification(
+                        customer._id,
+                        'GENERAL',
+                        null,
+                        'New Shop Alert!',
+                        `This ${shop.shopName} of shop has registered to PASR!`,
+                        imageUrl
+                    );
+                }
+            }
+        }
+    }
+
     req.flash("success", "Shop verified successfully");
     res.redirect("/shops/verify");
 }));
@@ -628,6 +665,10 @@ router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, handleItem
     await newItem.save();
     await shop.save();
 
+    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+        return res.json({ success: true, message: "Item activated/added successfully", item: newItem });
+    }
+
     req.flash("success", "Item activated/added successfully");
     res.redirect(`/shops/${id}`);
 }));
@@ -702,6 +743,10 @@ router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, handleItemUpload,
     }
 
     await Item.findByIdAndUpdate(itemId, updateData);
+
+    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+        return res.json({ success: true, message: "Item updated successfully" });
+    }
 
     req.flash("success", "Item updated successfully");
     res.redirect(`/shops/${id}`);

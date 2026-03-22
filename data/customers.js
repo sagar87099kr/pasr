@@ -44,6 +44,15 @@ const customerSchema = new Schema({
       type: [Number],
     },
   },
+  savedAddresses: [{
+    label: { type: String, enum: ['Home', 'Work', 'Other'], default: 'Other' },
+    addressStr: { type: String, required: true, trim: true },
+    geometry: {
+      type: { type: String, enum: ['Point'] },
+      coordinates: { type: [Number] }
+    },
+    isDefault: { type: Boolean, default: false }
+  }],
   verified: {
     type: Boolean,
     default: true

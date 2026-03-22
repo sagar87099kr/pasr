@@ -356,7 +356,7 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Claiming...';
             try {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                const res = await fetch(`/api/orders/${orderId}/claim`, {
+                const res = await fetch(`/delivery/api/accept-order/${orderId}`, {
                     method: 'POST',
                     headers: {
                     }
@@ -518,6 +518,38 @@
                 alert(data.message || "Failed to confirm receipt.");
             }
         }
+
+        // Live Order Polling
+        let knownBroadcastCount = <%= broadcastOrders ? broadcastOrders.length : 0 %>;
+        
+        async function pollForNewOrders() {
+            // Only poll if partner is online
+            if (!statusToggle.checked) return;
+
+            try {
+                const res = await fetch('/delivery/api/available-orders');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        const currentCount = data.orders.length;
+                        if (currentCount > knownBroadcastCount) {
+                            // Automatically refresh to show the new orders instantly!
+                            location.reload();
+                        } else if (currentCount < knownBroadcastCount) {
+                            // Update internal count so we don't infinitely reload,
+                            // but optionally reload if an order we were looking at vanished
+                            knownBroadcastCount = currentCount;
+                            location.reload(); // Reload to remove it from UI
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Polling error:", err);
+            }
+        }
+        
+        // Poll every 10 seconds
+        setInterval(pollForNewOrders, 10000);
     </script>
 
     <style>

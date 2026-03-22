@@ -2206,7 +2206,29 @@
 
                         const data = await res.json();
                         if (res.ok) {
-                            window.location.reload();
+                            if (!silent) {
+                                showToast("Success! Item added to your cart.", 'success');
+                                const btn = document.getElementById('modalAddToCartBtn');
+                                if(btn) {
+                                    const origHTML = btn.innerHTML;
+                                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Added!';
+                                    btn.style.background = '#16a34a'; // Green success color
+                                    setTimeout(() => {
+                                        btn.innerHTML = origHTML;
+                                        btn.style.background = '#1e293b'; 
+                                        closeItemModal();
+                                    }, 800);
+                                }
+                                
+                                // Best effort dynamic navbar cart update
+                                const cartBages = document.querySelectorAll('.bg-danger.rounded-pill, .bg-danger.border-light.rounded-circle');
+                                cartBages.forEach(badge => {
+                                    if(badge.classList.contains('rounded-pill')) {
+                                        let count = parseInt(badge.innerText) || 0;
+                                        badge.innerText = count + 1;
+                                    }
+                                });
+                            }
                             return true;
                         } else {
                             if (res.status === 401) {
@@ -2562,6 +2584,118 @@
                         };
                         reader.onerror = reject;
                     });
+                }
+            </script>
+
+            <!-- NEW SCRIPT: Asynchronous Non-Blocking Item Upload -->
+            <script>
+                document.addEventListener("DOMContentLoaded", () => {
+                    const addItemForm = document.getElementById("createItemForm");
+                    if (addItemForm) {
+                        addItemForm.addEventListener("submit", function(e) {
+                            e.preventDefault();
+                            
+                            const submitBtn = document.getElementById("addItemSubmitBtn");
+                            if (submitBtn && submitBtn.disabled) return; // Still compressing
+                            
+                            const formData = new FormData(this);
+                            
+                            // Close modal instantly
+                            const modal = document.getElementById("addItemModal");
+                            if (modal) modal.style.display = "none";
+                            
+                            // Reset form & previews for next potential background upload
+                            this.reset();
+                            const previewContainer = document.getElementById("addFilePreviewContainer");
+                            if (previewContainer) previewContainer.style.display = "none";
+                            if (typeof window.clearSelectedImage === 'function') {
+                                window.clearSelectedImage('add');
+                            }
+                            
+                            // Show initial toast
+                            let toastId = 'upload_' + Date.now();
+                            showProgressToast(toastId, "Storing item data... 0%");
+                            
+                            const xhr = new XMLHttpRequest();
+                            xhr.open("POST", this.action, true);
+                            xhr.setRequestHeader("Accept", "application/json");
+                            
+                            xhr.upload.onprogress = function(event) {
+                                if (event.lengthComputable) {
+                                    const percent = Math.round((event.loaded / event.total) * 100);
+                                    updateProgressToast(toastId, `Storing item data... ${percent}%`);
+                                }
+                            };
+                            
+                            xhr.onload = function() {
+                                if (xhr.status >= 200 && xhr.status < 300) {
+                                    updateProgressToast(toastId, "Your item is now added! ✓", "success", true);
+                                    setTimeout(() => {
+                                        showToast("Refresh the page when you want to see the new item.", "info");
+                                    }, 2000);
+                                } else {
+                                    let msg = "Failed to add item.";
+                                    try {
+                                        const res = JSON.parse(xhr.responseText);
+                                        if (res.message) msg = res.message;
+                                    } catch(e) {}
+                                    updateProgressToast(toastId, msg, "danger", true);
+                                }
+                            };
+                            
+                            xhr.onerror = function() {
+                                updateProgressToast(toastId, "Network error. Failed to add item.", "danger", true);
+                            };
+                            
+                            xhr.send(formData);
+                        });
+                    }
+                });
+
+                // Toast Helper for Upload Progress
+                function showProgressToast(id, message) {
+                    let container = document.getElementById('toast-container');
+                    if (!container) {
+                        container = document.createElement('div');
+                        container.id = 'toast-container';
+                        container.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;';
+                        document.body.appendChild(container);
+                    }
+                    
+                    const toast = document.createElement('div');
+                    toast.id = id;
+                    toast.style.cssText = 'background: #3b82f6; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-weight: 500; font-size: 14px; transform: translateY(100%); opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); min-width: 250px; text-align: center;';
+                    toast.innerText = message;
+                    
+                    container.appendChild(toast);
+                    
+                    // Animate in
+                    requestAnimationFrame(() => {
+                        toast.style.transform = 'translateY(0)';
+                        toast.style.opacity = '1';
+                    });
+                }
+                
+                function updateProgressToast(id, message, type = "primary", autoclose = false) {
+                    const toast = document.getElementById(id);
+                    if (toast) {
+                        toast.innerText = message;
+                        if (type === "success") {
+                            toast.style.background = "#10b981";
+                        } else if (type === "danger") {
+                            toast.style.background = "#ef4444";
+                        }
+                        
+                        if (autoclose) {
+                            setTimeout(() => {
+                                toast.style.transform = 'translateY(100%)';
+                                toast.style.opacity = '0';
+                                setTimeout(() => {
+                                    if(toast.parentNode) toast.parentNode.removeChild(toast);
+                                }, 300);
+                            }, 4000);
+                        }
+                    }
                 }
             </script>
 

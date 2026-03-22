@@ -11,7 +11,25 @@ module.exports.saveCustomerToken = async (req, res) => {
         return res.status(400).json({ success: false, message: "Invalid user ID" });
     }
 
+    const customer = await Customer.findById(req.user._id);
+    const isNewSubscription = !customer.fcmToken || customer.fcmToken !== fcmToken;
+
     await Customer.findByIdAndUpdate(req.user._id, { fcmToken });
+
+    // Send Welcome Push Notification only once
+    if (isNewSubscription) {
+        const { createNotification } = require("../utils/notificationHelper");
+        if (typeof createNotification === 'function') {
+            await createNotification(
+                req.user._id,
+                'GENERAL',
+                null,
+                'Welcome to notifications!',
+                'You will now receive instant push alerts about your orders.'
+            );
+        }
+    }
+
     res.status(200).json({ success: true, message: "Customer token saved" });
 };
 
@@ -25,7 +43,25 @@ module.exports.saveShopToken = async (req, res) => {
         return res.status(400).json({ success: false, message: "Invalid user ID" });
     }
 
+    const customer = await Customer.findById(req.user._id);
+    const isNewSubscription = !customer.fcmToken || customer.fcmToken !== fcmToken;
+
     // Assuming we update the token for the Customer who owns the shop
     await Customer.findByIdAndUpdate(req.user._id, { fcmToken });
+
+    // Send Welcome Push Notification only once
+    if (isNewSubscription) {
+        const { createNotification } = require("../utils/notificationHelper");
+        if (typeof createNotification === 'function') {
+            await createNotification(
+                req.user._id,
+                'GENERAL',
+                null,
+                'Push Alerts Enabled',
+                'Awesome! You will now receive instant shop order alerts.'
+            );
+        }
+    }
+
     res.status(200).json({ success: true, message: "Shop owner token saved" });
 };

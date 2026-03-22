@@ -59,6 +59,11 @@ router.post("/admin/reset-shop-due/:shopId", isLogedin, catchAsync(orderControll
 // Admin: Reset Partner Payout
 router.post("/admin/reset-partner-payout/:partnerId", isLogedin, catchAsync(orderController.resetPartnerPayout));
 
+// API: Cancel Order (Customer or Shop)
+router.post("/:id/cancel", isLogedin, catchAsync(orderController.cancelOrder));
+
+// API: Get live active statuses for polling
+router.get("/api/my-active-status", isLogedin, catchAsync(orderController.getActiveStatuses));
 
 module.exports = router;
 

@@ -256,3 +256,42 @@ module.exports.calculateDeliveryAPI = async (req, res, next) => {
         res.status(400).json({ success: false, message: e.message });
     }
 };
+
+// Fetch available broadcast orders (for AJAX polling in dashboard)
+module.exports.getAvailableOrders = async (req, res, next) => {
+    try {
+        const broadcastOrders = await Order.find({ orderStatus: 'BROADCAST' })
+            .populate({ path: 'shopId', populate: { path: 'owner', select: 'name username' } })
+            .populate('customerId')
+            .sort({ createdAt: -1 });
+            
+        res.status(200).json({ success: true, orders: broadcastOrders });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+};
+
+// Accept an order
+module.exports.acceptOrder = async (req, res, next) => {
+    try {
+        const { orderId } = req.params;
+        const partner = req.deliveryPartner;
+
+        if (!partner.isActive || !partner.isApproved) {
+            return res.status(403).json({ success: false, message: "You must be online and approved to accept orders." });
+        }
+
+        const order = await Order.findOne({ _id: orderId, orderStatus: 'BROADCAST' });
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order is no longer available or already accepted." });
+        }
+
+        order.deliveryPartnerId = partner._id;
+        order.orderStatus = 'ASSIGNED';
+        await order.save();
+
+        res.status(200).json({ success: true, message: "Order accepted successfully!", order });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+};

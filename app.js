@@ -214,6 +214,7 @@ app.use((req, res, next) => {
   res.locals.error = req.flash("error");
   res.locals.currUser = req.user;
   res.locals.csrfToken = ""; // Placeholder for views that still expect this variable
+  res.locals.cartItemCount = (req.session && req.session.cart && req.session.cart.items) ? req.session.cart.items.length : 0;
 
   // Default SEO Tags
   res.locals.seo = {
@@ -285,4 +286,5 @@ require("./services/socketService")(io);
 
 // Initialize Services
 require("./services/notificationService");
+require("./utils/cronJobs");
 
