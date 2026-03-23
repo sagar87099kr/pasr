@@ -700,26 +700,26 @@
                                                     <% } %>
 
                                                         <!-- ⑩ Action Buttons -->
-                                                        <% const needsPayVerify=(order.paymentType==='PREPAID' &&
-                                                            order.paymentStatus==='PENDING' ); const
-                                                            needsPackAction=(order.orderStatus==='ORDER_SHARED' ); const
-                                                            needsOtpVerification=( (order.deliveryType==='SELF_PICKUP'
-                                                            || order.orderStatus==='PACKED' ) && ['PACKED', 'CREATED'
-                                                            , 'ACCEPTED' , 'READY_FOR_DELIVERY'
-                                                            ].includes(order.orderStatus) ); const needsOtpSelfDeliver=(
-                                                            order.deliveryType==='HOME_DELIVERY' &&
-                                                            order.selfDelivery===true && ['CREATED', 'ACCEPTED'
-                                                            , 'READY_FOR_DELIVERY' , 'OUT_FOR_DELIVERY'
-                                                            isDeliverableHomeOrder=(
-                                                            order.deliveryType==='HOME_DELIVERY' &&
-                                                            ['CREATED', 'ACCEPTED' , 'READY_FOR_DELIVERY'
-                                                            ].includes(order.orderStatus) && !order.selfDelivery &&
-                                                            order.orderStatus !=='BROADCAST' && !(order.partnerSnapshot
-                                                            && order.partnerSnapshot.name) ); const
-                                                            isCancellable=(['CREATED', 'ACCEPTED', 'ORDER_SHARED'].includes(order.orderStatus)); const
-                                                            hasActions=needsPayVerify || needsPackAction ||
-                                                            needsOtpVerification || needsOtpSelfDeliver ||
-                                                            isDeliverableHomeOrder || isCancellable; %>
+                                                        <%
+                                                            const needsPayVerify = (order.paymentType === 'PREPAID' && order.paymentStatus === 'PENDING');
+                                                            const needsPackAction = (order.orderStatus === 'ORDER_SHARED');
+                                                            const needsOtpVerification = (
+                                                                (order.deliveryType === 'SELF_PICKUP' || order.orderStatus === 'PACKED') && 
+                                                                ['PACKED', 'CREATED', 'ACCEPTED', 'READY_FOR_DELIVERY'].includes(order.orderStatus)
+                                                            );
+                                                            const needsOtpSelfDeliver = (
+                                                                order.deliveryType === 'HOME_DELIVERY' && order.selfDelivery === true && 
+                                                                ['CREATED', 'ACCEPTED', 'READY_FOR_DELIVERY', 'OUT_FOR_DELIVERY'].includes(order.orderStatus)
+                                                            );
+                                                            const isDeliverableHomeOrder = (
+                                                                order.deliveryType === 'HOME_DELIVERY' && 
+                                                                ['CREATED', 'ACCEPTED', 'READY_FOR_DELIVERY'].includes(order.orderStatus) && 
+                                                                !order.selfDelivery && order.orderStatus !== 'BROADCAST' && 
+                                                                !(order.partnerSnapshot && order.partnerSnapshot.name)
+                                                            );
+                                                            const isCancellable = (['CREATED', 'ACCEPTED', 'ORDER_SHARED'].includes(order.orderStatus));
+                                                            const hasActions = needsPayVerify || needsPackAction || needsOtpVerification || needsOtpSelfDeliver || isDeliverableHomeOrder || isCancellable;
+                                                        %>
                                                             <% if (hasActions) { %>
                                                                 <div class="d-flex flex-column gap-2">
 
@@ -729,11 +729,6 @@
                                                                             <i class="fa-solid fa-box-archive me-1"></i>
                                                                             Mark as Packed
                                                                         </button>
-                                                                        <a href="/api/orders/request/<%= order.orderId %>"
-                                                                            class="btn btn-outline-secondary btn-sm fw-bold">
-                                                                            <i class="fa-solid fa-list-check me-1"></i>
-                                                                            View Checklist
-                                                                        </a>
                                                                         <% } %>
 
                                                                             <% if (needsPayVerify) { %>

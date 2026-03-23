@@ -140,6 +140,8 @@
                             const type = data.type;
                             if (type === 'ORDER_RECEIVED' || type === 'ORDER_CLAIMED') {
                                 window.open('/api/orders/my-shop-orders', '_blank');
+                            } else if (type === 'GENERAL') {
+                                window.open('/user', '_blank');
                             } else {
                                 window.open('/api/orders/my-orders', '_blank');
                             }

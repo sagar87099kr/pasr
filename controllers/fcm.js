@@ -12,7 +12,7 @@ module.exports.saveCustomerToken = async (req, res) => {
     }
 
     const customer = await Customer.findById(req.user._id);
-    const isNewSubscription = !customer.fcmToken || customer.fcmToken !== fcmToken;
+    const isNewSubscription = !customer.fcmToken;
 
     await Customer.findByIdAndUpdate(req.user._id, { fcmToken });
 
@@ -44,7 +44,7 @@ module.exports.saveShopToken = async (req, res) => {
     }
 
     const customer = await Customer.findById(req.user._id);
-    const isNewSubscription = !customer.fcmToken || customer.fcmToken !== fcmToken;
+    const isNewSubscription = !customer.fcmToken;
 
     // Assuming we update the token for the Customer who owns the shop
     await Customer.findByIdAndUpdate(req.user._id, { fcmToken });

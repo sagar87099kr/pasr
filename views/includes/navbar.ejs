@@ -292,21 +292,25 @@
       headerWrapper.style.display = 'block';
       if (badge) badge.style.display = 'block';
 
-      list.innerHTML = notifications.map(n => `
-      <a href="${n.type === 'ORDER_RECEIVED' ? '/api/orders/my-shop-orders' : '/api/orders/my-orders'}" class="notification-item ${n.isRead ? '' : 'unread'}" onclick="markAsRead('${n._id}')">
+      list.innerHTML = notifications.map(n => {
+        const targetUrl = n.type === 'ORDER_RECEIVED' || n.type === 'ORDER_CLAIMED' ? '/api/orders/my-shop-orders' : (n.type === 'GENERAL' ? '/user' : '/api/orders/my-orders');
+        return `
+      <a href="${targetUrl}" class="notification-item ${n.isRead ? '' : 'unread'}" onclick="markAsRead(event, '${n._id}', '${targetUrl}')">
         <span class="notification-title">${n.title}</span>
         <span class="notification-msg">${n.message}</span>
         <span class="notification-time">${new Date(n.createdAt).toLocaleString()}</span>
       </a>
-    `).join('');
+      `}).join('');
     }
 
-    async function markAsRead(id) {
+    async function markAsRead(event, id, url) {
+      event.preventDefault();
       try {
         await fetch(`/api/notifications/mark-read/${id}`, { method: 'POST' });
       } catch (e) {
         console.error('Error marking as read:', e);
       }
+      window.location.href = url;
     }
 
     async function markAllNotificationsAsRead(e) {
