@@ -12,21 +12,35 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Force Service Worker to update and claim clients immediately
+self.addEventListener('install', (e) => {
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (e) => {
+    e.waitUntil(self.clients.claim());
+});
+
 // Handle background push notifications (when app is closed/backgrounded)
 messaging.onBackgroundMessage((payload) => {
     console.log('[firebase-messaging-sw.js] Background message received:', payload);
 
-    const title = payload.notification?.title || 'PASR Notification';
+    const data = payload.data || {};
+    const title = data.title || 'PASR Notification';
     const options = {
-        body: payload.notification?.body || '',
+        body: data.body || '',
         icon: '/images/icon.jpeg',
         badge: '/images/icon.jpeg',
-        data: payload.data || {},
+        data: data,
         vibrate: [200, 100, 200],
-        tag: payload.data?.orderId || 'pasr-notification',
+        tag: data.orderId || 'pasr-notification',
         renotify: true,
         requireInteraction: true
     };
+
+    if (data.image) {
+        options.image = data.image;
+    }
 
     self.registration.showNotification(title, options);
 });

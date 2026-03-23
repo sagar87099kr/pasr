@@ -27,13 +27,17 @@ const createNotification = async (recipientId, type, orderId, title, message, im
         if (customer && customer.fcmToken) {
             const admin = require("firebase-admin");
             const payload = {
-                notification: { title, body: message },
-                data: { orderId: String(orderId || ''), type: String(type || '') },
+                data: {
+                    title: String(title || ''),
+                    body: String(message || ''),
+                    orderId: String(orderId || ''),
+                    type: String(type || '')
+                },
                 token: customer.fcmToken
             };
 
             if (imageUrl) {
-                payload.notification.image = imageUrl;
+                payload.data.image = String(imageUrl);
             }
             try {
                 await admin.messaging().send(payload);

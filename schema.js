@@ -20,7 +20,6 @@ module.exports.customerSchema = Joi.object({
         password: Joi.string().required().min(4),
         confirm: Joi.ref("password"),
         address: Joi.string().required(),
-        pincode: Joi.number().required(),
         referralCode: Joi.string().allow("").optional()
     })
 });

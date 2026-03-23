@@ -910,11 +910,14 @@ hr {
   border-bottom: 1px solid var(--border2);
   transition: background 0.2s;
   text-decoration: none !important;
+  color: var(--text) !important;
   display: block;
 }
 
 .notification-item:hover {
   background: #f1f5f9;
+  text-decoration: none !important;
+  color: var(--text) !important;
 }
 
 .notification-item.unread {

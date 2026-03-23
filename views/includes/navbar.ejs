@@ -127,9 +127,9 @@
 
           <!-- Notifications -->
           <% if (typeof currUser !=='undefined' && currUser) { %>
-            <div class="nav-item dropdown list-unstyled mb-0 ms-1" id="notificationContainer">
+            <div class="nav-item dropdown list-unstyled mb-0 ms-1 flex-shrink-0" id="notificationContainer">
               <a class="nav-link notification-nav-item" href="#" role="button" data-bs-toggle="dropdown"
-                aria-expanded="false" id="notificationBell">
+                aria-expanded="false" id="notificationBell" data-bs-display="static">
                 <i class="fa-solid fa-bell fs-5"></i>
                 <span class="notification-badge" id="notificationBadge"></span>
               </a>
