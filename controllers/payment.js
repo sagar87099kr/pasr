@@ -10,7 +10,8 @@ module.exports.verifyPayment = async (req, res, next) => {
         const {
             razorpay_order_id,
             razorpay_payment_id,
-            razorpay_signature
+            razorpay_signature,
+            orderId
         } = req.body;
 
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -18,7 +19,7 @@ module.exports.verifyPayment = async (req, res, next) => {
         }
 
         // Verify the signature
-        const secret = process.env.RAZORPAY_KEY_SECRET;
+        const secret = (process.env.RAZORPAY_KEY_SECRET || "").trim();
 
         // Safety check: if secret is missing, fail fast with a clear error
         if (!secret) {
@@ -44,68 +45,29 @@ module.exports.verifyPayment = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "Payment verification failed. Invalid signature." });
         }
 
-        // Lookup pending order from session!
-        const orderData = req.session.pendingOrders && req.session.pendingOrders[razorpay_order_id];
-
-        if (!orderData) {
-            return res.status(404).json({ success: false, message: "Order session expired or not found." });
+        if (!orderId) {
+             return res.status(400).json({ success: false, message: "Missing Order Database Mapping." });
         }
 
-        // 1. Re-check and decrement inventory ATOMICALLY
-        const Item = require("../data/item");
-        const inventoryUpdates = [];
-        for (let item of orderData.items) {
-            const result = await Item.updateOne(
-                { _id: item.itemId, quantity: { $gte: item.quantity } },
-                { $inc: { quantity: -item.quantity } }
-            );
-            if (result.modifiedCount === 0) {
-                // Out of stock NOW! Rollback!
-                for (let revert of inventoryUpdates) {
-                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-                }
-                // Issue a refund via Razorpay!
-                const Razorpay = require('razorpay');
-                const rzp = new Razorpay({
-                    key_id: process.env.RAZORPAY_KEY_ID,
-                    key_secret: process.env.RAZORPAY_KEY_SECRET
-                });
-                await rzp.payments.refund(razorpay_payment_id, { amount: Math.round(orderData.totalAmount * 100) });
-
-                // Clear pending order
-                delete req.session.pendingOrders[razorpay_order_id];
-                req.session.save(); // Save the deletion
-                return res.status(400).json({ success: false, message: "Items sold out during payment. A refund has been issued." });
-            }
-            inventoryUpdates.push({ id: item.itemId, qty: item.quantity });
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found in database." });
         }
 
-        // 2. Create the Order Document!
-        const Order = require("../data/order");
-        orderData.paymentStatus = 'VERIFIED';
-        orderData.razorpayPaymentId = razorpay_payment_id;
-        orderData.razorpaySignature = razorpay_signature;
+        // Only update the existing database order
+        order.paymentStatus = 'VERIFIED';
+        order.razorpayPaymentId = razorpay_payment_id;
+        order.razorpaySignature = razorpay_signature;
 
-        // Remove session-only flag before saving to DB
-        const grantFreeDelivery = orderData.grantFreeDelivery;
-        delete orderData.grantFreeDelivery;
-
-        const order = new Order(orderData);
         await order.save();
 
-        if (grantFreeDelivery) {
-            const FreeDeliveryUsage = require("../data/freeDeliveryUsage");
-            await FreeDeliveryUsage.create({ mobile: String(req.user.username), usedAt: new Date() });
-        }
-
-        // 3. Clear Cart for this shop and Pending Order
+        // Remove from session cart cache so it resets cleanly
         const cart = req.session.cart;
         if (cart) {
-            cart.items = cart.items.filter(item => item.shopId !== orderData.shopId);
+            cart.items = cart.items.filter(item => String(item.shopId) !== String(order.shopId));
             cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
             cart.shopId = cart.items.length === 0 ? null : cart.shopId;
         }
-        delete req.session.pendingOrders[razorpay_order_id];
 
         // Ensure session save since we modified cart and pendingOrders
         req.session.save(async () => {
@@ -206,32 +168,13 @@ module.exports.payCommission = async (req, res) => {
             return res.redirect(`/shops/${shopId}`);
         }
 
-        const Razorpay = require('razorpay');
-        // Generate Razorpay Order
-        const rzp = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID,
-            key_secret: process.env.RAZORPAY_KEY_SECRET
-        });
-
-        const rzpOrder = await rzp.orders.create({
-            amount: Math.round(commissionAmount * 100), // convert to paise
-            currency: "INR",
-            receipt: `comm_${shopId}_${Date.now()}`
-        });
-
-        // We render a special EJS page that automatically opens the Razorpay widget to pay PASR
-        res.render("pages/payCommissionWidget", {
-            shopId: shop._id,
-            amount: commissionAmount,
-            rzpOrderId: rzpOrder.id,
-            keyId: process.env.RAZORPAY_KEY_ID,
-            userName: req.user.name || req.user.username,
-            userPhone: req.user.username
-        });
+        // Manual UPI Payment Fallback (Bypassing Razorpay due to GST Constraints)
+        req.flash("success", `Please manually pay ₹${commissionAmount} to Admin UPI ID: sagarkumarv71-1@oksbi to settle your commission.`);
+        return res.redirect(`/shops/${shopId}`);
 
     } catch (error) {
         console.error("Pay Commission Error:", error);
-        req.flash("error", "Failed to initiate payment. Please try again later.");
+        req.flash("error", "Failed to initiate manual payment. Please try again later.");
         res.redirect("back");
     }
 };
@@ -246,7 +189,7 @@ module.exports.verifyCommissionPayment = async (req, res) => {
             amount
         } = req.body;
 
-        const secret = process.env.RAZORPAY_KEY_SECRET;
+        const secret = (process.env.RAZORPAY_KEY_SECRET || "").trim();
         const generated_signature = crypto
             .createHmac('sha256', secret)
             .update(razorpay_order_id + "|" + razorpay_payment_id)
