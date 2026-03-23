@@ -113,34 +113,50 @@
             // Handle foreground messages (app open)
             messaging.onMessage((payload) => {
                 console.log('[FCM] Foreground message payload:', payload);
-                if (typeof showToast === "function") showToast('[FCM] Foreground message received!', 'info');
 
-                const title = payload.notification?.title || 'PASR';
-                const body = payload.notification?.body || '';
+                const data = payload.data || {};
+                const title = data.title || 'PASR';
+                const body = data.body || '';
 
-                // Show browser notification even when page is open
+                if (typeof showToast === "function" && body) {
+                    showToast(`${title}: ${body}`, 'info');
+                }
+
                 if (Notification.permission === 'granted') {
-                    const notif = new Notification(title, {
+                    const notifOptions = {
                         body,
                         icon: '/images/icon.jpeg',
                         badge: '/images/icon.jpeg',
-                        tag: payload.data?.orderId || 'pasr-notif',
-                        renotify: true
-                    });
-
-                    // Auto-close after 8 seconds
-                    setTimeout(() => notif.close(), 8000);
-
-                    // Handle click
-                    notif.onclick = () => {
-                        const type = payload.data?.type;
-                        if (type === 'ORDER_RECEIVED' || type === 'ORDER_CLAIMED') {
-                            window.open('/api/orders/my-shop-orders', '_blank');
-                        } else {
-                            window.open('/api/orders/my-orders', '_blank');
-                        }
-                        notif.close();
+                        tag: data.orderId || 'pasr-notif',
+                        renotify: true,
+                        data: data
                     };
+
+                    try {
+                        const notif = new Notification(title, notifOptions);
+                        setTimeout(() => notif.close(), 8000);
+
+                        notif.onclick = () => {
+                            const type = data.type;
+                            if (type === 'ORDER_RECEIVED' || type === 'ORDER_CLAIMED') {
+                                window.open('/api/orders/my-shop-orders', '_blank');
+                            } else {
+                                window.open('/api/orders/my-orders', '_blank');
+                            }
+                            notif.close();
+                        };
+                    } catch (e) {
+                         if (registration && registration.showNotification) {
+                             registration.showNotification(title, notifOptions);
+                         }
+                    }
+                }
+
+                // Update navbar bell icon badge in real-time
+                const badge = document.getElementById('notificationBadge');
+                if (badge) {
+                    badge.style.display = 'block';
+                    if (typeof fetchNotifications === 'function') fetchNotifications();
                 }
             });
 
