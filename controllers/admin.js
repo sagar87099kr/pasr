@@ -125,17 +125,32 @@ const TransactionHistory = require("../data/transactionHistory");
 // Admin Payouts Management (Restricted to 8709956547)
 module.exports.getPayoutRequests = async (req, res, next) => {
     try {
-        if (req.user.username !== '8709956547') {
+        if (String(req.user.username) !== '8709956547') {
             req.flash("error", "Unauthorized: Only the super-admin (8709956547) can manage payouts.");
-            return res.redirect("back");
+            return res.redirect("/home");
         }
 
         const requests = await TransactionHistory.find({
             type: 'PAYOUT_TO_SHOP',
             status: 'PENDING'
-        }).populate('shopId').sort({ createdAt: -1 });
+        }).populate({
+            path: 'shopId',
+            populate: { path: 'owner' }
+        }).sort({ createdAt: -1 });
 
-        res.render('pages/adminPayouts.ejs', { requests });
+        const settledRequests = await TransactionHistory.find({
+            type: 'PAYOUT_TO_SHOP',
+            status: 'SUCCESS'
+        }).populate({
+            path: 'shopId',
+            populate: { path: 'owner' }
+        }).sort({ updatedAt: -1 }).limit(100);
+
+        res.render('pages/adminPayouts.ejs', { 
+            requests,
+            settledRequests,
+            containerClass: 'container-fluid mt-4 px-4'
+        });
     } catch (e) {
         next(e);
     }
@@ -143,7 +158,7 @@ module.exports.getPayoutRequests = async (req, res, next) => {
 
 module.exports.approvePayout = async (req, res, next) => {
     try {
-        if (req.user.username !== '8709956547') {
+        if (String(req.user.username) !== '8709956547') {
             return res.status(403).json({ success: false, message: "Unauthorized." });
         }
 

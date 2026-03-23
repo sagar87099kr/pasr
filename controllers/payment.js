@@ -168,9 +168,27 @@ module.exports.payCommission = async (req, res) => {
             return res.redirect(`/shops/${shopId}`);
         }
 
-        // Manual UPI Payment Fallback (Bypassing Razorpay due to GST Constraints)
-        req.flash("success", `Please manually pay ₹${commissionAmount} to Admin UPI ID: sagarkumarv71-1@oksbi to settle your commission.`);
-        return res.redirect(`/shops/${shopId}`);
+        // Generate Razorpay Order
+        const Razorpay = require('razorpay');
+        const rzp = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET
+        });
+
+        const rpOrder = await rzp.orders.create({
+            amount: Math.round(commissionAmount * 100), // paise
+            currency: "INR",
+            receipt: `commission_rcpt_${Date.now()}`
+        });
+
+        return res.render('pages/payCommissionWidget.ejs', {
+            keyId: process.env.RAZORPAY_KEY_ID,
+            rzpOrderId: rpOrder.id,
+            amount: commissionAmount,
+            shopId: shop._id,
+            userName: req.user.name || req.user.username || "Shop Owner",
+            userPhone: req.user.username || ""
+        });
 
     } catch (error) {
         console.error("Pay Commission Error:", error);

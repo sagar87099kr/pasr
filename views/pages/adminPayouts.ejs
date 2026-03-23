@@ -1,33 +1,38 @@
 <% layout('/layoutes/boilerplate') -%>
 
     <style>
-        .admin-payouts {
+        /* Modern generic admin layout matching adminOrders.ejs */
+        .admin-dashboard {
             width: 100% !important;
             max-width: 100% !important;
             padding: 0 1rem !important;
+            flex: 1 1 auto;
         }
 
-        .payout-card {
-            border-radius: 12px;
-            transition: transform 0.2s;
+        .admin-dashboard .row {
+            width: 100%;
+            margin: 0;
         }
 
-        .payout-card:hover {
-            transform: translateY(-5px);
+        .admin-dashboard .card {
+            padding: initial !important;
+            border: none !important;
+            border-radius: 12px !important;
+            margin: 0 !important;
+            background-color: #fff;
         }
 
-        .status-pending {
-            background-color: #fff3cd;
-            color: #856404;
+        .admin-dashboard .card-header {
+            background-color: #fff !important;
         }
 
-        .status-success {
-            background-color: #d4edda;
-            color: #155724;
+        .admin-dashboard .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
     </style>
 
-    <div class="admin-payouts w-100 mt-4 mb-5">
+    <div class="admin-dashboard w-100 mt-4 mb-5">
         <div class="row mb-4 align-items-center">
             <div class="col-md-6">
                 <h2 class="fw-bold"><i class="fa-solid fa-money-bill-transfer text-success me-2"></i> Payout Requests
@@ -36,70 +41,197 @@
             </div>
             <div class="col-md-6 text-md-end">
                 <button class="btn btn-outline-secondary" onclick="window.location.reload()">
-                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                    <i class="fa-solid fa-rotate-right"></i> Refresh Data
                 </button>
             </div>
         </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="card-title fw-bold mb-0">Pending Payouts</h5>
+                <span class="badge bg-warning text-dark rounded-pill">
+                    <%= requests.length %> Pending
+                </span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.9rem;">
                         <thead class="table-light">
                             <tr>
-                                <th class="ps-3">Date</th>
-                                <th>Shop</th>
-                                <th>UPI ID</th>
-                                <th>Amount</th>
-                                <th>Orders Count</th>
-                                <th class="text-center">Action</th>
+                                <th scope="col" class="ps-3 py-3">Shop & Owner</th>
+                                <th scope="col" class="py-3">Payout Details</th>
+                                <th scope="col" class="py-3 d-none d-md-table-cell">Request Info</th>
+                                <th scope="col" class="pe-3 py-3 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <% if (requests && requests.length> 0) { %>
                                 <% requests.forEach(req=> { %>
                                     <tr id="payout-row-<%= req._id %>">
+                                        
+                                        <!-- Shop & Owner Column -->
                                         <td class="ps-3">
-                                            <%= new Date(req.createdAt).toLocaleDateString('en-IN') %>
-                                        </td>
-                                        <td>
-                                            <div class="fw-bold">
-                                                <%= req.shopId ? req.shopId.shopName : 'Unknown' %>
+                                            <div class="fw-bold text-primary">
+                                                <i class="fa-solid fa-store me-1 text-muted"></i>
+                                                <%= req.shopId ? req.shopId.shopName : 'Unknown Shop' %>
                                             </div>
-                                            <div class="text-muted small">ID: <%= req.shopId ? req.shopId._id : 'N/A' %>
+                                            <% if (req.shopId && req.shopId.owner) { %>
+                                                <div class="fw-semibold small mt-1">
+                                                    <%= req.shopId.owner.name || "Unknown Owner" %>
+                                                </div>
+                                                <div class="text-muted small mt-1">
+                                                    <i class="fa-solid fa-phone me-1"></i> <%= req.shopId.owner.username %>
+                                                </div>
+                                            <% } else { %>
+                                                <div class="text-muted small fst-italic mt-1">No Owner Data</div>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Payout Details Column -->
+                                        <% 
+                                            const upiId = req.metadata ? req.metadata.upiId : ''; 
+                                            const shopNameStr = req.shopId ? req.shopId.shopName : 'Pasr Merchant';
+                                            const amountStr = req.amount;
+                                        %>
+                                        <td>
+                                            <div class="fw-bold text-success fs-5">₹<%= amountStr %></div>
+                                            <% if (upiId) { %>
+                                                <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                                                    <div class="bg-light border rounded px-2 py-1 user-select-all font-monospace small"><%= upiId %></div>
+                                                    <button class="btn btn-sm btn-outline-secondary p-1 px-2" title="Copy UPI ID"
+                                                        onclick="navigator.clipboard.writeText('<%= upiId %>'); alert('UPI ID copied!');">
+                                                        <i class="fa-regular fa-copy"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-primary p-1 px-2" title="View QR Code"
+                                                        onclick="showQRCode('<%= upiId %>', '<%= shopNameStr %>', '<%= amountStr %>')">
+                                                        <i class="fa-solid fa-qrcode"></i> QR
+                                                    </button>
+                                                </div>
+                                            <% } else { %>
+                                                <span class="badge bg-danger">No UPI Configured</span>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Request Info Column -->
+                                        <td class="d-none d-md-table-cell">
+                                            <div class="fw-semibold text-dark">
+                                                <i class="fa-solid fa-box text-muted me-1"></i> <%= req.metadata && req.metadata.ordersSettled ? req.metadata.ordersSettled.length : 0 %> Orders Settled
+                                            </div>
+                                            <div class="text-muted small mt-2">
+                                                <i class="fa-regular fa-calendar me-1"></i> <%= new Date(req.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'short' }) %>
                                             </div>
                                         </td>
-                                        <td>
-                                            <code><%= req.metadata ? req.metadata.upiId : 'N/A' %></code>
-                                            <button class="btn btn-sm btn-link"
-                                                onclick="navigator.clipboard.writeText('<%= req.metadata.upiId %>')">
-                                                <i class="fa-regular fa-copy"></i>
-                                            </button>
+
+                                        <!-- Actions Column -->
+                                        <td class="pe-3 text-center">
+                                            <div class="d-flex flex-column gap-2 justify-content-center align-items-stretch">
+                                                <button class="btn btn-success btn-sm btn-approve fw-bold" data-id="<%= req._id %>">
+                                                    <i class="fa-solid fa-check-circle me-1"></i> Mark as Paid
+                                                </button>
+                                                
+                                                <% if (req.shopId && req.shopId.owner && req.shopId.owner.username) { %>
+                                                    <a href="https://wa.me/91<%= req.shopId.owner.username %>?text=Hello <%= encodeURIComponent(req.shopId.owner.name || 'Merchant') %>, your PASR pending payout of ₹<%= amountStr %> has been successfully transferred to your UPI ID <%= encodeURIComponent(upiId) %>. Please find the payment screenshot attached." 
+                                                       target="_blank" 
+                                                       class="btn btn-outline-success btn-sm">
+                                                        <i class="fa-brands fa-whatsapp fs-6 me-1"></i> Send Receipt
+                                                    </a>
+                                                <% } %>
+                                            </div>
                                         </td>
-                                        <td class="fw-bold text-success">₹<%= req.amount %>
-                                        </td>
-                                        <td>
-                                            <%= req.metadata && req.metadata.ordersSettled ?
-                                                req.metadata.ordersSettled.length : 0 %>
-                                        </td>
-                                        <td class="text-center">
-                                            <button class="btn btn-success btn-sm btn-approve" data-id="<%= req._id %>">
-                                                Mark as Paid
-                                            </button>
-                                        </td>
+
                                     </tr>
                                     <% }) %>
-                                        <% } else { %>
-                                            <tr>
-                                                <td colspan="6" class="text-center py-5 text-muted">
-                                                    <i class="fa-solid fa-check-circle fs-2 mb-2"></i>
-                                                    <p>No pending payout requests!</p>
-                                                </td>
-                                            </tr>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="4" class="text-center py-5 text-muted">
+                                            <i class="fa-solid fa-money-check-dollar fs-1 mb-3 opacity-25"></i>
+                                            <p class="mb-0">No pending payout requests await action.</p>
+                                        </td>
+                                    </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settled Payouts History -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title fw-bold mb-0 text-success"><i class="fa-solid fa-clock-rotate-left me-2"></i>Recently Settled Payouts</h5>
+                <span class="badge bg-success rounded-pill">
+                    <%= settledRequests && settledRequests.length ? settledRequests.length : 0 %> Logged
+                </span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.9rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="ps-3 py-3">Shop & Owner</th>
+                                <th scope="col" class="py-3">Payout Details</th>
+                                <th scope="col" class="py-3 d-none d-md-table-cell">Request Info</th>
+                                <th scope="col" class="pe-3 py-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (settledRequests && settledRequests.length > 0) { %>
+                                <% settledRequests.forEach(req => { %>
+                                    <tr>
+                                        <!-- Shop & Owner Column -->
+                                        <td class="ps-3">
+                                            <div class="fw-bold text-dark">
+                                                <i class="fa-solid fa-store me-1 text-muted"></i>
+                                                <%= req.shopId ? req.shopId.shopName : 'Unknown Shop' %>
+                                            </div>
+                                            <% if (req.shopId && req.shopId.owner) { %>
+                                                <div class="fw-semibold small mt-1">
+                                                    <%= req.shopId.owner.name || "Unknown Owner" %>
+                                                </div>
+                                                <div class="text-muted small mt-1">
+                                                    <i class="fa-solid fa-phone me-1"></i> <%= req.shopId.owner.username %>
+                                                </div>
                                             <% } %>
+                                        </td>
+
+                                        <!-- Payout Details Column -->
+                                        <% 
+                                            const upiId = req.metadata ? req.metadata.upiId : ''; 
+                                            const amountStr = req.amount;
+                                        %>
+                                        <td>
+                                            <div class="fw-bold text-success fs-5">₹<%= amountStr %></div>
+                                            <% if (upiId) { %>
+                                                <div class="mt-1 text-muted font-monospace small"><%= upiId %></div>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Request Info Column -->
+                                        <td class="d-none d-md-table-cell">
+                                            <div class="fw-semibold text-dark">
+                                                <i class="fa-solid fa-box text-muted me-1"></i> <%= req.metadata && req.metadata.ordersSettled ? req.metadata.ordersSettled.length : 0 %> Orders Settled
+                                            </div>
+                                            <div class="text-muted small mt-2">
+                                                <i class="fa-regular fa-calendar-check me-1 text-success"></i> Settled: <%= new Date(req.updatedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'short' }) %>
+                                            </div>
+                                        </td>
+
+                                        <!-- Status Column -->
+                                        <td class="pe-3 text-center">
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2">
+                                                <i class="fa-solid fa-check-double me-1"></i> PAID
+                                            </span>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-file-invoice-dollar fs-1 mb-3 opacity-25"></i>
+                                        <p class="mb-0">No historical settled payouts exist yet.</p>
+                                    </td>
+                                </tr>
+                            <% } %>
                         </tbody>
                     </table>
                 </div>
@@ -107,11 +239,43 @@
         </div>
     </div>
 
+    <!-- QR Code Modal -->
+    <div class="modal fade" id="qrCodeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold">Pay via UPI</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center pt-2 pb-4">
+                    <p class="text-muted small mb-3">Scan this QR to pay <strong id="qrAmountDisplay" class="text-success"></strong> directly to <strong id="qrNameDisplay"></strong></p>
+                    <div class="bg-light p-3 rounded-3 d-inline-block border">
+                        <img id="qrCodeImage" src="" alt="UPI QR Code" class="img-fluid" style="width: 200px; height: 200px;" />
+                    </div>
+                    <div class="mt-3 font-monospace small user-select-all" id="qrUpiDisplay"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function showQRCode(upiId, shopName, amount) {
+            // Generate standard UPI Intent URL
+            const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(shopName)}&am=${amount}&cu=INR`;
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUrl)}`;
+            
+            document.getElementById('qrCodeImage').src = qrImageUrl;
+            document.getElementById('qrAmountDisplay').innerText = `₹${amount}`;
+            document.getElementById('qrNameDisplay').innerText = shopName;
+            document.getElementById('qrUpiDisplay').innerText = upiId;
+            
+            new bootstrap.Modal(document.getElementById('qrCodeModal')).show();
+        }
+
         document.querySelectorAll('.btn-approve').forEach(btn => {
             btn.addEventListener('click', async function () {
                 const id = this.getAttribute('data-id');
-                if (!confirm('Are you sure you have manually transferred the money to this UPI ID?')) return;
+                if (!confirm('Are you certain you have successfully transferred the money? This will clear the pending request permanently!')) return;
 
                 try {
                     const res = await fetch(`/admin/payouts/${id}/approve`, {
@@ -121,7 +285,8 @@
                     const data = await res.json();
 
                     if (data.success) {
-                        document.getElementById(`payout-row-${id}`).remove();
+                        const row = document.getElementById(`payout-row-${id}`);
+                        if (row) row.remove();
                         alert('Payout marked as settled successfully!');
                     } else {
                         alert(data.message || 'Failed to approve payout.');
