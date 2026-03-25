@@ -2197,7 +2197,7 @@
                     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processing...';
                     btn.disabled = true;
 
-                    await orderNow(
+                    const success = await orderNow(
                         btn.getAttribute('data-itemid'),
                         btn.getAttribute('data-name'),
                         btn.getAttribute('data-img'),
@@ -2206,8 +2206,10 @@
                         btn.getAttribute('data-shopname')
                     );
                     
-                    btn.innerHTML = originalHtml;
-                    btn.disabled = false;
+                    if (!success) {
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                    }
                 });
 
                 async function addToCart(itemId, name, imgUrl, price, shopId, shopName, silent = false) {
@@ -2227,12 +2229,12 @@
                                 showToast("Success! Item added to your cart.", 'success');
                                 const btn = document.getElementById('modalAddToCartBtn');
                                 if(btn) {
-                                    const origHTML = btn.innerHTML;
                                     btn.innerHTML = '<i class="fa-solid fa-check"></i> Added!';
                                     btn.style.background = '#16a34a'; // Green success color
                                     setTimeout(() => {
-                                        btn.innerHTML = origHTML;
+                                        btn.innerHTML = '<i class="fa-solid fa-cart-plus"></i> <span class="btn-text">Add to Cart</span>';
                                         btn.style.background = '#1e293b'; 
+                                        btn.disabled = false;
                                         closeItemModal();
                                     }, 800);
                                 }
@@ -2263,8 +2265,9 @@
                 }
 
                 function orderNow(itemId, name, imgUrl, price, shopId, shopName) {
-                    addToCart(itemId, name, imgUrl, price, shopId, shopName, true).then((success) => {
+                    return addToCart(itemId, name, imgUrl, price, shopId, shopName, true).then((success) => {
                         if (success) window.location.href = '/api/cart';
+                        return success;
                     });
                 }
 
