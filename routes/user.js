@@ -6,7 +6,7 @@ const Product = require("../data/product.js");
 const Shop = require("../data/shops.js");
 const KeshanSabhaPost = require("../data/keshanSabhaPost.js");
 const passport = require("passport");
-const { validatecustomer, saveRedirectUrl, isLogedin, isadmin } = require("../middeleware.js");
+const { validatecustomer, saveRedirectUrl, isLogedin, isadmin, isLoggedOut } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const userController = require("../controllers/user.js");
 const { forwardGeocode } = require("../utils/geocoder");
@@ -27,14 +27,18 @@ async function generateReferralCode() {
 }
 
 
+// login route for all // login route for all 
+router.get("/login", isLoggedOut, (req, res) => {
+    res.redirect("/alreadyLogin");
+});
+
 // login route for all 
-// login route for all 
-router.get("/signup", (req, res) => {
+router.get("/signup", isLoggedOut, (req, res) => {
     res.redirect("/customer/signup");
 });
 
 // login route for customer.
-router.get("/customer/signup", (req, res) => {
+router.get("/customer/signup", isLoggedOut, (req, res) => {
     res.render("pages/customer.ejs");
 });
 
@@ -81,7 +85,7 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
 }));
 
 // STEP 2a: Show OTP verification page
-router.get("/customer/verify-otp", (req, res) => {
+router.get("/customer/verify-otp", isLoggedOut, (req, res) => {
     if (!req.session.pendingSignup) {
         req.flash("danger", "Session expired. Please fill the signup form again.");
         return res.redirect("/customer/signup");
@@ -172,7 +176,7 @@ router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
 
 
 // If a person has already logedin before and trying to re login for that is this the route
-router.get("/alreadyLogin", (req, res) => {
+router.get("/alreadyLogin", isLoggedOut, (req, res) => {
     if (req.query.redirect) {
         req.session.redirectUrl = req.query.redirect;
     }
@@ -220,7 +224,7 @@ router.get("/logout", (req, res, next) => {
 const crypto = require("crypto");
 
 // GET: Show "enter your WhatsApp number" form
-router.get("/forgot-password", (req, res) => {
+router.get("/forgot-password", isLoggedOut, (req, res) => {
     res.render("pages/forgotPassword.ejs");
 });
 

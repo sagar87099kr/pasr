@@ -400,7 +400,11 @@
                             return true;
                         } else {
                             if (res.status === 401) {
-                                window.location.href = '/login';
+                                if (typeof window.showLoginModal === 'function') {
+                                    window.showLoginModal();
+                                } else {
+                                    window.location.href = '/login';
+                                }
                             } else {
                                 showToast(data.message || 'Failed to add', 'danger');
                             }

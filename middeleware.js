@@ -11,8 +11,29 @@ module.exports.isLogedin = (req, res, next) => {
     if (!req.isAuthenticated()) {
 
         req.session.redirectUrl = req.originalUrl;
+        
+        // Return 401 JSON for AJAX/fetch requests (usually non-GET APIs or explicit JSON accept)
+        // We skip this for GET requests since /api/cart is rendered as an HTML page.
+        const isApiRequest = req.originalUrl.startsWith("/api/") && req.method !== 'GET';
+        if (isApiRequest || req.xhr || req.headers.accept?.includes('application/json') || req.headers.accept?.includes('*/*') && req.method !== 'GET') {
+            return res.status(401).json({ success: false, message: "Please login to continue", redirect: "?showLogin=true" });
+        }
+        
         req.flash("danger", "please login or signup to see all services");
-        return res.redirect("/alreadyLogin");
+        let ref = req.get('Referrer') || '/home';
+        if (ref.includes('/alreadyLogin') || ref.includes('/login') || ref.includes('/cart') || ref.includes('/checkout')) {
+            ref = '/home';
+        }
+        const separator = ref.includes('?') ? '&' : '?';
+        return res.redirect(ref + separator + "showLogin=true");
+    }
+    next();
+}
+
+module.exports.isLoggedOut = (req, res, next) => {
+    if (req.isAuthenticated()) {
+        req.flash("success", "You are already logged in");
+        return res.redirect("/home");
     }
     next();
 }

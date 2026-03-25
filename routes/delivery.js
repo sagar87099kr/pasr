@@ -5,11 +5,11 @@ const passport = require("passport");
 const deliveryController = require("../controllers/delivery");
 const multer = require("multer");
 const { storage } = require("../cloud_con.js");
-const { isLogedin, isDeliveryPartner, validateDeliveryPartner } = require("../middeleware.js");
+const { isLogedin, isDeliveryPartner, validateDeliveryPartner, isLoggedOut } = require("../middeleware.js");
 const upload = multer({ storage });
 
 // Login (Uses Standard Passport Strategy)
-router.get("/login", deliveryController.renderLoginForm);
+router.get("/login", isLoggedOut, deliveryController.renderLoginForm);
 router.post("/login",
 
     passport.authenticate("local", {

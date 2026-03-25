@@ -657,6 +657,32 @@
                                 });
                             });
                         </script>
+                        <script>
+                            window.showLoginModal = function() {
+                                const modalEl = document.getElementById('welcomeSignupModal');
+                                if (modalEl) {
+                                    let modalInstance = bootstrap.Modal.getInstance(modalEl);
+                                    if (!modalInstance) {
+                                        modalInstance = new bootstrap.Modal(modalEl);
+                                    }
+                                    modalInstance.show();
+                                }
+                            };
+
+                            document.addEventListener("DOMContentLoaded", () => {
+                                const urlParams = new URLSearchParams(window.location.search);
+                                if (urlParams.get('showLogin') === 'true') {
+                                    window.showLoginModal();
+                                    // Remove param from URL without refreshing
+                                    urlParams.delete('showLogin');
+                                    let newUrl = window.location.pathname;
+                                    if (urlParams.toString().length > 0) {
+                                        newUrl += '?' + urlParams.toString();
+                                    }
+                                    window.history.replaceState({}, document.title, newUrl);
+                                }
+                            });
+                        </script>
                         <% } %>
                             <!-- Toast Notification Container -->
                             <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">

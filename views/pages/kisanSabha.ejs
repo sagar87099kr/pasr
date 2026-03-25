@@ -647,7 +647,14 @@
                                     this.style.color = '#666';
                                 }
                             } else {
-                                if (res.status === 401) alert("Please log in to like posts.");
+                                if (res.status === 401) {
+                                    if (typeof window.showLoginModal === 'function') {
+                                        window.showLoginModal();
+                                    } else {
+                                        window.location.href = '/login';
+                                    }
+                                    return;
+                                }
                             }
                         } catch (e) {
                             console.error(e);
