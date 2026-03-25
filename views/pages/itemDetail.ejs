@@ -125,9 +125,11 @@
     </div>
     
     <% if (item.quantity > 0) { %>
-        <form action="/api/cart/add" method="POST" class="add-to-cart-form">
+        <form id="itemDetailCartForm" class="add-to-cart-form">
             <input type="hidden" name="itemId" value="<%= item._id %>">
             <input type="hidden" name="shopId" value="<%= shop._id %>">
+            <input type="hidden" name="itemImage" value="<%= itemImg %>">
+            <input type="hidden" name="shopName" value="<%= shop.shopName %>">
             
             <div class="d-flex align-items-center gap-3 mb-4 p-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
                 <label for="quantity" style="font-weight: 600; color: #334155; margin: 0; white-space: nowrap;">Quantity</label>
@@ -135,10 +137,78 @@
                 <span style="font-size: 13px; color: #64748b; font-weight: 500;">(Available: <%= item.quantity %>)</span>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 py-3 d-flex justify-content-center align-items-center shadow-sm" style="font-weight:800; font-size:17px; border-radius:12px; background: #6366f1; border-color: #6366f1; transition: all 0.2s;">
-                <i class="fa-solid fa-cart-shopping me-2"></i> Add to Cart
-            </button>
+            <div class="d-flex gap-2">
+                <button type="button" id="itemAddToCartBtn" class="btn btn-primary w-100 py-3 d-flex justify-content-center align-items-center shadow-sm" style="font-weight:800; font-size:17px; border-radius:12px; background: #6366f1; border-color: #6366f1; transition: all 0.2s;">
+                    <i class="fa-solid fa-cart-shopping me-2"></i> <span class="btn-text">Add to Cart</span>
+                </button>
+                <button type="button" id="itemBuyNowBtn" class="btn btn-success w-100 py-3 d-flex justify-content-center align-items-center shadow-sm" style="font-weight:800; font-size:17px; border-radius:12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; transition: all 0.2s;">
+                    <i class="fa-solid fa-bolt me-2"></i> <span class="btn-text">Buy Now</span>
+                </button>
+            </div>
         </form>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const form = document.getElementById('itemDetailCartForm');
+                const addBtn = document.getElementById('itemAddToCartBtn');
+                const buyBtn = document.getElementById('itemBuyNowBtn');
+
+                async function submitCart(isBuyNow) {
+                    const btn = isBuyNow ? buyBtn : addBtn;
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> ${isBuyNow ? 'Processing...' : 'Adding...'}`;
+                    btn.disabled = true;
+                    if (!isBuyNow) buyBtn.disabled = true;
+                    if (isBuyNow) addBtn.disabled = true;
+
+                    try {
+                        const formData = new FormData(form);
+                        const payload = Object.fromEntries(formData.entries());
+                        const res = await fetch('/api/cart/add', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const data = await res.json();
+                        if (res.ok) {
+                            if (isBuyNow) {
+                                window.location.href = '/api/cart';
+                            } else {
+                                btn.innerHTML = '<i class="fa-solid fa-check me-2"></i> Added!';
+                                btn.style.background = '#16a34a';
+                                setTimeout(() => {
+                                    btn.innerHTML = originalHtml;
+                                    btn.style.background = '';
+                                    btn.disabled = false;
+                                    buyBtn.disabled = false;
+                                }, 1000);
+                            }
+                        } else {
+                            if (res.status === 401) {
+                                window.location.href = '/login';
+                            } else {
+                                alert(data.message || "Failed to add to cart");
+                                btn.innerHTML = originalHtml;
+                                btn.disabled = false;
+                                buyBtn.disabled = false;
+                                addBtn.disabled = false;
+                            }
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert("Error adding to cart");
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                        buyBtn.disabled = false;
+                        addBtn.disabled = false;
+                    }
+                }
+
+                addBtn.addEventListener('click', () => submitCart(false));
+                buyBtn.addEventListener('click', () => submitCart(true));
+            });
+        </script>
     <% } else { %>
         <button class="btn btn-secondary w-100 py-3 d-flex justify-content-center align-items-center" disabled style="font-weight:800; font-size:17px; border-radius:12px; background: #9ca3af; border-color: #9ca3af;">
             <i class="fa-solid fa-ban me-2"></i> Currently Out of Stock

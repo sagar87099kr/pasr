@@ -138,7 +138,7 @@ router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
                     newCustomer.coins = 5; // Reward new user
 
                     // Reward referrer
-                    referrer.coins = (referrer.coins || 0) + 5;
+                    referrer.coins = (referrer.coins || 0) + 10;
                     referrer.referralCount = (referrer.referralCount || 0) + 1;
                     await referrer.save();
                     
@@ -317,7 +317,27 @@ router.get("/user", isLogedin, saveRedirectUrl, wrapAsync(async (req, res) => {
     const shops = await Shop.find({ owner: req.user._id });
     const kisanPosts = await KeshanSabhaPost.find({ author: req.user._id }).sort({ createdAt: -1 });
     const deliveryPartner = await DeliveryPartner.findOne({ user: req.user._id });
-    res.render("pages/provider_profile.ejs", { listings, products, shops, kisanPosts, deliveryPartner });
+
+    // Calculate Referral Leaderboard Top 3
+    const top3Referrals = await Customer.find({ referralCount: { $gt: 0 } })
+        .sort({ referralCount: -1, createdAt: 1 })
+        .limit(3)
+        .lean();
+
+    // Calculate current user rank
+    const userReferralCount = req.user.referralCount || 0;
+    const higherRankUsersCount = await Customer.countDocuments({
+        $or: [
+            { referralCount: { $gt: userReferralCount } },
+            { 
+                referralCount: userReferralCount,
+                createdAt: { $lt: req.user.createdAt }
+            }
+        ]
+    });
+    const currentUserRank = higherRankUsersCount + 1;
+
+    res.render("pages/provider_profile.ejs", { listings, products, shops, kisanPosts, deliveryPartner, top3Referrals, currentUserRank });
 }));
 
 // these are verification route for customers 

@@ -380,6 +380,8 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
         const filteredMergedItems = mergedItems
             .filter(item => {
                 const hasImg = (item.img && item.img.url) || (item.product && item.product.img && item.product.img.url);
+                // The user requested not to show pre-populated 0 price and 0 quantity items directly
+                if (item.price === 0 && item.quantity === 0) return false;
                 return !!hasImg;
             })
             .sort((a, b) => {

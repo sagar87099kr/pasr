@@ -2040,17 +2040,16 @@
                         </div>
                         <div class="item-modal-footer-buttons">
                             <% if (typeof currUser !=='undefined' && currUser) { %>
-                                <button id="modalAddToCartBtn" class="item-modal-action-btn"
-                                    style="background: #1e293b; width: 100%; justify-content: center;">
-                                    <i class="fa-solid fa-cart-plus"></i> Add to Cart
-                                </button>
-                                <!-- Order Now temporarily disabled -->
-                                <!-- 
-                                <button id="modalOrderNowBtn" class="item-modal-action-btn"
-                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                    <i class="fa-solid fa-bolt"></i> Order
-                                </button>
-                                -->
+                                <div style="display: flex; gap: 10px; width: 100%;">
+                                    <button id="modalAddToCartBtn" class="item-modal-action-btn"
+                                        style="background: #1e293b; justify-content: center; flex: 1;">
+                                        <i class="fa-solid fa-cart-plus"></i> <span class="btn-text">Add to Cart</span>
+                                    </button>
+                                    <button id="modalOrderNowBtn" class="item-modal-action-btn"
+                                        style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); justify-content: center; flex: 1;">
+                                        <i class="fa-solid fa-bolt"></i> <span class="btn-text">Buy Now</span>
+                                    </button>
+                                </div>
                                 <% } else { %>
                                     <a href="/alreadyLogin?redirect=/shops/<%= shop._id %>"
                                         class="item-modal-action-btn"
@@ -2171,26 +2170,44 @@
                 }
 
                 // Attach event listeners outside the open function to prevent duplicate bindings or closures capturing old variables
-                document.getElementById('modalAddToCartBtn')?.addEventListener('click', function () {
-                    addToCart(
-                        this.getAttribute('data-itemid'),
-                        this.getAttribute('data-name'),
-                        this.getAttribute('data-img'),
-                        this.getAttribute('data-price'),
-                        this.getAttribute('data-shopid'),
-                        this.getAttribute('data-shopname')
+                document.getElementById('modalAddToCartBtn')?.addEventListener('click', async function () {
+                    const btn = this;
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Adding...';
+                    btn.disabled = true;
+
+                    const success = await addToCart(
+                        btn.getAttribute('data-itemid'),
+                        btn.getAttribute('data-name'),
+                        btn.getAttribute('data-img'),
+                        btn.getAttribute('data-price'),
+                        btn.getAttribute('data-shopid'),
+                        btn.getAttribute('data-shopname')
                     );
+
+                    if (!success) {
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                    }
                 });
 
-                document.getElementById('modalOrderNowBtn')?.addEventListener('click', function () {
-                    orderNow(
-                        this.getAttribute('data-itemid'),
-                        this.getAttribute('data-name'),
-                        this.getAttribute('data-img'),
-                        this.getAttribute('data-price'),
-                        this.getAttribute('data-shopid'),
-                        this.getAttribute('data-shopname')
+                document.getElementById('modalOrderNowBtn')?.addEventListener('click', async function () {
+                    const btn = this;
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processing...';
+                    btn.disabled = true;
+
+                    await orderNow(
+                        btn.getAttribute('data-itemid'),
+                        btn.getAttribute('data-name'),
+                        btn.getAttribute('data-img'),
+                        btn.getAttribute('data-price'),
+                        btn.getAttribute('data-shopid'),
+                        btn.getAttribute('data-shopname')
                     );
+                    
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
                 });
 
                 async function addToCart(itemId, name, imgUrl, price, shopId, shopName, silent = false) {

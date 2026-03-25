@@ -562,17 +562,14 @@
                                                 <button class="btn btn-primary checkout-btn cod-btn"
                                                     data-shopid="<%= shopId %>" <%=group.subtotal>= 1000 ?
                                                     'style="display:none"' : '' %>>
-                                                    <i class="fa-solid fa-money-bill me-1"></i> COD
+                                                    <i class="fa-solid fa-money-bill me-1"></i> <span class="cod-btn-text">Pay Cash</span>
                                                     <span
-                                                        class="badge bg-success-subtle text-success border border-success-subtle ms-2 <%= group.subtotal >= 1000 ? 'd-none' : '' %>"
-                                                        style="font-size: 10px;">COD
-                                                        Available</span>
+                                                        class="badge bg-success-subtle text-success border border-success-subtle ms-2 cod-avail-badge <%= group.subtotal >= 1000 ? 'd-none' : '' %>"
+                                                        style="font-size: 10px;">Cash Accepted</span>
                                                 </button>
                                                 <small
                                                     class="text-danger d-block text-center mt-1 cod-limit-msg <%= group.subtotal >= 1000 ? '' : 'd-none' %>"
-                                                    style="font-size: 10px;">COD
-                                                    not available for ₹1000+
-                                                    orders</small>
+                                                    style="font-size: 10px;"><span class="cod-limit-text">Cash payment</span> not available for ₹1000+ orders</small>
 
                                             </div>
                                         </div>
@@ -736,7 +733,9 @@
                     section.dataset.deliveryType = 'SELF_PICKUP';
                     section.dataset.deliveryOk = 'true';
                     const subtotalEl = section.querySelector('.summary-row span:last-child');
-                    section.dataset.total = subtotalEl ? subtotalEl.innerText.replace('₹', '') : '0';
+                    const subtotal = subtotalEl ? subtotalEl.innerText.replace('₹', '') : '0';
+                    section.dataset.total = subtotal;
+                    updateCodVisibility(section.id.replace('shop-section-', ''), parseFloat(subtotal));
                 });
 
                 // --- Delivery toggle buttons ---
@@ -945,12 +944,30 @@
                     const section = document.getElementById(`shop-section-${shopId}`);
                     const codBtn = section.querySelector('.cod-btn');
                     const msg = section.querySelector('.cod-limit-msg');
-                    if (total >= 1000) {
-                        codBtn.style.display = 'none';
-                        if (msg) msg.style.display = 'block';
-                    } else {
-                        codBtn.style.display = 'block';
-                        if (msg) msg.style.display = 'none';
+                    const deliveryType = section.dataset.deliveryType || 'SELF_PICKUP';
+
+                    if (codBtn) {
+                        const btnText = codBtn.querySelector('.cod-btn-text');
+                        const badge = codBtn.querySelector('.cod-avail-badge');
+                        const limitText = msg ? msg.querySelector('.cod-limit-text') : null;
+
+                        if (deliveryType === 'HOME_DELIVERY') {
+                            if (btnText) btnText.innerText = 'COD';
+                            if (badge) badge.innerText = 'COD Available';
+                            if (limitText) limitText.innerText = 'COD';
+                        } else {
+                            if (btnText) btnText.innerText = 'Pay Cash';
+                            if (badge) badge.innerText = 'Cash Accepted';
+                            if (limitText) limitText.innerText = 'Cash payment';
+                        }
+
+                        if (total >= 1000) {
+                            codBtn.style.display = 'none';
+                            if (msg) msg.style.display = 'block';
+                        } else {
+                            codBtn.style.display = 'block';
+                            if (msg) msg.style.display = 'none';
+                        }
                     }
                 }
 
@@ -1099,7 +1116,14 @@
 
                 document.querySelectorAll('.cod-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
-                        if (confirm('Place COD order for this shop?')) placeOrder(btn.dataset.shopid, 'COD');
+                        const shopId = btn.dataset.shopid;
+                        const section = document.getElementById(`shop-section-${shopId}`);
+                        const deliveryType = section.dataset.deliveryType || 'SELF_PICKUP';
+                        const paymentMethodName = deliveryType === 'HOME_DELIVERY' ? 'COD' : 'Cash';
+                        
+                        if (confirm(`Place ${paymentMethodName} order for this shop?`)) {
+                            placeOrder(shopId, 'COD');
+                        }
                     });
                 });
 

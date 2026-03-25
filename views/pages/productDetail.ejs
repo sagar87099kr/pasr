@@ -378,7 +378,10 @@
                     const btn = silent ? buyBtn : addBtn;
                     const originalHtml = btn.innerHTML;
                     btn.disabled = true;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                    if (!silent) buyBtn.disabled = true;
+                    if (silent) addBtn.disabled = true;
+                    
+                    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> ${silent ? 'Processing...' : 'Adding...'}`;
 
                     try {
                         const res = await fetch('/api/cart/add', {
