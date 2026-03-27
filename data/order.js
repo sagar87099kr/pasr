@@ -57,7 +57,11 @@ const orderSchema = new Schema({
     cancellationReason: { type: String },
 
     // Financial Settlement
-    settlementStatus: { type: String, enum: ['PENDING', 'REQUESTED', 'SETTLED'], default: 'PENDING' }
+    settlementStatus: { type: String, enum: ['PENDING', 'REQUESTED', 'SETTLED'], default: 'PENDING' },
+
+    coinDiscount: { type: Number, default: 0 }
 }, { timestamps: true });
 
-module.exports = mongoose.model("Order", orderSchema);
+const Order = mongoose.model('Order', orderSchema);
+
+module.exports = Order;

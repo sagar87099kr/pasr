@@ -54,7 +54,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
         }
 
         // 1. Extract inputs
-        const { paymentType, lat, lng, shopId, orderId: clientOrderId, deliveryType } = req.body;
+        const { paymentType, lat, lng, shopId, orderId: clientOrderId, deliveryType, useCoins } = req.body;
         const customerId = req.user._id;
 
         if (!shopId) {
@@ -212,7 +212,21 @@ module.exports.checkoutOrder = async (req, res, next) => {
             }
         }
 
-        const totalAmount = subtotalAmount + deliveryCharge;
+        let totalAmount = subtotalAmount + deliveryCharge;
+
+        // Apply Coin Discount
+        let coinDiscount = 0;
+        if (useCoins === true || useCoins === 'true') {
+            const Customer = require("../data/customers");
+            const customerDoc = await Customer.findById(customerId);
+            if (customerDoc && customerDoc.coins > 0) {
+                coinDiscount = Math.min(customerDoc.coins, totalAmount);
+                totalAmount -= coinDiscount;
+                
+                customerDoc.coins -= coinDiscount;
+                await customerDoc.save();
+            }
+        }
 
         // Validate Payment rules (>= ₹1000 requires PREPAID)
         if (totalAmount >= 1000 && paymentType !== 'PREPAID') {
@@ -235,6 +249,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
             deliveryType,
             deliveryAddress,
             firstOrderDiscount,
+            coinDiscount,
 
             deliveryDistance,
             pasrCommission,
@@ -278,25 +293,34 @@ module.exports.checkoutOrder = async (req, res, next) => {
 
         let razorpayOrderData = null;
         if (paymentType === 'PREPAID') {
-            const Razorpay = require('razorpay');
-            const rzp = new Razorpay({
-                key_id: process.env.RAZORPAY_KEY_ID,
-                key_secret: process.env.RAZORPAY_KEY_SECRET
-            });
-            const rzpOrder = await rzp.orders.create({
-                amount: Math.round(totalAmount * 100), // amount in paise
-                currency: 'INR',
-                receipt: order.orderId
-            });
-            order.razorpayOrderId = rzpOrder.id;
-            await order.save(); // Save the newly attached razorpay ID
+            if (totalAmount === 0) {
+                // If coins cover the entire amount, mark as VERIFIED directly
+                order.paymentStatus = 'VERIFIED';
+                // Automatically move order to READY_FOR_DELIVERY since it effectively paid
+                order.orderStatus = 'READY_FOR_DELIVERY';
+                await order.save();
+                orderBus.emit("ORDER_READY", order);
+            } else {
+                const Razorpay = require('razorpay');
+                const rzp = new Razorpay({
+                    key_id: process.env.RAZORPAY_KEY_ID,
+                    key_secret: process.env.RAZORPAY_KEY_SECRET
+                });
+                const rzpOrder = await rzp.orders.create({
+                    amount: Math.round(totalAmount * 100), // amount in paise
+                    currency: 'INR',
+                    receipt: order.orderId
+                });
+                order.razorpayOrderId = rzpOrder.id;
+                await order.save(); // Save the newly attached razorpay ID
 
-            razorpayOrderData = {
-                id: rzpOrder.id,
-                amount: rzpOrder.amount,
-                currency: rzpOrder.currency,
-                keyId: process.env.RAZORPAY_KEY_ID
-            };
+                razorpayOrderData = {
+                    id: rzpOrder.id,
+                    amount: rzpOrder.amount,
+                    currency: rzpOrder.currency,
+                    keyId: process.env.RAZORPAY_KEY_ID
+                };
+            }
         }
         cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
 
@@ -927,6 +951,16 @@ module.exports.cancelOrder = async (req, res, next) => {
                 { _id: orderItem.itemId }, 
                 { $inc: { quantity: orderItem.quantity } }
             );
+        }
+
+        // Refund Coins
+        if (order.coinDiscount && order.coinDiscount > 0) {
+            const Customer = require("../data/customers");
+            const cancelCustomer = await Customer.findById(order.customerId);
+            if (cancelCustomer) {
+                cancelCustomer.coins = (cancelCustomer.coins || 0) + order.coinDiscount;
+                await cancelCustomer.save();
+            }
         }
 
         order.orderStatus = 'CANCELLED';

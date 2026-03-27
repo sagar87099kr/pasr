@@ -416,6 +416,8 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
                 } else if (order.paymentType === 'COD') {
                     // Shop collected cash; PASR takes commission
                     totalDueToPasr += (order.pasrCommission || 0);
+                    // PASR owes the shop for any coin discount applied
+                    amount = order.coinDiscount || 0;
                 }
             } else {
                 // Partner Delivered (both PREPAID and COD means PASR gets/handles the money)

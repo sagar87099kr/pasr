@@ -112,6 +112,7 @@ module.exports.requestPayout = async (req, res) => {
 
         const payoutOrders = unsettledOrders.filter(order => {
             if (order.selfDelivery && order.paymentType === 'PREPAID') return true;
+            if (order.selfDelivery && order.paymentType === 'COD' && order.coinDiscount > 0) return true;
             if (!order.selfDelivery) return true;
             return false;
         });

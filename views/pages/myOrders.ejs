@@ -222,6 +222,12 @@
                             </div>
                             <% } %>
 
+                                <% if (order.coinDiscount && order.coinDiscount > 0) { %>
+                                <div class="summary-row">
+                                    <span>Coin Discount</span>
+                                    <span class="text-success fw-bold">-₹<%= order.coinDiscount %></span>
+                                </div>
+                                <% } %>
                                 <div class="summary-row summary-total">
                                     <span>Order Total</span>
                                     <span style="color:#138808">₹<%= order.totalAmount %></span>

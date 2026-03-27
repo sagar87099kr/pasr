@@ -581,6 +581,11 @@
                                                 <div class="pay-status-msg" style="color:#166534;">Collect <strong>₹<%=
                                                             order.totalAmount %>
                                                     </strong> in cash when delivering.</div>
+                                                <% if (order.coinDiscount && order.coinDiscount > 0) { %>
+                                                <div class="pay-status-msg mt-2" style="color:#059669; font-size: 13px; font-weight: 600; background: #d1fae5; padding: 6px 10px; border-radius: 6px; border: 1px solid #a7f3d0;">
+                                                    <i class="fa-solid fa-coins me-1" style="color:#f59e0b;"></i> Customer used coins. PASR will pay you the remaining <strong>₹<%= order.coinDiscount %></strong>.
+                                                </div>
+                                                <% } %>
                                             </div>
                                             <% } else if (order.paymentType==='PREPAID' ) { %>
                                                 <% if (order.paymentStatus==='VERIFIED' ) { %>
