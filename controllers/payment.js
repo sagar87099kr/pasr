@@ -111,10 +111,26 @@ module.exports.requestPayout = async (req, res) => {
         });
 
         const payoutOrders = unsettledOrders.filter(order => {
-            if (order.selfDelivery && order.paymentType === 'PREPAID') return true;
-            if (order.selfDelivery && order.paymentType === 'COD' && order.coinDiscount > 0) return true;
-            if (!order.selfDelivery) return true;
-            return false;
+            let earningsForShop = 0;
+            if (order.paymentType === 'PREPAID') {
+                earningsForShop = (order.subtotalAmount || 0);
+                if (order.selfDelivery && order.deliveryType === 'HOME_DELIVERY') {
+                    earningsForShop += (order.deliveryCharge || 0);
+                }
+                if (order.selfDelivery) {
+                    earningsForShop -= (order.pasrCommission || 0);
+                } else if (order.deliveryPartnerId) {
+                    earningsForShop -= (order.deliveryCharge || 0);
+                }
+            } else if (order.paymentType === 'COD') {
+                earningsForShop = (order.coinDiscount || 0);
+                if (order.selfDelivery) {
+                    earningsForShop -= (order.pasrCommission || 0);
+                } else if (order.deliveryPartnerId) {
+                    earningsForShop -= (order.deliveryCharge || 0);
+                }
+            }
+            return earningsForShop > 0;
         });
 
         const orderIds = payoutOrders.map(o => o.orderId);
@@ -219,13 +235,34 @@ module.exports.verifyCommissionPayment = async (req, res) => {
             return res.redirect(`/shops/${shopId}`);
         }
 
-        // Find COD Self-Delivery orders that owed commission
-        const unsettledOrders = await Order.find({
+        // Find orders that resulted in a net debt (earnings < 0) for the shop
+        const allPendingOrders = await Order.find({
             shopId: shopId,
             orderStatus: 'COMPLETED',
-            settlementStatus: 'PENDING',
-            selfDelivery: true,
-            paymentType: 'COD'
+            settlementStatus: 'PENDING'
+        });
+
+        const unsettledOrders = allPendingOrders.filter(order => {
+            let earningsForShop = 0;
+            if (order.paymentType === 'PREPAID') {
+                earningsForShop = (order.subtotalAmount || 0);
+                if (order.selfDelivery && order.deliveryType === 'HOME_DELIVERY') {
+                    earningsForShop += (order.deliveryCharge || 0);
+                }
+                if (order.selfDelivery) {
+                    earningsForShop -= (order.pasrCommission || 0);
+                } else if (order.deliveryPartnerId) {
+                    earningsForShop -= (order.deliveryCharge || 0);
+                }
+            } else if (order.paymentType === 'COD') {
+                earningsForShop = (order.coinDiscount || 0);
+                if (order.selfDelivery) {
+                    earningsForShop -= (order.pasrCommission || 0);
+                } else if (order.deliveryPartnerId) {
+                    earningsForShop -= (order.deliveryCharge || 0);
+                }
+            }
+            return earningsForShop < 0;
         });
 
         const orderIds = unsettledOrders.map(o => o.orderId);
@@ -247,6 +284,13 @@ module.exports.verifyCommissionPayment = async (req, res) => {
             { _id: { $in: unsettledOrders.map(o => o._id) } },
             { $set: { settlementStatus: 'SETTLED' } }
         );
+
+        // Also update the shop's dueToPasr field to reflect the payment
+        const shop = await Shop.findById(shopId);
+        if (shop) {
+            shop.dueToPasr = Math.max(0, (shop.dueToPasr || 0) - parseFloat(amount));
+            await shop.save();
+        }
 
         req.flash("success", `Payment of ₹${amount} successful. Commission debt cleared.`);
         res.redirect(`/shops/${shopId}`);

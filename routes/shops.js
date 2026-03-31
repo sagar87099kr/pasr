@@ -405,30 +405,51 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
 
         let totalPendingPayout = 0; // PASR owes Shop (Available)
         let totalRequestedPayout = 0; // PASR owes Shop (Requested but not paid)
-        let totalDueToPasr = 0;     // Shop owes PASR
+        let totalDueToPasr = 0;     // Shop owes PASR (Cumulative pending for these orders)
 
         unsettledOrders.forEach(order => {
-            let amount = 0;
-            if (order.selfDelivery) {
-                if (order.paymentType === 'PREPAID') {
-                    // PASR collected everything online; Shop did the delivery
-                    amount = (order.subtotalAmount + order.deliveryCharge - (order.pasrCommission || 0));
-                } else if (order.paymentType === 'COD') {
-                    // Shop collected cash; PASR takes commission
-                    totalDueToPasr += (order.pasrCommission || 0);
-                    // PASR owes the shop for any coin discount applied
-                    amount = order.coinDiscount || 0;
+            let earningsForShop = 0; // Net balance for this specific order
+
+            if (order.paymentType === 'PREPAID') {
+                // PASR collected everything online (Full Subtotal + Delivery)
+                earningsForShop = (order.subtotalAmount || 0);
+
+                // If shop delivered it, they also get the delivery charge PASR collected
+                if (order.selfDelivery && order.deliveryType === 'HOME_DELIVERY') {
+                    earningsForShop += (order.deliveryCharge || 0);
                 }
-            } else {
-                // Partner Delivered (both PREPAID and COD means PASR gets/handles the money)
-                amount = order.subtotalAmount;
+
+                // Deduct Platform Debt (Commission or Delivery Partner Fee)
+                if (order.selfDelivery) {
+                    earningsForShop -= (order.pasrCommission || 0);
+                } else if (order.deliveryPartnerId) {
+                    earningsForShop -= (order.deliveryCharge || 0);
+                }
+            } else if (order.paymentType === 'COD') {
+                // Shop/Partner already has the cash (Subtotal + Delivery - Coins)
+                // PASR only needs to pay the Shop for the coins they accepted
+                earningsForShop = (order.coinDiscount || 0);
+
+                // Deduct Platform Debt (Commission or Delivery Partner Fee)
+                if (order.selfDelivery) {
+                    earningsForShop -= (order.pasrCommission || 0);
+                } else if (order.deliveryPartnerId) {
+                    earningsForShop -= (order.deliveryCharge || 0);
+                }
             }
 
-            if (amount > 0) {
+            // Categorize the net result
+            if (earningsForShop > 0) {
                 if (order.settlementStatus === 'REQUESTED') {
-                    totalRequestedPayout += amount;
+                    totalRequestedPayout += earningsForShop;
                 } else {
-                    totalPendingPayout += amount;
+                    totalPendingPayout += earningsForShop;
+                }
+            } else if (earningsForShop < 0) {
+                // Only count debt for orders still in PENDING status
+                // (Requested doesn't really apply to debt, but we check for safety)
+                if (order.settlementStatus === 'PENDING') {
+                    totalDueToPasr += Math.abs(earningsForShop);
                 }
             }
         });
