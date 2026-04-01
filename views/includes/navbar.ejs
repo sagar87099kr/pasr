@@ -140,19 +140,20 @@
           </div>
         <% } %>
 
-        <!-- Auth Dropdown/Profile (Removed dropdown-toggle to eliminate caret-driven shift) -->
-        <div class="nav-item dropdown list-unstyled mb-0 d-flex align-items-center">
-          <a class="nav-link p-1 text-dark position-relative profile-icon-hover d-flex align-items-center lh-1" href="#" role="button" data-bs-toggle="dropdown"
-            aria-expanded="false">
-            <i class="fa-solid fa-circle-user fs-5"></i>
-            <% if (typeof cartItemCount !== 'undefined' && cartItemCount > 0) { %>
-              <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px; transform: translate(-50%, -50%) !important;">
-                <span class="visually-hidden">Items in cart</span>
-              </span>
-            <% } %>
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end position-absolute glass-dropdown">
-            <% if (typeof currUser !== 'undefined' && currUser) { %>
+        <!-- Auth: Logged In = profile dropdown, Logged Out = Login/Signup buttons -->
+        <% if (typeof currUser !== 'undefined' && currUser) { %>
+          <!-- Profile Dropdown (logged in) -->
+          <div class="nav-item dropdown list-unstyled mb-0 d-flex align-items-center">
+            <a class="nav-link p-1 text-dark position-relative profile-icon-hover d-flex align-items-center lh-1" href="#" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              <i class="fa-solid fa-circle-user fs-5"></i>
+              <% if (typeof cartItemCount !== 'undefined' && cartItemCount > 0) { %>
+                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px; transform: translate(-50%, -50%) !important;">
+                  <span class="visually-hidden">Items in cart</span>
+                </span>
+              <% } %>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end position-absolute glass-dropdown">
               <li><a class="dropdown-item" href="/user">Profile</a></li>
               <li><a class="dropdown-item" href="/api/orders/my-orders">My Orders</a></li>
               <li>
@@ -165,12 +166,25 @@
               </li>
               <li><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item" href="/logout" style="color: red;">Log Out</a></li>
-            <% } else { %>
-              <li><a class="dropdown-item" href="/alreadyLogin">Login</a></li>
-              <li><a class="dropdown-item" href="/customer/signup">Signup</a></li>
-            <% } %>
-          </ul>
-        </div>
+            </ul>
+          </div>
+        <% } else { %>
+          <!-- Login / Signup Buttons (not logged in) — visible in same row -->
+          <div class="d-flex align-items-center gap-2">
+            <a href="/alreadyLogin"
+              style="font-size: 13px; font-weight: 700; color: #1E3A8A; text-decoration: none; padding: 6px 14px; border: 1.5px solid #1E3A8A; border-radius: 99px; white-space: nowrap; transition: all 0.2s;"
+              onmouseover="this.style.background='#1E3A8A';this.style.color='#fff';"
+              onmouseout="this.style.background='transparent';this.style.color='#1E3A8A';">
+              Login
+            </a>
+            <a href="/customer/signup"
+              style="font-size: 13px; font-weight: 700; color: #fff; text-decoration: none; padding: 6px 14px; background: #F97316; border: 1.5px solid #F97316; border-radius: 99px; white-space: nowrap; transition: all 0.2s;"
+              onmouseover="this.style.opacity='0.85';"
+              onmouseout="this.style.opacity='1';">
+              Sign Up
+            </a>
+          </div>
+        <% } %>
 
         <!-- Hamburger Menu -->
         <button class="navbar-toggler py-1 px-1 border-0 d-flex align-items-center" type="button" data-bs-toggle="collapse"
