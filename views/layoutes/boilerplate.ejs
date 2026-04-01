@@ -115,6 +115,39 @@
                             grid-template-columns: repeat(1, minmax(0, 1fr));
                         }
 
+                        /* ── Categories FAB ── */
+                        #categories-fab {
+                            position: fixed;
+                            bottom: 20px;
+                            right: 16px;
+                            z-index: 1030;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 44px;
+                            height: 44px;
+                            background: rgba(255, 255, 255, 0.92);
+                            border: 1px solid rgba(15, 23, 42, 0.12);
+                            border-radius: 50%;
+                            box-shadow: 0 6px 24px rgba(15, 23, 42, 0.14);
+                            backdrop-filter: blur(12px);
+                            -webkit-backdrop-filter: blur(12px);
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                            color: #6366f1;
+                            text-decoration: none;
+                        }
+
+                        #categories-fab:hover {
+                            box-shadow: 0 10px 32px rgba(15, 23, 42, 0.18);
+                            transform: translateY(-2px) scale(1.05);
+                            color: #4f46e5;
+                        }
+
+                        #categories-fab i {
+                            font-size: 18px;
+                        }
+
                         /* ── Language FAB ── */
                         #lang-toggle-fab {
                             position: fixed;
@@ -361,6 +394,11 @@
 </head>
 
 <body data-logged-in="<%= (typeof currUser !== 'undefined' && currUser) ? 'true' : 'false' %>">
+
+    <!-- Fixed Categories FAB — Quick access to categories -->
+    <a href="/categories" id="categories-fab" title="All Categories">
+        <i class="fa-solid fa-layer-group"></i>
+    </a>
 
     <!-- Fixed Language Toggle — visible on every page, bottom-left corner -->
     <div id="lang-toggle-fab" title="Switch Language">

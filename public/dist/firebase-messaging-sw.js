@@ -52,13 +52,13 @@ self.addEventListener('notificationclick', (event) => {
     const data = event.notification.data || {};
     const type = data.type;
 
-    let targetUrl = '/home';
-    if (type === 'ORDER_RECEIVED') {
+    let targetUrl = '/api/orders/my-orders';
+    if (type === 'ORDER_RECEIVED' || type === 'ORDER_CLAIMED') {
         targetUrl = '/api/orders/my-shop-orders';
     } else if (type === 'ORDER_STATUS_UPDATE' || type === 'ORDER_BROADCAST') {
         targetUrl = '/api/orders/my-orders';
-    } else if (type === 'ORDER_CLAIMED') {
-        targetUrl = '/api/orders/my-shop-orders';
+    } else if (type === 'GENERAL') {
+        targetUrl = '/user';
     }
 
     event.waitUntil(

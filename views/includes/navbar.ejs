@@ -105,105 +105,83 @@
 <nav class="navbar navbar-expand-sm premium-nav sticky-top py-2">
   <div class="container-fluid d-flex flex-wrap align-items-center max-w-7xl mx-auto px-lg-4">
 
-    <!-- Top Row: Toggler, Search, Auth, Language -->
-    <div class="d-flex w-100 justify-content-between align-items-center order-1 gap-1 gap-sm-2">
-      <!-- Hamburger -->
-      <button class="navbar-toggler py-1 px-2 border-0" type="button" data-bs-toggle="collapse"
-        data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon" style="width: 1.2em; height: 1.2em;"></span>
-      </button>
+    <!-- Top Row: Home, Bell, Profile, Menu -->
+    <div class="d-flex w-100 justify-content-between align-items-center flex-nowrap order-1 gap-2 px-1">
+      
+      <!-- Left Side: Home Icon -->
+      <div class="d-flex align-items-center">
+        <a href="/" class="nav-link profile-icon-hover p-1 d-flex align-items-center lh-1">
+          <i class="fa-solid fa-house fs-5"></i>
+        </a>
+      </div>
 
-      <!-- React Search Bar Mount -->
-      <div id="react-navbar-search" class="d-flex flex-grow-1"></div>
-
-
-      <!-- Login / Sign Up button — only shown to guests, opens the welcome modal -->
-      <% if (typeof currUser==='undefined' || !currUser) { %>
-        <button type="button" class="btn btn-sm premium-btn ms-1" data-bs-toggle="modal"
-          data-bs-target="#welcomeSignupModal">
-          Login / Sign Up
-        </button>
-        <% } %>
-
-          <!-- Notifications -->
-          <% if (typeof currUser !=='undefined' && currUser) { %>
-            <div class="nav-item dropdown list-unstyled mb-0 ms-1 flex-shrink-0" id="notificationContainer">
-              <a class="nav-link notification-nav-item" href="#" role="button" data-bs-toggle="dropdown"
-                aria-expanded="false" id="notificationBell" data-bs-display="static">
-                <i class="fa-solid fa-bell fs-5"></i>
-                <span class="notification-badge" id="notificationBadge"></span>
-              </a>
-              <div class="dropdown-menu dropdown-menu-end notification-dropdown position-absolute glass-dropdown"
-                aria-labelledby="notificationBell">
-                <div id="notificationHeaderWrapper">
-                  <div class="notification-header">
-                    <h6>Notifications</h6>
-                    <button class="mark-all-read-btn" onclick="markAllNotificationsAsRead(event)">Mark all as
-                      read</button>
-                  </div>
+      <!-- Right Side: Service Icons & Menu -->
+      <div class="d-flex align-items-center gap-2 gap-sm-3">
+        <!-- Notifications -->
+        <% if (typeof currUser !== 'undefined' && currUser) { %>
+          <div class="nav-item dropdown list-unstyled mb-0 flex-shrink-0 d-flex align-items-center" id="notificationContainer">
+            <a class="nav-link notification-nav-item p-1 d-flex align-items-center lh-1" href="#" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false" id="notificationBell" data-bs-display="static">
+              <i class="fa-solid fa-bell fs-5"></i>
+              <span class="notification-badge" id="notificationBadge"></span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end notification-dropdown position-absolute glass-dropdown"
+              aria-labelledby="notificationBell">
+              <div id="notificationHeaderWrapper">
+                <div class="notification-header">
+                  <h6>Notifications</h6>
+                  <button class="mark-all-read-btn" onclick="markAllNotificationsAsRead(event)">Mark all as read</button>
                 </div>
-                <div class="notification-list" id="notificationList">
-                  <div class="no-notifications">Loading...</div>
-                </div>
+              </div>
+              <div class="notification-list" id="notificationList">
+                <div class="no-notifications">Loading...</div>
               </div>
             </div>
-            <% } %>
+          </div>
+        <% } %>
 
-              <!-- Auth Dropdown/Profile (Desktop mostly, or kept small on mobile) -->
-              <div class="nav-item dropdown list-unstyled mb-0 ms-1">
-                <a class="nav-link dropdown-toggle drop p-0 text-dark position-relative profile-icon-hover" href="#" role="button" data-bs-toggle="dropdown"
-                  aria-expanded="false">
-                  <i class="fa-solid fa-circle-user fs-5"></i>
+        <!-- Auth Dropdown/Profile (Removed dropdown-toggle to eliminate caret-driven shift) -->
+        <div class="nav-item dropdown list-unstyled mb-0 d-flex align-items-center">
+          <a class="nav-link p-1 text-dark position-relative profile-icon-hover d-flex align-items-center lh-1" href="#" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            <i class="fa-solid fa-circle-user fs-5"></i>
+            <% if (typeof cartItemCount !== 'undefined' && cartItemCount > 0) { %>
+              <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px; transform: translate(-50%, -50%) !important;">
+                <span class="visually-hidden">Items in cart</span>
+              </span>
+            <% } %>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end position-absolute glass-dropdown">
+            <% if (typeof currUser !== 'undefined' && currUser) { %>
+              <li><a class="dropdown-item" href="/user">Profile</a></li>
+              <li><a class="dropdown-item" href="/api/orders/my-orders">My Orders</a></li>
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="/api/cart">
+                  My Cart
                   <% if (typeof cartItemCount !== 'undefined' && cartItemCount > 0) { %>
-                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px; transform: translate(-50%, -50%) !important;">
-                      <span class="visually-hidden">Items in cart</span>
-                    </span>
+                    <span class="badge bg-danger rounded-pill"><%= cartItemCount %></span>
                   <% } %>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end position-absolute glass-dropdown">
-                  <% if (typeof currUser !=='undefined' && currUser) { %>
-                    <li><a class="dropdown-item" href="/user">Profile</a></li>
-                    <li><a class="dropdown-item" href="/api/orders/my-orders">My Orders</a></li>
-                    <li>
-                      <a class="dropdown-item d-flex justify-content-between align-items-center" href="/api/cart">
-                        My Cart
-                        <% if (typeof cartItemCount !== 'undefined' && cartItemCount > 0) { %>
-                          <span class="badge bg-danger rounded-pill"><%= cartItemCount %></span>
-                        <% } %>
-                      </a>
-                    </li>
-                    <% const adminNums=["8709956547", "9608812817" , "7091212569" , "7046699074" , "9304703911"
-                      , "8873679038" , "7091568049" , "9835780962" ]; if (adminNums.includes(String(currUser.username)))
-                      { %>
-                      <li><a class="dropdown-item fw-bold text-danger" href="/admin/orders">Admin: Orders</a></li>
-                      <% if (String(currUser.username)==='8709956547' ) { %>
-                        <li><a class="dropdown-item fw-bold text-success" href="/admin/payouts">Admin: Payouts</a></li>
-                        <li><a class="dropdown-item fw-bold" style="color: #6366f1;" href="/customer/verify">Admin: Verify Users</a></li>
-                        <% } %>
-                          <% } %>
-                            <% } %>
-                              <% if (typeof currUser !=='undefined' && currUser) { %>
-                                <% if (currUser.collection && currUser.collection.name==='deliverypartners' ) { %>
-                                  <li><a class="dropdown-item fw-bold text-primary" href="/delivery/dashboard">Delivery
-                                      Dashboard</a></li>
-                                  <% } %>
-                                    <% } %>
-                                      <li><a class="dropdown-item" href="#">About us</a> </li>
-                                      <% if (typeof currUser==='undefined' || !currUser){%>
-                                        <li><a class="dropdown-item" href="/alreadyLogin">login</a> </li>
-                                        <li><a class="dropdown-item" href="/customer/signup">SignUp</a> </li>
-                                        <%}%>
-                                          <li>
-                                            <hr class="dropdown-divider">
-                                          </li>
-                                          <% if (typeof currUser !=='undefined' && currUser){%>
-                                            <li><a class="dropdown-item" href="/logout" style="color: red;">logOut</a>
-                                            </li>
-                                            <%}%>
-                </ul>
-              </div>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="/logout" style="color: red;">Log Out</a></li>
+            <% } else { %>
+              <li><a class="dropdown-item" href="/alreadyLogin">Login</a></li>
+              <li><a class="dropdown-item" href="/customer/signup">Signup</a></li>
+            <% } %>
+          </ul>
+        </div>
 
+        <!-- Hamburger Menu -->
+        <button class="navbar-toggler py-1 px-1 border-0 d-flex align-items-center" type="button" data-bs-toggle="collapse"
+          data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon" style="width: 1.1em; height: 1.1em;"></span>
+        </button>
+      </div>
     </div>
+
+    <!-- Row 2 (Mobile): Search Bar -->
+    <div id="react-navbar-search" class="w-100 order-2 mt-2 px-1"></div>
 
 
     <!-- Collapsed Links -->

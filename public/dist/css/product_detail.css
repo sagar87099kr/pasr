@@ -346,6 +346,68 @@ body {
     }
 }
 
+/* Circular Quantity Selector */
+.circular-qty-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.qty-btn-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid #e2e8f0;
+    background: white;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    padding: 0;
+}
+
+.qty-btn-circle:hover {
+    background: #f8fafc;
+    border-color: #3b82f6;
+    color: #3b82f6;
+    transform: scale(1.1);
+}
+
+.qty-btn-circle:active {
+    transform: scale(0.95);
+}
+
+.qty-value-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+    border: 2px solid white;
+    position: relative;
+    transition: background 0.2s;
+}
+
+@keyframes qty-pulse {
+    0%   { transform: scale(1); box-shadow: 0 4px 10px rgba(59,130,246,0.3); }
+    40%  { transform: scale(1.25); box-shadow: 0 0 0 8px rgba(59,130,246,0.15); }
+    70%  { transform: scale(0.95); }
+    100% { transform: scale(1); box-shadow: 0 4px 10px rgba(59,130,246,0.3); }
+}
+
+.qty-value-circle.qty-changed {
+    animation: qty-pulse 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
 /* --- Shop Profile Redesign --- */
 .shop-profile-header {
     display: flex;

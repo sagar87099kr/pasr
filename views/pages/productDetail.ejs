@@ -273,13 +273,15 @@
                 <div class="cart-action-box mt-4 p-3 border rounded bg-light">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <label class="fw-bold mb-0">Quantity:</label>
-                        <div class="input-group input-group-sm" style="width: 100px;">
-                            <button class="btn btn-outline-secondary" type="button" id="minusQty"><i
-                                    class="fa-solid fa-minus"></i></button>
-                            <input type="number" class="form-control text-center" id="prodQty" value="1" min="1"
-                                max="<%= product.quantity %>">
-                            <button class="btn btn-outline-secondary" type="button" id="plusQty"><i
-                                    class="fa-solid fa-plus"></i></button>
+                        <div class="circular-qty-control">
+                            <button class="qty-btn-circle" type="button" id="minusQty">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <div class="qty-value-circle" id="qtyDisplay">1</div>
+                            <button class="qty-btn-circle" type="button" id="plusQty">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                            <input type="hidden" id="prodQty" value="1" min="1" max="<%= product.quantity %>">
                         </div>
                     </div>
                     <div class="d-grid gap-2">
@@ -344,14 +346,31 @@
                 const minusBtn = document.getElementById('minusQty');
                 const plusBtn = document.getElementById('plusQty');
                 const qtyInput = document.getElementById('prodQty');
+                const qtyDisplay = document.getElementById('qtyDisplay');
 
-                if (minusBtn && plusBtn && qtyInput) {
+                function pulseQty() {
+                    qtyDisplay.classList.remove('qty-changed');
+                    void qtyDisplay.offsetWidth; // reflow to restart animation
+                    qtyDisplay.classList.add('qty-changed');
+                }
+
+                if (minusBtn && plusBtn && qtyInput && qtyDisplay) {
                     minusBtn.addEventListener('click', () => {
-                        if (qtyInput.value > 1) qtyInput.value = parseInt(qtyInput.value) - 1;
+                        let cur = parseInt(qtyInput.value);
+                        if (cur > 1) {
+                            qtyInput.value = cur - 1;
+                            qtyDisplay.innerText = cur - 1;
+                            pulseQty();
+                        }
                     });
                     plusBtn.addEventListener('click', () => {
+                        let cur = parseInt(qtyInput.value);
                         const max = parseInt(qtyInput.getAttribute('max')) || 999;
-                        if (qtyInput.value < max) qtyInput.value = parseInt(qtyInput.value) + 1;
+                        if (cur < max) {
+                            qtyInput.value = cur + 1;
+                            qtyDisplay.innerText = cur + 1;
+                            pulseQty();
+                        }
                     });
                 }
 

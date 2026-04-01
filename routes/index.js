@@ -3,6 +3,8 @@ const router = express.Router();
 const { forwardGeocode, reverseGeocode } = require("../utils/geocoder");
 const Product = require("../data/product.js");
 const Customer = require("../data/customers.js");
+const Shop = require("../data/shops.js");
+const Provider = require("../data/serviceproviders.js");
 const { isLogedin, isadmin } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 
@@ -158,9 +160,120 @@ router.get("/action/whatsapp/:number", isLogedin, (req, res) => {
     res.redirect(redirectUrl);
 });
 
-// Redirect root to home
+// The new personalized React-based homepage
 router.get("/", (req, res) => {
-    res.redirect("/home");
+    res.render("pages/reactHome.ejs", {
+        containerClass: 'react-home-container',
+        useMaps: false,
+        useProfileCss: false,
+        useInsideCateCss: false,
+        seo: {
+            title: "PASR - Perfectly Assured Service and Rentals",
+            description: "Find local DJs, Catering, Vehicles, and Decoration services within your neighborhood. Perfectly Assured Service and Rentals for rural and semi-urban India.",
+            keywords: "pasr, pasr.in, local services, dj, catering, tent, decoration, vehicle rentals, rural bazaar",
+            url: "https://www.pasr.in/"
+        }
+    });
 });
+
+// The existing home route renamed to categories for fallback/navigation
+router.get("/categories", (req, res) => {
+    res.render("pages/home.ejs", {
+        useMaps: false,
+        useProfileCss: false,
+        useInsideCateCss: false,
+        seo: {
+            title: "Categories - PASR",
+            description: "Browse all local service categories on PASR.",
+            url: "https://www.pasr.in/categories"
+        }
+    });
+});
+
+// JSON API for dynamic discovery on React homepage
+router.get("/api/discovery", wrapAsync(async (req, res) => {
+    let { lat, lon, range = 5 } = req.query;
+    let userLocation = null;
+
+    if (lat && lon) {
+        userLocation = {
+            type: 'Point',
+            coordinates: [parseFloat(lon), parseFloat(lat)]
+        };
+    } else if (req.session.location) {
+        userLocation = req.session.location;
+    } else if (req.user && req.user.geometry) {
+        userLocation = req.user.geometry;
+    }
+
+    const maxDist = parseFloat(range) * 1000; // range in meters
+
+    const queryOptions = (baseQuery) => {
+        if (userLocation && userLocation.coordinates && userLocation.coordinates.length === 2) {
+            return {
+                ...baseQuery,
+                geometry: {
+                    $near: {
+                        $geometry: {
+                            type: "Point",
+                            coordinates: userLocation.coordinates
+                        },
+                        $maxDistance: maxDist
+                    }
+                }
+            };
+        }
+        return baseQuery;
+    };
+
+    // Helper to fetch data with possible range expansion
+    const fetchWithFallback = async (model, categoryField, categoryValue, limit = 10) => {
+        let results = await model.find(queryOptions({ [categoryField]: categoryValue, verified: true })).limit(limit).populate("owner");
+        
+        // If no results and we have a location, try a wider range (up to 20km)
+        if (results.length === 0 && userLocation) {
+            const widerDist = 20000; 
+            results = await model.find({
+                [categoryField]: categoryValue,
+                verified: true,
+                geometry: {
+                    $near: {
+                        $geometry: { type: "Point", coordinates: userLocation.coordinates },
+                        $maxDistance: widerDist
+                    }
+                }
+            }).limit(limit).populate("owner");
+        }
+        
+        // Final fallback: just get most recent verified if still empty
+        if (results.length === 0) {
+            results = await model.find({ [categoryField]: categoryValue, verified: true }).sort({ createdAt: -1 }).limit(limit).populate("owner");
+        }
+        
+        return results;
+    };
+
+    const [shops, bazaar, vehicles, farming, catering, dj] = await Promise.all([
+        Shop.find(queryOptions({ verified: true })).limit(10).populate("owner"),
+        Product.find(queryOptions({ verified: true })).limit(10).populate("owner"),
+        fetchWithFallback(Provider, "categories", "Four Wheelers"),
+        fetchWithFallback(Provider, "categories", "Farming Vehicles"),
+        fetchWithFallback(Provider, "categories", "Caterings"),
+        fetchWithFallback(Provider, "categories", "DJ and Tent")
+    ]);
+
+    res.json({
+        success: true,
+        data: {
+            cartItems: (req.session.cart && req.session.cart.items) ? req.session.cart.items : [],
+            shops,
+            bazaar,
+            vehicles,
+            farming,
+            catering,
+            dj
+        }
+    });
+}));
 
 module.exports = router;
