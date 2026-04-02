@@ -5,6 +5,11 @@ const Provider = require("../data/serviceproviders.js");
 const Product = require("../data/product.js");
 const Shop = require("../data/shops.js");
 const KeshanSabhaPost = require("../data/keshanSabhaPost.js");
+const KeshanSabhaComment = require("../data/keshanSabhaComment.js");
+const KeshanSabhaReport = require("../data/keshanSabhaReport.js");
+const DeliveryPartner = require("../data/deliveryPartner.js");
+const Notification = require("../data/notification.js");
+const Review = require("../data/review.js");
 const passport = require("passport");
 const { validatecustomer, saveRedirectUrl, isLogedin, isadmin, isLoggedOut } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
@@ -409,204 +414,115 @@ router.put("/customer/update/:id", isLogedin, wrapAsync(async (req, res) => {
     res.redirect("/user");
 }));
 
-// Delete Account - Direct deletion with admin notification logging
-router.post("/customer/delete-account", isLogedin, wrapAsync(async (req, res) => {
+// Hidden Account Deletion Page
+router.get("/account/remove/permanent", isLogedin, (req, res) => {
+    res.render("pages/delete_account.ejs");
+});
 
+// Comprehensive Account Deletion Process
+router.post("/account/remove/permanent", isLogedin, wrapAsync(async (req, res) => {
     const { username, password } = req.body;
     const userId = req.user._id;
 
     try {
-        // Verify phone number matches
+        // 1. Verification
         if (req.user.username != username) {
-            req.flash("danger", "Phone number does not match your account.");
-            return res.redirect("/customer/delete-account");
+            req.flash("danger", "Phone number does not match your current account.");
+            return res.redirect("/account/remove/permanent");
         }
 
-        // Verify password
         const user = await Customer.findById(userId);
-        await user.authenticate(password, (err, result) => {
-            if (err || !result) {
-                req.flash("danger", "Incorrect password.");
-                return res.redirect("/customer/delete-account");
-            }
+        const isAuthenticated = await new Promise((resolve) => {
+            user.authenticate(password, (err, result) => {
+                resolve(!err && result);
+            });
         });
 
-        console.log(`\n${'='.repeat(60)}`);
-        console.log(`⚠️  ACCOUNT DELETION REQUEST`);
-        console.log(`${'='.repeat(60)}`);
-        console.log(`User ID: ${userId}`);
-        console.log(`Name: ${req.user.name}`);
-        console.log(`Phone: ${req.user.username}`);
-        console.log(`Email: ${req.user.emailAddress || 'N/A'}`);
-        console.log(`Address: ${req.user.address || 'N/A'}`);
-        console.log(`Verified: ${req.user.verified}`);
-        console.log(`Account Created: ${req.user.createdAt}`);
-        console.log(`Deletion Time: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
-        console.log(`${'='.repeat(60)}\n`);
+        if (!isAuthenticated) {
+            req.flash("danger", "Incorrect password. Verification failed.");
+            return res.redirect("/account/remove/permanent");
+        }
 
-        // Import cloudinary for image deletion
+        console.log(`\nDeleting Account: ${user.name} (${user.username})`);
         const cloudinary = require("../cloud_con.js");
-        const Review = require("../data/review.js");
 
-        // 1. Delete all service provider listings and their images
+        // 2. Delete Service Provider Listings & Images
         const providers = await Provider.find({ owner: userId });
-        for (let provider of providers) {
-            // Delete provider images from Cloudinary
-            if (provider.personImage && provider.personImage.length > 0) {
-                for (let img of provider.personImage) {
-                    if (img.filename) {
-                        try {
-                            await cloudinary.uploader.destroy(img.filename);
-                            console.log(`Deleted provider image: ${img.filename}`);
-                        } catch (err) {
-                            console.error(`Error deleting image ${img.filename}:`, err);
-                        }
-                    }
+        for (let p of providers) {
+            if (p.personImage?.length) {
+                for (let img of p.personImage) {
+                    if (img.filename) await cloudinary.uploader.destroy(img.filename).catch(e => console.error(e));
                 }
             }
-            // Delete provider reviews
-            if (provider.review && provider.review.length > 0) {
-                await Review.deleteMany({ _id: { $in: provider.review } });
-            }
-            await Provider.findByIdAndDelete(provider._id);
-            console.log(`Deleted provider: ${provider._id}`);
+            if (p.review?.length) await Review.deleteMany({ _id: { $in: p.review } });
+            await Provider.findByIdAndDelete(p._id);
         }
 
-        // 2. Delete all shops and their images
+        // 3. Delete Shops & Images
         const shops = await Shop.find({ owner: userId });
-        for (let shop of shops) {
-            // Delete shop images from Cloudinary
-            if (shop.shopImage && shop.shopImage.length > 0) {
-                for (let img of shop.shopImage) {
-                    if (img.filename) {
-                        try {
-                            await cloudinary.uploader.destroy(img.filename);
-                            console.log(`Deleted shop image: ${img.filename}`);
-                        } catch (err) {
-                            console.error(`Error deleting image ${img.filename}:`, err);
-                        }
-                    }
+        for (let s of shops) {
+            if (s.shopImage?.length) {
+                for (let img of s.shopImage) {
+                    if (img.filename) await cloudinary.uploader.destroy(img.filename).catch(e => console.error(e));
                 }
             }
-            // Delete shop item images
-            if (shop.items && shop.items.length > 0) {
-                for (let item of shop.items) {
-                    if (item.itemImage && item.itemImage.filename) {
-                        try {
-                            await cloudinary.uploader.destroy(item.itemImage.filename);
-                            console.log(`Deleted item image: ${item.itemImage.filename}`);
-                        } catch (err) {
-                            console.error(`Error deleting image ${item.itemImage.filename}:`, err);
-                        }
-                    }
+            // Delete shop item images if they exist
+            if (s.items?.length) {
+                for (let item of s.items) {
+                    if (item.itemImage?.filename) await cloudinary.uploader.destroy(item.itemImage.filename).catch(e => console.error(e));
                 }
             }
-            // Delete shop reviews
-            if (shop.reviews && shop.reviews.length > 0) {
-                await Review.deleteMany({ _id: { $in: shop.reviews } });
-            }
-            await Shop.findByIdAndDelete(shop._id);
-            console.log(`Deleted shop: ${shop._id}`);
+            if (s.reviews?.length) await Review.deleteMany({ _id: { $in: s.reviews } });
+            await Shop.findByIdAndDelete(s._id);
         }
 
-        // 3. Delete all products and their images
+        // 4. Delete Products & Images
         const products = await Product.find({ owner: userId });
-        for (let product of products) {
-            // Delete product images from Cloudinary
-            if (product.productImage && product.productImage.length > 0) {
-                for (let img of product.productImage) {
-                    if (img.filename) {
-                        try {
-                            await cloudinary.uploader.destroy(img.filename);
-                            console.log(`Deleted product image: ${img.filename}`);
-                        } catch (err) {
-                            console.error(`Error deleting image ${img.filename}:`, err);
-                        }
-                    }
+        for (let prod of products) {
+            if (prod.productImage?.length) {
+                for (let img of prod.productImage) {
+                    if (img.filename) await cloudinary.uploader.destroy(img.filename).catch(e => console.error(e));
                 }
             }
-            await Product.findByIdAndDelete(product._id);
-            console.log(`Deleted product: ${product._id}`);
+            await Product.findByIdAndDelete(prod._id);
         }
 
-        // 4. Delete all reviews authored by this user
-        const userReviews = await Review.find({ author: userId });
-        await Review.deleteMany({ author: userId });
-        console.log(`Deleted ${userReviews.length} reviews by user`);
-
-        // 5. Finally, delete the user account
-        await Customer.findByIdAndDelete(userId);
-        console.log(`Deleted user account: ${userId}`);
-        console.log(`${'='.repeat(60)}\n`);
-
-        // Prepare WhatsApp notification message
-        const userName = req.user.name;
-        const userPhone = req.user.username;
-        const deletionTime = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-
-        const whatsappMessage = `🚨 Account Deleted from PaSr%0A%0AName: ${encodeURIComponent(userName)}%0APhone: ${userPhone}%0ATime: ${encodeURIComponent(deletionTime)}`;
-        const whatsappUrl = `https://wa.me/918252271535?text=${whatsappMessage}`;
-
-        // Logout and redirect to WhatsApp
-        req.logout((err) => {
-            if (err) {
-                console.error("Error logging out:", err);
+        // 5. Delete Kisan Sabha Content & Images
+        const posts = await KeshanSabhaPost.find({ author: userId });
+        for (let post of posts) {
+            if (post.media?.length) {
+                for (let m of post.media) {
+                    if (m.filename) await cloudinary.uploader.destroy(m.filename).catch(e => console.error(e));
+                }
             }
-            req.flash("success", "Your account has been permanently deleted. We're sorry to see you go.");
-            // Redirect to a page that will auto-open WhatsApp
+            await KeshanSabhaPost.findByIdAndDelete(post._id);
+        }
+        await KeshanSabhaComment.deleteMany({ author: userId });
+        await KeshanSabhaReport.deleteMany({ author: userId });
+
+        // 6. Delete Other Associations
+        await DeliveryPartner.deleteMany({ user: userId });
+        await Notification.deleteMany({ recipient: userId });
+        await Review.deleteMany({ author: userId });
+
+        // 7. Final Account Deletion
+        await Customer.findByIdAndDelete(userId);
+
+        // Notify Admin via WhatsApp (Optional step from previous code)
+        const whatsappMsg = `🚨 Data Purge Complete: ${encodeURIComponent(user.name)} (${user.username}) deleted their PaSr account.`;
+        const whatsappUrl = `https://wa.me/918252271535?text=${whatsappMsg}`;
+
+        req.logout((err) => {
+            if (err) console.error(err);
             res.send(`
-                <!DOCTYPE html>
                 <html>
-                <head>
-                    <title>Account Deleted</title>
-                    <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            height: 100vh;
-                            background: #f3f4f6;
-                            margin: 0;
-                        }
-                        .container {
-                            text-align: center;
-                            padding: 40px;
-                            background: white;
-                            border-radius: 12px;
-                            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                        }
-                        h1 { color: #dc2626; }
-                        p { color: #6b7280; margin: 20px 0; }
-                        a { 
-                            display: inline-block;
-                            background: #25D366;
-                            color: white;
-                            padding: 12px 24px;
-                            border-radius: 8px;
-                            text-decoration: none;
-                            margin-top: 20px;
-                        }
-                        a:hover { background: #20BA5A; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <h1>✓ Account Deleted Successfully</h1>
-                        <p>Your account and all associated data have been permanently removed.</p>
-                        <p>Redirecting to home page in 5 seconds...</p>
-                        <a href="/home">Go to Home Now</a>
-                    </div>
+                <body style="font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #fee2e2;">
+                    <h1 style="color: #dc2626;">Account Deleted</h1>
+                    <p>All your data has been permanently removed from PaSr.</p>
+                    <p>Redirecting to home page...</p>
                     <script>
-                        // Try to open WhatsApp notification for admin
-                        setTimeout(() => {
-                            window.open('${whatsappUrl}', '_blank');
-                        }, 500);
-                        
-                        // Redirect to home after 5 seconds
-                        setTimeout(() => {
-                            window.location.href = '/home';
-                        }, 5000);
+                        setTimeout(() => window.location.href = "/", 3000);
+                        window.open('${whatsappUrl}', '_blank');
                     </script>
                 </body>
                 </html>
@@ -614,11 +530,12 @@ router.post("/customer/delete-account", isLogedin, wrapAsync(async (req, res) =>
         });
 
     } catch (error) {
-        console.error("Error deleting account:", error);
-        req.flash("danger", "An error occurred while deleting your account. Please try again or contact support.");
-        res.redirect("/customer/delete-account");
+        console.error("Deletion Error:", error);
+        req.flash("danger", "Step-wise deletion failed. Please contact admin.");
+        res.redirect("/account/remove/permanent");
     }
 }));
+
 
 // API: Update Address
 router.post("/api/user/update-address", isLogedin, wrapAsync(userController.updateAddress));
