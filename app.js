@@ -216,6 +216,8 @@ app.use(async (req, res, next) => {
   res.locals.danger = req.flash("danger");
   res.locals.error = req.flash("error");
   res.locals.currUser = req.user;
+  const admins = ["8709956547", "9608812817", "7091212569", "7046699074", "9304703911", "8873679038", "7091568049", "9835780962"];
+  res.locals.isAdmin = req.user && admins.includes(String(req.user.username));
   res.locals.csrfToken = ""; // Placeholder for views that still expect this variable
   res.locals.cartItemCount = (req.session && req.session.cart && req.session.cart.items) ? req.session.cart.items.length : 0;
 

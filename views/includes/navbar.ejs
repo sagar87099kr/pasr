@@ -165,6 +165,17 @@
                 </a>
               </li>
               <li><hr class="dropdown-divider"></li>
+              <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+                <li><h6 class="dropdown-header text-primary fw-bold">Admin Panel</h6></li>
+                <li><a class="dropdown-item" href="/admin/orders">Admin Orders</a></li>
+                <li><a class="dropdown-item" href="/admin/payouts">Admin Payouts</a></li>
+                <li><a class="dropdown-item" href="/admin/delivery-partners">Delivery Partners</a></li>
+                <li><a class="dropdown-item" href="/shops/verify">Verify Shops</a></li>
+                <li><a class="dropdown-item" href="/provider/verify">Verify Providers</a></li>
+                <li><a class="dropdown-item" href="/product/verify">Verify Products</a></li>
+                <li><a class="dropdown-item" href="/admin/kisan-sabha">Kisan Sabha Admin</a></li>
+                <li><hr class="dropdown-divider"></li>
+              <% } %>
               <li><a class="dropdown-item" href="/logout" style="color: red;">Log Out</a></li>
             </ul>
           </div>
