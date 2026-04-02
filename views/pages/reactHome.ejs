@@ -3,9 +3,9 @@
 <!-- React Root Element -->
 <div id="react-homepage" data-is-logged-in="<%= typeof currUser !== 'undefined' && currUser ? 'true' : 'false' %>"></div>
 
-<!-- React Bundle Assets -->
-<link rel="stylesheet" href="/dist/assets/main.css">
-<script src="/dist/assets/main.js" type="module" defer></script>
+<!-- React Bundle Assets (cache busted with current timestamp on render) -->
+<link rel="stylesheet" href="/dist/assets/main.css?v=<%= Date.now() %>">
+<script src="/dist/assets/main.js?v=<%= Date.now() %>" type="module" defer></script>
 
 <style>
     /* Ensure the React container can take full width if needed */
