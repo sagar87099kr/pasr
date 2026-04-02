@@ -2295,6 +2295,36 @@
                                 colorLight: "#ffffff",
                                 correctLevel: QRCode.CorrectLevel.H
                             });
+
+                            setTimeout(() => {
+                                const canvas = qrDiv.querySelector('canvas');
+                                if (canvas) {
+                                    const ctx = canvas.getContext('2d');
+                                    const logoImg = new Image();
+                                    logoImg.crossOrigin = "Anonymous";
+                                    logoImg.src = '/images/icon.jpeg'; 
+                                    logoImg.onload = () => {
+                                        const logoSize = 50; 
+                                        const x = (canvas.width - logoSize) / 2;
+                                        const y = (canvas.height - logoSize) / 2;
+                                        
+                                        ctx.beginPath();
+                                        ctx.arc(canvas.width/2, canvas.height/2, logoSize/2 + 6, 0, 2 * Math.PI);
+                                        ctx.fillStyle = '#ffffff';
+                                        ctx.fill();
+
+                                        ctx.save();
+                                        ctx.beginPath();
+                                        ctx.arc(canvas.width/2, canvas.height/2, logoSize/2, 0, 2 * Math.PI);
+                                        ctx.clip();
+                                        ctx.drawImage(logoImg, x, y, logoSize, logoSize);
+                                        ctx.restore();
+                                        
+                                        const qrImg = qrDiv.querySelector('img');
+                                        if (qrImg) qrImg.src = canvas.toDataURL("image/png");
+                                    };
+                                }
+                            }, 100);
                         }
                     }, 50);
                 }
@@ -2327,6 +2357,36 @@
                                     colorLight: "#ffffff",
                                     correctLevel: QRCode.CorrectLevel.H
                                 });
+
+                                setTimeout(() => {
+                                    const canvas = qrContainer.querySelector('canvas');
+                                    if (canvas) {
+                                        const ctx = canvas.getContext('2d');
+                                        const logoImg = new Image();
+                                        logoImg.crossOrigin = "Anonymous";
+                                        logoImg.src = '/images/icon.jpeg'; 
+                                        logoImg.onload = () => {
+                                            const logoSize = 64; 
+                                            const x = (canvas.width - logoSize) / 2;
+                                            const y = (canvas.height - logoSize) / 2;
+                                            
+                                            ctx.beginPath();
+                                            ctx.arc(canvas.width/2, canvas.height/2, logoSize/2 + 6, 0, 2 * Math.PI);
+                                            ctx.fillStyle = '#ffffff';
+                                            ctx.fill();
+
+                                            ctx.save();
+                                            ctx.beginPath();
+                                            ctx.arc(canvas.width/2, canvas.height/2, logoSize/2, 0, 2 * Math.PI);
+                                            ctx.clip();
+                                            ctx.drawImage(logoImg, x, y, logoSize, logoSize);
+                                            ctx.restore();
+                                            
+                                            const qrImg = qrContainer.querySelector('img');
+                                            if (qrImg) qrImg.src = canvas.toDataURL("image/png");
+                                        };
+                                    }
+                                }, 100);
                             } catch (err) {
                                 console.error("QR Generation Error:", err);
                                 qrContainer.innerHTML = '<p class="text-danger small">Failed to generate QR</p>';

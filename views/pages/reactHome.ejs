@@ -1,7 +1,7 @@
 <% layout('layoutes/boilerplate') %>
 
 <!-- React Root Element -->
-<div id="react-homepage"></div>
+<div id="react-homepage" data-is-logged-in="<%= typeof currUser !== 'undefined' && currUser ? 'true' : 'false' %>"></div>
 
 <!-- React Bundle Assets -->
 <link rel="stylesheet" href="/dist/assets/main.css">

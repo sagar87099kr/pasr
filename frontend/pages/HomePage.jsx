@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import HeroSection from '../components/home/HeroSection';
 import CartSection from '../components/home/CartSection';
 import HorizontalSlider from '../components/home/HorizontalSlider';
+import OffersSection from '../components/home/OffersSection';
 import { getRecentlyViewed } from '../utils/tracking';
 
 const COLORS = {
@@ -51,7 +52,7 @@ const DJ_TENT = [
     { id: 'd3', name: 'Band Party', category: 'Music', image: '/images/band party.jpg', price: 8000, location: 'Dhanwar' }
 ];
 
-const HomePage = () => {
+const HomePage = ({ isLoggedIn }) => {
     const [recentItems, setRecentItems] = useState([]);
     const [discoveryData, setDiscoveryData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -115,8 +116,9 @@ const HomePage = () => {
             overflowX: 'hidden',
             paddingBottom: '40px'
         }}>
-            {/* 0. Hero with Professional Branding */}
-            <HeroSection />
+            {/* Special Offers Section */}
+            <OffersSection isLoggedIn={isLoggedIn} />
+
 
             {/* NEW: Continue Shopping (Cart Items) */}
             {discoveryData?.cartItems?.length > 0 && (
@@ -173,22 +175,65 @@ const HomePage = () => {
                 viewAllLink="/categories?type=Vehicles"
             />
 
-            {/* 7. Catering Services */}
+            {/* 7. Three Wheelers */}
+            <HorizontalSlider 
+                title="Three Wheelers" 
+                icon="fa-car-side" 
+                data={getSliderData(discoveryData?.threeWheelers, [])} 
+                viewAllLink="/categories?type=Three Wheelers"
+            />
+
+            {/* 8. Caterings */}
             <HorizontalSlider 
                 title="Catering Services" 
                 icon="fa-utensils" 
                 data={getSliderData(discoveryData?.catering, CATERING)} 
-                viewAllLink="/categories?type=Catering"
+                viewAllLink="/categories?type=Caterings"
             />
 
-            {/* 8. DJ, Sound & Tent */}
+            {/* 9. Filming and Photography */}
             <HorizontalSlider 
-                title="DJ, Sounds & Decoration" 
-                icon="fa-bullhorn" 
-                data={getSliderData(discoveryData?.dj, DJ_TENT)} 
-                viewAllLink="/categories?type=DJ"
+                title="Filming and Photography" 
+                icon="fa-camera" 
+                data={getSliderData(discoveryData?.filming, [])} 
+                viewAllLink="/categories?type=Filming"
             />
 
+            {/* 10. Event Decorators */}
+            <HorizontalSlider 
+                title="Event Decorators" 
+                icon="fa-wand-magic-sparkles" 
+                data={getSliderData(discoveryData?.decoration, [])} 
+                viewAllLink="/categories?type=Decoration"
+            />
+
+            {/* 11. Band Party */}
+            <HorizontalSlider 
+                title="Band Party" 
+                icon="fa-drum" 
+                data={getSliderData(discoveryData?.bandParty, [])} 
+                viewAllLink="/categories?type=Band Party"
+            />
+
+            {/* 12. Home Service */}
+            <HorizontalSlider 
+                title="Home Service" 
+                icon="fa-house-chimney-crack" 
+                data={getSliderData(discoveryData?.homeService, [])} 
+                viewAllLink="/categories?type=Home Service provider"
+            />
+
+            {/* 13. Heavy Equipments */}
+            <HorizontalSlider 
+                title="Heavy Equipments" 
+                icon="fa-tractor" 
+                data={getSliderData(discoveryData?.heavyEquipments, [])} 
+                viewAllLink="/categories?type=Heavy Equipments"
+            />
+
+
+            {/* 0. Hero with Professional Branding (moved to bottom) */}
+            <HeroSection />
 
             {/* Bottom: Browse by Category */}
             <section style={{ padding: '24px 20px', background: '#1E3A8A' }}>

@@ -16,5 +16,6 @@ if (searchMount) {
 const homeMount = document.getElementById('react-homepage');
 if (homeMount) {
   const root = createRoot(homeMount);
-  root.render(<HomePage />);
+  const isLoggedIn = homeMount.dataset.isLoggedIn === 'true';
+  root.render(<HomePage isLoggedIn={isLoggedIn} />);
 }

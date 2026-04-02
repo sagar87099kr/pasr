@@ -253,13 +253,19 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
         return results;
     };
 
-    const [shops, bazaar, vehicles, farming, catering, dj] = await Promise.all([
+    const [shops, bazaar, vehicles, farming, catering, dj, threeWheelers, filming, decoration, bandParty, homeService, heavyEquipments] = await Promise.all([
         Shop.find(queryOptions({ verified: true })).limit(10).populate("owner"),
         Product.find(queryOptions({ verified: true })).limit(10).populate("owner"),
         fetchWithFallback(Provider, "categories", "Four Wheelers"),
         fetchWithFallback(Provider, "categories", "Farming Vehicles"),
         fetchWithFallback(Provider, "categories", "Caterings"),
-        fetchWithFallback(Provider, "categories", "DJ and Tent")
+        fetchWithFallback(Provider, "categories", "DJ and Tent"),
+        fetchWithFallback(Provider, "categories", "Three Wheelers"),
+        fetchWithFallback(Provider, "categories", "Filming"),
+        fetchWithFallback(Provider, "categories", "Decoration"),
+        fetchWithFallback(Provider, "categories", "Band Party"),
+        fetchWithFallback(Provider, "categories", "Home Service provider"),
+        fetchWithFallback(Provider, "categories", "Heavy Equipments")
     ]);
 
     res.json({
@@ -271,7 +277,13 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
             vehicles,
             farming,
             catering,
-            dj
+            dj,
+            threeWheelers,
+            filming,
+            decoration,
+            bandParty,
+            homeService,
+            heavyEquipments
         }
     });
 }));
