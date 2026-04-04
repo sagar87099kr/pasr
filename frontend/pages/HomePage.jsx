@@ -4,53 +4,14 @@ import CartSection from '../components/home/CartSection';
 import HorizontalSlider from '../components/home/HorizontalSlider';
 import OffersSection from '../components/home/OffersSection';
 import { getRecentlyViewed } from '../utils/tracking';
+import { getRouteForCategory } from '../utils/routes';
 
 const COLORS = {
     PRIMARY: '#1E3A8A',    // Deep Blue
     BG: '#F9FAFB'          // Off-White
 };
 
-// --- Mock Data for Sliders (Using Real Local Image Paths) ---
-const MOST_SOLD = [
-    { id: 'ts1', productName: 'Fresh Cow Milk', categories: 'Dairy', image: 'https://images.unsplash.com/photo-1550583724-125581cc255b?q=80&w=800&auto=format&fit=crop', price: 60, unit: 'Litre', location: 'Dhanwar' },
-    { id: 'ts2', productName: 'Pure Local Ghee', categories: 'Dairy', image: 'https://images.unsplash.com/photo-1589927986089-35812388d1f4?q=80&w=800&auto=format&fit=crop', price: 650, unit: 'kg', location: 'Giridih' },
-    { id: 'ts3', productName: 'Organic Arhar Dal', categories: 'Grains', image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=800&auto=format&fit=crop', price: 120, unit: 'kg', location: 'Jamua' }
-];
-
-const SHOPS = [
-    { id: 's1', shopName: 'Maa Durga Kirana', category: 'Grocery', image: '/images/localshops.jpg', location: 'Giridih', price: 0, openingTime: '8 AM' },
-    { id: 's2', shopName: 'Aman Medicos', category: 'Medical', image: '/images/shop_front_example.png', location: 'Doranda', price: 0, openingTime: '9 AM' },
-    { id: 's3', shopName: 'Laxmi General Store', category: 'Grocery', image: 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?q=80&w=800&auto=format&fit=crop', location: 'Bengabad', price: 0, openingTime: '7 AM' }
-];
-
-const BAZAAR = [
-    { id: 'b1', productName: 'Fresh Tomatoes', categories: 'Vegetables', image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?q=80&w=800&auto=format&fit=crop', price: 40, unit: 'kg', location: 'Giridih' },
-    { id: 'b2', productName: 'Local Potatoes', categories: 'Vegetables', image: 'https://images.unsplash.com/photo-1518977676601-b53f02ac6d31?q=80&w=800&auto=format&fit=crop', price: 25, unit: 'kg', location: 'Jamua' },
-    { id: 'b3', productName: 'Local Cauliflower', categories: 'Vegetables', image: 'https://images.unsplash.com/photo-1568584711075-3d021a7c3ce3?q=80&w=800&auto=format&fit=crop', price: 30, unit: 'kg', location: 'Dhanwar' }
-];
-
-const FARMING = [
-    { id: 'f1', productName: 'Power Tiller', categories: 'Agriculture', image: '/images/fram tractor.jpeg', price: 1500, unit: 'Day', location: 'Giridih' },
-    { id: 'f2', productName: 'Organic Seeds', categories: 'Seeds', image: 'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?q=80&w=800&auto=format&fit=crop', price: 200, unit: 'kg', location: 'Bengabad' },
-    { id: 'f3', productName: 'Water Pump Repair', categories: 'Repair', image: '/images/construction.jpg', price: 500, unit: 'Visit', location: 'Jamua' }
-];
-
-const VEHICLES = [
-    { id: 'v1', name: 'Bolero PickUp', category: 'Vehicles', image: '/images/four wheeler .jpg', price: 2500, location: 'Giridih' },
-    { id: 'v2', name: 'Auto Rickshaw', category: 'Vehicles', image: '/images/three-weelers.jpg', price: 1000, location: 'Dhanwar' },
-    { id: 'v3', name: 'Local Mini Bus', category: 'Vehicles', image: '/images/bus .jpg', price: 5000, location: 'Jamua' }
-];
-
-const CATERING = [
-    { id: 'c1', name: 'Standard Catering', category: 'Catering', image: '/images/chef .jpg', price: 250, unit: 'Plate', location: 'Giridih' },
-    { id: 'c2', name: 'Party Meal Pack', category: 'Catering', image: 'https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=800&auto=format&fit=crop', price: 150, unit: 'Plate', location: 'Dhanwar' }
-];
-
-const DJ_TENT = [
-    { id: 'd1', name: 'High Bass DJ', category: 'DJ', image: '/images/DJ for party.jpeg', price: 5000, location: 'Jamua' },
-    { id: 'd2', name: 'Complete Tent Set', category: 'Decoration', image: '/images/decor.jpeg', price: 15000, location: 'Giridih' },
-    { id: 'd3', name: 'Band Party', category: 'Music', image: '/images/band party.jpg', price: 8000, location: 'Dhanwar' }
-];
+// Mock data removed to ensure only verified items from the database are shown.
 
 const HomePage = ({ isLoggedIn }) => {
     const [recentItems, setRecentItems] = useState([]);
@@ -102,10 +63,10 @@ const HomePage = ({ isLoggedIn }) => {
         }
     }, []);
 
-    // Helper to get data for specific sliders, falling back to mock data if empty
-    const getSliderData = (realData, mockFallback) => {
+    // Only return database items. If empty, return empty array to hide the section.
+    const getSliderData = (realData) => {
         if (realData && realData.length > 0) return realData;
-        return mockFallback;
+        return [];
     };
 
     return (
@@ -139,40 +100,40 @@ const HomePage = ({ isLoggedIn }) => {
             <HorizontalSlider 
                 title={discoveryData ? "Top Selling Near You" : "Most Sold in Your Area"} 
                 icon="fa-fire" 
-                data={getSliderData(discoveryData?.bazaar, MOST_SOLD)} 
-                viewAllLink="/localMarket"
+                data={getSliderData(discoveryData?.bazaar)} 
+                viewAllLink={getRouteForCategory('Local Bazaar')}
             />
 
             {/* 3. Local Shops */}
             <HorizontalSlider 
                 title="Shops Nearby" 
                 image="/images/localshops.jpg" 
-                data={getSliderData(discoveryData?.shops, SHOPS)} 
-                viewAllLink="/shops"
+                data={getSliderData(discoveryData?.shops)} 
+                viewAllLink={getRouteForCategory('Shops')}
             />
 
             {/* 4. Local Bazaar Products */}
             <HorizontalSlider 
                 title="Local Bazaar Products" 
                 image="/images/localMarket.jpg" 
-                data={getSliderData(discoveryData?.bazaar, BAZAAR)} 
-                viewAllLink="/localMarket"
+                data={getSliderData(discoveryData?.bazaar)} 
+                viewAllLink={getRouteForCategory('Local Bazaar')}
             />
 
             {/* 5. Farming & Agriculture */}
             <HorizontalSlider 
                 title="Farming & Agriculture" 
                 image="/images/keshanSabha.png" 
-                data={getSliderData(discoveryData?.farming, FARMING)} 
-                viewAllLink="/categories?type=Agriculture"
+                data={getSliderData(discoveryData?.farming)} 
+                viewAllLink={getRouteForCategory('Farming Vehicles')}
             />
 
             {/* 6. Four Wheelers & Transport */}
             <HorizontalSlider 
                 title="Four Wheelers & Transport" 
                 icon="fa-truck-moving" 
-                data={getSliderData(discoveryData?.vehicles, VEHICLES)} 
-                viewAllLink="/categories?type=Vehicles"
+                data={getSliderData(discoveryData?.vehicles)} 
+                viewAllLink={getRouteForCategory('Four Wheelers')}
             />
 
             {/* 7. Three Wheelers */}
@@ -180,15 +141,15 @@ const HomePage = ({ isLoggedIn }) => {
                 title="Three Wheelers" 
                 icon="fa-car-side" 
                 data={getSliderData(discoveryData?.threeWheelers, [])} 
-                viewAllLink="/categories?type=Three Wheelers"
+                viewAllLink="/three-weelers"
             />
 
             {/* 8. Caterings */}
             <HorizontalSlider 
                 title="Catering Services" 
                 icon="fa-utensils" 
-                data={getSliderData(discoveryData?.catering, CATERING)} 
-                viewAllLink="/categories?type=Caterings"
+                data={getSliderData(discoveryData?.catering)} 
+                viewAllLink="/caterings"
             />
 
             {/* 9. Filming and Photography */}
@@ -196,7 +157,7 @@ const HomePage = ({ isLoggedIn }) => {
                 title="Filming and Photography" 
                 icon="fa-camera" 
                 data={getSliderData(discoveryData?.filming, [])} 
-                viewAllLink="/categories?type=Filming"
+                viewAllLink="/filming"
             />
 
             {/* 10. Event Decorators */}
@@ -204,7 +165,7 @@ const HomePage = ({ isLoggedIn }) => {
                 title="Event Decorators" 
                 icon="fa-wand-magic-sparkles" 
                 data={getSliderData(discoveryData?.decoration, [])} 
-                viewAllLink="/categories?type=Decoration"
+                viewAllLink="/decor"
             />
 
             {/* 11. Band Party */}
@@ -212,7 +173,7 @@ const HomePage = ({ isLoggedIn }) => {
                 title="Band Party" 
                 icon="fa-drum" 
                 data={getSliderData(discoveryData?.bandParty, [])} 
-                viewAllLink="/categories?type=Band Party"
+                viewAllLink="/bandparty"
             />
 
             {/* 12. Home Service */}
@@ -220,7 +181,7 @@ const HomePage = ({ isLoggedIn }) => {
                 title="Home Service" 
                 icon="fa-house-chimney-crack" 
                 data={getSliderData(discoveryData?.homeService, [])} 
-                viewAllLink="/categories?type=Home Service provider"
+                viewAllLink="/homeservice"
             />
 
             {/* 13. Heavy Equipments */}
@@ -228,7 +189,7 @@ const HomePage = ({ isLoggedIn }) => {
                 title="Heavy Equipments" 
                 icon="fa-tractor" 
                 data={getSliderData(discoveryData?.heavyEquipments, [])} 
-                viewAllLink="/categories?type=Heavy Equipments"
+                viewAllLink="/heavy"
             />
 
 
@@ -255,7 +216,9 @@ const HomePage = ({ isLoggedIn }) => {
                     {['DJ/Events', 'Medical', 'Grocery', 'Repair', 'Agriculture', 'Catering', 'Vehicles', 'Decoration'].map((cat, idx) => (
                         <div
                             key={idx}
-                            onClick={() => window.location.href = `/categories?type=${cat}`}
+                            onClick={() => {
+                                window.location.href = getRouteForCategory(cat);
+                            }}
                             style={{
                                 flexShrink: 0,
                                 background: 'rgba(255,255,255,0.12)',

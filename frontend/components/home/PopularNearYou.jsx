@@ -36,7 +36,7 @@ const PopularNearYou = () => {
                     Popular Near You
                 </h2>
                 <span 
-                    onClick={() => window.location.href = '/categories'}
+                    onClick={() => window.location.href = '/localMarket'}
                     style={{ fontSize: '13px', color: COLORS.PRIMARY, fontWeight: '700', cursor: 'pointer' }}
                 >
                     View All

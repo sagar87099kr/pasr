@@ -1,5 +1,4 @@
-import React from 'react';
-import { getRecommendationMapping } from '../../utils/tracking';
+import { getRouteForCategory } from '../../utils/routes';
 
 const YouMayAlsoNeed = ({ lastCategory }) => {
     if (!lastCategory) return null;
@@ -27,7 +26,9 @@ const YouMayAlsoNeed = ({ lastCategory }) => {
                 {recommendations.map((catName, idx) => (
                     <div 
                         key={idx}
-                        onClick={() => window.location.href = `/categories?type=${catName}`}
+                        onClick={() => {
+                            window.location.href = getRouteForCategory(catName);
+                        }}
                         style={{
                             minWidth: '100px',
                             background: '#fff',

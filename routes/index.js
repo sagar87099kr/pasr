@@ -254,8 +254,8 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
     };
 
     const [shops, bazaar, vehicles, farming, catering, dj, threeWheelers, filming, decoration, bandParty, homeService, heavyEquipments] = await Promise.all([
-        Shop.find(queryOptions({ verified: true })).limit(10).populate("owner"),
-        Product.find(queryOptions({ verified: true })).limit(10).populate("owner"),
+        fetchWithFallback(Shop, "verified", true), // Special case for Shop (all verified)
+        fetchWithFallback(Product, "verified", true), // Special case for Product (all verified)
         fetchWithFallback(Provider, "categories", "Four Wheelers"),
         fetchWithFallback(Provider, "categories", "Farming Vehicles"),
         fetchWithFallback(Provider, "categories", "Caterings"),

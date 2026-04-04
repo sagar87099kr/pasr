@@ -40,7 +40,7 @@ const BazaarSection = () => {
                     </h2>
                 </div>
                 <span 
-                    onClick={() => window.location.href = '/bazaar'}
+                    onClick={() => window.location.href = '/localMarket'}
                     style={{ fontSize: '13px', color: COLORS.PRIMARY, fontWeight: '700', cursor: 'pointer' }}
                 >
                     View All
