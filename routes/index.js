@@ -7,6 +7,7 @@ const Shop = require("../data/shops.js");
 const Provider = require("../data/serviceproviders.js");
 const { isLogedin, isadmin } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
+const itemController = require("../controllers/item.js");
 
 
 // help route
@@ -226,28 +227,26 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
         return baseQuery;
     };
 
-    // Helper to fetch data with possible range expansion
-    const fetchWithFallback = async (model, categoryField, categoryValue, limit = 10) => {
-        let results = await model.find(queryOptions({ [categoryField]: categoryValue, verified: true })).limit(limit).populate("owner");
+    const fetchWithFallback = async (model, categoryField, categoryValue) => {
+        let results = await model.find(queryOptions({ [categoryField]: categoryValue })).populate("owner");
         
         // If no results and we have a location, try a wider range (up to 20km)
         if (results.length === 0 && userLocation) {
             const widerDist = 20000; 
             results = await model.find({
                 [categoryField]: categoryValue,
-                verified: true,
                 geometry: {
                     $near: {
                         $geometry: { type: "Point", coordinates: userLocation.coordinates },
                         $maxDistance: widerDist
                     }
                 }
-            }).limit(limit).populate("owner");
+            }).populate("owner");
         }
         
-        // Final fallback: just get most recent verified if still empty
+        // Final fallback: just get most recent if still empty
         if (results.length === 0) {
-            results = await model.find({ [categoryField]: categoryValue, verified: true }).sort({ createdAt: -1 }).limit(limit).populate("owner");
+            results = await model.find({ [categoryField]: categoryValue }).sort({ createdAt: -1 }).populate("owner");
         }
         
         return results;
@@ -287,5 +286,8 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
         }
     });
 }));
+
+// Route to fetch items for the homepage
+router.get("/api/home/items", itemController.getHomeItems);
 
 module.exports = router;

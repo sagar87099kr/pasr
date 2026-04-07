@@ -117,6 +117,16 @@
 
       <!-- Right Side: Service Icons & Menu -->
       <div class="d-flex align-items-center gap-2 gap-sm-3">
+        <!-- PASR Coins -->
+        <% if (typeof currUser !== 'undefined' && currUser) { %>
+          <a href="/user" class="d-flex align-items-center gap-1 me-2 text-decoration-none profile-icon-hover" title="Your PASR Coins - View Profile">
+            <i class="fa-solid fa-coins text-warning" style="font-size: 16px;"></i>
+            <span style="font-size: 14px; font-weight: 800; color: #2563eb;">
+              <%= currUser.coins || 0 %>
+            </span>
+          </a>
+        <% } %>
+
         <!-- Notifications -->
         <% if (typeof currUser !== 'undefined' && currUser) { %>
           <div class="nav-item dropdown list-unstyled mb-0 flex-shrink-0 d-flex align-items-center" id="notificationContainer">

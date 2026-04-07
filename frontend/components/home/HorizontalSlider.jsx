@@ -7,7 +7,7 @@ const COLORS = {
     BG: '#F9FAFB'          // Off-White
 };
 
-const HorizontalSlider = ({ title, icon, image, data, viewAllLink }) => {
+const HorizontalSlider = ({ title, icon, image, data, viewAllLink, rows = 1 }) => {
     if (!data || data.length === 0) return null;
 
     return (
@@ -48,16 +48,21 @@ const HorizontalSlider = ({ title, icon, image, data, viewAllLink }) => {
             </div>
             
             <div style={{
-                display: 'flex',
-                gap: '12px',
+                display: 'grid',
+                gridTemplateRows: rows > 1 ? `repeat(${rows}, auto)` : 'none',
+                gridAutoFlow: 'column',
+                gap: '16px',
                 overflowX: 'auto',
-                paddingBottom: '8px',
+                paddingBottom: '12px',
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
                 WebkitOverflowScrolling: 'touch'
             }} className="hide-scrollbar">
                 {data.map((item, idx) => (
-                    <div key={idx} style={{ minWidth: '160px', maxWidth: '160px' }}>
+                    <div key={idx} style={{ 
+                        minWidth: rows > 1 ? '160px' : '180px', 
+                        maxWidth: rows > 1 ? '160px' : '180px' 
+                    }}>
                         <ServiceCard item={item} />
                     </div>
                 ))}

@@ -13,6 +13,7 @@ const { normalizeItemName } = require("../utils/normalization");
 const MasterProduct = require("../data/masterProduct");
 const TransactionHistory = require("../data/transactionHistory.js");
 const { verifyGST } = require("../utils/gstHelper");
+const SHOP_CATEGORIES = require("../data/categories");
 
 // Define a middleware specifically for Shop ownership if isOwner is strictly for Providers
 // Looking at middleware.js: isOwner checks Provider. isProductOwner checks Product.
@@ -460,7 +461,8 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             activeOrderCount,
             totalPendingPayout,
             totalRequestedPayout,
-            totalDueToPasr
+            totalDueToPasr,
+            SHOP_CATEGORIES
         });
     } else {
         // Customer View: Only items with quantity > 0 AND having an image
@@ -485,7 +487,8 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             activeOrderCount: 0, // Customers don't see active orders
             totalPendingPayout: 0,
             totalRequestedPayout: 0,
-            totalDueToPasr: 0
+            totalDueToPasr: 0,
+            SHOP_CATEGORIES
         });
     }
 }));

@@ -56,4 +56,7 @@ const itemSchema = new Schema({
 itemSchema.index({ shop: 1, product: 1 });
 itemSchema.index({ name: 'text' }); // Still useful for custom items
 
+// Index for optimizing homepage item feeds
+itemSchema.index({ isActive: 1, createdAt: -1 });
+
 module.exports = mongoose.model("Item", itemSchema);
