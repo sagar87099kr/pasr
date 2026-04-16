@@ -13,7 +13,7 @@ const ServiceCard = ({ item }) => {
     if (!item) return null;
 
     const isProduct = !!item.productName;
-    const isService = item.categories === 'Caterings' || item.categories === 'DJ and Tent' || item.categories === 'Four Wheelers' || item.categories === 'Home Service' || item.isProvider;
+    const isService = !!item.company || !!item.personImage || ['Four Wheelers', 'Farming Vehicles', 'Caterings', 'DJ and Tent', 'Three Wheelers', 'Filming', 'Decoration', 'Band Party', 'Home Service provider', 'Home Service', 'Heavy Equipments', 'Others'].includes(item.categories) || item.isProvider;
     const isShop = !isProduct && !isService;
     
     const type = isProduct ? 'PRODUCT' : (isShop ? 'SHOP' : 'SERVICE');
@@ -74,8 +74,13 @@ const ServiceCard = ({ item }) => {
         const isRealId = id && /^[a-f\d]{24}$/i.test(String(id));
 
         if (isProduct) {
-            if (isRealId) window.location.href = `/products/${id}`;
-            else window.location.href = '/localMarket';
+            if (item.shopId) {
+                window.location.href = `/shops/${item.shopId}`;
+            } else if (isRealId) {
+                window.location.href = `/products/${id}`;
+            } else {
+                window.location.href = '/localMarket';
+            }
         } else if (isShop) {
             if (isRealId) window.location.href = `/shops/${id}`;
             else window.location.href = '/shops';
@@ -217,43 +222,7 @@ const ServiceCard = ({ item }) => {
                 </div>
 
                 <div style={{ marginTop: 'auto' }}>
-                    {isProduct ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button 
-                                onClick={handleAddToCart}
-                                style={{
-                                    flex: 1,
-                                    background: COLORS.SECONDARY,
-                                    color: '#FFF',
-                                    border: 'none',
-                                    padding: '10px 4px',
-                                    borderRadius: '8px',
-                                    fontSize: '12px',
-                                    fontWeight: '800',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 2px 4px rgba(249, 115, 22, 0.3)'
-                                }}
-                            >
-                                <i className="fa-solid fa-cart-plus me-1"></i> Add
-                            </button>
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); handleClick(); }}
-                                style={{
-                                    flex: 1,
-                                    background: '#F3F4F6',
-                                    color: COLORS.TEXT_PRI,
-                                    border: '1px solid #E5E7EB',
-                                    padding: '10px 4px',
-                                    borderRadius: '8px',
-                                    fontSize: '12px',
-                                    fontWeight: '700',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                View
-                            </button>
-                        </div>
-                    ) : (
+                    {!isProduct && !isShop && (
                         <button 
                             onClick={(e) => { e.stopPropagation(); handleClick(); }}
                             style={{
