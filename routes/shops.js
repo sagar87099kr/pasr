@@ -705,7 +705,7 @@ router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, handleItem
 router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, handleItemUpload, wrapAsync(async (req, res) => {
 
     const { id, itemId } = req.params;
-    const { name, price, quantity, itemCategory, description } = req.body.item;
+    const { name, price, quantity, itemCategory, description, discount } = req.body.item;
     let sizes = req.body.item.sizes || [];
     if (!Array.isArray(sizes)) sizes = [sizes];
 
@@ -715,7 +715,8 @@ router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, handleItemUpload,
         quantity,
         itemCategory,
         description,
-        sizes
+        sizes,
+        discount
     };
 
     const item = await Item.findById(itemId);

@@ -166,7 +166,15 @@
     </div>
 
     <h1 class="item-detail-title"><%= itemName %></h1>
-    <div class="item-detail-price">₹<%= item.price %></div>
+    <div class="item-detail-price">
+        <% if (item.discount > 0) { %>
+            <span style="text-decoration: line-through; color: #9ca3af; font-size: 0.8em; margin-right: 8px;">₹<%= item.price %></span>
+            <span style="color: #16a34a;">₹<%= Math.round(item.price * (1 - item.discount / 100)) %></span>
+            <span style="font-size: 0.6em; background: #dcfce7; color: #16a34a; padding: 4px 10px; border-radius: 8px; margin-left: 10px; vertical-align: middle;"><%= item.discount %>% OFF</span>
+        <% } else { %>
+            ₹<%= item.price %>
+        <% } %>
+    </div>
     
     <div class="item-detail-shop d-flex align-items-center">
         <div class="shop-icon">

@@ -1124,6 +1124,7 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                                                         data-category="<%= (itemCat === 'Other' || itemCat === 'Others' || !itemCat) ? 'General' : itemCat %>"
                                                         data-name="<%= itemName %>" data-img="<%= itemImg %>"
                                                         data-price="<%= item.price %>"
+                                                        data-discount="<%= item.discount || 0 %>"
                                                         data-quantity="<%= item.quantity %>"
                                                         data-itemid="<%= item._id || '' %>"
                                                         data-productid="<%= product._id || '' %>"
@@ -1143,7 +1144,12 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                                                                         No Image</div>
                                                                     <% } %>
                                                                         <div class="price-tag">
-                                                                            ₹<%= item.price %>
+                                                                            <% if (item.discount > 0) { %>
+                                                                                <span style="text-decoration: line-through; color: rgba(255,255,255,0.7); font-size: 0.8em; margin-right: 4px;">₹<%= item.price %></span>
+                                                                                ₹<%= Math.round(item.price * (1 - item.discount / 100)) %>
+                                                                            <% } else { %>
+                                                                                ₹<%= item.price %>
+                                                                            <% } %>
                                                                         </div>
                                                                         <% if(item.quantity===0) { %>
                                                                             <div
@@ -1380,6 +1386,12 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                         <div class="field">
                             <label>Price (₹)</label>
                             <input type="number" name="item[price]" required min="0" placeholder="0"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                        </div>
+                        
+                        <div class="field">
+                            <label>Offer (%)</label>
+                            <input type="number" name="item[discount]" min="0" max="100" placeholder="0" value="0"
                                 style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
                         </div>
 
@@ -1653,6 +1665,13 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                         <div class="field">
                             <label>Price (₹)</label>
                             <input type="number" id="editItemPrice" name="item[price]" required min="0"
+                                placeholder="0"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                        </div>
+
+                        <div class="field">
+                            <label>Offer (%)</label>
+                            <input type="number" id="editItemDiscount" name="item[discount]" min="0" max="100"
                                 placeholder="0"
                                 style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
                         </div>
@@ -1984,6 +2003,8 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                     const shopName = element.getAttribute('data-shopname');
                     const description = element.getAttribute('data-description');
 
+                    const discount = element.getAttribute('data-discount') || 0;
+
                     const modal = document.getElementById('itemModal');
                     const nameEl = document.getElementById('modalItemName');
                     const imgEl = document.getElementById('modalItemImage');
@@ -1991,7 +2012,13 @@ const currentShopCats = getShopCategoryData(shop.category || '');
 
                     nameEl.textContent = name;
                     imgEl.src = imgUrl || '/images/placeholder.jpg';
-                    priceEl.textContent = '₹' + price;
+                    
+                    if (discount > 0) {
+                        const discountedPrice = Math.round(price * (1 - discount / 100));
+                        priceEl.innerHTML = `<span style="text-decoration: line-through; color: #9ca3af; font-size: 0.7em; margin-right: 8px;">₹${price}</span> ₹${discountedPrice}`;
+                    } else {
+                        priceEl.textContent = '₹' + price;
+                    }
 
                     const addBtn = document.getElementById('modalAddToCartBtn');
                     if (addBtn) {
@@ -2348,14 +2375,15 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                     const isVirtual = card.getAttribute('data-isvirtual');
                     const itemName = card.getAttribute('data-name');
                     const itemPrice = card.getAttribute('data-price');
+                    const itemDiscount = card.getAttribute('data-discount');
                     const itemQuantity = card.getAttribute('data-quantity');
                     const itemCategory = card.getAttribute('data-category');
                     const sizes = JSON.parse(card.getAttribute('data-sizes') || '[]');
                     const description = card.getAttribute('data-description');
-                    openEditItemModal(itemId, itemName, itemPrice, itemQuantity, itemCategory, sizes, description, productId, isVirtual);
+                    openEditItemModal(itemId, itemName, itemPrice, itemDiscount, itemQuantity, itemCategory, sizes, description, productId, isVirtual);
                 }
 
-                function openEditItemModal(itemId, itemName, itemPrice, itemQuantity, itemCategory, sizes, description, productId, isVirtual) {
+                function openEditItemModal(itemId, itemName, itemPrice, itemDiscount, itemQuantity, itemCategory, sizes, description, productId, isVirtual) {
                     const modal = document.getElementById('editItemModal');
                     const form = document.getElementById('editItemForm');
 
@@ -2363,6 +2391,7 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                     document.getElementById('editProductId').value = productId || '';
                     document.getElementById('editItemName').value = itemName;
                     document.getElementById('editItemPrice').value = itemPrice;
+                    document.getElementById('editItemDiscount').value = itemDiscount || 0;
                     document.getElementById('editItemQuantity').value = itemQuantity;
                     document.getElementById('editItemDescription').value = description || '';
 

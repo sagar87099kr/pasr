@@ -251,7 +251,7 @@ const HomePage = ({ isLoggedIn }) => {
                     title="Featured Items" 
                     icon="fa-star" 
                     data={getSliderData(homeItems)} 
-                    viewAllLink="/localMarket"
+                    viewAllLink="/shop-items"
                     rows={2}
                 />
             </section>

@@ -46,6 +46,12 @@ const itemSchema = new Schema({
         type: Boolean,
         default: true
     },
+    discount: {
+        type: Number,
+        min: 0,
+        max: 100,
+        default: 0
+    },
     createdAt: {
         type: Date,
         default: Date.now

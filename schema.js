@@ -84,6 +84,7 @@ module.exports.itemSchema = Joi.object({
         itemCategory: Joi.string().allow(""),
         description: Joi.string().allow(""),
         sizes: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional(),
+        discount: Joi.number().min(0).max(100).optional(),
     }).required(),
     imageId: Joi.string().allow(""),
     productId: Joi.string().allow(""),

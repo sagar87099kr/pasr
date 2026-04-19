@@ -18,48 +18,6 @@ const ServiceCard = ({ item }) => {
     
     const type = isProduct ? 'PRODUCT' : (isShop ? 'SHOP' : 'SERVICE');
 
-    const handleAddToCart = async (e) => {
-        e.stopPropagation();
-        const btn = e.currentTarget;
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-        try {
-            const response = await fetch('/cart/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    itemId: item.id || item._id, 
-                    quantity: 1,
-                    itemImage: item.image,
-                    shopName: item.shopName
-                })
-            });
-            const data = await response.json();
-            if (data.success) {
-                if (window.showToast) window.showToast('✅ Added to Cart!', 'success');
-                btn.innerHTML = '<i class="fa-solid fa-check"></i>';
-                setTimeout(() => {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHtml;
-                }, 2000);
-            } else {
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
-                if (response.status === 401) {
-                    window.location.href = '/login?returnUrl=' + encodeURIComponent(window.location.pathname);
-                } else {
-                    alert(data.message || 'Error adding to cart');
-                }
-            }
-        } catch (err) {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-            console.error(err);
-        }
-    };
-
     const goToShop = (e) => {
         e.stopPropagation();
         if (item.shopId) {
@@ -89,6 +47,10 @@ const ServiceCard = ({ item }) => {
             else window.location.href = '/categories';
         }
     };
+
+    const actualPrice = item.price && item.discount > 0 
+        ? Math.round(item.price * (1 - item.discount / 100))
+        : item.price;
 
     return (
         <div 
@@ -142,8 +104,8 @@ const ServiceCard = ({ item }) => {
                     {type}
                 </span>
 
-                {/* Price or Verified Badge */}
-                {type === 'SERVICE' ? (
+                {/* Verified Badge for Services */}
+                {type === 'SERVICE' && (
                     <span style={{
                         position: 'absolute',
                         bottom: '10px',
@@ -163,24 +125,26 @@ const ServiceCard = ({ item }) => {
                     }}>
                         <i className="fa-solid fa-circle-check"></i> VERIFIED
                     </span>
-                ) : (
-                    item.price !== undefined && item.price !== null && (
-                        <span style={{
-                            position: 'absolute',
-                            bottom: '10px',
-                            right: '10px',
-                            background: 'rgba(255,255,255,0.95)',
-                            padding: '4px 10px',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            fontWeight: '900',
-                            color: COLORS.SUCCESS,
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                            zIndex: 2
-                        }}>
-                            ₹{item.price}
-                        </span>
-                    )
+                )}
+
+                {/* Savings Badge on Image - ONLY show percentage if discount exists */}
+                {item.discount > 0 && (
+                    <span style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        background: COLORS.SECONDARY,
+                        color: '#FFF',
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '11px',
+                        fontWeight: '900',
+                        boxShadow: '0 4px 10px rgba(249, 115, 22, 0.4)',
+                        zIndex: 2,
+                        textTransform: 'uppercase'
+                    }}>
+                        {item.discount}% OFF
+                    </span>
                 )}
             </div>
 
@@ -201,7 +165,27 @@ const ServiceCard = ({ item }) => {
                     {item.productName || item.shopName || item.company || item.name}
                 </h3>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
+                {/* Price Display - Professional Duo Pricing */}
+                {(item.price !== undefined && item.price !== null && item.price > 0) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '4px 0' }}>
+                        <span style={{ fontSize: '20px', fontWeight: '800', color: COLORS.SUCCESS, letterSpacing: '-0.5px' }}>
+                            ₹{actualPrice}
+                        </span>
+                        {item.discount > 0 && (
+                            <span style={{ 
+                                fontSize: '13px', 
+                                color: '#9CA3AF', 
+                                textDecoration: 'line-through', 
+                                fontWeight: '600',
+                                opacity: 0.9
+                            }}>
+                                ₹{item.price}
+                            </span>
+                        )}
+                    </div>
+                )}
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px', marginTop: '4px' }}>
                     {isProduct ? (
                         <div onClick={goToShop} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <i className="fa-solid fa-store" style={{ fontSize: '10px', color: COLORS.PRIMARY }}></i>
@@ -214,36 +198,10 @@ const ServiceCard = ({ item }) => {
                             <>
                                 <i className="fa-solid fa-location-dot" style={{ fontSize: '10px', color: COLORS.TEXT_SEC }}></i>
                                 <span style={{ fontSize: '11px', color: COLORS.TEXT_SEC, fontWeight: '500' }}>
-                                    {item.location.split(',')[0]}
+                                    {typeof item.location === 'string' ? item.location.split(',')[0] : 'Nearby'}
                                 </span>
                             </>
                         )
-                    )}
-                </div>
-
-                <div style={{ marginTop: 'auto' }}>
-                    {!isProduct && !isShop && (
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); handleClick(); }}
-                            style={{
-                                width: '100%',
-                                background: isShop ? COLORS.PRIMARY : COLORS.SECONDARY,
-                                color: '#FFF',
-                                border: 'none',
-                                padding: '12px',
-                                borderRadius: '8px',
-                                fontSize: '14px',
-                                fontWeight: '700',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px'
-                            }}
-                        >
-                            <i className={`fa-solid ${isShop ? 'fa-shop' : 'fa-phone'}`}></i>
-                            {isShop ? 'Visit Shop' : 'Call Now'}
-                        </button>
                     )}
                 </div>
             </div>

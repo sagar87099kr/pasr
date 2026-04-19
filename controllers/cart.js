@@ -75,13 +75,24 @@ module.exports.addToCart = async (req, res, next) => {
 
         const existingItemIndex = cart.items.findIndex(i => i.itemId === itemId);
 
+        // Calculate actual price after discount
+        let originalPrice = item.price;
+        let actualPrice = item.price;
+        if (!isProduct && item.discount > 0) {
+            actualPrice = Math.round(item.price * (1 - item.discount / 100));
+        }
+
         if (existingItemIndex > -1) {
             cart.items[existingItemIndex].quantity += parsedQuantity;
+            // Update price to latest in case it changed or has discount
+            cart.items[existingItemIndex].price = actualPrice;
+            cart.items[existingItemIndex].originalPrice = originalPrice;
         } else {
             cart.items.push({
                 itemId: item._id,
                 name: isProduct ? item.productName : item.name,
-                price: item.price,
+                price: actualPrice,
+                originalPrice: originalPrice,
                 quantity: parsedQuantity,
                 image: itemImage || (isProduct ? (item.productImage[0] ? item.productImage[0].url : '') : (item.img && item.img.url ? item.img.url : '')),
                 shopId: shopId,

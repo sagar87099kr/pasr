@@ -191,6 +191,21 @@ router.get("/categories", (req, res) => {
     });
 });
 
+// Dedicated Shop Items (Featured Items) Page
+router.get("/shop-items", (req, res) => {
+    res.render("pages/shopItems.ejs", {
+        containerClass: 'shop-items-container',
+        useMaps: false,
+        useProfileCss: false,
+        useInsideCateCss: false,
+        seo: {
+            title: "Shop Items - Dedicated Bazaar - PASR",
+            description: "Browse all local shop items and featured products in your neighborhood.",
+            url: "https://www.pasr.in/shop-items"
+        }
+    });
+});
+
 // JSON API for dynamic discovery on React homepage
 router.get("/api/discovery", wrapAsync(async (req, res) => {
     let { lat, lon, range = 5 } = req.query;

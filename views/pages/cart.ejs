@@ -460,7 +460,11 @@
                                                 <div class="cart-item-title">
                                                     <%= item.name %>
                                                 </div>
-                                                <div class="cart-item-price">₹<%= item.price %>
+                                                <div class="cart-item-price">
+                                                    <% if (item.originalPrice && item.originalPrice > item.price) { %>
+                                                        <span style="text-decoration: line-through; color: #94a3b8; font-size: 0.8em; margin-right: 4px;">₹<%= item.originalPrice %></span>
+                                                    <% } %>
+                                                    ₹<%= item.price %>
                                                 </div>
                                             </div>
                                             <div class="cart-item-actions">

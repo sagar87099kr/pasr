@@ -15,6 +15,7 @@ const { validatecustomer, saveRedirectUrl, isLogedin, isadmin, isLoggedOut } = r
 const wrapAsync = require("../utils/wrapAsync.js");
 const userController = require("../controllers/user.js");
 const { forwardGeocode } = require("../utils/geocoder");
+const { sendWhatsAppOTP } = require("../utils/whatsappHelper");
 
 // Helper to generate a unique referral code
 async function generateReferralCode() {
@@ -79,6 +80,13 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
         // Save pending data in session (no DB write yet)
         req.session.pendingSignup = { name, username, password, address, pincode, geometry, otp, otpExpiry, referralCode };
         await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve()));
+
+        try {
+            await sendWhatsAppOTP(username, otp);
+        } catch (error) {
+            console.error("Failed to send OTP via WhatsApp:", error.message);
+            req.flash("warning", "There was an issue sending the WhatsApp OTP, please try again later.");
+        }
 
         res.redirect("/customer/verify-otp");
 

@@ -5,7 +5,7 @@ const SHOP_CATEGORIES = require("../data/categories");
 
 module.exports.getHomeItems = async (req, res) => {
     try {
-        let { lat, lon, category } = req.query;
+        let { lat, lon, category, q, minDiscount, minPrice, maxPrice, sort, shopCategory } = req.query;
         let userLocation = null;
 
         if (lat && lon) {
@@ -76,27 +76,79 @@ module.exports.getHomeItems = async (req, res) => {
             const productRef = item.product || {};
             const shopRef = item.shop || {};
             const imgObj = productRef.img?.url ? productRef.img : (item.img?.url ? item.img : null);
+            
+            // Calculate actual price for filtering and sorting
+            const actualPrice = item.price && item.discount > 0 
+                ? Math.round(item.price * (1 - item.discount / 100))
+                : item.price;
 
             return {
                 id: item._id,
                 productName: productRef.name || item.name || "Unknown Product",
                 shopName: shopRef.shopName || "Unknown Shop",
-                shopId: shopRef._id, // NEW: Added shopId for redirection
+                shopId: shopRef._id,
                 price: item.price,
+                discount: item.discount || 0,
+                actualPrice: actualPrice, // Pre-calculated for frontend use
                 image: imgObj?.url || null,
                 category: productRef.category || item.itemCategory || "",
                 parentCategory: shopRef.category || "General",
-                location: shopRef.location || "Nearby"
+                location: shopRef.location || "Nearby",
+                createdAt: item.createdAt
             };
         });
 
+        // --- Apply Professional Filters ---
+        
+        // 1. Search filter
+        if (q) {
+            const searchTerm = q.toLowerCase();
+            allFormattedItems = allFormattedItems.filter(item => 
+                item.productName.toLowerCase().includes(searchTerm) || 
+                item.shopName.toLowerCase().includes(searchTerm) ||
+                item.category.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        // 2. Category filter (Product Category)
         if (category && category !== "All") {
             allFormattedItems = allFormattedItems.filter(item => 
                 item.category && item.category.toLowerCase() === category.toLowerCase()
             );
         }
 
-        // Limit removed: Now showing full matching dataset to allow for infinite scrolling potential or complete local listing
+        // 2b. Shop Category Filter
+        if (shopCategory && shopCategory !== "All Shops") {
+            allFormattedItems = allFormattedItems.filter(item => 
+                item.parentCategory && item.parentCategory.toLowerCase() === shopCategory.toLowerCase()
+            );
+        }
+
+        // 3. Discount filter
+        if (minDiscount) {
+            allFormattedItems = allFormattedItems.filter(item => item.discount >= parseInt(minDiscount));
+        }
+
+        // 4. Price range filter
+        if (minPrice) {
+            allFormattedItems = allFormattedItems.filter(item => item.actualPrice >= parseInt(minPrice));
+        }
+        if (maxPrice) {
+            allFormattedItems = allFormattedItems.filter(item => item.actualPrice <= parseInt(maxPrice));
+        }
+
+        // --- Apply Sorting ---
+        if (sort === 'price_asc') {
+            allFormattedItems.sort((a, b) => a.actualPrice - b.actualPrice);
+        } else if (sort === 'price_desc') {
+            allFormattedItems.sort((a, b) => b.actualPrice - a.actualPrice);
+        } else if (sort === 'discount_desc') {
+            allFormattedItems.sort((a, b) => b.discount - a.discount);
+        } else {
+            // Default: Newest
+            allFormattedItems.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+
         const finalItems = allFormattedItems;
 
         // Define a prioritized list of 'Major' categories that users use most often.
