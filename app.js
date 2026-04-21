@@ -57,6 +57,13 @@ app.use(compression());
 
 
 // Serve assetlinks.json explicitly since express.static ignores dotfiles by default
+app.use((req, res, next) => {
+    if (req.path !== '/health' && !req.path.includes('.')) {
+        console.log(`[Request] ${req.method} ${req.url}`);
+    }
+    next();
+});
+
 app.get("/.well-known/assetlinks.json", (req, res) => {
   res.sendFile(path.join(__dirname, "public", ".well-known", "assetlinks.json"));
 });
@@ -222,7 +229,6 @@ app.use(async (req, res, next) => {
   res.locals.cartItemCount = (req.session && req.session.cart && req.session.cart.items) ? req.session.cart.items.length : 0;
 
   // Daily Visitor Tracking
-  res.locals.todayVisits = todayVisitsCache.count;
   const isPageView = req.method === 'GET' && !req.xhr && !req.headers.accept?.includes('application/json') && !req.path.startsWith('/api') && !req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|map|woff|woff2)$/i);
   
   if (isPageView) {
@@ -230,30 +236,21 @@ app.use(async (req, res, next) => {
           const tzDate = new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
           const d = new Date(tzDate);
           const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-          let incremented = false;
           
           if (req.cookies.visited_today !== today) {
               res.cookie('visited_today', today, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
-              await SiteStat.findOneAndUpdate(
+              // Run DB update in background to not block response
+              SiteStat.findOneAndUpdate(
                   { date: today },
                   { $inc: { visits: 1 } },
                   { upsert: true, new: true }
-              );
-              incremented = true;
+              ).catch(err => console.error("SiteStat background update error:", err.message));
           }
 
-          const now = Date.now();
-          if (incremented || todayVisitsCache.date !== today || now - todayVisitsCache.lastFetched > 60000) {
-              const stat = await SiteStat.findOne({ date: today });
-              todayVisitsCache = {
-                  date: today,
-                  count: stat ? stat.visits : (incremented ? 1 : 0),
-                  lastFetched: now
-              };
-          }
+          // Cache logic simplified
           res.locals.todayVisits = todayVisitsCache.count;
       } catch (e) {
-          console.error("Visitor tracking error:", e);
+          console.error("Visitor tracking error:", e.message);
       }
   }
 

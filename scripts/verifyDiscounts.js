@@ -15,7 +15,7 @@ async function verifyDiscounts() {
             neemki.price = 20;
             // The item actually has ₹16 green in the user's screenshot.
             // If we set discount to 20%, actualPrice = 20 * 0.8 = 16.
-            neemki.discount = 20; 
+            neemki.discount = 20;
             await neemki.save();
             console.log("Updated 'neemki': Price 20, Discount 20% -> Actual 16");
         } else {

@@ -432,115 +432,142 @@ router.post("/account/remove/permanent", isLogedin, wrapAsync(async (req, res) =
     const { username, password } = req.body;
     const userId = req.user._id;
 
+    console.log(`[Account Deletion] STARTED for User: ${req.user.username} (${userId})`);
+
     try {
-        // 1. Verification
-        if (req.user.username != username) {
+        const currentUsername = String(req.user.username);
+        const inputUsername = String(username);
+
+        if (currentUsername !== inputUsername) {
+            console.warn(`[Account Deletion] ABORT: Username mismatch`);
             req.flash("danger", "Phone number does not match your current account.");
-            return res.redirect("/account/remove/permanent");
+            return res.redirect("/user"); 
         }
 
         const user = await Customer.findById(userId);
+        if (!user) {
+            console.error(`[Account Deletion] ABORT: User not found in DB`);
+            req.flash("danger", "Account not found.");
+            return res.redirect("/home");
+        }
+
+        console.log(`[Account Deletion] Authenticating password for ${currentUsername}...`);
         const isAuthenticated = await new Promise((resolve) => {
-            user.authenticate(password, (err, result) => {
-                resolve(!err && result);
+            const timeout = setTimeout(() => {
+                console.warn("[Account Deletion] Auth Timeout: Verification taking too long.");
+                resolve(false);
+            }, 5000);
+
+            Customer.authenticate()(currentUsername, password, (err, userResult, msg) => {
+                clearTimeout(timeout);
+                if (err) console.error(`[Account Deletion] Auth Error: ${err.message}`);
+                resolve(!!userResult);
             });
         });
 
         if (!isAuthenticated) {
-            req.flash("danger", "Incorrect password. Verification failed.");
-            return res.redirect("/account/remove/permanent");
+            console.warn(`[Account Deletion] ABORT: Password verification failed`);
+            req.flash("danger", "Incorrect password. Identity verification failed.");
+            return res.redirect("/user");
         }
 
-        console.log(`\nDeleting Account: ${user.name} (${user.username})`);
+        console.log(`[Account Deletion] Auth successful. Starting resilient data purge for ${user.name}...`);
         const cloudinary = require("../cloud_con.js");
+        const deletePromises = [];
 
-        // 2. Delete Service Provider Listings & Images
-        const providers = await Provider.find({ owner: userId });
-        for (let p of providers) {
-            if (p.personImage?.length) {
-                for (let img of p.personImage) {
-                    if (img.filename) await cloudinary.uploader.destroy(img.filename).catch(e => console.error(e));
+        // 1. Providers Purge
+        try {
+            const providers = await Provider.find({ owner: userId });
+            for (let p of providers) {
+                if (p.personImage?.length) {
+                    for (let img of p.personImage) {
+                        if (img.filename) deletePromises.push(cloudinary.uploader.destroy(img.filename).catch(e => {}));
+                    }
                 }
+                if (p.review?.length) await Review.deleteMany({ _id: { $in: p.review } });
+                await Provider.findByIdAndDelete(p._id);
             }
-            if (p.review?.length) await Review.deleteMany({ _id: { $in: p.review } });
-            await Provider.findByIdAndDelete(p._id);
-        }
+            console.log(`[Account Deletion] - Providers purged`);
+        } catch (e) { console.error(`[Account Deletion] Provider purge error: ${e.message}`); }
 
-        // 3. Delete Shops & Images
-        const shops = await Shop.find({ owner: userId });
-        for (let s of shops) {
-            if (s.shopImage?.length) {
-                for (let img of s.shopImage) {
-                    if (img.filename) await cloudinary.uploader.destroy(img.filename).catch(e => console.error(e));
+        // 2. Shops Purge
+        try {
+            const shops = await Shop.find({ owner: userId });
+            for (let s of shops) {
+                if (s.shopImage?.length) {
+                    for (let img of s.shopImage) {
+                        if (img.filename) deletePromises.push(cloudinary.uploader.destroy(img.filename).catch(e => {}));
+                    }
                 }
-            }
-            // Delete shop item images if they exist
-            if (s.items?.length) {
-                for (let item of s.items) {
-                    if (item.itemImage?.filename) await cloudinary.uploader.destroy(item.itemImage.filename).catch(e => console.error(e));
+                if (s.items?.length) {
+                    for (let item of s.items) {
+                        if (item.itemImage?.filename) deletePromises.push(cloudinary.uploader.destroy(item.itemImage.filename).catch(e => {}));
+                    }
                 }
+                if (s.reviews?.length) await Review.deleteMany({ _id: { $in: s.reviews } });
+                await Shop.findByIdAndDelete(s._id);
             }
-            if (s.reviews?.length) await Review.deleteMany({ _id: { $in: s.reviews } });
-            await Shop.findByIdAndDelete(s._id);
-        }
+            console.log(`[Account Deletion] - Shops purged`);
+        } catch (e) { console.error(`[Account Deletion] Shop purge error: ${e.message}`); }
 
-        // 4. Delete Products & Images
-        const products = await Product.find({ owner: userId });
-        for (let prod of products) {
-            if (prod.productImage?.length) {
-                for (let img of prod.productImage) {
-                    if (img.filename) await cloudinary.uploader.destroy(img.filename).catch(e => console.error(e));
+        // 3. Products Purge
+        try {
+            const products = await Product.find({ owner: userId });
+            for (let prod of products) {
+                if (prod.productImage?.length) {
+                    for (let img of prod.productImage) {
+                        if (img.filename) deletePromises.push(cloudinary.uploader.destroy(img.filename).catch(e => {}));
+                    }
                 }
+                await Product.findByIdAndDelete(prod._id);
             }
-            await Product.findByIdAndDelete(prod._id);
-        }
+            console.log(`[Account Deletion] - Products purged`);
+        } catch (e) { console.error(`[Account Deletion] Product purge error: ${e.message}`); }
 
-        // 5. Delete Kisan Sabha Content & Images
-        const posts = await KeshanSabhaPost.find({ author: userId });
-        for (let post of posts) {
-            if (post.media?.length) {
-                for (let m of post.media) {
-                    if (m.filename) await cloudinary.uploader.destroy(m.filename).catch(e => console.error(e));
+        // 4. Kisan Sabha Purge
+        try {
+            const posts = await KeshanSabhaPost.find({ author: userId });
+            for (let post of posts) {
+                if (post.media?.length) {
+                    for (let m of post.media) {
+                        if (m.filename) deletePromises.push(cloudinary.uploader.destroy(m.filename).catch(e => {}));
+                    }
                 }
+                await KeshanSabhaPost.findByIdAndDelete(post._id);
             }
-            await KeshanSabhaPost.findByIdAndDelete(post._id);
-        }
-        await KeshanSabhaComment.deleteMany({ author: userId });
-        await KeshanSabhaReport.deleteMany({ author: userId });
+            await KeshanSabhaComment.deleteMany({ author: userId });
+            await KeshanSabhaReport.deleteMany({ author: userId });
+            console.log(`[Account Deletion] - Kisan Sabha content purged`);
+        } catch (e) { console.error(`[Account Deletion] Kisan Sabha purge error: ${e.message}`); }
 
-        // 6. Delete Other Associations
-        await DeliveryPartner.deleteMany({ user: userId });
-        await Notification.deleteMany({ recipient: userId });
-        await Review.deleteMany({ author: userId });
+        // 5. Associations Purge
+        try {
+            await DeliveryPartner.deleteMany({ user: userId });
+            await Notification.deleteMany({ recipient: userId });
+            await Review.deleteMany({ author: userId });
+            console.log(`[Account Deletion] - Associations purged`);
+        } catch (e) { console.error(`[Account Deletion] Association purge error: ${e.message}`); }
 
-        // 7. Final Account Deletion
+        // 6. Final Critical Deletion
         await Customer.findByIdAndDelete(userId);
+        console.log(`[Account Deletion] SUCCESS: CUSTOMER RECORD DELETED`);
 
-        // Notify Admin via WhatsApp (Optional step from previous code)
-        const whatsappMsg = `🚨 Data Purge Complete: ${encodeURIComponent(user.name)} (${user.username}) deleted their PaSr account.`;
-        const whatsappUrl = `https://wa.me/918252271535?text=${whatsappMsg}`;
+        // Background Cloudinary deletions
+        if (deletePromises.length > 0) {
+            Promise.all(deletePromises).catch(e => console.error("[Account Deletion] Background image purge error:", e.message));
+        }
 
+        console.log(`[Account Deletion] Logging out...`);
         req.logout((err) => {
-            if (err) console.error(err);
-            res.send(`
-                <html>
-                <body style="font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #fee2e2;">
-                    <h1 style="color: #dc2626;">Account Deleted</h1>
-                    <p>All your data has been permanently removed from PaSr.</p>
-                    <p>Redirecting to home page...</p>
-                    <script>
-                        setTimeout(() => window.location.href = "/", 3000);
-                        window.open('${whatsappUrl}', '_blank');
-                    </script>
-                </body>
-                </html>
-            `);
+            if (err) console.error(`[Account Deletion] Logout Error: ${err.message}`);
+            req.flash("success", "Account successfully deleted.");
+            res.redirect("/home");
         });
 
     } catch (error) {
-        console.error("Deletion Error:", error);
-        req.flash("danger", "Step-wise deletion failed. Please contact admin.");
-        res.redirect("/account/remove/permanent");
+        console.error(`[Account Deletion] CRITICAL ERROR: ${error.message}`);
+        req.flash("danger", "Something went wrong during deletion. Please contact support.");
+        res.redirect("/user");
     }
 }));
 

@@ -9,6 +9,7 @@ const Customer = require("./data/customers.js");
 
 module.exports.isLogedin = (req, res, next) => {
     if (!req.isAuthenticated()) {
+        console.log(`[Auth] User NOT authenticated for ${req.method} ${req.originalUrl}`);
 
         req.session.redirectUrl = req.originalUrl;
         
@@ -27,6 +28,7 @@ module.exports.isLogedin = (req, res, next) => {
         const separator = ref.includes('?') ? '&' : '?';
         return res.redirect(ref + separator + "showLogin=true");
     }
+    console.log(`[Auth] User ${req.user.username} authenticated for ${req.method} ${req.originalUrl}`);
     next();
 }
 
