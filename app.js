@@ -228,31 +228,38 @@ app.use(async (req, res, next) => {
   res.locals.csrfToken = ""; // Placeholder for views that still expect this variable
   res.locals.cartItemCount = (req.session && req.session.cart && req.session.cart.items) ? req.session.cart.items.length : 0;
 
-  // Daily Visitor Tracking
+  // Daily Visitor Tracking & Stats Fetching
+  const tzDate = new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
+  const d = new Date(tzDate);
+  const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  
   const isPageView = req.method === 'GET' && !req.xhr && !req.headers.accept?.includes('application/json') && !req.path.startsWith('/api') && !req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|map|woff|woff2)$/i);
   
   if (isPageView) {
-      try {
-          const tzDate = new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
-          const d = new Date(tzDate);
-          const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-          
-          if (req.cookies.visited_today !== today) {
-              res.cookie('visited_today', today, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
-              // Run DB update in background to not block response
-              SiteStat.findOneAndUpdate(
-                  { date: today },
-                  { $inc: { visits: 1 } },
-                  { upsert: true, new: true }
-              ).catch(err => console.error("SiteStat background update error:", err.message));
-          }
-
-          // Cache logic simplified
-          res.locals.todayVisits = todayVisitsCache.count;
-      } catch (e) {
-          console.error("Visitor tracking error:", e.message);
+      if (req.cookies.visited_today !== today) {
+          res.cookie('visited_today', today, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
+          SiteStat.findOneAndUpdate(
+              { date: today },
+              { $inc: { visits: 1 } },
+              { upsert: true, new: true }
+          ).then(stat => {
+              if (stat) todayVisitsCache = { date: today, count: stat.visits, lastFetched: Date.now() };
+          }).catch(err => console.error("SiteStat background update error:", err.message));
       }
   }
+
+  // Throttled cache refresh (every 5 minutes or on new day)
+  if (todayVisitsCache.date !== today || Date.now() - todayVisitsCache.lastFetched > 5 * 60 * 1000) {
+      SiteStat.findOne({ date: today }).then(stat => {
+          todayVisitsCache = {
+              date: today,
+              count: stat ? stat.visits : 0,
+              lastFetched: Date.now()
+          };
+      }).catch(err => console.error("SiteStat cache refresh error:", err.message));
+  }
+
+  res.locals.todayVisits = todayVisitsCache.count;
 
   // Default SEO Tags
   res.locals.seo = {
