@@ -139,9 +139,7 @@ router.get("/shops", wrapAsync(async (req, res) => {
     }
 
     if (lat && lng) {
-        console.log(`\n========== SHOP DISTANCE QUERY DEBUG ==========`);
-        console.log(`User Location: Lat=${lat}, Lng=${lng}`);
-        console.log(`Search Range: ${range}km (${range * 1000}m)`);
+        // Debug logs removed for cleaner terminal output
 
         let query = {
             geometry: {
@@ -159,7 +157,6 @@ router.get("/shops", wrapAsync(async (req, res) => {
         // Filter by category if specified
         if (req.query.category && req.query.category !== 'All Shops') {
             query.category = req.query.category;
-            console.log(`Category Filter: ${req.query.category}`);
         }
 
         // Filter by opening hours if "Open Now" is checked
@@ -169,26 +166,24 @@ router.get("/shops", wrapAsync(async (req, res) => {
             const currentTime = now.toLocaleTimeString('en-US', options);
             query.openingTime = { $lte: currentTime };
             query.closingTime = { $gte: currentTime };
-            console.log(`Open Now Filter: Current time = ${currentTime}`);
         }
 
-        console.log(`Query:`, JSON.stringify(query, null, 2));
+        // Query filter applied
 
         // Check total verified shops first
         const totalVerifiedShops = await Shop.countDocuments({ verified: true });
-        console.log(`Total Verified Shops in DB: ${totalVerifiedShops}`);
 
         // Check if any shops have geometry
         const shopsWithGeometry = await Shop.countDocuments({
             verified: true,
             'geometry.coordinates': { $exists: true, $ne: [] }
         });
-        console.log(`Verified Shops with Geometry: ${shopsWithGeometry}`);
 
-        shops = await Shop.find(query).populate('owner');
+        shops = await Shop.find(query).populate('owner').populate('reviews');
 
         // Prioritize owned shop to the top
         if (req.user) {
+            const Order = require("../data/order.js");
             shops.sort((a, b) => {
                 const aIsOwner = a.owner._id.equals(req.user._id);
                 const bIsOwner = b.owner._id.equals(req.user._id);
@@ -215,9 +210,6 @@ router.get("/shops", wrapAsync(async (req, res) => {
                 return shopObj;
             });
         }
-
-        console.log(`Found ${shops.length} shops within ${range}km of (${lat}, ${lng})`);
-        console.log(`==============================================\n`);
     }
 
     res.render("pages/shops.ejs", { shops, lat, lng, range, queryParams: req.query });
@@ -630,11 +622,6 @@ const handleItemUpload = (req, res, next) => {
 // Create Item
 router.post("/shops/:id/items", isLogedin, isNotBlocked, isShopOwner, handleItemUpload, validateItem, wrapAsync(async (req, res) => {
 
-    console.log("Create Item Route Hit");
-    console.log("Body:", req.body);
-    console.log("Item Category:", req.body.item.itemCategory);
-    console.log("File:", req.file);
-
     const { id } = req.params;
     const shop = await Shop.findById(id);
     if (!shop) {
@@ -846,7 +833,13 @@ router.delete("/shops/:id/upi", isLogedin, isShopOwner, wrapAsync(async (req, re
 // Individual Item Details Page
 router.get("/items/:id", wrapAsync(async (req, res) => {
     const { id } = req.params;
-    const item = await Item.findById(id).populate("shop").populate("product");
+    const item = await Item.findById(id)
+        .populate("shop")
+        .populate("product")
+        .populate({
+            path: "reviews",
+            populate: { path: "author" }
+        });
     
     if (!item) {
         req.flash("danger", "Item not found");
@@ -859,7 +852,81 @@ router.get("/items/:id", wrapAsync(async (req, res) => {
         return res.redirect("/home");
     }
 
-    res.render("pages/itemDetail.ejs", { item, shop: item.shop });
+    res.render("pages/itemDetail.ejs", { item, shop: item.shop, isOwner: (req.user && item.shop.owner.equals(req.user._id)) });
+}));
+
+// Add Extra Images for Item
+router.post("/items/:id/extra-images", isLogedin, isNotBlocked, itemUpload.array('extraImages', 5), wrapAsync(async (req, res) => {
+    const { id } = req.params;
+    const item = await Item.findById(id).populate('shop');
+    
+    if (!item) {
+        req.flash("danger", "Item not found");
+        return res.redirect("/home");
+    }
+    
+    if (!item.shop.owner.equals(req.user._id)) {
+        req.flash("danger", "You are not authorized to edit this item.");
+        return res.redirect(`/items/${id}`);
+    }
+    
+    if (req.files && req.files.length > 0) {
+        const images = req.files.map(f => ({ url: f.path, filename: f.filename }));
+        item.extraImages.push(...images);
+        await item.save();
+        req.flash("success", "Extra images added successfully");
+    } else {
+        req.flash("danger", "No images selected");
+    }
+    
+    res.redirect(`/items/${id}`);
+}));
+
+// Create Item Review
+router.post("/items/:id/reviews", isLogedin, isNotBlocked, validatereview, wrapAsync(async (req, res) => {
+    let { id } = req.params;
+    let item = await Item.findById(id);
+    if (!item) {
+        req.flash("danger", "Item not found");
+        return res.redirect("/home");
+    }
+    
+    let newReview = new Review(req.body.review);
+    newReview.author = req.user._id;
+    item.reviews.push(newReview);
+    
+    await newReview.save();
+    await item.save();
+    
+    req.flash("success", "Review added successfully");
+    res.redirect(`/items/${id}`);
+}));
+
+// Delete Item Review
+const isItemReviewAuthor = async (req, res, next) => {
+    try {
+        let { id, reviewId } = req.params;
+        let review = await Review.findById(reviewId);
+        if (!review) {
+            req.flash("danger", "Review not found");
+            return res.redirect(`/items/${id}`);
+        }
+        if (res.locals.currUser && !review.author.equals(res.locals.currUser._id)) {
+            req.flash("danger", "You are not the author of this review.");
+            return res.redirect(`/items/${id}`);
+        }
+        next();
+    } catch (e) {
+        next(e);
+    }
+};
+
+router.delete("/items/:id/reviews/:reviewId", isLogedin, isItemReviewAuthor, wrapAsync(async (req, res) => {
+    let { id, reviewId } = req.params;
+    await Item.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
+    await Review.findByIdAndDelete(reviewId);
+    req.flash("success", "Review deleted");
+    res.redirect(`/items/${id}`);
 }));
 
 module.exports = router;

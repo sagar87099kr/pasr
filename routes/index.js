@@ -48,7 +48,7 @@ router.post("/set-location", async (req, res) => {
             type: 'Point',
             coordinates: [parseFloat(longitude), parseFloat(latitude)]
         };
-        console.log("Location updated in session:", req.session.location);
+        // Location update log removed
 
         if (req.user) {
             try {
@@ -70,7 +70,7 @@ router.post("/set-location", async (req, res) => {
                         address: address,
                         pincode: pincode
                     });
-                    console.log("User persisted to DB:", req.user._id);
+                    // User persisted log removed
                 }
             } catch (e) {
                 console.error("Failed to persist location to DB:", e);

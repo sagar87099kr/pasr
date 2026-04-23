@@ -16,6 +16,12 @@ const itemSchema = new Schema({
         url: String,
         filename: String
     },
+    extraImages: [
+        {
+            url: String,
+            filename: String
+        }
+    ],
     itemCategory: {
         type: String,
         default: ""
@@ -55,7 +61,13 @@ const itemSchema = new Schema({
     createdAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    reviews: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "Review"
+        }
+    ]
 });
 
 // Compound index for fast lookup of a shop's inventory for a product

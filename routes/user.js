@@ -91,7 +91,7 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
         res.redirect("/customer/verify-otp");
 
     } catch (e) {
-        console.log(e);
+        console.error(e);
         req.flash("danger", e.message || "Something went wrong. Please try again.");
         res.redirect("/customer/signup");
     }
@@ -180,7 +180,7 @@ router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
         });
 
     } catch (e) {
-        console.log(e);
+        console.error(e);
         req.flash("danger", e.message || "Registration failed. Please try again.");
         res.redirect("/customer/signup");
     }
@@ -375,9 +375,7 @@ router.put("/:id/verifycustomer", isLogedin, isadmin, async (req, res) => {
     }
     let { id } = req.params;
     const { verified, verifedBy } = req.body.customer;
-    console.log(verified)
     await Customer.findByIdAndUpdate(id, { verified, verifedBy });
-    console.log("customer is verifed");
 });
 
 // we anything suspicious delete customer from database
@@ -388,7 +386,7 @@ router.delete("/customer/:id/verifyfail", isLogedin, isadmin, async (req, res) =
     }
     let { id } = req.params;
     await Customer.findByIdAndDelete(id);
-    console.log("customer is deleted");
+    // deletion log removed
 });
 
 

@@ -1,5 +1,206 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
     <link rel="stylesheet" href="/css/localMarket.css">
+    <style>
+        /* New Professional List View Styles */
+        .shop-list-view {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 20px;
+            padding-bottom: 40px;
+        }
+
+        .shop-list-card {
+            background: #ffffff;
+            border-radius: 16px;
+            display: flex;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .shop-list-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+            border-color: var(--market-primary);
+        }
+
+        .shop-list-img-side {
+            width: 130px;
+            min-width: 130px;
+            height: 130px;
+            position: relative;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .shop-list-img-side img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .shop-list-card:hover .shop-list-img-side img {
+            transform: scale(1.1);
+        }
+
+        .shop-list-content {
+            flex-grow: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+            /* Important for text-overflow */
+        }
+
+        .shop-list-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0 0 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .shop-list-address {
+            font-size: 0.95rem;
+            color: #64748b;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .shop-list-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .meta-tag {
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-badge-new {
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .status-open-new {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-closed-new {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-holiday-new {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .owned-indicator {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--market-primary);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 5px 14px;
+            border-bottom-left-radius: 12px;
+            z-index: 5;
+            box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .notification-dot-new {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            box-shadow: 0 0 0 3px #fff;
+            animation: pulse-red 2s infinite;
+        }
+
+        .market-grid {
+            display: none !important;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .shop-list-view {
+                gap: 12px;
+            }
+
+            .shop-list-img-side {
+                width: 110px;
+                min-width: 110px;
+                height: 110px;
+            }
+
+            .shop-list-name {
+                font-size: 1.1rem;
+            }
+
+            .shop-list-content {
+                padding: 12px;
+            }
+
+            .shop-list-meta {
+                margin-top: 8px;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .shop-list-img-side {
+                width: 90px;
+                min-width: 90px;
+                height: 90px;
+            }
+
+            .shop-list-name {
+                font-size: 1rem;
+            }
+
+            .meta-tag {
+                padding: 2px 8px;
+                font-size: 0.7rem;
+            }
+        }
+    </style>
 
     <!-- Floating Action Button for Sellers -->
     <a href="/shops/new" class="fab-sell" title="Register Shop">
@@ -183,9 +384,9 @@
                     </div>
 
 
-                    <!-- Shop Grid -->
+                    <!-- Shop List View -->
                     <% if (shops && shops.length> 0) { %>
-                        <div class="market-grid">
+                        <div class="shop-list-view">
                             <% for (let shop of shops) { var istOffsetMs=5.5 * 60 * 60 * 1000; var nowIST=new Date(new
                                 Date().getTime() + istOffsetMs); var istH=nowIST.getUTCHours(); var
                                 istM=nowIST.getUTCMinutes(); var nowStr=(istH < 10 ? '0' : '' ) + istH + ':' + (istM <
@@ -194,59 +395,70 @@
                                 shopIsClosed=!(nowStr>= shop.openingTime && nowStr <= shop.closingTime); } var
                                     isOwner=currUser && shop.owner._id.equals(currUser._id); var
                                     isOpenNow=!shopIsClosed; %>
-                                    <a href="/shops/<%= shop._id %>" class="product-card-link" <% if (!isOwner &&
+
+                                    <a href="/shops/<%= shop._id %>" class="shop-list-card" <% if (!isOwner &&
                                         shopIsClosed) { %>data-closed="true" data-opening-time="<%= shop.openingTime %>"
                                             data-shop-name="<%= shop.shopName %>"<% } %>
                                                     >
-                                                    <div
-                                                        class="product-card <%= isOwner ? 'owned-shop-card' : '' %> <%= (!isOwner && shopIsClosed) ? 'shop-closed-card' : '' %>">
-                                                        <% if (isOwner) { %>
-                                                            <div class="owned-shop-badge">
-                                                                <i class="fa-solid fa-user-check"></i> Your Shop
-                                                            </div>
+                                                    <% if (isOwner) { %>
+                                                        <div class="owned-indicator">
+                                                            <i class="fa-solid fa-user-check"></i> Owner
                                                             <% if (shop.hasPendingOrders) { %>
-                                                                <div class="card-notification-dot"
+                                                                <div class="notification-dot-new"
                                                                     title="New Order Received!"></div>
                                                                 <% } %>
-                                                                    <% } %>
-                                                                        <div class="product-img-wrap">
-                                                                            <img src="<%= optimizeImage(shop.shopImage[0].url) %>"
-                                                                                alt="<%= shop.shopName %>">
-                                                                            <% if (shop.isHoliday) { %>
-                                                                                <span class="badge position-absolute"
-                                                                                    style="top:10px;right:10px;z-index:10;background:#b45309;">
-                                                                                    🏖️ Holiday
-                                                                                </span>
-                                                                                <% } else { %>
-                                                                                    <span
-                                                                                        class="badge position-absolute"
-                                                                                        style="top:10px;right:10px;z-index:10;background:<%= isOpenNow ? '#16a34a' : '#dc2626' %>;">
-                                                                                        <%= isOpenNow ? 'Open Now'
-                                                                                            : 'Closed' %>
-                                                                                    </span>
-                                                                                    <% } %>
-                                                                        </div>
-                                                                        <div class="card-body-custom">
-                                                                            <h5 class="prod-title">
-                                                                                <%= shop.shopName %>
-                                                                            </h5>
-                                                                            <p class="prod-desc">
-                                                                                <i class="fa-solid fa-user"></i>
-                                                                                <%= shop.owner.name %>
-                                                                            </p>
-                                                                            <div class="prod-meta">
-                                                                                <span><i class="fa-solid fa-tag"></i>
-                                                                                    <%= catIcons[shop.category] || '' %>
-                                                                                        <%= shop.category %>
-                                                                                </span>
-                                                                                <span class="text-truncate"
-                                                                                    style="max-width:100px;"><i
-                                                                                        class="fa-solid fa-map-pin"></i>
-                                                                                    <%= shop.location %>
-                                                                                </span>
-                                                                            </div>
-                                                                        </div>
-                                                    </div>
+                                                        </div>
+                                                        <% } %>
+
+                                                            <div class="shop-list-img-side">
+                                                                <img src="<%= optimizeImage(shop.shopImage[0].url) %>"
+                                                                    alt="<%= shop.shopName %>">
+                                                            </div>
+
+                                                            <div class="shop-list-content">
+                                                                <h3 class="shop-list-name">
+                                                                    <%= shop.shopName %>
+                                                                </h3>
+                                                                <p class="shop-list-address">
+                                                                    <i class="fa-solid fa-location-dot"></i>
+                                                                    <%= shop.location.split(' ').slice(0, 3).join(' ') %>
+                                                                </p>
+
+                                                                <div class="shop-list-meta">
+                                                                    <span class="meta-tag">
+                                                                        <%= catIcons[shop.category] || '🏪' %>
+                                                                            <%= shop.category %>
+                                                                    </span>
+
+                                                                    <% if (shop.isHoliday) { %>
+                                                                        <span class="status-badge-new status-holiday-new">
+                                                                            🏖️ Holiday
+                                                                        </span>
+                                                                        <% } else { %>
+                                                                            <span
+                                                                                class="status-badge-new <%= isOpenNow ? 'status-open-new' : 'status-closed-new' %>">
+                                                                                <% if (isOpenNow) { %>
+                                                                                    Open Now
+                                                                                <% } else { 
+                                                                                    let [h, m] = (shop.openingTime || '00:00').split(':').map(Number);
+                                                                                    let ampm = h >= 12 ? 'PM' : 'AM';
+                                                                                    let h12 = h % 12 || 12;
+                                                                                %>
+                                                                                    Open at <%= h12 %>:<%= m.toString().padStart(2, '0') %> <%= ampm %>
+                                                                                <% } %>
+                                                                            </span>
+                                                                            <% } %>
+                                                                    <span class="meta-tag">
+                                                                        <% if (shop.reviews && shop.reviews.length > 0) { 
+                                                                            let avg = shop.reviews.reduce((acc, r) => acc + r.ratings, 0) / shop.reviews.length;
+                                                                        %>
+                                                                            <i class="fa-solid fa-star text-warning me-1"></i> <%= avg.toFixed(1) %> (<%= shop.reviews.length %>)
+                                                                        <% } else { %>
+                                                                            <i class="fa-solid fa-star text-muted me-1"></i> No Rating
+                                                                        <% } %>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
                                     </a>
                                     <% } %>
                         </div>

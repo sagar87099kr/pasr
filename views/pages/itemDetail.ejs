@@ -1,330 +1,435 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
+<link rel="stylesheet" href="/css/product_detail.css">
 
-<style>
-/* CSS for the item details centered view */
-.item-detail-container { 
-    max-width: 600px; 
-    margin: 40px auto; 
-    background: #fff; 
-    padding: 32px; 
-    border-radius: 16px; 
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
-}
-.item-detail-img-wrap {
-    width: 100%; 
-    height: 350px; 
-    border-radius: 12px; 
-    margin-bottom: 24px; 
-    background: #f9fafb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    position: relative;
-    border: 1px solid #e5e7eb;
-}
-.item-detail-img-wrap img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-.item-detail-title { 
-    font-size: 26px; 
-    font-weight: 800; 
-    margin-bottom: 8px; 
-    color: #111827; 
-}
-.item-detail-price { 
-    font-size: 24px; 
-    font-weight: 800; 
-    color: #16a34a; 
-    margin-bottom: 20px; 
-}
-.item-detail-shop { 
-    display: flex; 
-    align-items: center; 
-    gap: 12px; 
-    font-size: 15px; 
-    color: #4b5563; 
-    margin-bottom: 24px; 
-    padding: 16px; 
-    background: #f3f4f6; 
-    border-radius: 12px; 
-    transition: all 0.2s ease;
-}
-.item-detail-shop:hover {
-    background: #e5e7eb;
-    transform: translateY(-2px);
-}
-.item-detail-shop .shop-icon { 
-    color: #6366f1; 
-    background: #e0e7ff;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.item-inactive-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: #4b5563;
-    color: white;
-    font-size: 12px;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-weight: 700;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
+<body>
+    <div class="product-container">
+        <!-- LEFT COLUMN: Item Details -->
+        <div class="main-content">
+            <% 
+              const productObj = item.product || item;
+              const itemName = productObj.name || item.name;
+              const itemDesc = productObj.description || item.description || 'No description available for this item.';
+              const itemImg = (productObj.img && productObj.img.url) ? productObj.img.url : (item.img && item.img.url ? item.img.url : '');
+              const itemCat = productObj.category || item.itemCategory || 'General';
+            %>
 
-/* Circular Quantity Selector */
-.circular-qty-control {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
+            <!-- Item Main Card -->
+            <section class="card-section">
+                <div class="product-showcase">
+                    <div class="product-image-column">
+                        <!-- Image -->
+                        <div class="main-image-wrapper">
+                            <% if(itemImg) { %>
+                                <img src="<%= itemImg %>" alt="<%= itemName %>" class="main-image" id="mainImage" />
+                            <% } else { %>
+                                <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f3f4f6; color:#9ca3af;">
+                                    <i class="fa-solid fa-image fa-4x mb-2"></i>
+                                    <span style="font-weight:600;">No Image</span>
+                                </div>
+                            <% } %>
+                            <button class="btn-share" id="shareBtn" type="button" title="Share Item">
+                                <i class="fa-solid fa-share-nodes"></i>
+                            </button>
+                            <% if(item.quantity === 0) { %>
+                                <div style="position:absolute; top:12px; left:12px; background:#4b5563; color:white; font-size:11px; font-weight:800; padding:4px 10px; border-radius:6px; z-index:11;">OUT OF STOCK</div>
+                            <% } %>
+                        </div>
 
-.qty-btn-circle {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1.5px solid #e2e8f0;
-    background: white;
-    color: #475569;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 12px;
-    padding: 0;
-}
+                        <!-- Additional Images Gallery -->
+                        <% if (item.extraImages && item.extraImages.length > 0) { %>
+                            <div class="product-gallery mt-3 px-3 px-md-0" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;">
+                                <!-- Main image as first thumb -->
+                                <div class="gallery-thumb active" onclick="changeMainImage('<%= itemImg %>', this)" style="flex: 0 0 60px; height: 60px; border-radius: 8px; border: 2px solid #3b82f6; cursor: pointer; overflow: hidden;">
+                                    <img src="<%= itemImg %>" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                                <% item.extraImages.forEach(img => { %>
+                                    <div class="gallery-thumb" onclick="changeMainImage('<%= img.url %>', this)" style="flex: 0 0 60px; height: 60px; border-radius: 8px; border: 2px solid #e2e8f0; cursor: pointer; overflow: hidden;">
+                                        <img src="<%= img.url %>" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </div>
+                                <% }) %>
+                            </div>
+                        <% } %>
+                    </div>
 
-.qty-btn-circle:hover {
-    background: #f8fafc;
-    border-color: #6366f1;
-    color: #6366f1;
-    transform: scale(1.1);
-}
+                    <!-- Info -->
+                    <div class="product-info-header">
+                        <h1 class="product-title">
+                            <%= itemName %>
+                        </h1>
+                        <div class="seller-badge">
+                            <i class="fa-solid fa-store"></i> Sold by
+                            <a href="/shops/<%= shop._id %>"
+                                style="color: inherit; text-decoration: underline; font-weight: 600;">
+                                <%= shop.shopName %>
+                            </a>
+                        </div>
 
-.qty-btn-circle:active {
-    transform: scale(0.95);
-}
+                        <div class="info-grid">
+                            <div class="info-box">
+                                <span class="info-label">Price</span>
+                                <span class="info-value">
+                                    <% if (item.discount > 0) { %>
+                                        <span style="text-decoration: line-through; color: #9ca3af; font-size: 0.8em; margin-right: 4px;">₹<%= item.price %></span>
+                                        ₹<%= Math.round(item.price * (1 - item.discount / 100)) %>
+                                    <% } else { %>
+                                        ₹<%= item.price %>
+                                    <% } %>
+                                </span>
+                            </div>
+                            <div class="info-box">
+                                <span class="info-label">Stock Status</span>
+                                <span class="info-value <%= item.quantity > 0 ? 'text-success' : 'text-danger' %>">
+                                    <%= item.quantity > 0 ? `${item.quantity} In Stock` : 'Out of Stock' %>
+                                </span>
+                            </div>
+                            <div class="info-box">
+                                <span class="info-label">Category</span>
+                                <span class="info-value">
+                                    <%= itemCat %>
+                                </span>
+                            </div>
+                            <div class="info-box">
+                                <span class="info-label">Shop Rating</span>
+                                <span class="info-value" style="color: #f59e0b;">
+                                    <i class="fa-solid fa-star"></i> 4.5
+                                </span>
+                            </div>
+                        </div>
 
-.qty-value-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #6366f1;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 16px;
-    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
-    border: 2px solid white;
-    position: relative;
-    transition: background 0.2s;
-}
-
-@keyframes qty-pulse {
-    0%   { transform: scale(1); box-shadow: 0 4px 10px rgba(99,102,241,0.3); }
-    40%  { transform: scale(1.25); box-shadow: 0 0 0 8px rgba(99,102,241,0.15); }
-    70%  { transform: scale(0.95); }
-    100% { transform: scale(1); box-shadow: 0 4px 10px rgba(99,102,241,0.3); }
-}
-
-.qty-value-circle.qty-changed {
-    animation: qty-pulse 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
-}
-</style>
-
-<div class="item-detail-container">
-    <% 
-      const productObj = item.product || item;
-      const itemName = productObj.name || item.name;
-      const itemDesc = productObj.description || item.description || 'No description available for this item.';
-      const itemImg = (productObj.img && productObj.img.url) ? productObj.img.url : (item.img && item.img.url ? item.img.url : '');
-    %>
-    
-    <div class="item-detail-img-wrap">
-        <% if(itemImg) { %>
-            <img src="<%= itemImg %>" alt="<%= itemName %>">
-        <% } else { %>
-            <div style="color:#9ca3af; text-align:center;">
-                <i class="fa-solid fa-image fa-4x mb-2"></i>
-                <div style="font-weight: 600; font-size: 14px;">No Image</div>
-            </div>
-        <% } %>
-
-        <% if(item.quantity === 0) { %>
-            <div class="item-inactive-badge">OUT OF STOCK</div>
-        <% } %>
-    </div>
-
-    <h1 class="item-detail-title"><%= itemName %></h1>
-    <div class="item-detail-price">
-        <% if (item.discount > 0) { %>
-            <span style="text-decoration: line-through; color: #9ca3af; font-size: 0.8em; margin-right: 8px;">₹<%= item.price %></span>
-            <span style="color: #16a34a;">₹<%= Math.round(item.price * (1 - item.discount / 100)) %></span>
-            <span style="font-size: 0.6em; background: #dcfce7; color: #16a34a; padding: 4px 10px; border-radius: 8px; margin-left: 10px; vertical-align: middle;"><%= item.discount %>% OFF</span>
-        <% } else { %>
-            ₹<%= item.price %>
-        <% } %>
-    </div>
-    
-    <div class="item-detail-shop d-flex align-items-center">
-        <div class="shop-icon">
-            <i class="fa-solid fa-store fs-5"></i>
-        </div>
-        <div style="flex-grow: 1;">
-            <div style="color:#111827; font-weight: 700; font-size: 16px; margin-bottom: 2px;"><%= shop.shopName %></div>
-            <div style="margin:0; font-size: 13px; color: #6b7280;"><i class="fa-solid fa-location-dot me-1"></i> <%= shop.location %></div>
-        </div>
-        <a href="/shops/<%= shop._id %>" class="btn btn-sm shadow-sm" style="background: white; border: 1px solid #d1d5db; color: #4f46e5; font-weight: 700; border-radius: 8px; white-space: nowrap;">
-            Visit Shop
-        </a>
-    </div>
-
-    <div style="margin-bottom: 30px; line-height: 1.6; color: #4b5563;">
-        <h5 style="font-size:18px; font-weight:700; color:#111827; margin-bottom:12px;">Description</h5>
-        <%= itemDesc %>
-    </div>
-    
-    <% if (item.quantity > 0) { %>
-        <form id="itemDetailCartForm" class="add-to-cart-form">
-            <input type="hidden" name="itemId" value="<%= item._id %>">
-            <input type="hidden" name="shopId" value="<%= shop._id %>">
-            <input type="hidden" name="itemImage" value="<%= itemImg %>">
-            <input type="hidden" name="shopName" value="<%= shop.shopName %>">
-            
-            <div class="d-flex align-items-center gap-3 mb-4 p-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
-                <label style="font-weight: 600; color: #334155; margin: 0; white-space: nowrap;">Quantity</label>
-                <div class="circular-qty-control">
-                    <button class="qty-btn-circle" type="button" id="minusQty">
-                        <i class="fa-solid fa-minus"></i>
-                    </button>
-                    <div class="qty-value-circle" id="qtyDisplay">1</div>
-                    <button class="qty-btn-circle" type="button" id="plusQty">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                    <input type="hidden" id="quantity" name="quantity" value="1" min="1" max="<%= item.quantity %>">
+                        <% if (item.discount > 0) { %>
+                            <div style="margin-top: 15px;">
+                                <span style="background: #dcfce7; color: #16a34a; padding: 6px 12px; border-radius: 20px; font-weight: 700; font-size: 13px;">
+                                    <i class="fa-solid fa-tag me-1"></i> Special Offer: <%= item.discount %>% OFF
+                                </span>
+                            </div>
+                        <% } %>
+                    </div>
                 </div>
-                <span style="font-size: 13px; color: #64748b; font-weight: 500;">(Available: <%= item.quantity %>)</span>
-            </div>
 
-            <div class="d-flex gap-2">
-                <button type="button" id="itemAddToCartBtn" class="btn btn-primary w-100 py-3 d-flex justify-content-center align-items-center shadow-sm" style="font-weight:800; font-size:17px; border-radius:12px; background: #6366f1; border-color: #6366f1; transition: all 0.2s;">
-                    <i class="fa-solid fa-cart-shopping me-2"></i> <span class="btn-text">Add to Cart</span>
-                </button>
-                <button type="button" id="itemBuyNowBtn" class="btn btn-success w-100 py-3 d-flex justify-content-center align-items-center shadow-sm" style="font-weight:800; font-size:17px; border-radius:12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; transition: all 0.2s;">
-                    <i class="fa-solid fa-bolt me-2"></i> <span class="btn-text">Buy Now</span>
-                </button>
-            </div>
-        </form>
+                <!-- ADD IMAGE FORM (SHOP OWNER ONLY) -->
+                <% if (isOwner) { %>
+                    <div class="owner-actions mt-4 p-4" style="background: #f0f9ff; border: 1px dashed #0ea5e9; border-radius: 16px;">
+                        <h4 style="font-size: 16px; font-weight: 700; color: #0369a1; margin-bottom: 12px;">
+                            <i class="fa-solid fa-images me-2"></i> Add More Product Images
+                        </h4>
+                        <form action="/items/<%= item._id %>/extra-images" method="POST" enctype="multipart/form-data" class="d-flex gap-2">
+                            <input type="file" name="extraImages" multiple accept="image/*" class="form-control" style="border-radius: 8px;">
+                            <button type="submit" class="btn btn-info text-white fw-bold">
+                                Upload
+                            </button>
+                        </form>
+                        <p style="font-size: 11px; color: #64748b; margin-top: 8px;">You can upload up to 5 additional images at once.</p>
+                    </div>
+                <% } %>
+            </section>
+
+            <!-- Description & Sizes -->
+            <section class="card-section">
+                <h2 class="section-heading">Description</h2>
+                <div class="description-text" style="white-space: pre-line; margin-bottom: 20px;">
+                    <%= itemDesc %>
+                </div>
+
+                <% if (item.sizes && item.sizes.length > 0) { %>
+                    <h3 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 12px;">Available Sizes</h3>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <% item.sizes.forEach(size => { %>
+                            <span style="padding: 6px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; color: #475569; font-weight: 600;">
+                                <%= size %>
+                            </span>
+                        <% }) %>
+                    </div>
+                <% } %>
+                <% if (item.quantity > 0) { %>
+                    <div class="cart-action-box mt-4 p-4" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px;">
+                        <div class="d-flex align-items-center justify-content-between mb-4" style="max-width: 300px;">
+                            <label class="fw-bold mb-0" style="color: #334155;">Quantity:</label>
+                            <div class="circular-qty-control">
+                                <button class="qty-btn-circle" type="button" id="minusQty">
+                                    <i class="fa-solid fa-minus"></i>
+                                </button>
+                                <div class="qty-value-circle" id="qtyDisplay">1</div>
+                                <button class="qty-btn-circle" type="button" id="plusQty">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                                <input type="hidden" id="prodQty" value="1" min="1" max="<%= item.quantity %>">
+                            </div>
+                        </div>
+                        <div class="checkout-actions d-flex gap-3">
+                            <button class="btn btn-primary fw-bold flex-grow-1" id="addToCartBtn" style="background: #1e293b; padding: 16px; border-radius: 12px; white-space: nowrap;">
+                                <i class="fa-solid fa-cart-plus me-2"></i> Add to Cart
+                            </button>
+                            <button class="btn btn-success fw-bold flex-grow-1" id="buyNowBtn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 16px; border: none; border-radius: 12px; white-space: nowrap;">
+                                <i class="fa-solid fa-bolt me-2"></i> Buy Now
+                            </button>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="mt-4 p-4 text-center" style="background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; color: #64748b;">
+                        <i class="fa-solid fa-ban mb-2" style="font-size: 24px;"></i>
+                        <div style="font-weight: 700; font-size: 18px;">Currently Out of Stock</div>
+                        <p style="margin: 0; font-size: 14px;">This item is temporarily unavailable in this shop.</p>
+                    </div>
+                <% } %>
+            </section>
+
+            <!-- Reviews Section -->
+            <section class="card-section">
+                <h2 class="section-heading">Product Reviews</h2>
+                
+                <% if (currUser) { %>
+                    <div style="margin-bottom: 40px; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 20px; color: #1e293b;">Write a Review</h4>
+                        <form action="/items/<%= item._id %>/reviews" method="POST" class="needs-validation" novalidate>
+                            <div class="mb-4">
+                                <label class="form-label" style="font-weight: 600; display: block; margin-bottom: 8px;">Rating</label>
+                                <div class="star-rating" style="display: flex; gap: 5px; cursor: pointer;">
+                                    <% for(let i=1; i<=5; i++) { %>
+                                        <input type="radio" name="review[ratings]" id="rate<%= i %>" value="<%= i %>" required style="display: none;">
+                                        <label for="rate<%= i %>" title="<%= i %> stars" style="margin: 0;">
+                                            <i class="fa-solid fa-star star-icon" data-value="<%= i %>" style="font-size: 24px; color: #cbd5e1; transition: color 0.2s;"></i>
+                                        </label>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="comment" class="form-label" style="font-weight: 600;">Your Comment</label>
+                                <textarea name="review[comment]" id="comment" cols="30" rows="4" class="form-control" required style="border-radius: 10px; padding: 12px;"></textarea>
+                                <div class="invalid-feedback">Please add some comment for review</div>
+                            </div>
+                            <button class="btn btn-primary" style="background: #1e293b; border: none; padding: 12px 25px; font-weight: 700;">Submit Review</button>
+                        </form>
+                    </div>
+                <% } else { %>
+                    <div style="margin-bottom: 40px; padding: 20px; background: #f0f9ff; border-radius: 12px; border: 1px solid #bae6fd; text-align: center;">
+                        <p style="margin: 0; color: #0369a1; font-weight: 600;">
+                            Please <a href="/login" style="text-decoration: underline; color: inherit;">login</a> to leave a review.
+                        </p>
+                    </div>
+                <% } %>
+
+                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 40px 0;">
+
+                <div class="reviews-list">
+                    <% if (item.reviews && item.reviews.length > 0) { %>
+                        <div style="display: flex; flex-direction: column; gap: 24px;">
+                            <% for (let review of item.reviews) { %>
+                                <div style="padding-bottom: 24px; border-bottom: 1px solid #f1f5f9;">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                        <div>
+                                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                                                <div style="width: 32px; height: 32px; background: #e0e7ff; color: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">
+                                                    <%= review.author.name ? review.author.name.charAt(0).toUpperCase() : 'U' %>
+                                                </div>
+                                                <span style="font-weight: 700; color: #1e293b;"><%= review.author.name %></span>
+                                            </div>
+                                            <div style="display: flex; gap: 2px;">
+                                                <% for(let i=0; i<5; i++) { %>
+                                                    <i class="fa-solid fa-star" style="font-size: 12px; color: <%= i < review.ratings ? '#f59e0b' : '#e2e8f0' %>;"></i>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <span style="font-size: 12px; color: #94a3b8;"><%= new Date(review.createdAt).toLocaleDateString() %></span>
+                                            <% if (currUser && review.author._id.equals(currUser._id)) { %>
+                                                <form action="/items/<%= item._id %>/reviews/<%= review._id %>?_method=DELETE" method="POST" style="margin-top: 8px;">
+                                                    <button style="background: none; border: none; color: #ef4444; font-size: 12px; padding: 0; cursor: pointer; text-decoration: underline;">Delete</button>
+                                                </form>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    <p style="margin: 0; color: #475569; line-height: 1.5;"><%= review.comment %></p>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% } else { %>
+                        <div style="text-align: center; padding: 40px 0; color: #94a3b8;">
+                            <i class="fa-regular fa-comments" style="font-size: 40px; margin-bottom: 15px; display: block;"></i>
+                            <p style="font-weight: 600;">No reviews yet. Be the first to review this product!</p>
+                        </div>
+                    <% } %>
+                </div>
+            </section>
+        </div>
 
         <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const form = document.getElementById('itemDetailCartForm');
-                const addBtn = document.getElementById('itemAddToCartBtn');
-                const buyBtn = document.getElementById('itemBuyNowBtn');
-                const minusBtn = document.getElementById('minusQty');
-                const plusBtn = document.getElementById('plusQty');
-                const qtyInput = document.getElementById('quantity');
-                const qtyDisplay = document.getElementById('qtyDisplay');
-
-                function pulseQty() {
-                    qtyDisplay.classList.remove('qty-changed');
-                    void qtyDisplay.offsetWidth;
-                    qtyDisplay.classList.add('qty-changed');
-                }
-
-                if (minusBtn && plusBtn && qtyInput && qtyDisplay) {
-                    minusBtn.addEventListener('click', () => {
-                        let cur = parseInt(qtyInput.value);
-                        if (cur > 1) {
-                            qtyInput.value = cur - 1;
-                            qtyDisplay.innerText = cur - 1;
-                            pulseQty();
-                        }
-                    });
-                    plusBtn.addEventListener('click', () => {
-                        let cur = parseInt(qtyInput.value);
-                        const max = parseInt(qtyInput.getAttribute('max')) || 999;
-                        if (cur < max) {
-                            qtyInput.value = cur + 1;
-                            qtyDisplay.innerText = cur + 1;
-                            pulseQty();
-                        }
-                    });
-                }
-
-                async function submitCart(isBuyNow) {
-                    const btn = isBuyNow ? buyBtn : addBtn;
-                    const originalHtml = btn.innerHTML;
-                    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> ${isBuyNow ? 'Processing...' : 'Adding...'}`;
-                    btn.disabled = true;
-                    if (!isBuyNow) buyBtn.disabled = true;
-                    if (isBuyNow) addBtn.disabled = true;
-
-                    try {
-                        const formData = new FormData(form);
-                        const payload = Object.fromEntries(formData.entries());
-                        const res = await fetch('/api/cart/add', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        const data = await res.json();
-                        if (res.ok) {
-                            if (isBuyNow) {
-                                window.location.href = '/api/cart';
-                            } else {
-                                btn.innerHTML = '<i class="fa-solid fa-check me-2"></i> Added!';
-                                btn.style.background = '#16a34a';
-                                setTimeout(() => {
-                                    btn.innerHTML = originalHtml;
-                                    btn.style.background = '';
-                                    btn.disabled = false;
-                                    buyBtn.disabled = false;
-                                }, 1000);
-                            }
-                        } else {
-                            if (res.status === 401) {
-                                if (typeof window.showLoginModal === 'function') {
-                                    window.showLoginModal();
-                                } else {
-                                    window.location.href = '/login';
-                                }
-                            } else {
-                                alert(data.message || "Failed to add to cart");
-                                btn.innerHTML = originalHtml;
-                                btn.disabled = false;
-                                buyBtn.disabled = false;
-                                addBtn.disabled = false;
-                            }
-                        }
-                    } catch (e) {
-                        console.error(e);
-                        alert("Error adding to cart");
-                        btn.innerHTML = originalHtml;
-                        btn.disabled = false;
-                        buyBtn.disabled = false;
-                        addBtn.disabled = false;
-                    }
-                }
-
-                addBtn.addEventListener('click', () => submitCart(false));
-                buyBtn.addEventListener('click', () => submitCart(true));
+            // Star rating interaction
+            document.querySelectorAll('.star-rating .star-icon').forEach(star => {
+                star.addEventListener('mouseover', function() {
+                    const val = this.getAttribute('data-value');
+                    highlightStars(val);
+                });
+                
+                star.addEventListener('mouseout', function() {
+                    const checked = document.querySelector('.star-rating input:checked');
+                    highlightStars(checked ? checked.value : 0);
+                });
+                
+                star.addEventListener('click', function() {
+                    const val = this.getAttribute('data-value');
+                    document.getElementById('rate' + val).checked = true;
+                    highlightStars(val);
+                });
             });
+            function highlightStars(val) {
+                document.querySelectorAll('.star-rating .star-icon').forEach(star => {
+                    const starVal = star.getAttribute('data-value');
+                    star.style.color = starVal <= val ? '#f59e0b' : '#cbd5e1';
+                });
+            }
         </script>
-    <% } else { %>
-        <button class="btn btn-secondary w-100 py-3 d-flex justify-content-center align-items-center" disabled style="font-weight:800; font-size:17px; border-radius:12px; background: #9ca3af; border-color: #9ca3af;">
-            <i class="fa-solid fa-ban me-2"></i> Currently Out of Stock
-        </button>
-    <% } %>
+    </div>
+
+    </div>
 </div>
+
+
+
+    <!-- Fullscreen Image Modal -->
+    <div id="imageModal" class="profile-img-modal" onclick="closeImageModal(event)">
+        <span class="profile-modal-close" onclick="closeImageModal(event)">&times;</span>
+        <img class="profile-modal-content" id="expandedImg">
+    </div>
+
+    <script>
+        function changeMainImage(url, thumb) {
+            document.getElementById('mainImage').src = url;
+            // Highlight active thumbnail
+            document.querySelectorAll('.gallery-thumb').forEach(t => {
+                t.style.borderColor = '#e2e8f0';
+            });
+            thumb.style.borderColor = '#3b82f6';
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Quantity controls
+            const minusBtn = document.getElementById('minusQty');
+            const plusBtn = document.getElementById('plusQty');
+            const qtyInput = document.getElementById('prodQty');
+            const qtyDisplay = document.getElementById('qtyDisplay');
+
+            function pulseQty() {
+                if(!qtyDisplay) return;
+                qtyDisplay.classList.remove('qty-changed');
+                void qtyDisplay.offsetWidth; // reflow
+                qtyDisplay.classList.add('qty-changed');
+            }
+
+            if (minusBtn && plusBtn && qtyInput && qtyDisplay) {
+                minusBtn.addEventListener('click', () => {
+                    let cur = parseInt(qtyInput.value);
+                    if (cur > 1) {
+                        qtyInput.value = cur - 1;
+                        qtyDisplay.innerText = cur - 1;
+                        pulseQty();
+                    }
+                });
+                plusBtn.addEventListener('click', () => {
+                    let cur = parseInt(qtyInput.value);
+                    const max = parseInt(qtyInput.getAttribute('max')) || 999;
+                    if (cur < max) {
+                        qtyInput.value = cur + 1;
+                        qtyDisplay.innerText = cur + 1;
+                        pulseQty();
+                    }
+                });
+            }
+
+            // Add to Cart logic
+            async function handleAddToCart(isBuyNow) {
+                const btn = isBuyNow ? document.getElementById('buyNowBtn') : document.getElementById('addToCartBtn');
+                if(!btn) return;
+                
+                const originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> ${isBuyNow ? 'Processing...' : 'Adding...'}`;
+
+                try {
+                    const res = await fetch('/api/cart/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            itemId: '<%= item._id %>',
+                            itemName: '<%= itemName %>',
+                            itemImage: '<%= itemImg %>',
+                            price: <%= item.price %>,
+                            shopId: '<%= shop._id %>',
+                            shopName: '<%= shop.shopName %>',
+                            quantity: parseInt(qtyInput ? qtyInput.value : 1)
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (res.ok) {
+                        if (isBuyNow) {
+                            window.location.href = '/api/cart';
+                        } else {
+                            btn.innerHTML = '<i class="fa-solid fa-check me-2"></i> Added!';
+                            btn.style.background = '#16a34a';
+                            setTimeout(() => {
+                                btn.innerHTML = originalHtml;
+                                btn.style.background = '';
+                                btn.disabled = false;
+                            }, 1500);
+                        }
+                    } else {
+                        if (res.status === 401) {
+                            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                        } else {
+                            alert(data.message || "Failed to add to cart");
+                            btn.disabled = false;
+                            btn.innerHTML = originalHtml;
+                        }
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("Error adding to cart");
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+
+            const atcBtn = document.getElementById('addToCartBtn');
+            if (atcBtn) atcBtn.addEventListener('click', () => handleAddToCart(false));
+
+            const buyBtn = document.getElementById('buyNowBtn');
+            if (buyBtn) buyBtn.addEventListener('click', () => handleAddToCart(true));
+
+            // Share logic
+            const shareBtn = document.getElementById('shareBtn');
+            if (shareBtn) {
+                shareBtn.addEventListener('click', async () => {
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({
+                                title: '<%= itemName %>',
+                                text: 'Check out this item from <%= shop.shopName %> on Local Bazzar!',
+                                url: window.location.href
+                            });
+                        } catch (err) { console.log(err); }
+                    } else {
+                        navigator.clipboard.writeText(window.location.href);
+                        alert('Link copied to clipboard!');
+                    }
+                });
+            }
+
+            // Image modal
+            const mainImg = document.getElementById('mainImage');
+            const imgModal = document.getElementById('imageModal');
+            const expImg = document.getElementById('expandedImg');
+            if (mainImg && imgModal && expImg) {
+                mainImg.onclick = () => {
+                    expImg.src = mainImg.src;
+                    imgModal.classList.add('show');
+                }
+            }
+        });
+
+        function closeImageModal(e) {
+            if (e.target.id === 'imageModal' || e.target.classList.contains('profile-modal-close')) {
+                document.getElementById('imageModal').classList.remove('show');
+            }
+        }
+    </script>
+</body>

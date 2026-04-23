@@ -92,7 +92,7 @@ router.get("/localMarket", wrapAsync(async (req, res) => {
                 });
         }
 
-        console.log(`Found ${products.length} products within ${range}km of (${lat}, ${lng})`);
+        // Discovery count log removed
     }
 
 

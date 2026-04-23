@@ -443,10 +443,10 @@ const currentShopCats = getShopCategoryData(shop.category || '');
             .item-modal-card {
                 background: white;
                 border-radius: 24px;
-                width: 400px;
-                height: 600px;
+                width: 420px;
+                height: auto;
                 max-width: 95vw;
-                max-height: 95vh;
+                max-height: 90vh;
                 overflow: hidden;
                 box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
                 animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -532,13 +532,72 @@ const currentShopCats = getShopCategoryData(shop.category || '');
             .item-modal-img-wrapper {
                 position: relative;
                 width: 100%;
-                aspect-ratio: 9 / 16;
+                aspect-ratio: 1 / 1;
                 background-color: white !important;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 overflow: hidden;
                 flex-shrink: 0;
+                border-bottom: 1px solid #f1f5f9;
+            }
+
+            .item-slider-btn {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                background: rgba(255, 255, 255, 0.9);
+                border: 1px solid #e2e8f0;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                z-index: 10;
+                transition: all 0.2s;
+                color: #1e293b;
+            }
+
+            .item-slider-btn:hover {
+                background: white;
+                transform: translateY(-50%) scale(1.1);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            }
+
+            .item-slider-btn.prev {
+                left: 15px;
+            }
+
+            .item-slider-btn.next {
+                right: 15px;
+            }
+
+            .item-slider-dots {
+                position: absolute;
+                bottom: 15px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                gap: 8px;
+                z-index: 10;
+            }
+
+            .item-slider-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: rgba(0, 0, 0, 0.15);
+                transition: all 0.3s;
+                cursor: pointer;
+            }
+
+            .item-slider-dot.active {
+                background: #3b82f6;
+                width: 20px;
+                border-radius: 10px;
             }
 
             .item-modal-img {
@@ -1133,6 +1192,7 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                                                         data-owner="<%= shop.owner.username %>"
                                                         data-description="<%= itemDesc %>"
                                                         data-isvirtual="<%= item.isVirtual %>"
+                                                        data-extraimages='<%= JSON.stringify(item.extraImages || []) %>'
                                                         onclick="openItemModal(this)"
                                                         style="cursor: pointer; <%= (item.quantity === 0) ? 'opacity: 0.7; border-style: dashed;' : '' %>">
                                                         <div class="product-img-wrap">
@@ -1892,16 +1952,35 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                         <h2 class="item-modal-title" id="modalItemName"></h2>
                     </div>
                     <div class="item-modal-body">
-                        <div class="item-modal-img-wrapper" style="background-color: white !important;">
-                            <img id="modalItemImage" class="item-modal-img" alt="Item"
-                                style="object-fit: contain !important;">
+                        <div class="item-modal-img-wrapper">
+                            <button class="item-slider-btn prev" onclick="moveSlide(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                            <img id="modalItemImage" class="item-modal-img" alt="Item">
+                            <button class="item-slider-btn next" onclick="moveSlide(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                            <div id="modalSliderDots" class="item-slider-dots"></div>
                         </div>
+                        
+                        <!-- Owner Image Upload Form (Hidden by default) -->
+                        <div id="modalOwnerUploadSection" style="display: none; padding: 15px; background: #f0f9ff; border-bottom: 1px solid #bae6fd;">
+                            <p style="font-size: 13px; font-weight: 700; color: #0369a1; margin-bottom: 10px;">
+                                <i class="fa-solid fa-images me-1"></i> Add More Images (Shop Owner)
+                            </p>
+                            <form id="modalExtraImagesForm" method="POST" enctype="multipart/form-data" class="d-flex gap-2">
+                                <input type="file" name="extraImages" multiple accept="image/*" class="form-control form-control-sm border-info">
+                                <button type="submit" class="btn btn-sm btn-info text-white flex-shrink-0">
+                                    <i class="fa-solid fa-upload"></i>
+                                </button>
+                            </form>
+                        </div>
+
                         <div class="item-modal-desc" id="modalItemDescription"
                             style="padding: 20px; font-size: 15px; color: #475569; line-height: 1.6; background: white;">
                         </div>
                     </div>
                     <div class="item-modal-footer">
-                        <div style="display: flex; justify-content: flex-end; margin-bottom: 5px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <a id="modalViewDetails" href="#" class="text-primary" style="font-size: 14px; font-weight: 600; text-decoration: none;">
+                                View Full Details <i class="fa-solid fa-arrow-right" style="font-size: 10px;"></i>
+                            </a>
                             <div class="item-modal-price" id="modalItemPrice"></div>
                         </div>
                         <div class="item-modal-footer-buttons">
@@ -1909,7 +1988,7 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                                 <div style="display: flex; gap: 10px; width: 100%;">
                                     <button id="modalAddToCartBtn" class="item-modal-action-btn"
                                         style="background: #1e293b; justify-content: center; flex: 1;">
-                                        <i class="fa-solid fa-cart-plus"></i> <span class="btn-text">Add to Cart</span>
+                                        <i class="fa-solid fa-cart-plus"></i> <span class="btn-text">Add</span>
                                     </button>
                                     <button id="modalOrderNowBtn" class="item-modal-action-btn"
                                         style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); justify-content: center; flex: 1;">
@@ -1920,7 +1999,7 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                                     <a href="/alreadyLogin?redirect=/shops/<%= shop._id %>"
                                         class="item-modal-action-btn"
                                         style="background: #1e293b; width: 100%; justify-content: center; text-decoration: none; display: flex; align-items: center;">
-                                        Login to Add to Cart
+                                        Login to Order
                                     </a>
                                     <% } %>
                         </div>
@@ -1993,25 +2072,62 @@ const currentShopCats = getShopCategoryData(shop.category || '');
             </div>
 
             <script>
-                // NEW: Open Item Modal
+                let currentSlideIndex = 0;
+                let modalImages = [];
+
                 function openItemModal(element) {
                     const name = element.getAttribute('data-name');
-                    const imgUrl = element.getAttribute('data-img');
+                    const mainImg = element.getAttribute('data-img');
                     const price = element.getAttribute('data-price');
                     const itemId = element.getAttribute('data-itemid');
                     const shopId = element.getAttribute('data-shopid');
                     const shopName = element.getAttribute('data-shopname');
                     const description = element.getAttribute('data-description');
-
                     const discount = element.getAttribute('data-discount') || 0;
-
+                    const extraImagesRaw = element.getAttribute('data-extraimages');
+                    
                     const modal = document.getElementById('itemModal');
                     const nameEl = document.getElementById('modalItemName');
-                    const imgEl = document.getElementById('modalItemImage');
                     const priceEl = document.getElementById('modalItemPrice');
 
                     nameEl.textContent = name;
-                    imgEl.src = imgUrl || '/images/placeholder.jpg';
+                    
+                    // Setup Images for Slider
+                    modalImages = [mainImg];
+                    if (extraImagesRaw) {
+                        try {
+                            const extra = JSON.parse(extraImagesRaw);
+                            extra.forEach(img => modalImages.push(img.url));
+                        } catch(e) { console.error("Error parsing extra images", e); }
+                    }
+                    
+                    currentSlideIndex = 0;
+                    updateModalSlider();
+
+                    // Owner Section
+                    const ownerUser = element.getAttribute('data-owner');
+                    const currentUser = '<%= currUser ? currUser.username : "" %>';
+                    const ownerSection = document.getElementById('modalOwnerUploadSection');
+                    if (ownerSection) {
+                        if (currentUser && ownerUser === currentUser) {
+                            ownerSection.style.display = 'block';
+                            document.getElementById('modalExtraImagesForm').action = `/items/${itemId}/extra-images`;
+                        } else {
+                            ownerSection.style.display = 'none';
+                        }
+                    }
+
+                    // Update description
+                    const descEl = document.getElementById('modalItemDescription');
+                    if (descEl) {
+                        descEl.innerHTML = description ? description.replace(/\n/g, '<br>') : '<span class="text-muted">No description available.</span>';
+                    }
+
+                    // Update View Details link
+                    const detailsLink = document.getElementById('modalViewDetails');
+                    if (detailsLink) {
+                        detailsLink.href = `/items/${itemId}`;
+                    }
                     
                     if (discount > 0) {
                         const discountedPrice = Math.round(price * (1 - discount / 100));
@@ -2024,7 +2140,7 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                     if (addBtn) {
                         addBtn.setAttribute('data-itemid', itemId);
                         addBtn.setAttribute('data-name', name);
-                        addBtn.setAttribute('data-img', imgUrl);
+                        addBtn.setAttribute('data-img', mainImg);
                         addBtn.setAttribute('data-price', price);
                         addBtn.setAttribute('data-shopid', shopId);
                         addBtn.setAttribute('data-shopname', shopName);
@@ -2034,13 +2150,55 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                     if (orderBtn) {
                         orderBtn.setAttribute('data-itemid', itemId);
                         orderBtn.setAttribute('data-name', name);
-                        orderBtn.setAttribute('data-img', imgUrl);
+                        orderBtn.setAttribute('data-img', mainImg);
                         orderBtn.setAttribute('data-price', price);
                         orderBtn.setAttribute('data-shopid', shopId);
                         orderBtn.setAttribute('data-shopname', shopName);
                     }
 
                     modal.style.display = 'flex';
+                }
+
+                function updateModalSlider() {
+                    const imgEl = document.getElementById('modalItemImage');
+                    const prevBtn = document.querySelector('.item-slider-btn.prev');
+                    const nextBtn = document.querySelector('.item-slider-btn.next');
+                    const dotsEl = document.getElementById('modalSliderDots');
+
+                    if (modalImages.length > 0) {
+                        imgEl.src = modalImages[currentSlideIndex] || '/images/placeholder.jpg';
+                    }
+
+                    // Show/Hide Navigation
+                    if (modalImages.length > 1) {
+                        prevBtn.style.display = 'flex';
+                        nextBtn.style.display = 'flex';
+                        
+                        // Dots
+                        dotsEl.innerHTML = '';
+                        modalImages.forEach((_, i) => {
+                            const dot = document.createElement('div');
+                            dot.className = `item-slider-dot ${i === currentSlideIndex ? 'active' : ''}`;
+                            dot.onclick = () => setSlide(i);
+                            dotsEl.appendChild(dot);
+                        });
+                    } else {
+                        prevBtn.style.display = 'none';
+                        nextBtn.style.display = 'none';
+                        dotsEl.innerHTML = '';
+                    }
+                }
+
+                function moveSlide(n) {
+                    currentSlideIndex += n;
+                    if (currentSlideIndex >= modalImages.length) currentSlideIndex = 0;
+                    if (currentSlideIndex < 0) currentSlideIndex = modalImages.length - 1;
+                    updateModalSlider();
+                }
+
+                function setSlide(n) {
+                    currentSlideIndex = n;
+                    updateModalSlider();
                 }
 
                 // Attach event listeners outside the open function to prevent duplicate bindings or closures capturing old variables

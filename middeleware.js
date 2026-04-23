@@ -9,7 +9,6 @@ const Customer = require("./data/customers.js");
 
 module.exports.isLogedin = (req, res, next) => {
     if (!req.isAuthenticated()) {
-        console.log(`[Auth] User NOT authenticated for ${req.method} ${req.originalUrl}`);
 
         req.session.redirectUrl = req.originalUrl;
         
@@ -28,7 +27,6 @@ module.exports.isLogedin = (req, res, next) => {
         const separator = ref.includes('?') ? '&' : '?';
         return res.redirect(ref + separator + "showLogin=true");
     }
-    console.log(`[Auth] User ${req.user.username} authenticated for ${req.method} ${req.originalUrl}`);
     next();
 }
 
@@ -284,8 +282,6 @@ module.exports.findNearbyProviders = (category) => {
             const rangeInKm = req.query.range ? parseFloat(req.query.range) : 10;
             const maxDist = rangeInKm * 1000;
 
-            console.log(`Finding ${category} within ${maxDist}m of`, userLocation.coordinates);
-
             const allProvider = await Provider.find({
                 categories: category,
                 verified: true,
@@ -303,7 +299,7 @@ module.exports.findNearbyProviders = (category) => {
             res.locals.allProvider = allProvider;
             next();
         } catch (e) {
-            console.log("Error in findNearbyProviders:", e);
+            console.error("Error in findNearbyProviders:", e);
             req.flash("danger", "Could not fetch nearby providers");
             res.redirect("/home");
         }

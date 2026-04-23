@@ -58,9 +58,6 @@ app.use(compression());
 
 // Serve assetlinks.json explicitly since express.static ignores dotfiles by default
 app.use((req, res, next) => {
-    if (req.path !== '/health' && !req.path.includes('.')) {
-        console.log(`[Request] ${req.method} ${req.url}`);
-    }
     next();
 });
 
