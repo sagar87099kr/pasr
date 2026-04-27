@@ -228,13 +228,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
             }
         }
 
-        // Validate Payment rules (>= ₹1000 requires PREPAID)
-        if (totalAmount >= 1000 && paymentType !== 'PREPAID') {
-            for (let revert of inventoryUpdates) {
-                await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-            }
-            return res.status(400).json({ success: false, message: "Orders of ₹1000 or above must be PREPAID." });
-        }
+
 
         // Create Order Document
         const order = new Order({

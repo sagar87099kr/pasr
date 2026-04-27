@@ -119,15 +119,22 @@
     border-color: #6366f1;
 }
 
-.avatar-circle-wrapper {
+.avatar-circle-wrapper, .avatar-square-wrapper {
     width: 180px;
     height: 180px;
-    border-radius: 50%;
     overflow: hidden;
     margin-bottom: 1.5rem;
     border: 6px solid #f8fafc;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
     background: #f1f5f9;
+}
+
+.avatar-circle-wrapper {
+    border-radius: 50%;
+}
+
+.avatar-square-wrapper {
+    border-radius: 20px;
 }
 
 .avatar-img {

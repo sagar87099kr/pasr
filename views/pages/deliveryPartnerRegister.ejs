@@ -495,15 +495,17 @@
 
             // Fallback: Primary Geolocation on Load (Quietly update coordinates)
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function (position) {
-                        latInput.value = position.coords.latitude;
-                        lngInput.value = position.coords.longitude;
-                    },
-                    function (error) {
-                        console.log("Silent geolocation unavailable.");
-                    }
-                );
+                setTimeout(() => {
+                    navigator.geolocation.getCurrentPosition(
+                        function (position) {
+                            latInput.value = position.coords.latitude;
+                            lngInput.value = position.coords.longitude;
+                        },
+                        function (error) {
+                            console.log("Silent geolocation unavailable.");
+                        }
+                    );
+                }, 5000);
             }
         });
 

@@ -33,7 +33,7 @@ const ServiceCard = ({ item }) => {
 
         if (isProduct) {
             if (item.shopId) {
-                window.location.href = `/shops/${item.shopId}`;
+                window.location.href = `/items/${id}`;
             } else if (isRealId) {
                 window.location.href = `/products/${id}`;
             } else {

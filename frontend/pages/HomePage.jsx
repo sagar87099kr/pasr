@@ -77,25 +77,27 @@ const HomePage = ({ isLoggedIn }) => {
 
         // Try to get browser location
         if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    setUserLoc({ lat: latitude, lon: longitude, resolved: true });
-                    fetchDiscovery(latitude, longitude);
-                    // Also sync with session for other pages
-                    fetch('/set-location', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ latitude, longitude })
-                    });
-                },
-                (error) => {
-                    console.warn("Geolocation denied or failed:", error);
-                    setUserLoc({ lat: null, lon: null, resolved: true });
-                    fetchDiscovery(); // Fallback to session/database location
-                },
-                { timeout: 10000 }
-            );
+            setTimeout(() => {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        setUserLoc({ lat: latitude, lon: longitude, resolved: true });
+                        fetchDiscovery(latitude, longitude);
+                        // Also sync with session for other pages
+                        fetch('/set-location', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ latitude, longitude })
+                        });
+                    },
+                    (error) => {
+                        console.warn("Geolocation denied or failed:", error);
+                        setUserLoc({ lat: null, lon: null, resolved: true });
+                        fetchDiscovery(); // Fallback to session/database location
+                    },
+                    { timeout: 10000 }
+                );
+            }, 5000);
         } else {
             setUserLoc({ lat: null, lon: null, resolved: true });
             fetchDiscovery();

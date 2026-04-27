@@ -46,17 +46,19 @@ const ShopItemsPage = ({ isLoggedIn }) => {
     useEffect(() => {
         // Try to get browser location
         if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    setUserLoc({ lat: latitude, lon: longitude, resolved: true });
-                },
-                (error) => {
-                    console.warn("Geolocation denied or failed:", error);
-                    setUserLoc({ lat: null, lon: null, resolved: true });
-                },
-                { timeout: 10000 }
-            );
+            setTimeout(() => {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        setUserLoc({ lat: latitude, lon: longitude, resolved: true });
+                    },
+                    (error) => {
+                        console.warn("Geolocation denied or failed:", error);
+                        setUserLoc({ lat: null, lon: null, resolved: true });
+                    },
+                    { timeout: 10000 }
+                );
+            }, 5000);
         } else {
             setUserLoc({ lat: null, lon: null, resolved: true });
         }
