@@ -279,27 +279,10 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
         return res.redirect("/shops");
     }
 
-    // Check if shop is closed and user is not owner
     const isOwner = req.user && shop.owner._id.equals(req.user._id);
 
-    if (!isOwner && shop.openingTime && shop.closingTime) {
-        var istOffsetMs = 5.5 * 60 * 60 * 1000;
-        var nowIST = new Date(new Date().getTime() + istOffsetMs);
-        var istH = nowIST.getUTCHours();
-        var istM = nowIST.getUTCMinutes();
-        var nowStr = (istH < 10 ? '0' : '') + istH + ':' + (istM < 10 ? '0' : '') + istM;
-
-        if (!(nowStr >= shop.openingTime && nowStr <= shop.closingTime)) {
-            // Format time for flash message
-            const [h, m] = shop.openingTime.split(':').map(Number);
-            const ampm = h >= 12 ? 'PM' : 'AM';
-            const h12 = h % 12 || 12;
-            const displayTime = `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
-
-            req.flash("error", `This shop is currently closed. It will open at ${displayTime}.`);
-            return res.redirect("/shops");
-        }
-    }
+    // Shop open/closed status is now handled in the template and cart controller
+    // instead of a hard redirect, allowing customers to browse items anytime.
 
     if (isOwner) {
         // Owner View: Show MasterProducts relevant to this shop's category in the grid.

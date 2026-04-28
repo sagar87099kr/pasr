@@ -13,15 +13,22 @@ const COLORS = {
 
 // Mock data removed to ensure only verified items from the database are shown.
 
-const HomePage = ({ isLoggedIn }) => {
+const HomePage = ({ isLoggedIn, initialLat, initialLon }) => {
     const [recentItems, setRecentItems] = useState([]);
     const [discoveryData, setDiscoveryData] = useState(null);
     const [homeItems, setHomeItems] = useState([]);
     const [homeItemCats, setHomeItemCats] = useState([{ name: "All", parent: "General" }]);
     const [selectedItemCat, setSelectedItemCat] = useState("All");
+    const [activeService, setActiveService] = useState('Shopping');
     const [isCatModalOpen, setIsCatModalOpen] = useState(false);
-    const [userLoc, setUserLoc] = useState({ lat: null, lon: null, resolved: false });
+    const [userLoc, setUserLoc] = useState({ 
+        lat: (initialLat && initialLat !== 'undefined') ? parseFloat(initialLat) : null, 
+        lon: (initialLon && initialLon !== 'undefined') ? parseFloat(initialLon) : null, 
+        resolved: !!(initialLat && initialLat !== 'undefined' && initialLon && initialLon !== 'undefined') 
+    });
     const [isLoading, setIsLoading] = useState(true);
+    const [itemsLimit, setItemsLimit] = useState(8); // Show only 8 items initially
+    const [loadedSections, setLoadedSections] = useState({}); // Track which sections are scrolled into view
 
     useEffect(() => {
         if (!userLoc.resolved) return;
@@ -52,6 +59,29 @@ const HomePage = ({ isLoggedIn }) => {
         };
         fetchHomeItems();
     }, [userLoc, selectedItemCat]);
+    
+    // Gradual loading effect
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setItemsLimit(100); // Show more items after 3 seconds
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Intersection Observer to load sections on scroll
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const sectionId = entry.target.getAttribute('data-section-id');
+                    setLoadedSections(prev => ({ ...prev, [sectionId]: true }));
+                }
+            });
+        }, { rootMargin: '200px' });
+
+        document.querySelectorAll('[data-section-id]').forEach(el => observer.observe(el));
+        return () => observer.disconnect();
+    }, [discoveryData, homeItems]);
 
     useEffect(() => {
 
@@ -75,8 +105,8 @@ const HomePage = ({ isLoggedIn }) => {
             }
         };
 
-        // Try to get browser location
-        if ("geolocation" in navigator) {
+        // Try to get browser location ONLY if we don't already have one resolved from session
+        if ("geolocation" in navigator && !userLoc.resolved) {
             setTimeout(() => {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
@@ -118,6 +148,56 @@ const HomePage = ({ isLoggedIn }) => {
             overflowX: 'hidden',
             paddingBottom: '40px'
         }}>
+            {/* Service Switcher Tabs */}
+            <div style={{
+                display: 'flex',
+                background: '#FFF',
+                padding: '12px 20px',
+                gap: '12px',
+                position: 'sticky',
+                top: 0,
+                zIndex: 1000,
+                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+            }} className="hide-scrollbar">
+                {[
+                    { id: 'Shopping', label: 'Shopping', icon: 'fa-basket-shopping', route: '/' },
+                    { id: 'Farm Fresh', label: 'Farm Fresh', icon: 'fa-tractor', route: '/localMarket' },
+                    { id: 'Service', label: 'Service', icon: 'fa-screwdriver-wrench', route: '/service' }
+                ].map(service => (
+                    <div
+                        key={service.id}
+                        onClick={() => {
+                            if (service.id === 'Shopping') {
+                                setActiveService(service.id);
+                            } else {
+                                window.location.href = service.route;
+                            }
+                        }}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            flexShrink: 0,
+                            padding: '10px 24px',
+                            borderRadius: '99px',
+                            fontSize: '14px',
+                            fontWeight: '800',
+                            cursor: 'pointer',
+                            background: activeService === service.id ? COLORS.PRIMARY : '#F3F4F6',
+                            color: activeService === service.id ? '#FFF' : '#374151',
+                            transition: 'all 0.3s ease',
+                            border: `1px solid ${activeService === service.id ? COLORS.PRIMARY : '#E5E7EB'}`
+                        }}
+                    >
+                        <i className={`fa-solid ${service.icon}`}></i>
+                        {service.label}
+                    </div>
+                ))}
+            </div>
+
             {/* Special Offers Section */}
             <OffersSection isLoggedIn={isLoggedIn} />
 
@@ -128,22 +208,18 @@ const HomePage = ({ isLoggedIn }) => {
             )}
             
             {/* 1. Recently Viewed (CONDITIONAL) */}
-            {recentItems.length > 0 && (
-                <HorizontalSlider 
-                    title="Recently Viewed" 
-                    icon="fa-clock-rotate-left" 
-                    data={recentItems} 
-                    viewAllLink="/user"
-                />
-            )}
+            {activeService === 'Shopping' ? (
+                <>
+                    {recentItems.length > 0 && (
+                        <HorizontalSlider 
+                            title="Recently Viewed" 
+                            icon="fa-clock-rotate-left" 
+                            data={recentItems} 
+                            viewAllLink="/user"
+                        />
+                    )}
 
-            <HorizontalSlider 
-                title={discoveryData ? "Top Selling Near You" : "Most Sold in Your Area"} 
-                icon="fa-fire" 
-                data={getSliderData(discoveryData?.bazaar)} 
-                viewAllLink={getRouteForCategory('Local Bazaar')}
-                rows={2}
-            />
+            {/* Bazaar Sliders Removed per user request */}
 
             {/* Category Modal (Bottom Sheet) */}
             {isCatModalOpen && (
@@ -249,110 +325,72 @@ const HomePage = ({ isLoggedIn }) => {
                         </div>
                     )}
                 </div>
-                <HorizontalSlider 
-                    title="Featured Items" 
-                    icon="fa-star" 
-                    data={getSliderData(homeItems)} 
-                    viewAllLink="/shop-items"
-                    rows={2}
-                />
+                {/* Dynamic Category Sliders */}
+                {(() => {
+                    const SEQUENCE = [
+                        "Fashion", "Mobile Shop", "Electronics", "Footwear", "Grocery", "General Store", 
+                        "Bakery", "Restaurant", "Vegetables & Fruits", "Medical", "Beauty/Cosmetics", 
+                        "Hardware", "Sweet Shop", "Jewelers", "Furniture", "Dhaba", "Non-Veg", 
+                        "Printing & Digital", "Salon", "Seeds & Fertilizers", "Sports", "Stationery", "Others"
+                    ];
+
+                    const groups = {};
+                    const filteredItems = getSliderData(homeItems);
+                    
+                    filteredItems.forEach(item => {
+                        const cat = item.parentCategory || "Others";
+                        if (!groups[cat]) groups[cat] = [];
+                        groups[cat].push(item);
+                    });
+                    
+                    const sortedKeys = Object.keys(groups).sort((a, b) => {
+                        let indexA = SEQUENCE.indexOf(a);
+                        let indexB = SEQUENCE.indexOf(b);
+                        if (indexA === -1) indexA = 999;
+                        if (indexB === -1) indexB = 999;
+                        return indexA - indexB;
+                    });
+
+                    return sortedKeys.map(key => {
+                        const items = groups[key];
+                        if (!items || items.length === 0) return null;
+                        
+                        return (
+                            <React.Fragment key={key}>
+                                <HorizontalSlider 
+                                    title={`${key} Items`} 
+                                    icon="fa-box" 
+                                    data={items.slice(0, Math.min(itemsLimit, 100))} 
+                                    viewAllLink={`/shop-items?category=${encodeURIComponent(key)}`}
+                                    rows={2}
+                                />
+                                {items.length > 100 && itemsLimit > 100 && (
+                                    <HorizontalSlider 
+                                        title={`More ${key} Items`} 
+                                        icon="fa-plus" 
+                                        data={items.slice(100, itemsLimit)} 
+                                        viewAllLink={`/shop-items?category=${encodeURIComponent(key)}`}
+                                        rows={2}
+                                    />
+                                )}
+                            </React.Fragment>
+                        );
+                    });
+                })()}
             </section>
 
-            {/* 3. Local Shops */}
-            <HorizontalSlider 
-                title="Shops Nearby" 
-                image="/images/localshops.jpg" 
-                data={getSliderData(discoveryData?.shops)} 
-                viewAllLink={getRouteForCategory('Shops')}
-            />
+            {/* All non-shop service sliders removed from Shopping tab */}
 
-            <HorizontalSlider 
-                title="Local Bazaar Products" 
-                image="/images/localMarket.jpg" 
-                data={getSliderData(discoveryData?.bazaar)} 
-                viewAllLink={getRouteForCategory('Local Bazaar')}
-                rows={2}
-            />
-
-            {/* 5. Farming & Agriculture */}
-            <HorizontalSlider 
-                title="Farming & Agriculture" 
-                image="/images/keshanSabha.png" 
-                data={getSliderData(discoveryData?.farming)} 
-                viewAllLink={getRouteForCategory('Farming Vehicles')}
-            />
-
-            {/* 6. Four Wheelers & Transport */}
-            <HorizontalSlider 
-                title="Four Wheelers & Transport" 
-                icon="fa-truck-moving" 
-                data={getSliderData(discoveryData?.vehicles)} 
-                viewAllLink={getRouteForCategory('Four Wheelers')}
-            />
-
-            {/* 7. Three Wheelers */}
-            <HorizontalSlider 
-                title="Three Wheelers" 
-                icon="fa-car-side" 
-                data={getSliderData(discoveryData?.threeWheelers, [])} 
-                viewAllLink="/three-weelers"
-            />
-
-            {/* 8. Caterings */}
-            <HorizontalSlider 
-                title="Catering Services" 
-                icon="fa-utensils" 
-                data={getSliderData(discoveryData?.catering)} 
-                viewAllLink="/caterings"
-            />
-
-            {/* 9. Filming and Photography */}
-            <HorizontalSlider 
-                title="Filming and Photography" 
-                icon="fa-camera" 
-                data={getSliderData(discoveryData?.filming, [])} 
-                viewAllLink="/filming"
-            />
-
-            {/* 10. Event Decorators */}
-            <HorizontalSlider 
-                title="Event Decorators" 
-                icon="fa-wand-magic-sparkles" 
-                data={getSliderData(discoveryData?.decoration, [])} 
-                viewAllLink="/decor"
-            />
-
-            {/* 11. Band Party */}
-            <HorizontalSlider 
-                title="Band Party" 
-                icon="fa-drum" 
-                data={getSliderData(discoveryData?.bandParty, [])} 
-                viewAllLink="/bandparty"
-            />
-
-            {/* NEW: 11b. DJ and Tent */}
-            <HorizontalSlider 
-                title="DJ and Tent" 
-                icon="fa-music" 
-                data={getSliderData(discoveryData?.dj, [])} 
-                viewAllLink="/dj"
-            />
-
-            {/* 12. Home Service */}
-            <HorizontalSlider 
-                title="Home Service" 
-                icon="fa-house-chimney-crack" 
-                data={getSliderData(discoveryData?.homeService, [])} 
-                viewAllLink="/homeservice"
-            />
-
-            {/* 13. Heavy Equipments */}
-            <HorizontalSlider 
-                title="Heavy Equipments" 
-                icon="fa-tractor" 
-                data={getSliderData(discoveryData?.heavyEquipments, [])} 
-                viewAllLink="/heavy"
-            />
+            <div data-section-id="shops" style={{ minHeight: '300px' }}>
+                {loadedSections['shops'] && (
+                    <HorizontalSlider 
+                        title="Shops Nearby" 
+                        image="/images/localshops.jpg" 
+                        data={getSliderData(discoveryData?.shops)} 
+                        viewAllLink={getRouteForCategory('Shops')}
+                    />
+                )}
+            </div>
 
 
             {/* 0. Hero with Professional Branding (moved to bottom) */}
@@ -401,6 +439,18 @@ const HomePage = ({ isLoggedIn }) => {
                     ))}
                 </div>
             </section>
+                </>
+            ) : (
+                <div style={{ textAlign: 'center', padding: '80px 20px', minHeight: '50vh' }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚧</div>
+                    <h3 style={{ fontSize: '20px', fontWeight: '800', color: COLORS.PRIMARY, marginBottom: '8px' }}>
+                        {activeService} Coming Soon
+                    </h3>
+                    <p style={{ color: '#6B7280', fontSize: '15px' }}>
+                        We are working hard to bring you the best {activeService} experience. Stay tuned!
+                    </p>
+                </div>
+            )}
 
             {/* Footer Trust Section */}
             <section style={{ 

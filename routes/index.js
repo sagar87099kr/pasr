@@ -177,6 +177,22 @@ router.get("/", (req, res) => {
     });
 });
 
+// React Service Page
+router.get("/service", (req, res) => {
+    res.render("pages/reactService.ejs", {
+        containerClass: 'react-home-container',
+        useMaps: false,
+        useProfileCss: false,
+        useInsideCateCss: false,
+        seo: {
+            title: "Local Services - PASR",
+            description: "Find local Farming & Agriculture, Vehicles, Catering, DJs, and Event Decoration services within your neighborhood.",
+            keywords: "pasr, pasr.in, local services, dj, catering, tent, decoration, vehicle rentals",
+            url: "https://www.pasr.in/service"
+        }
+    });
+});
+
 // The existing home route renamed to categories for fallback/navigation
 router.get("/categories", (req, res) => {
     res.render("pages/home.ejs", {

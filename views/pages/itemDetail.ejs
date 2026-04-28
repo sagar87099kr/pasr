@@ -1,7 +1,26 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
 <link rel="stylesheet" href="/css/product_detail.css">
 
-<body>
+    <% 
+      let shopIsCurrentlyOpen = false; 
+      if (shop.isActive && !shop.isHoliday) { 
+          if (shop.openingTime && shop.closingTime) { 
+              const now = new Date();
+              const istOffsetMs = 5.5 * 60 * 60 * 1000;
+              const nowIST = new Date(now.getTime() + istOffsetMs);
+              const oh = parseInt(shop.openingTime.split(':')[0]);
+              const om = parseInt(shop.openingTime.split(':')[1]);
+              const ch = parseInt(shop.closingTime.split(':')[0]);
+              const cm = parseInt(shop.closingTime.split(':')[1]);
+              const nowMin = nowIST.getUTCHours() * 60 + nowIST.getUTCMinutes();
+              const openMin = oh * 60 + om;
+              const closeMin = ch * 60 + cm;
+              shopIsCurrentlyOpen = nowMin >= openMin && nowMin < closeMin;
+          } else {
+              shopIsCurrentlyOpen = true; 
+          }
+      }
+    %>
     <div class="product-container">
         <!-- LEFT COLUMN: Item Details -->
         <div class="main-content">
@@ -155,13 +174,24 @@
                                 <input type="hidden" id="prodQty" value="1" min="1" max="<%= item.quantity %>">
                             </div>
                         </div>
-                        <div class="checkout-actions d-flex gap-3">
-                            <button class="btn btn-primary fw-bold flex-grow-1" id="addToCartBtn" style="background: #1e293b; padding: 16px; border-radius: 12px; white-space: nowrap;">
-                                <i class="fa-solid fa-cart-plus me-2"></i> Add to Cart
-                            </button>
-                            <button class="btn btn-success fw-bold flex-grow-1" id="buyNowBtn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 16px; border: none; border-radius: 12px; white-space: nowrap;">
-                                <i class="fa-solid fa-bolt me-2"></i> Buy Now
-                            </button>
+                        <div class="checkout-actions d-flex flex-column gap-3">
+                            <div class="d-flex gap-3">
+                                <button class="btn btn-primary fw-bold flex-grow-1" id="addToCartBtn" 
+                                    style="background: #1e293b; padding: 16px; border-radius: 12px; white-space: nowrap;"
+                                    <%= !shopIsCurrentlyOpen ? 'disabled' : '' %>>
+                                    <i class="fa-solid fa-cart-plus me-2"></i> Add to Cart
+                                </button>
+                                <button class="btn btn-success fw-bold flex-grow-1" id="buyNowBtn" 
+                                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 16px; border: none; border-radius: 12px; white-space: nowrap;"
+                                    <%= !shopIsCurrentlyOpen ? 'disabled' : '' %>>
+                                    <i class="fa-solid fa-bolt me-2"></i> Buy Now
+                                </button>
+                            </div>
+                            <% if (!shopIsCurrentlyOpen) { %>
+                                <div style="background: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600; text-align: center;">
+                                    <i class="fa-solid fa-clock me-1"></i> This shop is currently closed. Ordering is disabled.
+                                </div>
+                            <% } %>
                         </div>
                     </div>
                 <% } else { %>

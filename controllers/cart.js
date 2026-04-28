@@ -71,7 +71,29 @@ module.exports.addToCart = async (req, res, next) => {
         const cart = req.session.cart;
 
         // MULTI-SHOP CART: We no longer restrict to one shop.
-        // We store shop details within each item for grouping in the view.
+        // But we MUST check if the shop is currently open/active.
+        if (!isProduct && item.shop) {
+            const shop = item.shop;
+            const now = new Date();
+            const istOffsetMs = 5.5 * 60 * 60 * 1000;
+            const nowIST = new Date(now.getTime() + istOffsetMs);
+            const istH = nowIST.getUTCHours();
+            const istM = nowIST.getUTCMinutes();
+            const nowStr = (istH < 10 ? '0' : '') + istH + ':' + (istM < 10 ? '0' : '') + istM;
+
+            const isOwner = req.user && shop.owner && shop.owner.equals(req.user._id);
+
+            if (!isOwner) {
+                if (!shop.isActive || shop.isHoliday) {
+                    return res.status(400).json({ success: false, message: "This shop is currently closed and not accepting orders." });
+                }
+                if (shop.openingTime && shop.closingTime) {
+                    if (!(nowStr >= shop.openingTime && nowStr <= shop.closingTime)) {
+                        return res.status(400).json({ success: false, message: `This shop is currently closed. It will open at ${shop.openingTime}.` });
+                    }
+                }
+            }
+        }
 
         const existingItemIndex = cart.items.findIndex(i => i.itemId === itemId);
 

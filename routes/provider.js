@@ -130,7 +130,7 @@ router.get("/car", findNearbyProviders("Four Wheelers"), wrapAsync(async (req, r
 }));
 
 // profile route
-router.get("/provider/:id/profile", isLogedin, wrapAsync(async (req, res) => {
+router.get("/provider/:id/profile", wrapAsync(async (req, res) => {
     let { id } = req.params;
     const providerData = await Provider.findById(id)
         .populate([

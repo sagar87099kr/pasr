@@ -1,7 +1,7 @@
 <% layout('layoutes/boilerplate') %>
 
 <!-- React Root Element -->
-<div id="react-homepage" 
+<div id="react-service-page" 
     data-is-logged-in="<%= typeof currUser !== 'undefined' && currUser ? 'true' : 'false' %>"
     data-lat="<%= (typeof session !== 'undefined' && session.location) ? session.location.coordinates[1] : '' %>"
     data-lon="<%= (typeof session !== 'undefined' && session.location) ? session.location.coordinates[0] : '' %>"
