@@ -19,6 +19,7 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon }) => {
     const [homeItems, setHomeItems] = useState([]);
     const [homeItemCats, setHomeItemCats] = useState([{ name: "All", parent: "General" }]);
     const [selectedItemCat, setSelectedItemCat] = useState("All");
+    const [selectedSubCats, setSelectedSubCats] = useState({});
     const [activeService, setActiveService] = useState('Shopping');
     const [isCatModalOpen, setIsCatModalOpen] = useState(false);
     const [userLoc, setUserLoc] = useState({ 
@@ -107,27 +108,25 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon }) => {
 
         // Try to get browser location ONLY if we don't already have one resolved from session
         if ("geolocation" in navigator && !userLoc.resolved) {
-            setTimeout(() => {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        setUserLoc({ lat: latitude, lon: longitude, resolved: true });
-                        fetchDiscovery(latitude, longitude);
-                        // Also sync with session for other pages
-                        fetch('/set-location', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ latitude, longitude })
-                        });
-                    },
-                    (error) => {
-                        console.warn("Geolocation denied or failed:", error);
-                        setUserLoc({ lat: null, lon: null, resolved: true });
-                        fetchDiscovery(); // Fallback to session/database location
-                    },
-                    { timeout: 10000 }
-                );
-            }, 5000);
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    setUserLoc({ lat: latitude, lon: longitude, resolved: true });
+                    fetchDiscovery(latitude, longitude);
+                    // Also sync with session for other pages
+                    fetch('/set-location', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ latitude, longitude })
+                    });
+                },
+                (error) => {
+                    console.warn("Geolocation denied or failed:", error);
+                    setUserLoc({ lat: null, lon: null, resolved: true });
+                    fetchDiscovery(); // Fallback to session/database location
+                },
+                { timeout: 5000 }
+            );
         } else {
             setUserLoc({ lat: null, lon: null, resolved: true });
             fetchDiscovery();
@@ -221,110 +220,8 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon }) => {
 
             {/* Bazaar Sliders Removed per user request */}
 
-            {/* Category Modal (Bottom Sheet) */}
-            {isCatModalOpen && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-                    background: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex',
-                    alignItems: 'flex-end', justifyContent: 'center'
-                }} onClick={() => setIsCatModalOpen(false)}>
-                    <div style={{
-                        background: '#FFF', width: '100%', maxWidth: '500px',
-                        borderTopLeftRadius: '20px', borderTopRightRadius: '20px',
-                        padding: '24px', maxHeight: '80vh', overflowY: 'auto'
-                    }} onClick={(e) => e.stopPropagation()}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: COLORS.PRIMARY }}>All Categories</h3>
-                            <i className="fa-solid fa-xmark" style={{ cursor: 'pointer', fontSize: '20px', color: '#6B7280' }} onClick={() => setIsCatModalOpen(false)}></i>
-                        </div>
-                        
-                        {Object.entries(
-                            homeItemCats.reduce((acc, cat) => {
-                                if (cat.name === "All") return acc;
-                                if (!acc[cat.parent]) acc[cat.parent] = [];
-                                acc[cat.parent].push(cat);
-                                return acc;
-                            }, {})
-                        ).map(([parentName, childCats]) => (
-                            <div key={parentName} style={{ marginBottom: '24px' }}>
-                                <h4 style={{ fontSize: '13px', color: '#6B7280', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.5px' }}>{parentName}</h4>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                    {childCats.map(cat => (
-                                        <div
-                                            key={cat.name}
-                                            onClick={() => { setSelectedItemCat(cat.name); setIsCatModalOpen(false); }}
-                                            style={{
-                                                padding: '8px 16px', borderRadius: '12px', fontSize: '13px',
-                                                fontWeight: '600', cursor: 'pointer',
-                                                background: selectedItemCat === cat.name ? COLORS.PRIMARY : '#F3F4F6',
-                                                color: selectedItemCat === cat.name ? '#FFF' : '#374151',
-                                                border: `1px solid ${selectedItemCat === cat.name ? COLORS.PRIMARY : '#E5E7EB'}`,
-                                                transition: 'all 0.2s'
-                                            }}
-                                        >
-                                            {cat.icon && <span style={{ marginRight: '6px' }}>{cat.icon}</span>}
-                                            {cat.name}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Featured Items with Category Filter */}
+            {/* Featured Items grouped by Shop Category */}
             <section style={{ background: COLORS.BG, paddingTop: '16px' }}>
-                <div style={{ 
-                    display: 'flex', 
-                    gap: '12px', 
-                    overflowX: 'auto', 
-                    padding: '0 20px', 
-                    scrollbarWidth: 'none', 
-                    msOverflowStyle: 'none',
-                    paddingBottom: '16px'
-                }} className="hide-scrollbar">
-                    {/* Only show the top 12 most popular categories in the highlight slider */}
-                    {homeItemCats.slice(0, 12).map(cat => (
-                        <div
-                            key={cat.name}
-                            onClick={() => setSelectedItemCat(cat.name)}
-                            style={{
-                                flexShrink: 0,
-                                padding: '8px 16px',
-                                borderRadius: '12px',
-                                fontSize: '13px',
-                                fontWeight: '700',
-                                cursor: 'pointer',
-                                background: selectedItemCat === cat.name ? COLORS.PRIMARY : '#FFF',
-                                color: selectedItemCat === cat.name ? '#FFF' : '#374151',
-                                border: `1px solid ${selectedItemCat === cat.name ? COLORS.PRIMARY : '#E5E7EB'}`,
-                                transition: 'all 0.2s',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                whiteSpace: 'nowrap'
-                            }}
-                        >
-                            {cat.icon && <span>{cat.icon}</span>}
-                            {cat.name}
-                        </div>
-                    ))}
-                    
-                    {homeItemCats.length > 12 && (
-                        <div
-                            onClick={() => setIsCatModalOpen(true)}
-                            style={{
-                                flexShrink: 0, padding: '8px 16px', borderRadius: '12px', fontSize: '13px',
-                                fontWeight: '800', cursor: 'pointer', background: '#FFF', color: COLORS.PRIMARY,
-                                border: `1px solid ${COLORS.PRIMARY}`, display: 'flex', alignItems: 'center', gap: '6px',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            <i className="fa-solid fa-layer-group"></i> More
-                        </div>
-                    )}
-                </div>
                 {/* Dynamic Category Sliders */}
                 {(() => {
                     const SEQUENCE = [
@@ -352,23 +249,85 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon }) => {
                     });
 
                     return sortedKeys.map(key => {
-                        const items = groups[key];
-                        if (!items || items.length === 0) return null;
+                        const allItems = groups[key];
+                        if (!allItems || allItems.length === 0) return null;
                         
+                        // Local filter logic for specific store sliders
+                        const subCats = homeItemCats.filter(c => c.parent === key) || [];
+                        const selectedSubCat = selectedSubCats[key] || "All";
+                        
+                        const filteredItems = selectedSubCat === "All" 
+                            ? allItems 
+                            : allItems.filter(item => {
+                                const prodCat = item.category || item.itemCategory;
+                                return prodCat === selectedSubCat;
+                            });
+
                         return (
                             <React.Fragment key={key}>
                                 <HorizontalSlider 
                                     title={`${key} Items`} 
                                     icon="fa-box" 
-                                    data={items.slice(0, Math.min(itemsLimit, 100))} 
+                                    data={filteredItems.slice(0, Math.min(itemsLimit, 100))} 
                                     viewAllLink={`/shop-items?category=${encodeURIComponent(key)}`}
                                     rows={2}
-                                />
-                                {items.length > 100 && itemsLimit > 100 && (
+                                >
+                                    {subCats.length > 0 && (
+                                        <div style={{
+                                            display: 'flex',
+                                            gap: '8px',
+                                            overflowX: 'auto',
+                                            scrollbarWidth: 'none',
+                                            paddingBottom: '12px',
+                                            marginBottom: '4px'
+                                        }} className="hide-scrollbar">
+                                            <button
+                                                onClick={() => setSelectedSubCats(prev => ({ ...prev, [key]: "All" }))}
+                                                style={{
+                                                    padding: '5px 14px',
+                                                    borderRadius: '20px',
+                                                    fontSize: '11px',
+                                                    fontWeight: '700',
+                                                    whiteSpace: 'nowrap',
+                                                    border: '1.5px solid',
+                                                    borderColor: selectedSubCat === "All" ? COLORS.PRIMARY : '#E5E7EB',
+                                                    background: selectedSubCat === "All" ? COLORS.PRIMARY : 'transparent',
+                                                    color: selectedSubCat === "All" ? '#FFF' : '#6B7280',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                All
+                                            </button>
+                                            {subCats.map(cat => (
+                                                <button
+                                                    key={cat.name}
+                                                    onClick={() => setSelectedSubCats(prev => ({ ...prev, [key]: cat.name }))}
+                                                    style={{
+                                                        padding: '5px 14px',
+                                                        borderRadius: '20px',
+                                                        fontSize: '11px',
+                                                        fontWeight: '700',
+                                                        whiteSpace: 'nowrap',
+                                                        border: '1.5px solid',
+                                                        borderColor: selectedSubCat === cat.name ? COLORS.PRIMARY : '#E5E7EB',
+                                                        background: selectedSubCat === cat.name ? COLORS.PRIMARY : 'transparent',
+                                                        color: selectedSubCat === cat.name ? '#FFF' : '#6B7280',
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    {cat.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </HorizontalSlider>
+                                {filteredItems.length > 100 && itemsLimit > 100 && (
                                     <HorizontalSlider 
                                         title={`More ${key} Items`} 
                                         icon="fa-plus" 
-                                        data={items.slice(100, itemsLimit)} 
+                                        data={filteredItems.slice(100, itemsLimit)} 
                                         viewAllLink={`/shop-items?category=${encodeURIComponent(key)}`}
                                         rows={2}
                                     />

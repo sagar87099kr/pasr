@@ -120,6 +120,7 @@ module.exports.productSchema = Joi.object({
         quantity: Joi.number().required().min(0),
         categories: Joi.string().required(),
         location: Joi.string().required(),
-        description: Joi.string().allow(""),
+        productDescription: Joi.string().allow(""),
+        upiId: Joi.string().allow(""),
     }).required()
 });

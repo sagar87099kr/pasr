@@ -17,11 +17,19 @@ const ShopItemsPage = ({ isLoggedIn }) => {
     const [userLoc, setUserLoc] = useState({ lat: null, lon: null, resolved: false });
     const [isLoading, setIsLoading] = useState(true);
 
+    const getQueryParam = (param) => {
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+        return null;
+    };
+
     // Advanced Filter States
     const [searchQuery, setSearchQuery] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [showFilters, setShowFilters] = useState(false);
-    const [selectedShopCat, setSelectedShopCat] = useState("All Shops");
+    const [selectedShopCat, setSelectedShopCat] = useState(getQueryParam('category') || "All Shops");
     const [minDiscount, setMinDiscount] = useState(0);
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
@@ -242,22 +250,21 @@ const ShopItemsPage = ({ isLoggedIn }) => {
                         </div>
                     </div>
 
-                    {/* 2. Item Category (Product) Scroll */}
-                    <div>
-                        <div style={{ fontSize: '10px', fontWeight: '800', color: COLORS.TEXT_SEC, letterSpacing: '0.5px', marginBottom: '6px', textTransform: 'uppercase' }}>
-                            Filter by Product Category
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            gap: '8px',
-                            overflowX: 'auto',
-                            scrollbarWidth: 'none',
-                            padding: '2px 0'
-                        }} className="hide-scrollbar">
-                            {homeItemCats.slice(0, 25).map((cat) => (
+                    {/* 2. Item Category (Product) Scroll - Contextual */}
+                    {selectedShopCat !== "All Shops" && (
+                        <div>
+                            <div style={{ fontSize: '10px', fontWeight: '800', color: COLORS.TEXT_SEC, letterSpacing: '0.5px', marginBottom: '6px', textTransform: 'uppercase' }}>
+                                Filter by {selectedShopCat} Categories
+                            </div>
+                            <div style={{
+                                display: 'flex',
+                                gap: '8px',
+                                overflowX: 'auto',
+                                scrollbarWidth: 'none',
+                                padding: '2px 0'
+                            }} className="hide-scrollbar">
                                 <button
-                                    key={cat.name}
-                                    onClick={() => setSelectedItemCat(cat.name)}
+                                    onClick={() => setSelectedItemCat("All")}
                                     style={{
                                         padding: '5px 12px',
                                         borderRadius: '20px',
@@ -265,18 +272,39 @@ const ShopItemsPage = ({ isLoggedIn }) => {
                                         fontWeight: '700',
                                         whiteSpace: 'nowrap',
                                         border: '1.5px solid',
-                                        borderColor: selectedItemCat === cat.name ? COLORS.PRIMARY : '#E5E7EB',
-                                        background: selectedItemCat === cat.name ? COLORS.PRIMARY : 'transparent',
-                                        color: selectedItemCat === cat.name ? '#FFF' : COLORS.TEXT_SEC,
+                                        borderColor: selectedItemCat === "All" ? COLORS.PRIMARY : '#E5E7EB',
+                                        background: selectedItemCat === "All" ? COLORS.PRIMARY : 'transparent',
+                                        color: selectedItemCat === "All" ? '#FFF' : COLORS.TEXT_SEC,
                                         cursor: 'pointer',
                                         transition: 'all 0.2s'
                                     }}
                                 >
-                                    {cat.name}
+                                    All
                                 </button>
-                            ))}
+                                {homeItemCats.filter(cat => cat.parent === selectedShopCat).map((cat) => (
+                                    <button
+                                        key={cat.name}
+                                        onClick={() => setSelectedItemCat(cat.name)}
+                                        style={{
+                                            padding: '5px 12px',
+                                            borderRadius: '20px',
+                                            fontSize: '11px',
+                                            fontWeight: '700',
+                                            whiteSpace: 'nowrap',
+                                            border: '1.5px solid',
+                                            borderColor: selectedItemCat === cat.name ? COLORS.PRIMARY : '#E5E7EB',
+                                            background: selectedItemCat === cat.name ? COLORS.PRIMARY : 'transparent',
+                                            color: selectedItemCat === cat.name ? '#FFF' : COLORS.TEXT_SEC,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        {cat.name}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 

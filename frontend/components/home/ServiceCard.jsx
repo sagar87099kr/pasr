@@ -194,14 +194,24 @@ const ServiceCard = ({ item }) => {
                             </span>
                         </div>
                     ) : (
-                        item.location && (
-                            <>
-                                <i className="fa-solid fa-location-dot" style={{ fontSize: '10px', color: COLORS.TEXT_SEC }}></i>
-                                <span style={{ fontSize: '11px', color: COLORS.TEXT_SEC, fontWeight: '500' }}>
-                                    {typeof item.location === 'string' ? item.location.split(',')[0] : 'Nearby'}
-                                </span>
-                            </>
-                        )
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                            {(item.category || item.categories) && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <i className="fa-solid fa-tag" style={{ fontSize: '10px', color: COLORS.PRIMARY }}></i>
+                                    <span style={{ fontSize: '11px', color: COLORS.PRIMARY, fontWeight: '600' }}>
+                                        {item.category || item.categories}
+                                    </span>
+                                </div>
+                            )}
+                            {item.location && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <i className="fa-solid fa-location-dot" style={{ fontSize: '10px', color: COLORS.TEXT_SEC }}></i>
+                                    <span style={{ fontSize: '11px', color: COLORS.TEXT_SEC, fontWeight: '500' }}>
+                                        {typeof item.location === 'string' ? item.location.split(',')[0] : 'Nearby'}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>

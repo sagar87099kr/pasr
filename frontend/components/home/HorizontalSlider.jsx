@@ -7,8 +7,8 @@ const COLORS = {
     BG: '#F9FAFB'          // Off-White
 };
 
-const HorizontalSlider = ({ title, icon, image, data, viewAllLink, rows = 1 }) => {
-    if (!data || data.length === 0) return null;
+const HorizontalSlider = ({ title, icon, image, data, viewAllLink, rows = 1, children }) => {
+    if ((!data || data.length === 0) && !children) return null;
 
     return (
         <section className="section" style={{ padding: '24px 20px', background: COLORS.BG, borderBottom: '1px solid #E2E8F0' }}>
@@ -47,26 +47,34 @@ const HorizontalSlider = ({ title, icon, image, data, viewAllLink, rows = 1 }) =
                 )}
             </div>
             
-            <div style={{
-                display: 'grid',
-                gridTemplateRows: rows > 1 ? `repeat(${rows}, auto)` : 'none',
-                gridAutoFlow: 'column',
-                gap: '16px',
-                overflowX: 'auto',
-                paddingBottom: '12px',
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'touch'
-            }} className="hide-scrollbar">
-                {data.map((item, idx) => (
-                    <div key={idx} style={{ 
-                        minWidth: rows > 1 ? '160px' : '180px', 
-                        maxWidth: rows > 1 ? '160px' : '180px' 
-                    }}>
-                        <ServiceCard item={item} />
-                    </div>
-                ))}
-            </div>
+            {children}
+
+            {data && data.length > 0 ? (
+                <div style={{
+                    display: 'grid',
+                    gridTemplateRows: rows > 1 ? `repeat(${rows}, auto)` : 'none',
+                    gridAutoFlow: 'column',
+                    gap: '16px',
+                    overflowX: 'auto',
+                    paddingBottom: '12px',
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    WebkitOverflowScrolling: 'touch'
+                }} className="hide-scrollbar">
+                    {data.map((item, idx) => (
+                        <div key={idx} style={{ 
+                            minWidth: rows > 1 ? '160px' : '180px', 
+                            maxWidth: rows > 1 ? '160px' : '180px' 
+                        }}>
+                            <ServiceCard item={item} />
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div style={{ padding: '20px 0', textAlign: 'center', color: '#6B7280', fontSize: '14px', fontStyle: 'italic' }}>
+                    No items available for this filter.
+                </div>
+            )}
         </section>
     );
 };
