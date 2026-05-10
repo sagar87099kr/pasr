@@ -175,14 +175,14 @@
                             </div>
                         </div>
                         <div class="checkout-actions d-flex flex-column gap-3">
-                            <div class="d-flex gap-3">
+                            <div class="d-flex flex-column flex-sm-row gap-3">
                                 <button class="btn btn-primary fw-bold flex-grow-1" id="addToCartBtn" 
-                                    style="background: #1e293b; padding: 16px; border-radius: 12px; white-space: nowrap;"
+                                    style="background: #1e293b; padding: 12px 16px; border-radius: 12px;"
                                     <%= !shopIsCurrentlyOpen ? 'disabled' : '' %>>
                                     <i class="fa-solid fa-cart-plus me-2"></i> Add to Cart
                                 </button>
                                 <button class="btn btn-success fw-bold flex-grow-1" id="buyNowBtn" 
-                                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 16px; border: none; border-radius: 12px; white-space: nowrap;"
+                                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 12px 16px; border: none; border-radius: 12px;"
                                     <%= !shopIsCurrentlyOpen ? 'disabled' : '' %>>
                                     <i class="fa-solid fa-bolt me-2"></i> Buy Now
                                 </button>
