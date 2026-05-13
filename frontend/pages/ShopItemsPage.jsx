@@ -10,20 +10,20 @@ const COLORS = {
     TEXT_SEC: '#6B7280'
 };
 
+const getQueryParam = (param) => {
+    if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+    return null;
+};
+
 const ShopItemsPage = ({ isLoggedIn }) => {
     const [homeItems, setHomeItems] = useState([]);
     const [homeItemCats, setHomeItemCats] = useState([{ name: "All", parent: "General" }]);
-    const [selectedItemCat, setSelectedItemCat] = useState("All");
+    const [selectedItemCat, setSelectedItemCat] = useState(getQueryParam('subCategory') || "All");
     const [userLoc, setUserLoc] = useState({ lat: null, lon: null, resolved: false });
     const [isLoading, setIsLoading] = useState(true);
-
-    const getQueryParam = (param) => {
-        if (typeof window !== 'undefined') {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
-        }
-        return null;
-    };
 
     // Advanced Filter States
     const [searchQuery, setSearchQuery] = useState("");

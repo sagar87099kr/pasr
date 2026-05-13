@@ -269,7 +269,7 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon }) => {
                                     title={`${key} Items`} 
                                     icon="fa-box" 
                                     data={filteredItems.slice(0, Math.min(itemsLimit, 100))} 
-                                    viewAllLink={`/shop-items?category=${encodeURIComponent(key)}`}
+                                    viewAllLink={`/shop-items?category=${encodeURIComponent(key)}${selectedSubCat !== "All" ? `&subCategory=${encodeURIComponent(selectedSubCat)}` : ""}`}
                                     rows={2}
                                 >
                                     {subCats.length > 0 && (
@@ -328,7 +328,7 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon }) => {
                                         title={`More ${key} Items`} 
                                         icon="fa-plus" 
                                         data={filteredItems.slice(100, itemsLimit)} 
-                                        viewAllLink={`/shop-items?category=${encodeURIComponent(key)}`}
+                                        viewAllLink={`/shop-items?category=${encodeURIComponent(key)}${selectedSubCat !== "All" ? `&subCategory=${encodeURIComponent(selectedSubCat)}` : ""}`}
                                         rows={2}
                                     />
                                 )}
@@ -423,7 +423,7 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon }) => {
                     Trusted Local Marketplace
                 </h3>
                 <p style={{ fontSize: '14px', opacity: '0.8', maxWidth: '400px', margin: '0 auto 24px auto' }}>
-                    Perfectly Assured Service and Rentals. Verified local partners for your daily needs.
+                    PASR Private Limited. Verified local partners for your daily needs.
                 </p>
                 <button 
                     onClick={() => window.location.href = '/help'}

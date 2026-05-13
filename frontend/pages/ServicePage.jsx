@@ -279,7 +279,7 @@ const ServicePage = ({ isLoggedIn, initialLat, initialLon }) => {
                     Trusted Local Marketplace
                 </h3>
                 <p style={{ fontSize: '14px', opacity: '0.8', maxWidth: '400px', margin: '0 auto 24px auto' }}>
-                    Perfectly Assured Service and Rentals. Verified local partners for your daily needs.
+                    PASR Private Limited. Verified local partners for your daily needs.
                 </p>
                 <button 
                     onClick={() => window.location.href = '/help'}
