@@ -104,7 +104,7 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
 // STEP 2a: Show OTP verification page
 router.get("/customer/verify-otp", isLoggedOut, (req, res) => {
     if (!req.session.pendingSignup) {
-        req.flash("danger", "Session expired. Please fill the signup form again.");
+        req.flash("danger", "Session expired. Please fill the registration form again.");
         return res.redirect("/customer/signup");
     }
     res.render("pages/otpVerify.ejs", { phone: req.session.pendingSignup.username, otp: req.session.pendingSignup.otp });
@@ -116,13 +116,13 @@ router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
     const pending = req.session.pendingSignup;
 
     if (!pending) {
-        req.flash("danger", "Session expired. Please fill the signup form again.");
+        req.flash("danger", "Session expired. Please fill the registration form again.");
         return res.redirect("/customer/signup");
     }
 
     if (Date.now() > pending.otpExpiry) {
         req.session.pendingSignup = null;
-        req.flash("danger", "OTP expired. Please sign up again.");
+        req.flash("danger", "OTP expired. Please try creating your account again.");
         return res.redirect("/customer/signup");
     }
 

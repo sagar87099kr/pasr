@@ -1214,9 +1214,14 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                                                                 <img src="<%= itemImg %>" alt="<%= itemName %>">
                                                                 <% } else { %>
                                                                     <div
-                                                                        style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#999; font-size:12px;">
-                                                                        No Image</div>
-                                                                    <% } %>
+                                                                        style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#ef4444; background:#fef2f2; border: 1.5px dashed #fca5a5; font-size:11px; font-weight:700; text-align:center; padding:10px;">
+                                                                        <i class="fa-solid fa-triangle-exclamation mb-1" style="font-size: 16px;"></i>
+                                                                        <span>Missing Image</span>
+                                                                        <% if (currUser && shop.owner._id.equals(currUser._id)) { %>
+                                                                            <span style="font-size:9px; font-weight:400; color:#dc2626; margin-top:2px; text-decoration: underline;">Click Edit to Fix</span>
+                                                                        <% } %>
+                                                                    </div>
+                                                                <% } %>
                                                                         <div class="price-tag">
                                                                             <% if (item.discount > 0) { %>
                                                                                 <span style="text-decoration: line-through; color: rgba(255,255,255,0.7); font-size: 0.8em; margin-right: 4px;">₹<%= item.price %></span>
@@ -2486,6 +2491,22 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                 document.addEventListener("DOMContentLoaded", () => {
                     // Modal Logic
                     const modal = document.getElementById("addItemModal");
+
+                    // Auto-open Add Item modal if openAddItem query parameter is present
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('openAddItem') === 'true') {
+                        if (modal) {
+                            const form = modal.querySelector('form');
+                            if (form) form.reset();
+                            const imageIdInput = document.getElementById('addItemImageId');
+                            if (imageIdInput) imageIdInput.value = '';
+                            if (typeof window.clearSelectedImage === 'function') {
+                                window.clearSelectedImage('add');
+                            }
+                            modal.style.display = "block";
+                        }
+                    }
+
                     const btn = document.getElementById("addItemBtn");
                     const span = document.getElementsByClassName("close")[0];
 
@@ -2561,10 +2582,11 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                     const itemCategory = card.getAttribute('data-category');
                     const sizes = JSON.parse(card.getAttribute('data-sizes') || '[]');
                     const description = card.getAttribute('data-description');
-                    openEditItemModal(itemId, itemName, itemPrice, itemDiscount, itemQuantity, itemCategory, sizes, description, productId, isVirtual);
+                    const itemImg = card.getAttribute('data-img');
+                    openEditItemModal(itemId, itemName, itemPrice, itemDiscount, itemQuantity, itemCategory, sizes, description, productId, isVirtual, itemImg);
                 }
 
-                function openEditItemModal(itemId, itemName, itemPrice, itemDiscount, itemQuantity, itemCategory, sizes, description, productId, isVirtual) {
+                function openEditItemModal(itemId, itemName, itemPrice, itemDiscount, itemQuantity, itemCategory, sizes, description, productId, isVirtual, itemImg) {
                     const modal = document.getElementById('editItemModal');
                     const form = document.getElementById('editItemForm');
 
@@ -2575,6 +2597,28 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                     document.getElementById('editItemDiscount').value = itemDiscount || 0;
                     document.getElementById('editItemQuantity').value = itemQuantity;
                     document.getElementById('editItemDescription').value = description || '';
+
+                    // Check if image is missing to prompt owner
+                    const imageLabel = document.querySelector('#editItemImageField label');
+                    const imageInput = document.getElementById('editItemImageInput');
+                    const previewContainer = document.getElementById('editFilePreviewContainer');
+                    const previewImg = document.getElementById('editFilePreviewImg');
+                    
+                    if (imageLabel && imageInput) {
+                        if (!itemImg || itemImg.trim() === '') {
+                            imageLabel.innerHTML = 'Update Image <span style="color:#ef4444; font-weight:bold; font-size:12px; margin-left:5px; background:#fef2f2; border:1px solid #fca5a5; padding:2px 8px; border-radius:4px;"><i class="fa-solid fa-triangle-exclamation"></i> REQUIRED: Missing Image</span>';
+                            imageInput.required = true;
+                            if (previewContainer) previewContainer.style.display = 'none';
+                            if (previewImg) previewImg.src = '';
+                        } else {
+                            imageLabel.innerHTML = 'Update Image (Optional)';
+                            imageInput.required = false;
+                            if (previewContainer && previewImg) {
+                                previewImg.src = itemImg;
+                                previewContainer.style.display = 'block';
+                            }
+                        }
+                    }
 
                     const categorySelect = document.getElementById('editItemCategory');
                     const primarySelect = document.getElementById('editPrimaryCategorySelect');

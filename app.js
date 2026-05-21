@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const Customer = require("./data/customers.js");
+const Shop = require("./data/shops.js");
 const session = require("express-session");
 const MongoStore = require("connect-mongo").default;
 const flash = require("connect-flash");
@@ -220,10 +221,23 @@ app.use(async (req, res, next) => {
   res.locals.danger = req.flash("danger");
   res.locals.error = req.flash("error");
   res.locals.currUser = req.user;
-  const admins = ["8709956547", "9608812817", "7091212569", "7046699074", "9304703911", "8873679038", "7091568049", "9835780962"];
+  const admins = ["8709956547", "9608812817", "7091212569", "7046699074", "9304703911", "8873679038", "7091568049", "9835780962", "9352462475"];
   res.locals.isAdmin = req.user && admins.includes(String(req.user.username));
   res.locals.csrfToken = ""; // Placeholder for views that still expect this variable
   res.locals.cartItemCount = (req.session && req.session.cart && req.session.cart.items) ? req.session.cart.items.length : 0;
+
+  // Retrieve user shops for the "+" add-item shortcut in navbar
+  if (req.user) {
+    try {
+      const userShops = await Shop.find({ owner: req.user._id }).select("_id shopName");
+      res.locals.userShops = userShops.map(s => ({ id: s._id.toString(), name: s.shopName }));
+    } catch (err) {
+      console.error("Error retrieving user shops in global middleware:", err);
+      res.locals.userShops = [];
+    }
+  } else {
+    res.locals.userShops = [];
+  }
 
   // Daily Visitor Tracking & Stats Fetching
   const tzDate = new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"});

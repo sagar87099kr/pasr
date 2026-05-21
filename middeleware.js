@@ -19,7 +19,7 @@ module.exports.isLogedin = (req, res, next) => {
             return res.status(401).json({ success: false, message: "Please login to continue", redirect: "?showLogin=true" });
         }
         
-        req.flash("danger", "please login or signup to see all services");
+        req.flash("danger", "please login or create an account to see all services");
         let ref = req.get('Referrer') || '/home';
         if (ref.includes('/alreadyLogin') || ref.includes('/login') || ref.includes('/cart') || ref.includes('/checkout')) {
             ref = '/home';
