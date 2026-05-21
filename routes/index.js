@@ -61,7 +61,7 @@ router.post("/set-location", async (req, res) => {
 
                     // Extract pincode from context
                     if (feature.context) {
-                        const pincodeCtx = feature.context.find(c => c.id.startsWith('postcode') || c.id === 'postal_code');
+                        const pincodeCtx = feature.context.find(c => c && c.id && (c.id.startsWith('postcode') || c.id === 'postal_code'));
                         if (pincodeCtx) pincode = parseInt(pincodeCtx.text);
                     }
 

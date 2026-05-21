@@ -63,13 +63,17 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
 
         // Geocode the address to get coordinates
         const geoData = await forwardGeocode(address);
+
+        if (!geoData.body.features || geoData.body.features.length === 0) {
+            req.flash("danger", "Could not verify address location. Please enter a valid address.");
+            return res.redirect("/customer/signup");
+        }
+
         let pincode = null;
-        if (geoData.body.features.length > 0) {
-            const context = geoData.body.features[0].context;
-            if (context) {
-                const pinCtx = context.find(c => c.id.startsWith('postcode') || c.id === 'postal_code');
-                if (pinCtx) pincode = parseInt(pinCtx.text);
-            }
+        const context = geoData.body.features[0].context;
+        if (context) {
+            const pinCtx = context.find(c => c && c.id && (c.id.startsWith('postcode') || c.id === 'postal_code'));
+            if (pinCtx) pincode = parseInt(pinCtx.text);
         }
         const geometry = geoData.body.features[0].geometry;
 
