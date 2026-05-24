@@ -213,19 +213,159 @@ router.post("/alreadyLogin", saveRedirectUrl, (req, res, next) => {
             return res.redirect("/alreadyLogin");
         }
 
+        console.log("Login succeeded, logging user in...");
+        require('fs').appendFileSync('debug.log', 'Login succeeded, logging user in...\n');
         // Login succeeded, log the user in
         req.logIn(user, (err) => {
+            require('fs').appendFileSync('debug.log', 'req.logIn callback reached, err: ' + err + '\n');
+            console.log("req.logIn callback reached, err:", err);
             if (err) return next(err);
 
             // Clear the failed attempts counter on success
             req.session.failedLoginAttempts = 0;
-            req.flash("success", "Welcome back to PaSr. Your login is successful");
+            req.flash("success", "Welcome to Back!");
 
-            let redirectUrl = res.locals.redirectUrl || "/home";
-            res.redirect(redirectUrl);
+            console.log("Saving session explicitly before redirect...");
+            req.session.save((err) => {
+                if (err) {
+                    console.error("Session save error:", err);
+                    return next(err);
+                }
+                console.log("Session saved successfully, redirecting...");
+                res.redirect(res.locals.redirectUrl || "/home");
+            });
         });
     })(req, res, next);
 });
+
+// ─── JWT API AUTH FOR MOBILE (FLUTTER) ───────────────────────────────────────
+const jwt = require("jsonwebtoken");
+
+router.post("/api/auth/login", (req, res, next) => {
+    passport.authenticate("local", { session: true }, (err, user, info) => {
+        if (err) return res.status(500).json({ success: false, message: "Internal Server Error" });
+        if (!user) {
+            return res.status(401).json({ success: false, message: "Invalid mobile number or password" });
+        }
+
+        req.logIn(user, (err) => {
+            if (err) return res.status(500).json({ success: false, message: "Internal Server Error" });
+
+            // Generate JWT
+            const token = jwt.sign(
+                { id: user._id, username: user.username },
+                process.env.SECRET || "fallback_secret_for_dev",
+                { expiresIn: "30d" }
+            );
+
+            res.json({
+                success: true,
+                token,
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    username: user.username,
+                    address: user.address,
+                    coins: user.coins
+                }
+            });
+        });
+    })(req, res, next);
+});
+
+// POST /api/auth/register — Step 1: Validate, send OTP, store in session
+router.post("/api/auth/register", wrapAsync(async (req, res) => {
+    const { name, username, password, address, referralCode } = req.body;
+
+    if (!name || !username || !password || !address) {
+        return res.status(400).json({ success: false, message: "All fields marked * are required." });
+    }
+
+    const existing = await Customer.findOne({ username: Number(username) });
+    if (existing) {
+        return res.status(409).json({ success: false, message: "This WhatsApp number is already registered. Please log in." });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    // Store pending signup in session
+    req.session.pendingSignup = { name, username, password, address, otp, otpExpiry, referralCode };
+    await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve()));
+
+    try {
+        await sendWhatsAppOTP(username, otp);
+    } catch (err) {
+        console.error("[API Signup] WhatsApp OTP failed:", err.message);
+    }
+
+    res.json({ success: true, message: "OTP sent to your WhatsApp number." });
+}));
+
+// POST /api/auth/verify-otp — Step 2: Verify OTP, create account, return JWT
+router.post("/api/auth/verify-otp", wrapAsync(async (req, res) => {
+    const { otp } = req.body;
+    const pending = req.session.pendingSignup;
+
+    if (!pending) return res.status(400).json({ success: false, message: "Session expired. Please restart registration." });
+    if (Date.now() > pending.otpExpiry) {
+        req.session.pendingSignup = null;
+        return res.status(400).json({ success: false, message: "OTP expired. Please register again." });
+    }
+    if ((otp || "").trim() !== pending.otp) {
+        return res.status(400).json({ success: false, message: "Incorrect OTP. Please try again." });
+    }
+
+    const referralCodeForNewUser = await generateReferralCode();
+    const newCustomer = new Customer({
+        name: pending.name,
+        username: pending.username,
+        address: pending.address,
+        referralCode: referralCodeForNewUser
+    });
+
+    if (pending.referralCode) {
+        const ReferralUsage = require('../data/referralUsage');
+        const alreadyClaimed = await ReferralUsage.findOne({ mobile: pending.username });
+        if (!alreadyClaimed) {
+            const referrer = await Customer.findOne({ referralCode: pending.referralCode.toUpperCase() });
+            if (referrer) {
+                newCustomer.referredBy = referrer._id;
+                newCustomer.coins = 5;
+                referrer.coins = (referrer.coins || 0) + 10;
+                referrer.referralCount = (referrer.referralCount || 0) + 1;
+                await referrer.save();
+                await ReferralUsage.create({ mobile: pending.username, usedCode: pending.referralCode.toUpperCase() });
+            }
+        }
+    }
+
+    const registeredUser = await Customer.register(newCustomer, pending.password);
+    req.session.pendingSignup = null;
+
+    req.logIn(registeredUser, (err) => {
+        if (err) return res.status(500).json({ success: false, message: "Login failed after registration" });
+
+        const token = jwt.sign(
+            { id: registeredUser._id, username: registeredUser.username },
+            process.env.SECRET || "fallback_secret_for_dev",
+            { expiresIn: "30d" }
+        );
+
+        res.json({
+            success: true,
+            token,
+            user: {
+                id: registeredUser._id,
+                name: registeredUser.name,
+                username: registeredUser.username,
+                address: registeredUser.address,
+                coins: registeredUser.coins || 0
+            }
+        });
+    });
+}));
+// ─────────────────────────────────────────────────────────────────────────────
 
 router.get("/logout", (req, res, next) => {
     req.logout((err) => {

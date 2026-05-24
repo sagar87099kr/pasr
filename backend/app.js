@@ -14,7 +14,11 @@ const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const ExpressError = require("./utils/expressError.js");
+const cors = require("cors");
 require('dotenv').config();
+
+// Enable CORS for API requests from Flutter/Mobile
+app.use(cors({ origin: '*' }));
 
 // Routers
 const userRouter = require("./routes/user.js");
@@ -31,7 +35,7 @@ if (!dbUrl) {
   throw new Error("ATLAS_DB is missing in your .env file");
 }
 
-const clientPromise = mongoose.connect(dbUrl)
+const clientPromise = mongoose.connect(dbUrl, { family: 4 })
   .then(() => {
     console.log("connected to databases");
     return mongoose.connection.getClient();
@@ -135,7 +139,7 @@ app.use(limiter);
 // We will apply it to sensitive POST routes.
 
 const store = MongoStore.create({
-  clientPromise,
+  mongoUrl: dbUrl,
   crypto: {
     secret: process.env.SECRET, // encrypt session in DB
   },

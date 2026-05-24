@@ -26,24 +26,28 @@ const createNotification = async (recipientId, type, orderId, title, message, im
         const customer = await Customer.findById(recipientId);
         if (customer && customer.fcmToken) {
             const admin = require("firebase-admin");
-            const payload = {
-                data: {
-                    title: String(title || ''),
-                    body: String(message || ''),
-                    orderId: String(orderId || ''),
-                    type: String(type || '')
-                },
-                token: customer.fcmToken
-            };
+            if (admin.apps.length > 0) {
+                const payload = {
+                    data: {
+                        title: String(title || ''),
+                        body: String(message || ''),
+                        orderId: String(orderId || ''),
+                        type: String(type || '')
+                    },
+                    token: customer.fcmToken
+                };
 
-            if (imageUrl) {
-                payload.data.image = String(imageUrl);
-            }
-            try {
-                await admin.messaging().send(payload);
-                console.log(`FCM Push Sent to ${recipientId}`);
-            } catch (fcmErr) {
-                console.error(`Failed to send FCM to ${recipientId}:`, fcmErr);
+                if (imageUrl) {
+                    payload.data.image = String(imageUrl);
+                }
+                try {
+                    await admin.messaging().send(payload);
+                    console.log(`FCM Push Sent to ${recipientId}`);
+                } catch (fcmErr) {
+                    console.error(`Failed to send FCM to ${recipientId}:`, fcmErr);
+                }
+            } else {
+                console.log(`Firebase not initialized. Skipped FCM Push to ${recipientId}`);
             }
         }
 

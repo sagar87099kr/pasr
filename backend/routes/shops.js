@@ -212,6 +212,10 @@ router.get("/shops", wrapAsync(async (req, res) => {
         }
     }
 
+    if (req.xhr || req.headers.accept.includes('application/json')) {
+        return res.json({ success: true, shops });
+    }
+
     res.render("pages/shops.ejs", { shops, lat, lng, range, queryParams: req.query });
 }));
 
@@ -430,6 +434,19 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             }
         });
 
+        if (req.xhr || req.headers.accept.includes('application/json')) {
+            return res.json({
+                success: true,
+                shop,
+                displayItems: filteredMergedItems,
+                activeOrderCount,
+                totalPendingPayout,
+                totalRequestedPayout,
+                totalDueToPasr,
+                SHOP_CATEGORIES
+            });
+        }
+
         res.render("pages/shopDetail.ejs", {
             shop,
             displayItems: filteredMergedItems,
@@ -454,6 +471,20 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             if (item.product && item.product.category) return item.product.category;
             return item.itemCategory || "Others";
         }))];
+
+        if (req.xhr || req.headers.accept.includes('application/json')) {
+            return res.json({
+                success: true,
+                shop,
+                displayItems: sellableItems,
+                availableCategories,
+                activeOrderCount: 0,
+                totalPendingPayout: 0,
+                totalRequestedPayout: 0,
+                totalDueToPasr: 0,
+                SHOP_CATEGORIES
+            });
+        }
 
         res.render("pages/shopDetail.ejs", {
             shop,
@@ -831,8 +862,15 @@ router.get("/items/:id", wrapAsync(async (req, res) => {
     
     // Check if shop is verified
     if (!item.shop || !item.shop.verified) {
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.status(400).json({ success: false, message: "This shop is not available currently." });
+        }
         req.flash("danger", "This shop is not available currently.");
         return res.redirect("/home");
+    }
+
+    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+        return res.json({ success: true, item, shop: item.shop, isOwner: (req.user && item.shop.owner.equals(req.user._id)) });
     }
 
     res.render("pages/itemDetail.ejs", { item, shop: item.shop, isOwner: (req.user && item.shop.owner.equals(req.user._id)) });
@@ -881,6 +919,10 @@ router.post("/items/:id/reviews", isLogedin, isNotBlocked, validatereview, wrapA
     await newReview.save();
     await item.save();
     
+    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+        return res.status(201).json({ success: true, message: "Review added successfully", review: newReview });
+    }
+
     req.flash("success", "Review added successfully");
     res.redirect(`/items/${id}`);
 }));

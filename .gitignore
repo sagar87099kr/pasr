@@ -5,3 +5,4 @@ node_modules/
 npm-debug.log
 check_*.js
 serviceAccountKey.json
+test_*.js

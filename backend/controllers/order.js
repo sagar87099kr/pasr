@@ -535,6 +535,11 @@ module.exports.getCustomerOrders = async (req, res, next) => {
             return orderObj;
         }));
 
+        // Return JSON for API
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.json({ success: true, orders: processedOrders });
+        }
+
         // Render the page
         res.render("pages/myOrders.ejs", { orders: processedOrders });
     } catch (e) {

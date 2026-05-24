@@ -7,7 +7,27 @@ const Customer = require("./data/customers.js");
 
 
 
-module.exports.isLogedin = (req, res, next) => {
+const jwt = require("jsonwebtoken");
+
+module.exports.isLogedin = async (req, res, next) => {
+    // 1. Check for JWT (Mobile API Auth)
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        try {
+            const decoded = jwt.verify(token, process.env.SECRET || "fallback_secret_for_dev");
+            const user = await Customer.findById(decoded.id);
+            if (user) {
+                req.user = user;
+                req.isAuthenticated = () => true; // Override for subsequent middlewares
+                return next();
+            }
+        } catch (e) {
+            console.error("JWT Verification failed:", e.message);
+        }
+    }
+
+    // 2. Default Session Auth (Web App)
     if (!req.isAuthenticated()) {
 
         req.session.redirectUrl = req.originalUrl;

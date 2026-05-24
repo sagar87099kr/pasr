@@ -144,6 +144,12 @@ module.exports.viewCart = (req, res) => {
     console.log("[CART] Before initCart:", req.session.cart ? JSON.stringify(req.session.cart.items.length) + " items" : "No cart");
     initCart(req);
     console.log("[CART] After initCart:", JSON.stringify(req.session.cart, null, 2));
+    
+    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+        const coins = req.user && req.user.coins ? req.user.coins : 0;
+        return res.json({ success: true, cart: req.session.cart, coins: coins });
+    }
+    
     // Render an EJS page
     res.render("pages/cart", { cart: req.session.cart });
 };
