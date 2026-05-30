@@ -29,8 +29,23 @@ router.get("/others", findNearbyProviders("Others"), wrapAsync(async (req, res) 
 
 // this will redirect into farmer page
 // Unified Search Route
-router.get("/search", isLogedin, wrapAsync(async (req, res) => {
-    const { q } = req.query;
+router.get("/search", wrapAsync(async (req, res) => {
+    // Optionally extract JWT for mobile users
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        try {
+            const jwt = require("jsonwebtoken");
+            const Customer = require("../data/customers.js");
+            const decoded = jwt.verify(token, process.env.SECRET || "fallback_secret_for_dev");
+            const user = await Customer.findById(decoded.id);
+            if (user) req.user = user;
+        } catch (e) {
+            console.error("JWT Verification failed in /search:", e.message);
+        }
+    }
+
+    const { q, loc } = req.query;
     let query = q || "";
     let providerFilter = {};
     let shopFilter = {};
@@ -38,25 +53,35 @@ router.get("/search", isLogedin, wrapAsync(async (req, res) => {
     let itemFilter = {};
 
     let userLocation = req.session.location;
-    if (!userLocation && req.user && req.user.geometry && req.user.geometry.coordinates && req.user.geometry.coordinates.length === 2) {
+    if (loc && loc.trim() !== '') {
+        try {
+            const geoData = await forwardGeocode(loc);
+            if (geoData && geoData.body && geoData.body.features && geoData.body.features.length > 0) {
+                userLocation = geoData.body.features[0].geometry;
+            }
+        } catch(err) {
+            console.error("Geocoding failed for search loc:", err);
+        }
+    } else if (!userLocation && req.user && req.user.geometry && req.user.geometry.coordinates && req.user.geometry.coordinates.length === 2) {
         userLocation = req.user.geometry;
     }
+
     const hasValidLocation = userLocation && userLocation.coordinates && userLocation.coordinates.length === 2;
     let nearbyShopIds = [];
 
     if (hasValidLocation) {
         const maxDist = 10000; // 10km
-        const nearbyShops = await Shop.find({
-            geometry: {
-                $near: {
-                    $geometry: {
-                        type: "Point",
-                        coordinates: userLocation.coordinates
-                    },
-                    $maxDistance: maxDist
-                }
+        const geoFilter = {
+            $near: {
+                $geometry: { type: "Point", coordinates: userLocation.coordinates },
+                $maxDistance: maxDist
             }
-        }).select('_id');
+        };
+        providerFilter.geometry = geoFilter;
+        shopFilter.geometry = geoFilter;
+        productFilter.geometry = geoFilter;
+
+        const nearbyShops = await Shop.find({ geometry: geoFilter }).select('_id');
         nearbyShopIds = nearbyShops.map(s => s._id);
         itemFilter.shop = { $in: nearbyShopIds };
     }
@@ -113,6 +138,9 @@ router.get("/search", isLogedin, wrapAsync(async (req, res) => {
         items = items.filter(item => item.shop && (item.shop.verified || (req.user && item.shop.owner && item.shop.owner.equals(req.user._id))));
     }
 
+    if (req.headers.accept && req.headers.accept.includes("application/json")) {
+        return res.json({ success: true, providers, shops, products, items, query });
+    }
     res.render("pages/search_results.ejs", { providers, shops, products, items, query });
 }));
 
@@ -153,6 +181,15 @@ router.get("/provider/:id/profile", wrapAsync(async (req, res) => {
     if (doc?.days) {
         console.log("[DEBUG SERVER] First 3 days:", JSON.stringify(doc.days.slice(0, 3)));
     }
+
+    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+        return res.json({
+            success: true,
+            providerData,
+            existingDays: doc?.days || []
+        });
+    }
+
     res.render("pages/profile.ejs", { providerData, currUser: req.user, existingDays: doc?.days || [], containerClass: 'page' });
 }));
 
@@ -410,7 +447,7 @@ router.delete("/provider/:id/delete-image/:imageIndex", isLogedin, isOwner, wrap
 
 // Search Suggestions API
 router.get("/api/search/suggestions", wrapAsync(async (req, res) => {
-    const { q } = req.query;
+    const { q, loc } = req.query;
     if (!q || q.length < 2) return res.json({ providers: [], shops: [], products: [], items: [] });
     
     let query = q;
@@ -420,22 +457,35 @@ router.get("/api/search/suggestions", wrapAsync(async (req, res) => {
     let itemFilter = {};
 
     let userLocation = req.session.location;
-    if (!userLocation && req.user && req.user.geometry && req.user.geometry.coordinates && req.user.geometry.coordinates.length === 2) {
+    if (loc && loc.trim() !== '') {
+        try {
+            const geoData = await forwardGeocode(loc);
+            if (geoData && geoData.body && geoData.body.features && geoData.body.features.length > 0) {
+                userLocation = geoData.body.features[0].geometry;
+            }
+        } catch(err) {
+            console.error("Geocoding failed for search loc:", err);
+        }
+    } else if (!userLocation && req.user && req.user.geometry && req.user.geometry.coordinates && req.user.geometry.coordinates.length === 2) {
         userLocation = req.user.geometry;
     }
+
     const hasValidLocation = userLocation && userLocation.coordinates && userLocation.coordinates.length === 2;
     let nearbyShopIds = [];
 
     if (hasValidLocation) {
         const maxDist = 10000; // 10km
-        const nearbyShops = await Shop.find({
-            geometry: {
-                $near: {
-                    $geometry: { type: "Point", coordinates: userLocation.coordinates },
-                    $maxDistance: maxDist
-                }
+        const geoFilter = {
+            $near: {
+                $geometry: { type: "Point", coordinates: userLocation.coordinates },
+                $maxDistance: maxDist
             }
-        }).select('_id');
+        };
+        providerFilter.geometry = geoFilter;
+        shopFilter.geometry = geoFilter;
+        productFilter.geometry = geoFilter;
+
+        const nearbyShops = await Shop.find({ geometry: geoFilter }).select('_id');
         nearbyShopIds = nearbyShops.map(s => s._id);
         itemFilter.shop = { $in: nearbyShopIds };
     }

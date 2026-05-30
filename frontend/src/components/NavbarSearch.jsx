@@ -4,6 +4,7 @@ import './NavbarSearch.css';
 
 export default function NavbarSearch({ initialQuery = '' }) {
   const [query, setQuery] = useState(initialQuery);
+  const [loc, setLoc] = useState('');
   const [suggestions, setSuggestions] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -33,7 +34,7 @@ export default function NavbarSearch({ initialQuery = '' }) {
 
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}&loc=${encodeURIComponent(loc)}`);
         if (!res.ok) return;
         const data = await res.json();
         setSuggestions(data);
@@ -44,7 +45,7 @@ export default function NavbarSearch({ initialQuery = '' }) {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, loc]);
 
   const hasResults = suggestions && (
     suggestions.items?.length > 0 ||
@@ -55,12 +56,21 @@ export default function NavbarSearch({ initialQuery = '' }) {
 
   return (
     <div style={{ position: 'relative', flexGrow: 1, display: 'flex' }} className="d-flex flex-grow-1 header-search-form">
-      <form action="/search" method="GET" style={{ display: 'flex', width: '100%' }}>
+      <form action="/search" method="GET" style={{ display: 'flex', width: '100%', gap: '4px' }}>
+        <input
+          type="text"
+          name="loc"
+          className="form-control form-control-sm"
+          placeholder="Location..."
+          value={loc}
+          onChange={(e) => setLoc(e.target.value)}
+          style={{ maxWidth: '100px', borderRadius: '9999px', border: '1px solid #cbd5e1', paddingLeft: '1rem' }}
+        />
         <input
           ref={inputRef}
           type="search"
           name="q"
-          className="form-control form-control-sm me-1 notranslate"
+          className="form-control form-control-sm flex-grow-1 notranslate"
           placeholder="Search by name, phone..."
           autoComplete="off"
           value={query}

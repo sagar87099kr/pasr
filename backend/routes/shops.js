@@ -138,48 +138,43 @@ router.get("/shops", wrapAsync(async (req, res) => {
         }
     }
 
+    let query = { verified: true };
     if (lat && lng) {
-        // Debug logs removed for cleaner terminal output
-
-        let query = {
-            geometry: {
-                $near: {
-                    $geometry: {
-                        type: "Point",
-                        coordinates: [parseFloat(lng), parseFloat(lat)]
-                    },
-                    $maxDistance: range * 1000 // Convert km to meters
-                }
-            },
-            verified: true // Only show verified shops
+        query.geometry = {
+            $near: {
+                $geometry: {
+                    type: "Point",
+                    coordinates: [parseFloat(lng), parseFloat(lat)]
+                },
+                $maxDistance: range * 1000 // Convert km to meters
+            }
         };
+    }
 
-        // Filter by category if specified
-        if (req.query.category && req.query.category !== 'All Shops') {
-            query.category = req.query.category;
-        }
+    // Filter by category if specified
+    if (req.query.category && req.query.category !== 'All Shops') {
+        query.category = req.query.category;
+    }
 
-        // Filter by opening hours if "Open Now" is checked
-        if (req.query.openNow === 'true') {
-            const now = new Date();
-            const options = { timeZone: 'Asia/Kolkata', hour12: false, hour: '2-digit', minute: '2-digit' };
-            const currentTime = now.toLocaleTimeString('en-US', options);
-            query.openingTime = { $lte: currentTime };
-            query.closingTime = { $gte: currentTime };
-        }
+    // Filter by opening hours if "Open Now" is checked
+    if (req.query.openNow === 'true') {
+        const now = new Date();
+        const options = { timeZone: 'Asia/Kolkata', hour12: false, hour: '2-digit', minute: '2-digit' };
+        const currentTime = now.toLocaleTimeString('en-US', options);
+        query.openingTime = { $lte: currentTime };
+        query.closingTime = { $gte: currentTime };
+    }
 
-        // Query filter applied
+    // Check total verified shops first
+    const totalVerifiedShops = await Shop.countDocuments({ verified: true });
 
-        // Check total verified shops first
-        const totalVerifiedShops = await Shop.countDocuments({ verified: true });
+    // Check if any shops have geometry
+    const shopsWithGeometry = await Shop.countDocuments({
+        verified: true,
+        'geometry.coordinates': { $exists: true, $ne: [] }
+    });
 
-        // Check if any shops have geometry
-        const shopsWithGeometry = await Shop.countDocuments({
-            verified: true,
-            'geometry.coordinates': { $exists: true, $ne: [] }
-        });
-
-        shops = await Shop.find(query).populate('owner').populate('reviews');
+    shops = await Shop.find(query).populate('owner').populate('reviews');
 
         // Prioritize owned shop to the top
         if (req.user) {
@@ -210,7 +205,7 @@ router.get("/shops", wrapAsync(async (req, res) => {
                 return shopObj;
             });
         }
-    }
+
 
     if (req.xhr || req.headers.accept.includes('application/json')) {
         return res.json({ success: true, shops });

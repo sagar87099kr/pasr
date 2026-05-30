@@ -5,8 +5,11 @@ const SHOP_CATEGORIES = require("../data/categories");
 
 module.exports.getHomeItems = async (req, res) => {
     try {
-        let { lat, lon, category, q, minDiscount, minPrice, maxPrice, sort, shopCategory } = req.query;
+        let { lat, lon, category, q, minDiscount, minPrice, maxPrice, sort, shopCategory, page, limit } = req.query;
         let userLocation = null;
+
+        const pageNum = parseInt(page) || 1;
+        const limitNum = parseInt(limit) || 10;
 
         if (lat && lon) {
             userLocation = {
@@ -21,43 +24,27 @@ module.exports.getHomeItems = async (req, res) => {
 
         let query = { isActive: true };
 
-        // 1. Get all shop IDs as global fallback (remove verification filter to show all listed content)
         const allShops = await Shop.find().select('_id');
         const allShopIds = allShops.map(s => s._id);
 
         if (userLocation && userLocation.coordinates && userLocation.coordinates.length === 2) {
-            // Find shops within 5 km
+            // Find shops STRICTLY within 10 km (10000 meters)
             let nearbyShops = await Shop.find({
                 geometry: {
                     $near: {
                         $geometry: { type: "Point", coordinates: userLocation.coordinates },
-                        $maxDistance: 5000
+                        $maxDistance: 10000
                     }
                 }
             }).select('_id');
 
-            // Fallback 1: If no shops within 5km, try 15km
-            if (nearbyShops.length === 0) {
-                nearbyShops = await Shop.find({
-                    geometry: {
-                        $near: {
-                            $geometry: { type: "Point", coordinates: userLocation.coordinates },
-                            $maxDistance: 15000
-                        }
-                    }
-                }).select('_id');
-            }
-
             const shopIds = nearbyShops.map(s => s._id);
             
-            // Fallback 2: If still no shops, show all shops globally instead of showing nothing
-            if (shopIds.length > 0) {
-                query.shop = { $in: shopIds };
-            } else {
-                query.shop = { $in: allShopIds };
-            }
+            // If there are shops within 10km, use them. If none, we strictly return empty by passing an empty array.
+            // But if the user didn't grant location, we use all globally (handled in 'else').
+            query.shop = { $in: shopIds };
         } else {
-            // If no location, filter by all shops globally
+            // If no location provided, filter by all shops globally
             query.shop = { $in: allShopIds };
         }
 
@@ -97,6 +84,9 @@ module.exports.getHomeItems = async (req, res) => {
                 createdAt: item.createdAt
             };
         });
+
+        // Calculate distinct active categories BEFORE applying filters like shopCategory
+        const activeCategories = [...new Set(allFormattedItems.map(item => item.parentCategory))].filter(Boolean);
 
         // --- Apply Professional Filters ---
         
@@ -149,7 +139,10 @@ module.exports.getHomeItems = async (req, res) => {
             allFormattedItems.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
 
-        const finalItems = allFormattedItems;
+        const startIndex = (pageNum - 1) * limitNum;
+        const endIndex = pageNum * limitNum;
+        const paginatedItems = allFormattedItems.slice(startIndex, endIndex);
+        const hasMore = endIndex < allFormattedItems.length;
 
         // Define a prioritized list of 'Major' categories that users use most often.
         const MAJOR_CATEGORIES = [
@@ -187,7 +180,7 @@ module.exports.getHomeItems = async (req, res) => {
             });
         });
 
-        res.status(200).json({ items: finalItems, categories: allSystemCategories });
+        res.status(200).json({ items: paginatedItems, hasMore, categories: allSystemCategories, activeCategories });
     } catch (error) {
         console.error("Error fetching homepage items:", error);
         res.status(500).json({ error: "Server Error" });
