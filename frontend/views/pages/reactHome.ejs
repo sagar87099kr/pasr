@@ -5,6 +5,7 @@
     data-is-logged-in="<%= typeof currUser !== 'undefined' && currUser ? 'true' : 'false' %>"
     data-lat="<%= (typeof session !== 'undefined' && session.location) ? session.location.coordinates[1] : '' %>"
     data-lon="<%= (typeof session !== 'undefined' && session.location) ? session.location.coordinates[0] : '' %>"
+    data-bazaar-name="<%= typeof bazaarName !== 'undefined' && bazaarName ? bazaarName : '' %>"
 ></div>
 
 <!-- React Bundle Assets (cache busted with current timestamp on render) -->

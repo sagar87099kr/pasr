@@ -280,11 +280,22 @@ module.exports.isReviewAuthor = async (req, res, next) => {
 module.exports.findNearbyProviders = (category) => {
     return async (req, res, next) => {
         try {
-            // Priority 1: Session Location (from browser)
-            // Priority 2: User Profile Location (if logged in and valid)
-            let userLocation = req.session.location;
+            // Priority 1: Bazaar Location (from Mobile App headers)
+            // Priority 2: Bazaar Location (from Web App session)
+            // Priority 3: Session Location (from browser)
+            // Priority 4: User Profile Location (if logged in and valid)
+            let userLocation = null;
 
-            if (!userLocation && req.user && req.user.geometry && req.user.geometry.coordinates && req.user.geometry.coordinates.length === 2) {
+            if (req.headers['x-bazaar-lat'] && req.headers['x-bazaar-lng']) {
+                userLocation = {
+                    type: "Point",
+                    coordinates: [parseFloat(req.headers['x-bazaar-lng']), parseFloat(req.headers['x-bazaar-lat'])]
+                };
+            } else if (req.session.bazaarLocation) {
+                userLocation = req.session.bazaarLocation;
+            } else if (req.session.location) {
+                userLocation = req.session.location;
+            } else if (req.user && req.user.geometry && req.user.geometry.coordinates && req.user.geometry.coordinates.length === 2) {
                 userLocation = req.user.geometry;
             }
 

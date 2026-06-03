@@ -420,10 +420,14 @@
             }
 
             const atcBtn = document.getElementById('addToCartBtn');
-            if (atcBtn) atcBtn.addEventListener('click', () => handleAddToCart(false));
+            if (atcBtn) atcBtn.addEventListener('click', () => {
+                requireProfileCompletion(() => handleAddToCart(false));
+            });
 
             const buyBtn = document.getElementById('buyNowBtn');
-            if (buyBtn) buyBtn.addEventListener('click', () => handleAddToCart(true));
+            if (buyBtn) buyBtn.addEventListener('click', () => {
+                requireProfileCompletion(() => handleAddToCart(true));
+            });
 
             // Share logic
             const shareBtn = document.getElementById('shareBtn');

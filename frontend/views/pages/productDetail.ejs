@@ -379,17 +379,21 @@
                 const msgDiv = document.getElementById('cartMsg');
 
                 if (addBtn) {
-                    addBtn.addEventListener('click', async () => {
-                        const success = await handleAddToCart(false);
-                        if (success) window.location.reload();
+                    addBtn.addEventListener('click', () => {
+                        requireProfileCompletion(async () => {
+                            const success = await handleAddToCart(false);
+                            if (success) window.location.reload();
+                        });
                     });
                 }
 
                 const buyBtn = document.getElementById('buyNowBtn');
                 if (buyBtn) {
-                    buyBtn.addEventListener('click', async () => {
-                        const success = await handleAddToCart(true);
-                        if (success) window.location.href = '/api/cart';
+                    buyBtn.addEventListener('click', () => {
+                        requireProfileCompletion(async () => {
+                            const success = await handleAddToCart(true);
+                            if (success) window.location.href = '/api/cart';
+                        });
                     });
                 }
 

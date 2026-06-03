@@ -13,7 +13,7 @@ const COLORS = {
 
 // Mock data removed to ensure only verified items from the database are shown.
 
-const HomePage = ({ isLoggedIn, initialLat, initialLon }) => {
+const HomePage = ({ isLoggedIn, initialLat, initialLon, initialBazaarName }) => {
     const [recentItems, setRecentItems] = useState([]);
     const [discoveryData, setDiscoveryData] = useState(null);
     const [homeItems, setHomeItems] = useState([]);
@@ -138,6 +138,99 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon }) => {
         if (realData && realData.length > 0) return realData;
         return [];
     };
+
+    const [bazaars, setBazaars] = useState([]);
+    const [bazaarQuery, setBazaarQuery] = useState('');
+
+    useEffect(() => {
+        if (!initialBazaarName) {
+            fetch('/api/bazaars')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) setBazaars(data.bazaars);
+                })
+                .catch(e => console.error(e));
+        }
+    }, [initialBazaarName]);
+
+    const handleSelectBazaar = async (bazaarId) => {
+        try {
+            const res = await fetch('/api/bazaars/select', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bazaarId })
+            });
+            if (res.ok) window.location.reload();
+        } catch (e) {
+            console.error('Failed to select bazaar', e);
+        }
+    };
+
+    if (!initialBazaarName || initialBazaarName === 'All Bazaars') {
+        const filteredBazaars = bazaars.filter(b => b.name.toLowerCase().includes(bazaarQuery.toLowerCase()));
+        
+        return (
+            <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', background: COLORS.BG, padding: '40px 20px' }}>
+                <div style={{ background: '#FFF', padding: '32px', borderRadius: '24px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', maxWidth: '500px', width: '100%' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                        <i className="fa-solid fa-map-location-dot" style={{ fontSize: '48px', color: COLORS.PRIMARY, marginBottom: '16px' }}></i>
+                        <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0F172A', marginBottom: '8px' }}>Select Your Local Bazaar</h1>
+                        <p style={{ color: '#64748B', fontSize: '15px' }}>To discover shops, farmers, and services near you, please select your local marketplace.</p>
+                    </div>
+
+                    <div style={{ position: 'relative', marginBottom: '24px' }}>
+                        <input 
+                            type="text" 
+                            placeholder="Search your bazaar..." 
+                            value={bazaarQuery}
+                            onChange={(e) => setBazaarQuery(e.target.value)}
+                            style={{ 
+                                width: '100%', 
+                                padding: '14px 16px 14px 48px', 
+                                borderRadius: '99px', 
+                                border: '1px solid #CBD5E1',
+                                fontSize: '16px',
+                                outline: 'none'
+                            }} 
+                        />
+                        <i className="fa-solid fa-search" style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }}></i>
+                    </div>
+
+                    <div style={{ maxHeight: '350px', overflowY: 'auto', borderRadius: '12px', border: '1px solid #F1F5F9' }}>
+                        {filteredBazaars.length > 0 ? filteredBazaars.map(b => (
+                            <div 
+                                key={b._id} 
+                                onClick={() => handleSelectBazaar(b._id)}
+                                style={{
+                                    padding: '16px',
+                                    borderBottom: '1px solid #F1F5F9',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    transition: 'background 0.2s',
+                                    background: '#FFF'
+                                }}
+                                onMouseOver={e => e.currentTarget.style.background = '#F8FAFC'}
+                                onMouseOut={e => e.currentTarget.style.background = '#FFF'}
+                            >
+                                <div style={{ background: '#EFF6FF', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '16px' }}>
+                                    <i className="fa-solid fa-store" style={{ color: COLORS.PRIMARY }}></i>
+                                </div>
+                                <div>
+                                    <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1E293B', margin: 0 }}>{b.name}</h3>
+                                    <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' }}>{b.location}</p>
+                                </div>
+                            </div>
+                        )) : (
+                            <div style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
+                                No bazaars found matching "{bazaarQuery}".
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="pasr-react-home" style={{ 

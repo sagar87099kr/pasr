@@ -21,7 +21,8 @@ if (homeMount) {
   const isLoggedIn = homeMount.dataset.isLoggedIn === 'true';
   const lat = homeMount.dataset.lat;
   const lon = homeMount.dataset.lon;
-  root.render(<HomePage isLoggedIn={isLoggedIn} initialLat={lat} initialLon={lon} />);
+  const bazaarName = homeMount.dataset.bazaarName;
+  root.render(<HomePage isLoggedIn={isLoggedIn} initialLat={lat} initialLon={lon} initialBazaarName={bazaarName} />);
 }
 
 // Mount Shop Items Page

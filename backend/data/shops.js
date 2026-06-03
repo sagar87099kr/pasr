@@ -34,6 +34,10 @@ const shopSchema = new Schema({
         type: String, // Text address
         required: true
     },
+    bazaar: {
+        type: Schema.Types.ObjectId,
+        ref: "Bazaar"
+    },
     owner: {
         type: Schema.Types.ObjectId,
         required: true,

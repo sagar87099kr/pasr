@@ -356,6 +356,18 @@
                                                 <%= shop.owner ? shop.owner.username : 'N/A' %>
                                             </div>
                                         </div>
+                                        <div class="row">
+                                            <div class="label">Bazaar</div>
+                                            <div class="value">
+                                                <select onchange="document.getElementById('hiddenBazaarInput_<%= shop._id %>').value = this.value" style="padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 100%; max-width: 250px;">
+                                                    <option value="">-- Unassigned --</option>
+                                                    <% bazaars.forEach(function(b) { %>
+                                                        <option value="<%= b._id %>"><%= b.name %></option>
+                                                    <% }); %>
+                                                </select>
+                                                <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">(Select before verifying)</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </aside>
                             </div>
@@ -365,13 +377,13 @@
 
                                     <div class="mb-3" style="width: 100%; margin-right: 10px;">
                                         <label for="adminName" class="form-label"
-                                            style="font-size: 12px; font-weight: bold; margin-bottom: 5px; display: block;">Verified
-                                            By (Admin Name):</label>
+                                            style="font-size: 12px; font-weight: bold; margin-bottom: 5px; display: block;">Verified By (Admin Name):</label>
                                         <input type="text" class="form-control" id="adminName" required
                                             name="verifiedBy" placeholder="Enter Admin Name"
-                                            style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+                                            style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px;">
                                     </div>
                                     <input type="hidden" name="verified" value="true">
+                                    <input type="hidden" name="bazaarId" id="hiddenBazaarInput_<%= shop._id %>" value="">
                                     <button class="btn primary">Verify</button>
                                 </form>
                                 <button type="button" class="btn primary"
@@ -387,8 +399,19 @@
                                 Verified Shops (<%= verifiedShops.length %>)
                             </h2>
 
+                            <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                                <label style="font-weight: bold; color: #065f46;">Filter by Bazaar:</label>
+                                <select id="bazaarFilter" onchange="filterBazaars()" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px; min-width: 200px;">
+                                    <option value="all">All Shops</option>
+                                    <option value="unassigned">-- Unassigned Shops --</option>
+                                    <% bazaars.forEach(function(b) { %>
+                                        <option value="<%= b._id %>"><%= b.name %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+
                             <% for (shop of verifiedShops){ %>
-                                <section class="card" style="opacity: 0.9;">
+                                <section class="card verified-shop-card" data-bazaar-id="<%= shop.bazaar ? shop.bazaar._id.toString() : 'unassigned' %>" style="opacity: 0.9;">
                                     <div class="header">
                                         <div class="title">
                                             <h1 class="name">
@@ -448,6 +471,20 @@
                                                         <%= shop.gstNumber || 'N/A' %>
                                                     </div>
                                                 </div>
+                                                <div class="row">
+                                                    <div class="label">Bazaar</div>
+                                                    <div class="value">
+                                                        <form method="POST" action="/admin/shops/<%= shop._id %>/assign-bazaar" style="display: flex; gap: 8px;">
+                                                            <select name="bazaarId" style="padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
+                                                                <option value="">-- Unassigned --</option>
+                                                                <% bazaars.forEach(function(b) { %>
+                                                                    <option value="<%= b._id %>" <%= (shop.bazaar && shop.bazaar._id.toString() === b._id.toString()) ? 'selected' : '' %>><%= b.name %></option>
+                                                                <% }); %>
+                                                            </select>
+                                                            <button type="submit" class="btn primary" style="padding: 4px 10px; font-size: 12px;">Save</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </aside>
                                     </div>
@@ -503,6 +540,20 @@
         function closeAdminDeleteModal() {
             const modal = document.getElementById('adminDeleteModal');
             modal.style.display = "none";
+        }
+
+        function filterBazaars() {
+            const selected = document.getElementById('bazaarFilter').value;
+            const cards = document.querySelectorAll('.verified-shop-card');
+            cards.forEach(card => {
+                if (selected === 'all') {
+                    card.style.display = 'block';
+                } else if (card.getAttribute('data-bazaar-id') === selected) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         }
 
         // Close on click outside

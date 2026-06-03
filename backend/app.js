@@ -225,6 +225,7 @@ app.use(async (req, res, next) => {
   res.locals.danger = req.flash("danger");
   res.locals.error = req.flash("error");
   res.locals.currUser = req.user;
+  res.locals.bazaarName = req.session.bazaarName || null;
   const admins = ["8709956547", "9608812817", "7091212569", "7046699074", "9304703911", "8873679038", "7091568049", "9835780962", "9352462475"];
   res.locals.isAdmin = req.user && admins.includes(String(req.user.username));
   res.locals.csrfToken = ""; // Placeholder for views that still expect this variable
@@ -319,7 +320,7 @@ app.use("/api", require("./routes/itemRegistry.js"));
 app.use("/api/notifications", require("./routes/apiNotification.js"));
 app.use("/api/fcm", require("./routes/fcm.js"));
 app.use("/api/payment", require("./routes/payment.js"));
-
+app.use("/api/bazaars", require("./routes/bazaar.js"));
 
 app.use((req, res, next) => {
   next(new ExpressError(404, "Page not found!"));

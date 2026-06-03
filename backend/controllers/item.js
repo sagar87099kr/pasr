@@ -21,14 +21,27 @@ module.exports.getHomeItems = async (req, res) => {
         } else if (req.user && req.user.geometry) {
             userLocation = req.user.geometry;
         }
-
-        let query = { isActive: true };
-
+        let query = { 
+            isActive: true, 
+            quantity: { $gt: 0 }
+        };
         const allShops = await Shop.find().select('_id');
         const allShopIds = allShops.map(s => s._id);
 
-        if (userLocation && userLocation.coordinates && userLocation.coordinates.length === 2) {
-            // Find shops STRICTLY within 10 km (10000 meters)
+        let bazaarId = null;
+        if (req.headers['x-bazaar-id']) {
+            bazaarId = req.headers['x-bazaar-id'];
+        } else if (req.session && req.session.bazaarId) {
+            bazaarId = req.session.bazaarId;
+        }
+
+        if (bazaarId) {
+            // Strict assigned bazaar filtering
+            let bazaarShops = await Shop.find({ bazaar: bazaarId }).select('_id');
+            const shopIds = bazaarShops.map(s => s._id);
+            query.shop = { $in: shopIds };
+        } else if (userLocation && userLocation.coordinates && userLocation.coordinates.length === 2) {
+            // Fallback: Find shops strictly within 10 km
             let nearbyShops = await Shop.find({
                 geometry: {
                     $near: {
@@ -39,9 +52,6 @@ module.exports.getHomeItems = async (req, res) => {
             }).select('_id');
 
             const shopIds = nearbyShops.map(s => s._id);
-            
-            // If there are shops within 10km, use them. If none, we strictly return empty by passing an empty array.
-            // But if the user didn't grant location, we use all globally (handled in 'else').
             query.shop = { $in: shopIds };
         } else {
             // If no location provided, filter by all shops globally

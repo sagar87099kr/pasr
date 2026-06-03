@@ -215,21 +215,45 @@ router.get("/shop-items", (req, res) => {
 router.get("/api/discovery", wrapAsync(async (req, res) => {
     let { lat, lon, range = 5 } = req.query;
     let userLocation = null;
+    let maxDist = parseFloat(range) * 1000; // range in meters
 
-    if (lat && lon) {
+    let bazaarId = null;
+    if (req.headers['x-bazaar-id']) {
+        bazaarId = req.headers['x-bazaar-id'];
+    } else if (req.session && req.session.bazaarId) {
+        bazaarId = req.session.bazaarId;
+    }
+
+    if (bazaarId) {
+        const Bazaar = require("../data/bazaar");
+        const bazaarData = await Bazaar.findById(bazaarId);
+        if (bazaarData && bazaarData.geometry && bazaarData.geometry.coordinates) {
+            userLocation = {
+                type: 'Point',
+                coordinates: bazaarData.geometry.coordinates
+            };
+            maxDist = bazaarData.radius || 5000;
+        }
+    } else if (lat && lon) {
         userLocation = {
             type: 'Point',
             coordinates: [parseFloat(lon), parseFloat(lat)]
         };
-    } else if (req.session.location) {
+    } else if (req.session && req.session.location) {
         userLocation = req.session.location;
     } else if (req.user && req.user.geometry) {
         userLocation = req.user.geometry;
     }
 
-    const maxDist = parseFloat(range) * 1000; // range in meters
+    const queryOptions = (baseQuery, model) => {
+        // If it's the Shop model and we have a bazaarId, filter strictly by bazaar
+        if (model.modelName === 'Shop' && bazaarId) {
+            return {
+                ...baseQuery,
+                bazaar: bazaarId
+            };
+        }
 
-    const queryOptions = (baseQuery) => {
         if (userLocation && userLocation.coordinates && userLocation.coordinates.length === 2) {
             return {
                 ...baseQuery,
@@ -248,10 +272,10 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
     };
 
     const fetchWithFallback = async (model, categoryField, categoryValue) => {
-        let results = await model.find(queryOptions({ [categoryField]: categoryValue })).populate("owner");
+        let results = await model.find(queryOptions({ [categoryField]: categoryValue }, model)).populate("owner");
         
-        // If no results and we have a location, try a wider range (up to 20km)
-        if (results.length === 0 && userLocation) {
+        // If no results and we have a location (and not using strict bazaar filtering), try a wider range
+        if (results.length === 0 && userLocation && !bazaarId) {
             const widerDist = 20000; 
             results = await model.find({
                 [categoryField]: categoryValue,
@@ -264,8 +288,8 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
             }).populate("owner");
         }
         
-        // Final fallback: just get most recent if still empty
-        if (results.length === 0) {
+        // Final fallback: just get most recent if still empty. NEVER fallback if bazaarId is set!
+        if (results.length === 0 && !bazaarId) {
             results = await model.find({ [categoryField]: categoryValue }).sort({ createdAt: -1 }).populate("owner");
         }
         

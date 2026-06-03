@@ -114,6 +114,14 @@
           <i class="fa-solid fa-house fs-5"></i>
         </a>
 
+        <!-- BAZAAR SELECTOR -->
+        <a href="#" class="nav-link profile-icon-hover p-1 d-flex align-items-center lh-1 text-decoration-none" title="Select Local Bazaar" data-bs-toggle="modal" data-bs-target="#bazaarModal">
+          <i class="fa-solid fa-location-dot fs-6 text-danger"></i>
+          <span class="ms-1" style="font-size: 13px; font-weight: 600; color: #1e293b;" id="currentBazaarName">
+            <%= (typeof bazaarName !== 'undefined' && bazaarName) ? bazaarName : "All Bazaars" %>
+          </span>
+        </a>
+
         <!-- Add Item Shortcut (Shop Owner) -->
         <% if (typeof userShops !== 'undefined' && userShops.length > 0) { %>
           <% if (userShops.length === 1) { %>
@@ -211,6 +219,7 @@
                 <li><a class="dropdown-item" href="/admin/delivery-partners">Delivery Partners</a></li>
                 <li><a class="dropdown-item" href="/shops/verify">Verify Shops</a></li>
                 <li><a class="dropdown-item" href="/provider/verify">Verify Providers</a></li>
+                <li><a class="dropdown-item" href="/admin/bazaars">Manage Bazaars</a></li>
                 <li><a class="dropdown-item" href="/product/verify">Verify Products</a></li>
                 <li><a class="dropdown-item" href="/admin/kisan-sabha">Kisan Sabha Admin</a></li>
                 <li><hr class="dropdown-divider"></li>
@@ -381,3 +390,276 @@
 <script type="module" src="/dist/assets/main.js?v=<%= Date.now() %>"></script>
 <!-- Currently, Vite extracts CSS to a separate file, so we need to include it -->
 <link rel="stylesheet" href="/dist/assets/main.css?v=<%= Date.now() %>">
+
+<!-- Bazaar Selection Modal -->
+<div class="modal fade" id="bazaarModal" tabindex="-1" aria-labelledby="bazaarModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius: 1rem; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold text-dark" id="bazaarModalLabel"><i class="fa-solid fa-location-dot text-danger me-2"></i>Select Local Bazaar</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3 position-relative">
+          <input type="text" id="bazaarSearchInput" class="form-control" placeholder="Search bazaars..." style="border-radius: 99px; padding-left: 2.5rem; border-color: #cbd5e1;">
+          <i class="fa-solid fa-search position-absolute text-muted" style="left: 1rem; top: 50%; transform: translateY(-50%);"></i>
+        </div>
+        <button type="button" class="btn btn-primary w-100 mb-3" style="border-radius: 99px; font-weight: 600;" onclick="useCurrentLocation()">
+          <i class="fa-solid fa-location-crosshairs me-2"></i>Use Current Location
+        </button>
+        <div class="list-group list-group-flush" id="bazaarList">
+          <div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm" role="status"></div> Loading bazaars...</div>
+        </div>
+      </div>
+      <div class="modal-footer border-top-0 pt-0 justify-content-start">
+        <button type="button" class="btn btn-outline-danger w-100" style="border-radius: 99px; font-weight: 600;" onclick="selectBazaar('')">
+          <i class="fa-solid fa-earth-americas me-2"></i>Show All Bazaars (Clear)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let bazaarsCache = [];
+  const bazaarModalEl = document.getElementById('bazaarModal');
+  let bsBazaarModal = null;
+  
+  if (bazaarModalEl) {
+    if (typeof bootstrap !== 'undefined') {
+      bsBazaarModal = new bootstrap.Modal(bazaarModalEl);
+    }
+    
+    bazaarModalEl.addEventListener('show.bs.modal', async () => {
+      await fetchBazaars();
+    });
+
+    document.getElementById('bazaarSearchInput').addEventListener('input', (e) => {
+      renderBazaars(e.target.value);
+    });
+  }
+
+  // Auto-prompt on first visit
+  document.addEventListener('DOMContentLoaded', () => {
+    const hasBazaar = "<%= typeof bazaarName !== 'undefined' ? bazaarName : '' %>";
+    const prompted = localStorage.getItem('bazaarPrompted');
+    
+    if (!hasBazaar && !prompted && bsBazaarModal) {
+      bsBazaarModal.show();
+      localStorage.setItem('bazaarPrompted', 'true');
+    }
+  });
+
+  async function fetchBazaars() {
+    try {
+      const res = await fetch('/api/bazaars');
+      const data = await res.json();
+      if (data.success) {
+        bazaarsCache = data.bazaars;
+        renderBazaars();
+      }
+    } catch (e) {
+      console.error('Failed to fetch bazaars', e);
+      document.getElementById('bazaarList').innerHTML = '<div class="text-center text-danger py-4">Failed to load bazaars.</div>';
+    }
+  }
+
+  function renderBazaars(query = '') {
+    const list = document.getElementById('bazaarList');
+    let filtered = bazaarsCache;
+    if (query.trim() !== '') {
+      const q = query.toLowerCase();
+      filtered = bazaarsCache.filter(b => b.name.toLowerCase().includes(q));
+    }
+
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="text-center text-muted py-4">No bazaars found.</div>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(b => `
+      <button type="button" class="list-group-item list-group-item-action border-0 mb-1 rounded d-flex align-items-center" onclick="selectBazaar('${b._id}')">
+        <div class="bg-light rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+          <i class="fa-solid fa-shop text-primary"></i>
+        </div>
+        <div>
+          <h6 class="mb-0 fw-bold">${b.name}</h6>
+          <small class="text-muted">${b.location}</small>
+        </div>
+      </button>
+    `).join('');
+  }
+
+  async function selectBazaar(id) {
+    try {
+      const res = await fetch('/api/bazaars/select', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bazaarId: id })
+      });
+      if (res.ok) {
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error('Error selecting bazaar', e);
+    }
+  }
+
+  function useCurrentLocation() {
+    if (navigator.geolocation) {
+      const btn = event.currentTarget;
+      const ogHtml = btn.innerHTML;
+      btn.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Finding nearest bazaar...';
+      btn.disabled = true;
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const res = await fetch('/api/bazaars');
+            const data = await res.json();
+            if (data.success && data.bazaars.length > 0) {
+              // Basic distance calculation
+              const lat1 = position.coords.latitude;
+              const lon1 = position.coords.longitude;
+              
+              let closest = null;
+              let minD = Infinity;
+
+              data.bazaars.forEach(b => {
+                const lat2 = b.geometry.coordinates[1];
+                const lon2 = b.geometry.coordinates[0];
+                const d = Math.sqrt(Math.pow(lat1 - lat2, 2) + Math.pow(lon1 - lon2, 2));
+                if (d < minD) {
+                  minD = d;
+                  closest = b;
+                }
+              });
+
+              if (closest) {
+                await selectBazaar(closest._id);
+              }
+            }
+          } catch (e) {
+            console.error(e);
+            btn.innerHTML = ogHtml;
+            btn.disabled = false;
+            alert("Failed to find nearest bazaar.");
+          }
+        },
+        (error) => {
+          console.error(error);
+          btn.innerHTML = ogHtml;
+          btn.disabled = false;
+          alert("Location access denied or failed.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+  }
+</script>
+
+<!-- Progressive Profiling Modal -->
+<div class="modal fade" id="profileCompletionModal" tabindex="-1" aria-labelledby="profileCompletionModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 1rem; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold text-dark" id="profileCompletionModalLabel">Complete Your Profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <p class="text-muted small mb-4">Please provide a few more details to continue with this action.</p>
+        <form id="profileCompletionForm">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Full Name *</label>
+            <input type="text" class="form-control" id="pcName" required placeholder="Enter your full name">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Full Address *</label>
+            <textarea class="form-control" id="pcAddress" required rows="2" placeholder="Start typing your address..."></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Additional Phone (Optional)</label>
+            <input type="number" class="form-control" id="pcAdditionalPhone" placeholder="Alternate contact number">
+          </div>
+          <button type="submit" class="btn btn-primary w-100" style="border-radius: 99px; font-weight: 600;" id="pcSubmitBtn">
+            Save & Continue
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let pcPendingCallback = null;
+  const userProfileName = "<%= (typeof currUser !== 'undefined' && currUser) ? (currUser.name || '') : '' %>";
+  const userProfileAddress = "<%= (typeof currUser !== 'undefined' && currUser) ? (currUser.address || '') : '' %>";
+  const isLoggedIn = <%= (typeof currUser !== 'undefined' && currUser) ? 'true' : 'false' %>;
+
+  function requireProfileCompletion(callback) {
+    if (!isLoggedIn) {
+      window.location.href = '/login';
+      return;
+    }
+    
+    // Check if name and address exist and are not just whitespace
+    if (userProfileName.trim() === '' || userProfileAddress.trim() === '') {
+      pcPendingCallback = callback;
+      const pcModal = new bootstrap.Modal(document.getElementById('profileCompletionModal'));
+      pcModal.show();
+    } else {
+      // Profile is complete
+      callback();
+    }
+  }
+
+  document.getElementById('profileCompletionForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('pcSubmitBtn');
+    const name = document.getElementById('pcName').value;
+    const address = document.getElementById('pcAddress').value;
+    const additionalPhone = document.getElementById('pcAdditionalPhone').value;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+
+    try {
+      const res = await fetch('/api/user/complete-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, address, additionalPhone })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('profileCompletionModal'));
+        modal.hide();
+        // Since we don't want to reload the page and lose their action context (e.g., item in cart),
+        // we'll execute the callback directly. Next page load will have the updated info.
+        if (pcPendingCallback) {
+          pcPendingCallback();
+          pcPendingCallback = null;
+        }
+      } else {
+        alert(data.message || 'Failed to update profile');
+        btn.disabled = false;
+        btn.innerHTML = 'Save & Continue';
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred');
+      btn.disabled = false;
+      btn.innerHTML = 'Save & Continue';
+    }
+  });
+
+  // Google Maps Autocomplete for Profile Completion
+  document.addEventListener("DOMContentLoaded", () => {
+    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+      const input = document.getElementById("pcAddress");
+      if (input) {
+        new google.maps.places.Autocomplete(input, { strictBounds: false });
+      }
+    }
+  });
+</script>

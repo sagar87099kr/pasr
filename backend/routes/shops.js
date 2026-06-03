@@ -39,20 +39,26 @@ const isShopOwner = async (req, res, next) => {
 // Shop Verification Route (Admin Only)
 router.get("/shops/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
     // Fetch all shops to display pending and verified
-    const shops = await Shop.find({}).populate('owner');
-    res.render("pages/shopVerification.ejs", { shops });
+    const shops = await Shop.find({}).populate('owner').populate('bazaar');
+    const bazaars = await require("../data/bazaar").find({}).sort({ name: 1 });
+    res.render("pages/shopVerification.ejs", { shops, bazaars });
 }));
 
 // Verify Shop Action
 router.put("/shops/:id/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
     const { id } = req.params;
-    const { verifiedBy } = req.body;
+    const { verifiedBy, bazaarId } = req.body;
     
     // Determine if shop was previously unverified
     const previousShopState = await Shop.findById(id);
     const wasUnverified = !previousShopState.verified;
 
-    const shop = await Shop.findByIdAndUpdate(id, { verified: true, verifiedBy }, { new: true });
+    const updateData = { verified: true, verifiedBy };
+    if (bazaarId) {
+        updateData.bazaar = bazaarId;
+    }
+
+    const shop = await Shop.findByIdAndUpdate(id, updateData, { new: true });
     
     // Broadcast notification to nearby customers (3km radius)
     if (wasUnverified && shop.geometry && shop.geometry.coordinates && shop.geometry.coordinates.length === 2) {
@@ -122,10 +128,25 @@ router.get("/shops", wrapAsync(async (req, res) => {
     range = parseInt(range) || 5;
     if (range > 10) range = 10;
 
-    // Priority 1: Query params (lat, lng from URL)
-    // Priority 2: Session location (from browser geolocation)
-    // Priority 3: User profile location
-    if (!lat || !lng) {
+    // Priority 1: Bazaar Location (from Mobile App headers)
+    // Priority 2: Bazaar Location (from Web App session)
+    // Priority 3: Query params (lat, lng from URL)
+    // Priority 4: Session location (from browser geolocation)
+    // Priority 5: User profile location
+    
+    let bazaarId = null;
+
+    if (req.headers['x-bazaar-id']) {
+        bazaarId = req.headers['x-bazaar-id'];
+    } else if (req.session.bazaarId) {
+        bazaarId = req.session.bazaarId;
+    } else if (req.headers['x-bazaar-lat'] && req.headers['x-bazaar-lng']) {
+        lng = parseFloat(req.headers['x-bazaar-lng']);
+        lat = parseFloat(req.headers['x-bazaar-lat']);
+    } else if (req.session.bazaarLocation && req.session.bazaarLocation.coordinates) {
+        lng = req.session.bazaarLocation.coordinates[0];
+        lat = req.session.bazaarLocation.coordinates[1];
+    } else if (!lat || !lng) {
         // Check session location first
         if (req.session.location && req.session.location.coordinates && req.session.location.coordinates.length === 2) {
             lng = req.session.location.coordinates[0];
@@ -139,7 +160,10 @@ router.get("/shops", wrapAsync(async (req, res) => {
     }
 
     let query = { verified: true };
-    if (lat && lng) {
+    
+    if (bazaarId) {
+        query.bazaar = bazaarId;
+    } else if (lat && lng) {
         query.geometry = {
             $near: {
                 $geometry: {

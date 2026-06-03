@@ -6,10 +6,13 @@ const passportLocalMongoose = require("passport-local-mongoose").default;
 const customerSchema = new Schema({
   name: {
     type: String,
-    required: true,
     maxlength: 50,
     trim: true,
-
+  },
+  additionalPhone: {
+    type: String,
+    maxlength: 15,
+    trim: true,
   },
   username: {
     type: Number,

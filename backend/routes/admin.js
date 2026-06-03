@@ -28,4 +28,13 @@ router.post("/orders/:id/cancel", isLogedin, isadmin, catchAsync(adminController
 router.get("/payouts", isLogedin, isadmin, catchAsync(adminController.getPayoutRequests));
 router.post("/payouts/:id/approve", isLogedin, isadmin, catchAsync(adminController.approvePayout));
 
+const adminBazaarController = require("../controllers/adminBazaar");
+
+// Admin - Bazaar Management
+router.get("/bazaars", isLogedin, isadmin, catchAsync(adminBazaarController.getBazaars));
+router.post("/bazaars", isLogedin, isadmin, catchAsync(adminBazaarController.createBazaar));
+
+// Admin - Assign Bazaars to Shops
+router.post("/shops/:id/assign-bazaar", isLogedin, isadmin, catchAsync(adminBazaarController.assignBazaarToShop));
+
 module.exports = router;

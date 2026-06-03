@@ -15,10 +15,18 @@ router.get("/localMarket", wrapAsync(async (req, res) => {
     // Cap range at 10km maximum
     if (range > 10) range = 10;
 
-    // Priority 1: Query params (lat, lng from URL)
-    // Priority 2: Session location (from browser geolocation)
-    // Priority 3: User profile location
-    if (!lat || !lng) {
+    // Priority 1: Bazaar Location (from Mobile App headers)
+    // Priority 2: Bazaar Location (from Web App session)
+    // Priority 3: Query params (lat, lng from URL)
+    // Priority 4: Session location (from browser geolocation)
+    // Priority 5: User profile location
+    if (req.headers['x-bazaar-lat'] && req.headers['x-bazaar-lng']) {
+        lng = parseFloat(req.headers['x-bazaar-lng']);
+        lat = parseFloat(req.headers['x-bazaar-lat']);
+    } else if (req.session.bazaarLocation && req.session.bazaarLocation.coordinates) {
+        lng = req.session.bazaarLocation.coordinates[0];
+        lat = req.session.bazaarLocation.coordinates[1];
+    } else if (!lat || !lng) {
         // Check session location first
         if (req.session.location && req.session.location.coordinates && req.session.location.coordinates.length === 2) {
             lng = req.session.location.coordinates[0];

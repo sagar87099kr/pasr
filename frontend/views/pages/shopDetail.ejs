@@ -2230,46 +2230,50 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                 }
 
                 // Attach event listeners outside the open function to prevent duplicate bindings or closures capturing old variables
-                document.getElementById('modalAddToCartBtn')?.addEventListener('click', async function () {
-                    const btn = this;
-                    const originalHtml = btn.innerHTML;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Adding...';
-                    btn.disabled = true;
+                document.getElementById('modalAddToCartBtn')?.addEventListener('click', function () {
+                    requireProfileCompletion(async () => {
+                        const btn = this;
+                        const originalHtml = btn.innerHTML;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Adding...';
+                        btn.disabled = true;
 
-                    const success = await addToCart(
-                        btn.getAttribute('data-itemid'),
-                        btn.getAttribute('data-name'),
-                        btn.getAttribute('data-img'),
-                        btn.getAttribute('data-price'),
-                        btn.getAttribute('data-shopid'),
-                        btn.getAttribute('data-shopname')
-                    );
+                        const success = await addToCart(
+                            btn.getAttribute('data-itemid'),
+                            btn.getAttribute('data-name'),
+                            btn.getAttribute('data-img'),
+                            btn.getAttribute('data-price'),
+                            btn.getAttribute('data-shopid'),
+                            btn.getAttribute('data-shopname')
+                        );
 
-                    if (!success) {
-                        btn.innerHTML = originalHtml;
-                        btn.disabled = false;
-                    }
+                        if (!success) {
+                            btn.innerHTML = originalHtml;
+                            btn.disabled = false;
+                        }
+                    });
                 });
 
-                document.getElementById('modalOrderNowBtn')?.addEventListener('click', async function () {
-                    const btn = this;
-                    const originalHtml = btn.innerHTML;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processing...';
-                    btn.disabled = true;
+                document.getElementById('modalOrderNowBtn')?.addEventListener('click', function () {
+                    requireProfileCompletion(async () => {
+                        const btn = this;
+                        const originalHtml = btn.innerHTML;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processing...';
+                        btn.disabled = true;
 
-                    const success = await orderNow(
-                        btn.getAttribute('data-itemid'),
-                        btn.getAttribute('data-name'),
-                        btn.getAttribute('data-img'),
-                        btn.getAttribute('data-price'),
-                        btn.getAttribute('data-shopid'),
-                        btn.getAttribute('data-shopname')
-                    );
-                    
-                    if (!success) {
-                        btn.innerHTML = originalHtml;
-                        btn.disabled = false;
-                    }
+                        const success = await orderNow(
+                            btn.getAttribute('data-itemid'),
+                            btn.getAttribute('data-name'),
+                            btn.getAttribute('data-img'),
+                            btn.getAttribute('data-price'),
+                            btn.getAttribute('data-shopid'),
+                            btn.getAttribute('data-shopname')
+                        );
+                        
+                        if (!success) {
+                            btn.innerHTML = originalHtml;
+                            btn.disabled = false;
+                        }
+                    });
                 });
 
                 async function addToCart(itemId, name, imgUrl, price, shopId, shopName, silent = false) {

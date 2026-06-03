@@ -899,15 +899,23 @@ module.exports.requestDelivery = module.exports.broadcastDelivery;
 module.exports.cancelOrder = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const order = await Order.findById(id).populate('shopId');
+        const order = await Order.findById(id);
 
         if (!order) {
             return res.status(404).json({ success: false, message: "Order not found." });
         }
 
+        const Shop = require("../data/shops");
+        const shop = await Shop.findById(order.shopId);
+
         // Authorize: Only the Customer who placed it OR the Shop owner can cancel it
         const isCustomer = order.customerId.equals(req.user._id);
-        const isShopOwner = order.shopId.owner.equals(req.user._id);
+        let isShopOwner = false;
+        if (shop && shop.owner && shop.owner.equals(req.user._id)) {
+            isShopOwner = true;
+        } else if (String(order.shopId) === String(req.user._id)) {
+            isShopOwner = true;
+        }
         
         if (!isCustomer && !isShopOwner) {
             return res.status(403).json({ success: false, message: "Unauthorized to cancel this order." });
@@ -968,7 +976,7 @@ module.exports.cancelOrder = async (req, res, next) => {
         
         // Push notification (Optional)
         const NotificationHelper = require("../utils/notificationHelper");
-        const targetUserId = isCustomer ? order.shopId.owner : order.customerId;
+        const targetUserId = isCustomer ? (shop && shop.owner ? shop.owner : order.shopId) : order.customerId;
         if (NotificationHelper && typeof NotificationHelper.createNotification === 'function') {
             await NotificationHelper.createNotification(
                 targetUserId, 

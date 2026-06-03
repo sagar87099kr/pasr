@@ -61,21 +61,25 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
             return res.redirect("/customer/signup");
         }
 
-        // Geocode the address to get coordinates
-        const geoData = await forwardGeocode(address);
-
-        if (!geoData.body.features || geoData.body.features.length === 0) {
-            req.flash("danger", "Could not verify address location. Please enter a valid address.");
-            return res.redirect("/customer/signup");
-        }
-
         let pincode = null;
-        const context = geoData.body.features[0].context;
-        if (context) {
-            const pinCtx = context.find(c => c && c.id && (c.id.startsWith('postcode') || c.id === 'postal_code'));
-            if (pinCtx) pincode = parseInt(pinCtx.text);
+        let geometry = null;
+        
+        if (address && address.trim() !== '') {
+            // Geocode the address to get coordinates
+            const geoData = await forwardGeocode(address);
+
+            if (!geoData.body.features || geoData.body.features.length === 0) {
+                req.flash("danger", "Could not verify address location. Please enter a valid address.");
+                return res.redirect("/customer/signup");
+            }
+
+            const context = geoData.body.features[0].context;
+            if (context) {
+                const pinCtx = context.find(c => c && c.id && (c.id.startsWith('postcode') || c.id === 'postal_code'));
+                if (pinCtx) pincode = parseInt(pinCtx.text);
+            }
+            geometry = geoData.body.features[0].geometry;
         }
-        const geometry = geoData.body.features[0].geometry;
 
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -277,8 +281,8 @@ router.post("/api/auth/login", (req, res, next) => {
 router.post("/api/auth/register", wrapAsync(async (req, res) => {
     const { name, username, password, address, referralCode } = req.body;
 
-    if (!name || !username || !password || !address) {
-        return res.status(400).json({ success: false, message: "All fields marked * are required." });
+    if (!username || !password) {
+        return res.status(400).json({ success: false, message: "Mobile number and password are required." });
     }
 
     const existing = await Customer.findOne({ username: Number(username) });
@@ -716,6 +720,40 @@ router.post("/account/remove/permanent", isLogedin, wrapAsync(async (req, res) =
 
 // API: Update Address
 router.post("/api/user/update-address", isLogedin, wrapAsync(userController.updateAddress));
+
+// API: Complete Profile (Progressive Profiling)
+router.post("/api/user/complete-profile", isLogedin, wrapAsync(async (req, res) => {
+    const { name, address, additionalPhone } = req.body;
+    if (!name || !address) {
+        return res.status(400).json({ success: false, message: "Name and address are required" });
+    }
+
+    let geometry = null;
+    let pincode = null;
+    try {
+        const coordinate = await forwardGeocode(address);
+        if (coordinate.body.features && coordinate.body.features.length > 0) {
+            geometry = coordinate.body.features[0].geometry;
+            const context = coordinate.body.features[0].context;
+            if (context) {
+                const pinCtx = context.find(c => c && c.id && (c.id.startsWith('postcode') || c.id === 'postal_code'));
+                if (pinCtx) pincode = parseInt(pinCtx.text);
+            }
+        }
+    } catch (e) {
+        console.error("Geocoding failed for profile completion", e);
+    }
+
+    await Customer.findByIdAndUpdate(req.user._id, {
+        name,
+        address,
+        additionalPhone,
+        ...(geometry && { geometry }),
+        ...(pincode && { pincode })
+    });
+
+    res.json({ success: true, message: "Profile updated successfully" });
+}));
 
 // API: Add Saved Address
 router.post("/api/user/saved-addresses", isLogedin, wrapAsync(async (req, res) => {
