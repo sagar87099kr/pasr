@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import HeroSection from '../components/home/HeroSection';
 import CartSection from '../components/home/CartSection';
 import HorizontalSlider from '../components/home/HorizontalSlider';
+import ServiceCard from '../components/home/ServiceCard';
 import OffersSection from '../components/home/OffersSection';
 import { getRecentlyViewed } from '../utils/tracking';
 import { getRouteForCategory } from '../utils/routes';
@@ -28,15 +29,20 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon, initialBazaarName }) => 
         resolved: !!(initialLat && initialLat !== 'undefined' && initialLon && initialLon !== 'undefined') 
     });
     const [isLoading, setIsLoading] = useState(true);
-    const [itemsLimit, setItemsLimit] = useState(8); // Show only 8 items initially
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(false);
     const [loadedSections, setLoadedSections] = useState({}); // Track which sections are scrolled into view
+
+    useEffect(() => {
+        setPage(1); // Reset page on category change
+    }, [selectedItemCat]);
 
     useEffect(() => {
         if (!userLoc.resolved) return;
 
         const fetchHomeItems = async () => {
             try {
-                let url = `/api/home/items?`;
+                let url = `/api/home/items?page=${page}&limit=20&`;
                 if (userLoc.lat && userLoc.lon) {
                     url += `lat=${userLoc.lat}&lon=${userLoc.lon}&`;
                 }
@@ -47,28 +53,30 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon, initialBazaarName }) => 
                 const response = await fetch(url);
                 const result = await response.json();
                 if (result && result.items) {
-                    setHomeItems(result.items);
+                    if (page === 1) {
+                        setHomeItems(result.items);
+                    } else {
+                        setHomeItems(prev => [...prev, ...result.items]);
+                    }
+                    setHasMore(result.hasMore);
                     if (result.categories) {
                         setHomeItemCats(result.categories);
                     }
                 } else if (Array.isArray(result)) {
-                    setHomeItems(result);
+                    if (page === 1) {
+                        setHomeItems(result);
+                    } else {
+                        setHomeItems(prev => [...prev, ...result]);
+                    }
+                    setHasMore(false);
                 }
             } catch (err) {
                 console.error("Home items fetch failed:", err);
             }
         };
         fetchHomeItems();
-    }, [userLoc, selectedItemCat]);
+    }, [userLoc, selectedItemCat, page]);
     
-    // Gradual loading effect
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setItemsLimit(100); // Show more items after 3 seconds
-        }, 3000);
-        return () => clearTimeout(timer);
-    }, []);
-
     // Intersection Observer to load sections on scroll
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
@@ -311,138 +319,117 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon, initialBazaarName }) => 
                         />
                     )}
 
-            {/* Bazaar Sliders Removed per user request */}
+            {/* NEW LAYOUT: Shops, Categories, Products */}
+            {(() => {
+                const noShops = !discoveryData?.shops || discoveryData.shops.length === 0;
+                const noProducts = !homeItems || homeItems.length === 0;
+                
+                if (noShops && noProducts && !isLoading) {
+                    return (
+                        <div style={{ padding: '80px 32px', textAlign: 'center', background: COLORS.BG }}>
+                            <i className="fa-solid fa-store-slash" style={{ fontSize: '80px', color: '#CBD5E1', marginBottom: '24px' }}></i>
+                            <h2 style={{ fontSize: '24px', fontWeight: '800', color: COLORS.PRIMARY, marginBottom: '12px' }}>We will reach you soon!</h2>
+                            <p style={{ fontSize: '16px', color: '#64748B' }}>Currently, there are no products or shops available in this bazaar.</p>
+                        </div>
+                    );
+                }
 
-            {/* Featured Items grouped by Shop Category */}
-            <section style={{ background: COLORS.BG, paddingTop: '16px' }}>
-                {/* Dynamic Category Sliders */}
-                {(() => {
-                    const SEQUENCE = [
-                        "Fashion", "Mobile Shop", "Electronics", "Footwear", "Grocery", "General Store", 
-                        "Bakery", "Restaurant", "Vegetables & Fruits", "Medical", "Beauty/Cosmetics", 
-                        "Hardware", "Sweet Shop", "Jewelers", "Furniture", "Dhaba", "Non-Veg", 
-                        "Printing & Digital", "Salon", "Seeds & Fertilizers", "Sports", "Stationery", "Others"
-                    ];
+                const ALL_CATEGORIES = [
+                    "All", "Fashion", "Mobile Shop", "Electronics", "Footwear", "Grocery", "General Store", 
+                    "Bakery", "Restaurant", "Vegetables & Fruits", "Medical", "Beauty/Cosmetics", 
+                    "Hardware", "Sweet Shop", "Jewelers", "Furniture", "Dhaba", "Non-Veg", 
+                    "Printing & Digital", "Salon", "Seeds & Fertilizers", "Sports", "Stationery", "Others"
+                ];
 
-                    const groups = {};
-                    const filteredItems = getSliderData(homeItems);
-                    
-                    filteredItems.forEach(item => {
-                        const cat = item.parentCategory || "Others";
-                        if (!groups[cat]) groups[cat] = [];
-                        groups[cat].push(item);
-                    });
-                    
-                    const sortedKeys = Object.keys(groups).sort((a, b) => {
-                        let indexA = SEQUENCE.indexOf(a);
-                        let indexB = SEQUENCE.indexOf(b);
-                        if (indexA === -1) indexA = 999;
-                        if (indexB === -1) indexB = 999;
-                        return indexA - indexB;
-                    });
+                return (
+                    <div style={{ background: COLORS.BG }}>
+                        {/* Top: Shops Nearby */}
+                        {!noShops && (
+                            <HorizontalSlider 
+                                title="Shops Nearby" 
+                                image="/images/localshops.jpg" 
+                                data={getSliderData(discoveryData?.shops)} 
+                                viewAllLink={getRouteForCategory('Shops')}
+                            />
+                        )}
 
-                    return sortedKeys.map(key => {
-                        const allItems = groups[key];
-                        if (!allItems || allItems.length === 0) return null;
-                        
-                        // Local filter logic for specific store sliders
-                        const subCats = homeItemCats.filter(c => c.parent === key) || [];
-                        const selectedSubCat = selectedSubCats[key] || "All";
-                        
-                        const filteredItems = selectedSubCat === "All" 
-                            ? allItems 
-                            : allItems.filter(item => {
-                                const prodCat = item.category || item.itemCategory;
-                                return prodCat === selectedSubCat;
-                            });
+                        {/* Middle: Popular Categories */}
+                        <section style={{ padding: '20px 20px 10px 20px', borderBottom: '1px solid #E2E8F0' }}>
+                            <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#111827', marginBottom: '16px' }}>Shop by Category</h3>
+                            <div style={{
+                                display: 'flex',
+                                gap: '10px',
+                                overflowX: 'auto',
+                                scrollbarWidth: 'none',
+                                msOverflowStyle: 'none',
+                                paddingBottom: '10px'
+                            }} className="hide-scrollbar">
+                                {ALL_CATEGORIES.map(cat => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => setSelectedItemCat(cat)}
+                                        style={{
+                                            padding: '8px 16px',
+                                            borderRadius: '99px',
+                                            fontSize: '13px',
+                                            fontWeight: '700',
+                                            whiteSpace: 'nowrap',
+                                            border: '1px solid',
+                                            borderColor: selectedItemCat === cat ? COLORS.PRIMARY : '#E5E7EB',
+                                            background: selectedItemCat === cat ? COLORS.PRIMARY : '#FFF',
+                                            color: selectedItemCat === cat ? '#FFF' : '#374151',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                            boxShadow: selectedItemCat === cat ? '0 4px 10px rgba(30, 58, 138, 0.2)' : 'none'
+                                        }}
+                                    >
+                                        {cat}
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
 
-                        return (
-                            <React.Fragment key={key}>
-                                <HorizontalSlider 
-                                    title={`${key} Items`} 
-                                    icon="fa-box" 
-                                    data={filteredItems.slice(0, Math.min(itemsLimit, 100))} 
-                                    viewAllLink={`/shop-items?category=${encodeURIComponent(key)}${selectedSubCat !== "All" ? `&subCategory=${encodeURIComponent(selectedSubCat)}` : ""}`}
-                                    rows={2}
-                                >
-                                    {subCats.length > 0 && (
-                                        <div style={{
-                                            display: 'flex',
-                                            gap: '8px',
-                                            overflowX: 'auto',
-                                            scrollbarWidth: 'none',
-                                            paddingBottom: '12px',
-                                            marginBottom: '4px'
-                                        }} className="hide-scrollbar">
-                                            <button
-                                                onClick={() => setSelectedSubCats(prev => ({ ...prev, [key]: "All" }))}
-                                                style={{
-                                                    padding: '5px 14px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '11px',
-                                                    fontWeight: '700',
-                                                    whiteSpace: 'nowrap',
-                                                    border: '1.5px solid',
-                                                    borderColor: selectedSubCat === "All" ? COLORS.PRIMARY : '#E5E7EB',
-                                                    background: selectedSubCat === "All" ? COLORS.PRIMARY : 'transparent',
-                                                    color: selectedSubCat === "All" ? '#FFF' : '#6B7280',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                All
-                                            </button>
-                                            {subCats.map(cat => (
-                                                <button
-                                                    key={cat.name}
-                                                    onClick={() => setSelectedSubCats(prev => ({ ...prev, [key]: cat.name }))}
-                                                    style={{
-                                                        padding: '5px 14px',
-                                                        borderRadius: '20px',
-                                                        fontSize: '11px',
-                                                        fontWeight: '700',
-                                                        whiteSpace: 'nowrap',
-                                                        border: '1.5px solid',
-                                                        borderColor: selectedSubCat === cat.name ? COLORS.PRIMARY : '#E5E7EB',
-                                                        background: selectedSubCat === cat.name ? COLORS.PRIMARY : 'transparent',
-                                                        color: selectedSubCat === cat.name ? '#FFF' : '#6B7280',
-                                                        cursor: 'pointer',
-                                                        transition: 'all 0.2s'
-                                                    }}
-                                                >
-                                                    {cat.name}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </HorizontalSlider>
-                                {filteredItems.length > 100 && itemsLimit > 100 && (
-                                    <HorizontalSlider 
-                                        title={`More ${key} Items`} 
-                                        icon="fa-plus" 
-                                        data={filteredItems.slice(100, itemsLimit)} 
-                                        viewAllLink={`/shop-items?category=${encodeURIComponent(key)}${selectedSubCat !== "All" ? `&subCategory=${encodeURIComponent(selectedSubCat)}` : ""}`}
-                                        rows={2}
-                                    />
+                        {/* Bottom: Vertical Product Grid */}
+                        <section style={{ padding: '24px 20px' }}>
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+                                gap: '16px'
+                            }}>
+                                {homeItems.length > 0 ? (
+                                    homeItems.map((item, idx) => (
+                                        <ServiceCard key={idx} item={item} />
+                                    ))
+                                ) : (
+                                    <div style={{ gridColumn: '1 / -1', padding: '40px 0', textAlign: 'center', color: '#6B7280' }}>
+                                        <i className="fa-solid fa-box-open" style={{ fontSize: '32px', marginBottom: '12px', color: '#CBD5E1' }}></i>
+                                        <p>No products found for this category.</p>
+                                    </div>
                                 )}
-                            </React.Fragment>
-                        );
-                    });
-                })()}
-            </section>
-
-            {/* All non-shop service sliders removed from Shopping tab */}
-
-            <div data-section-id="shops" style={{ minHeight: '300px' }}>
-                {loadedSections['shops'] && (
-                    <HorizontalSlider 
-                        title="Shops Nearby" 
-                        image="/images/localshops.jpg" 
-                        data={getSliderData(discoveryData?.shops)} 
-                        viewAllLink={getRouteForCategory('Shops')}
-                    />
-                )}
-            </div>
+                            </div>
+                            {hasMore && (
+                                <div style={{ textAlign: 'center', marginTop: '24px' }}>
+                                    <button 
+                                        onClick={() => setPage(prev => prev + 1)}
+                                        style={{
+                                            padding: '10px 24px',
+                                            borderRadius: '99px',
+                                            background: '#FFF',
+                                            border: `1px solid ${COLORS.PRIMARY}`,
+                                            color: COLORS.PRIMARY,
+                                            fontWeight: '700',
+                                            fontSize: '14px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Load More
+                                    </button>
+                                </div>
+                            )}
+                        </section>
+                    </div>
+                );
+            })()}
 
 
             {/* 0. Hero with Professional Branding (moved to bottom) */}
