@@ -23,19 +23,114 @@ router.get("/T&C", (req, res) => {
     res.render("pages/T&C.ejs");
 });
 
-// Delete account route (required by Google Play)
+// Delete account route (required by Google Play) - Public Form
 router.get("/delete-account", (req, res) => {
     res.send(`
         <html>
         <head><title>Delete Account - PaSr</title><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-        <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem;">
+        <body style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 2rem;">
             <h2>Account Deletion Request</h2>
-            <p>If you would like to permanently delete your PaSr account and all associated data, please email us at <strong>support@pasr.in</strong> from your registered email address or include your registered phone number in the message.</p>
-            <p>Your data will be permanently removed within 7 days of the request.</p>
+            <p>Enter your WhatsApp number and password to permanently delete your PaSr account and all associated data.</p>
+            <form action="/delete-account" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="text" name="username" placeholder="WhatsApp Number (e.g. 9999999999)" required style="padding: 10px; font-size: 16px;">
+                <input type="password" name="password" placeholder="Password" required style="padding: 10px; font-size: 16px;">
+                <button type="submit" style="padding: 12px; background-color: #dc3545; color: white; border: none; font-size: 16px; cursor: pointer;">Delete My Account Permanently</button>
+            </form>
         </body>
         </html>
     `);
 });
+
+router.post("/delete-account", wrapAsync(async (req, res) => {
+    const { username, password } = req.body;
+    
+    // Authenticate user first
+    const isAuthenticated = await new Promise((resolve) => {
+        Customer.authenticate()(String(username), password, (err, userResult, msg) => {
+            resolve(userResult);
+        });
+    });
+
+    if (!isAuthenticated) {
+        return res.send("<h3 style='color:red;'>Authentication failed. Incorrect phone number or password. <a href='/delete-account'>Try again</a></h3>");
+    }
+
+    const userId = isAuthenticated._id;
+    const cloudinary = require("../cloud_con.js");
+    const deletePromises = [];
+
+    try {
+        // 1. Providers
+        const providers = await Provider.find({ owner: userId });
+        for (let p of providers) {
+            if (p.personImage?.length) {
+                for (let img of p.personImage) {
+                    if (img.filename) deletePromises.push(cloudinary.uploader.destroy(img.filename).catch(e => {}));
+                }
+            }
+            if (p.review?.length) await require("../data/review.js").deleteMany({ _id: { $in: p.review } });
+            await Provider.findByIdAndDelete(p._id);
+        }
+
+        // 2. Shops
+        const shops = await Shop.find({ owner: userId });
+        for (let s of shops) {
+            if (s.shopImage?.length) {
+                for (let img of s.shopImage) {
+                    if (img.filename) deletePromises.push(cloudinary.uploader.destroy(img.filename).catch(e => {}));
+                }
+            }
+            if (s.items?.length) {
+                for (let item of s.items) {
+                    if (item.itemImage?.filename) deletePromises.push(cloudinary.uploader.destroy(item.itemImage.filename).catch(e => {}));
+                }
+            }
+            if (s.reviews?.length) await require("../data/review.js").deleteMany({ _id: { $in: s.reviews } });
+            await Shop.findByIdAndDelete(s._id);
+        }
+
+        // 3. Products
+        const products = await Product.find({ owner: userId });
+        for (let prod of products) {
+            if (prod.productImage?.length) {
+                for (let img of prod.productImage) {
+                    if (img.filename) deletePromises.push(cloudinary.uploader.destroy(img.filename).catch(e => {}));
+                }
+            }
+            await Product.findByIdAndDelete(prod._id);
+        }
+
+        // 4. Kisan Sabha
+        const posts = await require("../data/keshanSabhaPost.js").find({ author: userId });
+        for (let post of posts) {
+            if (post.media?.length) {
+                for (let m of post.media) {
+                    if (m.filename) deletePromises.push(cloudinary.uploader.destroy(m.filename).catch(e => {}));
+                }
+            }
+            await require("../data/keshanSabhaPost.js").findByIdAndDelete(post._id);
+        }
+        await require("../data/keshanSabhaComment.js").deleteMany({ author: userId });
+        await require("../data/keshanSabhaReport.js").deleteMany({ author: userId });
+
+        // 5. Associations
+        await require("../data/deliveryPartner.js").deleteMany({ user: userId });
+        await require("../data/notification.js").deleteMany({ recipient: userId });
+        await require("../data/review.js").deleteMany({ author: userId });
+
+        // 6. Delete User
+        await Customer.findByIdAndDelete(userId);
+
+        if (deletePromises.length > 0) {
+            Promise.all(deletePromises).catch(e => {});
+        }
+
+        res.send("<h3 style='color:green;'>Your account and all associated data have been permanently deleted.</h3>");
+
+    } catch (error) {
+        res.send("<h3 style='color:red;'>An error occurred during deletion. Please contact support.</h3>");
+    }
+}));
 
 // Redirect old /home to the new personalized React-based homepage at /
 router.get("/home", (req, res) => {
