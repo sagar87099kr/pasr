@@ -23,6 +23,20 @@ router.get("/T&C", (req, res) => {
     res.render("pages/T&C.ejs");
 });
 
+// Delete account route (required by Google Play)
+router.get("/delete-account", (req, res) => {
+    res.send(`
+        <html>
+        <head><title>Delete Account - PaSr</title><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+        <body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem;">
+            <h2>Account Deletion Request</h2>
+            <p>If you would like to permanently delete your PaSr account and all associated data, please email us at <strong>support@pasr.in</strong> from your registered email address or include your registered phone number in the message.</p>
+            <p>Your data will be permanently removed within 7 days of the request.</p>
+        </body>
+        </html>
+    `);
+});
+
 // Redirect old /home to the new personalized React-based homepage at /
 router.get("/home", (req, res) => {
     res.redirect("/");
