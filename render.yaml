@@ -3,7 +3,7 @@ services:
     name: pasr
     env: node
     plan: standard
-    buildCommand: cd backend && npm install --legacy-peer-deps
+    buildCommand: cd frontend && npm install && npm run build && cd ../backend && npm install --legacy-peer-deps
     startCommand: cd backend && node app.js
     envVars:
       - key: NODE_VERSION
