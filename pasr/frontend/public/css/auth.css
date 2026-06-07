@@ -1,0 +1,311 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+
+/* ── Override the global .contain grid so auth pages go full width ── */
+.contain:has(.auth-container) {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Fallback for browsers without :has() support */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 48px 20px 80px;
+    min-height: calc(100vh - 80px);
+    background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%);
+    /* Break out of the .contain grid */
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+}
+
+/* ── Auth Card ── */
+.auth-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 520px;
+    padding: 48px 44px;
+    border-radius: 28px;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.05),
+        0 20px 60px -10px rgba(99, 102, 241, 0.12),
+        0 0 0 1px rgba(99, 102, 241, 0.06);
+    animation: card-in 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes card-in {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Header ── */
+.auth-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.auth-title {
+    font-size: 30px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 8px;
+    letter-spacing: -0.6px;
+    line-height: 1.2;
+}
+
+.auth-subtitle {
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.badge-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #eff6ff;
+    color: #3b82f6;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 99px;
+    margin-top: 14px;
+    border: 1px solid #dbeafe;
+}
+
+/* ── Form Groups ── */
+.form-group {
+    margin-bottom: 22px;
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 13.5px;
+    color: #374151;
+    margin-bottom: 8px;
+    display: block;
+    letter-spacing: 0.1px;
+}
+
+/* ── Inputs ── */
+.form-control {
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: 15px;
+    font-family: 'Outfit', system-ui, sans-serif;
+    color: #0f172a;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+}
+
+.form-control::placeholder {
+    color: #94a3b8;
+}
+
+.form-control:focus {
+    background: #ffffff;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    outline: none;
+}
+
+.form-control:valid:not(:placeholder-shown) {
+    border-color: #10b981;
+}
+
+/* ── Password Row — two fields side by side ── */
+.password-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+/* Bootstrap .row/.col compatibility fix */
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.col-md-6 {
+    /* Remove Bootstrap's float/flex — let grid handle it */
+    min-width: 0;
+}
+
+.col-md-6.form-group {
+    margin-bottom: 0;
+}
+
+/* ── Textarea ── */
+textarea.form-control {
+    resize: vertical;
+    min-height: 90px;
+}
+
+/* ── Select ── */
+select.form-control {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+}
+
+/* ── Invalid Feedback ── */
+.invalid-feedback {
+    font-size: 12px;
+    color: #ef4444;
+    margin-top: 5px;
+    display: none;
+}
+
+.was-validated .form-control:invalid ~ .invalid-feedback,
+.form-control.is-invalid ~ .invalid-feedback {
+    display: block;
+}
+
+/* ── Form Check (Checkbox) ── */
+.form-check {
+    margin-top: 4px;
+    margin-bottom: 28px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.form-check-input {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    margin-top: 1px;
+    cursor: pointer;
+    border-radius: 6px;
+    border: 1.5px solid #cbd5e1;
+    accent-color: #6366f1;
+}
+
+.form-check-label {
+    font-size: 13.5px;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.form-check-label a {
+    color: #6366f1;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.form-check-label a:hover {
+    text-decoration: underline;
+}
+
+/* ── Submit Button ── */
+.btn-submit {
+    width: 100%;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    padding: 15px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.2px;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+    transition: all 0.22s ease;
+    margin-top: 4px;
+}
+
+.btn-submit:hover {
+    background: linear-gradient(135deg, #4f46e5, #4338ca);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.45);
+}
+
+.btn-submit:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+}
+
+/* ── Image Upload Box ── */
+.p-3.border.rounded.bg-light {
+    border-radius: 14px !important;
+    border-color: #e2e8f0 !important;
+    background: #f8fafc !important;
+}
+
+/* ── Input group (prefix) ── */
+.input-group {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+}
+
+.input-group .form-control {
+    flex: 1;
+    width: auto;
+    border-radius: 0 12px 12px 0;
+}
+
+.input-group-text {
+    background: #f1f5f9;
+    border: 1.5px solid #e2e8f0;
+    border-right: none;
+    border-radius: 12px 0 0 12px;
+    padding: 12px 16px;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Responsive ── */
+@media (max-width: 580px) {
+    .auth-container {
+        padding: 24px 14px 80px;
+    }
+
+    .auth-card {
+        padding: 32px 22px;
+        border-radius: 22px;
+    }
+
+    .auth-title {
+        font-size: 24px;
+    }
+
+    /* Stack password fields on mobile */
+    .password-row,
+    .row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Wider card for provider/shop forms ── */
+.seller-card {
+    max-width: 680px;
+}
+
+/* ── Form text (helper) ── */
+.form-text {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 5px;
+}
+
+.text-danger.small {
+    font-size: 12px;
+    color: #ef4444 !important;
+    margin-top: 6px;
+}

@@ -1,0 +1,13 @@
+{
+  "name": "pasr-root",
+  "version": "1.0.0",
+  "description": "PASR monorepo root — convenience scripts",
+  "private": true,
+  "scripts": {
+    "start": "cd backend && node app.js",
+    "dev:backend": "cd backend && node --watch app.js",
+    "build:ui": "cd frontend && npm run build",
+    "dev:ui": "cd frontend && npm run dev",
+    "install:all": "cd backend && npm install --legacy-peer-deps && cd ../frontend && npm install"
+  }
+}

@@ -1,0 +1,41 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+  <link rel="stylesheet" href="/css/auth.css">
+
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-subtitle">Login to your PaSr account</p>
+      </div>
+
+      <form action="/alreadyLogin" method="POST" novalidate class="needs-validation">
+
+        <div class="form-group">
+          <label for="exampleInputEmail1" class="form-label">WhatsApp Number *</label>
+          <input type="number" class="form-control" id="exampleInputEmail1" required="true" name="username"
+            placeholder="e.g. 9876543210">
+          <div class="invalid-feedback">Please provide your mobile number.</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 32px;">
+          <label for="exampleInputPassword1" class="form-label">Password *</label>
+          <input type="password" class="form-control" id="exampleInputPassword1" required="true" name="password"
+            placeholder="Enter your password">
+          <div class="invalid-feedback">Please provide your password.</div>
+        </div>
+
+        <button class="btn-submit" type="submit">Log In</button>
+
+        <% if (typeof failedAttempts !=='undefined' && failedAttempts>= 2) { %>
+          <p
+            style="text-align:center; margin-top:20px; font-size:14px; color:#6b7280; background: #fffbeb; padding: 12px; border-radius: 8px; border: 1px solid #fde68a;">
+            Having trouble logging in?<br>
+            <a href="/forgot-password"
+              style="color:#d97706; font-weight:700; text-decoration:none; display:inline-block; margin-top:6px;">
+              🔑 Recover Password
+            </a>
+          </p>
+          <% } %>
+      </form>
+    </div>
+  </div>

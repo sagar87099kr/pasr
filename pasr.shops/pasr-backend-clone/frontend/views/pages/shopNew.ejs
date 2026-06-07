@@ -1,0 +1,255 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <link rel="stylesheet" href="/css/auth.css">
+
+    <body>
+        <div class="auth-container">
+            <div class="auth-card seller-card">
+                <div class="auth-header">
+                    <h1 class="auth-title">List Your Shop</h1>
+                    <p class="auth-subtitle">Create your digital storefront on PaSr</p>
+                    <div class="badge-info mt-3">
+                        <i class="fa-solid fa-circle-info"></i> Fields marked with (*) are mandatory
+                    </div>
+                    <div class="text-danger small mt-2 notranslate">
+                        Please fill details in English / कृपया अंग्रेजी में भरें
+                    </div>
+                </div>
+
+                <form action="/shops" method="POST" novalidate class="needs-validation notranslate"
+                    enctype="multipart/form-data">
+
+
+                    <!-- Shop Name -->
+                    <div class="form-group">
+                        <label for="shopName" class="form-label">Shop Name *</label>
+                        <input type="text" name="shop[shopName]" id="shopName" class="form-control"
+                            placeholder="e.g. Fresh Daily Mart" required>
+                        <div class="invalid-feedback">Please provide a shop name.</div>
+                    </div>
+
+                    <!-- GST Number -->
+                    <div class="form-group">
+                        <label for="gstNumber" class="form-label">GST Number (Optional) - <span
+                                class="text-success small fw-bold">Get More Priority</span></label>
+                        <div class="input-group">
+                            <input type="text" name="shop[gstNumber]" id="gstNumber" class="form-control"
+                                placeholder="15-digit GSTIN (e.g. 24AEQPV2328Q1ZO)" maxlength="15">
+                            <span class="input-group-text d-none" id="gst-loader">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                            </span>
+                        </div>
+                        <div id="gst-feedback" class="mt-1 small" style="min-height: 1.25rem;"></div>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="form-group">
+                        <label for="category" class="form-label">Category *</label>
+                        <select class="form-control form-select" name="shop[category]" id="category" required>
+                            <option selected disabled value="">Select Category...</option>
+                            <option value="Automobile">🚗 Automobile & Parts</option>
+                            <option value="Bakery">🍰 Bakery</option>
+                            <option value="Beauty/Cosmetics">💄 Beauty/Cosmetics</option>
+                            <option value="Coaching">👨‍🏫 Coaching</option>
+                            <option value="Dhaba">🥘 Dhaba</option>
+                            <option value="Electronics">🔌 Electronics</option>
+                            <option value="Fashion">👕 Fashion</option>
+                            <option value="Footwear">👟 Footwear</option>
+                            <option value="Furniture">🪑 Furniture</option>
+                            <option value="General Store">🏪 General Store</option>
+                            <option value="Grocery">🛒 Grocery</option>
+                            <option value="Hardware">🛠️ Hardware</option>
+                            <option value="Jewelers">💍 Jewelers</option>
+                            <option value="Medical">💊 Medical</option>
+                            <option value="Mobile Shop">📱 Mobile Shop</option>
+                            <option value="Non-Veg">🍖 Non-Veg Shop</option>
+                            <option value="Printing & Digital">🖨️ Printing & Digital</option>
+                            <option value="Restaurant">🍽️ Restaurant</option>
+                            <option value="Salon">💇 Salon</option>
+                            <option value="Seeds & Fertilizers">🌱 Seeds & Fertilizers</option>
+                            <option value="Sports">🏏 Sports</option>
+                            <option value="Stationery">📚 Stationery</option>
+                            <option value="Sweet Shop">🍬 Sweet Shop</option>
+                            <option value="Vegetables & Fruits">🥕 Vegetables & Fruits</option>
+                            <option value="Wholesale">🏪 Wholesale</option>
+                            <option value="Others">📦 Others</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a category.</div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="form-group">
+                        <label for="location" class="form-label">Location / Address *</label>
+                        <input type="text" name="shop[location]" id="location" class="form-control"
+                            placeholder="Start typing your address..." required>
+                        <div class="invalid-feedback">Please provide a location.</div>
+                    </div>
+
+                    <!-- Operating Hours -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label for="openingTime" class="form-label">Opening Time</label>
+                                <input type="time" name="shop[openingTime]" id="openingTime" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label for="closingTime" class="form-label">Closing Time</label>
+                                <input type="time" name="shop[closingTime]" id="closingTime" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label for="shopDescription" class="form-label">Description</label>
+                        <textarea name="shop[shopDescription]" id="shopDescription" class="form-control" rows="4"
+                            placeholder="Describe what you sell..."></textarea>
+                    </div>
+
+                    <!-- UPI ID -->
+                    <div class="form-group mt-3">
+                        <label for="upiId" class="form-label">UPI ID for Payouts *</label>
+                        <input type="text" name="shop[upiId]" id="upiId" class="form-control"
+                            placeholder="e.g. 9876543210@paytm" required>
+                        <div class="invalid-feedback">Please provide a valid UPI ID for platform payouts.</div>
+                        <div class="form-text mt-1"><i class="fa-solid fa-money-bill-transfer text-success"></i> PASR
+                            will use this UPI ID to send your earnings.</div>
+
+                        <!-- QR Preview -->
+                        <div id="qr-preview-container" class="mt-3 p-3 border rounded bg-white text-center"
+                            style="display: none;">
+                            <p class="small mb-2 text-muted">Scan to Verify Your UPI ID</p>
+                            <div id="qrcode" class="d-inline-block"></div>
+                            <div class="mt-2 small font-weight-bold text-primary" id="upi-display-id"></div>
+                        </div>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="form-group mt-4">
+                        <label class="form-label">Shop Image (Single Photo) *</label>
+                        <div class="p-3 border rounded bg-light text-center">
+                            <img src="/images/shop_front_example.png" alt="Example Shop Front"
+                                class="img-fluid rounded mb-3" style="max-height: 150px; opacity: 0.9;">
+                            <input type="file" name="shopImage" id="shopImage" class="form-control" required>
+                            <div class="form-text mt-2"><i class="fa-solid fa-lightbulb text-warning"></i> Tip: Upload a
+                                clear photo of your shop front.</div>
+                        </div>
+                        <div class="invalid-feedback">Please upload at least one image.</div>
+                    </div>
+
+                    <button class="btn-submit">
+                        <i class="fa-solid fa-check-circle"></i> List Your Shop
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function initAutocomplete() {
+                const input = document.getElementById("location");
+                const options = {
+                    fields: ["formatted_address", "geometry", "name"],
+                    strictBounds: false,
+                };
+
+                const autocomplete = new google.maps.places.Autocomplete(input, options);
+
+                autocomplete.addListener("place_changed", () => {
+                    const place = autocomplete.getPlace();
+                    if (!place.geometry || !place.geometry.location) {
+                        return;
+                    }
+                    // The input value is already updated by the autocomplete widget
+                });
+            }
+
+            // UPI QR Preview Logic
+            document.addEventListener('DOMContentLoaded', () => {
+                const upiInput = document.getElementById('upiId');
+                const qrContainer = document.getElementById('qr-preview-container');
+                const qrDiv = document.getElementById('qrcode');
+                const upiDisplay = document.getElementById('upi-display-id');
+                let qrcode = null;
+
+                upiInput.addEventListener('input', (e) => {
+                    const val = e.target.value.trim();
+                    if (val && val.includes('@')) {
+                        qrContainer.style.display = 'block';
+                        upiDisplay.innerText = val;
+
+                        // Standard UPI Payment String
+                        const upiString = `upi://pay?pa=${val}&pn=Shop%20Owner&cu=INR`;
+
+                        if (!qrcode) {
+                            qrcode = new QRCode(qrDiv, {
+                                text: upiString,
+                                width: 128,
+                                height: 128,
+                                colorDark: "#000000",
+                                colorLight: "#ffffff",
+                                correctLevel: QRCode.CorrectLevel.H
+                            });
+                        } else {
+                            qrcode.clear();
+                            qrcode.makeCode(upiString);
+                        }
+                    } else {
+                        qrContainer.style.display = 'none';
+                    }
+                });
+            });
+
+            // GST Verification Logic
+            document.addEventListener('DOMContentLoaded', () => {
+                const gstInput = document.getElementById('gstNumber');
+                const feedback = document.getElementById('gst-feedback');
+                const loader = document.getElementById('gst-loader');
+                let debounceTimer;
+
+                const verifyGST = async (val) => {
+                    if (val.length < 15) {
+                        feedback.innerHTML = '';
+                        return;
+                    }
+
+                    loader.classList.remove('d-none');
+                    feedback.innerHTML = '<span class="text-muted">Verifying GSTIN...</span>';
+
+                    try {
+                        const response = await fetch(`/api/v1/gst-lookup?gstin=${val}`);
+                        const result = await response.json();
+
+                        if (result.valid) {
+                            feedback.innerHTML = `
+                                <div class="alert alert-success d-flex align-items-center p-2 mb-0 mt-2" style="border-radius: 12px; border: 1px solid #d1e7dd; background-color: #f8fff9;">
+                                    <i class="fa-solid fa-circle-check text-success me-2" style="font-size: 1.1rem;"></i>
+                                    <div>
+                                        <div class="text-success small fw-bold">GST Received</div>
+                                        <div class="text-dark small">We will verify it and notify you.</div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            feedback.innerHTML = `<span class="text-danger"><i class="fa-solid fa-circle-xmark"></i> ${result.message}</span>`;
+                        }
+                    } catch (e) {
+                        feedback.innerHTML = '<span class="text-warning">Verification unavailable.</span>';
+                    } finally {
+                        loader.classList.add('d-none');
+                    }
+                };
+
+                gstInput.addEventListener('input', (e) => {
+                    const val = e.target.value.toUpperCase().trim();
+                    gstInput.value = val;
+
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => verifyGST(val), 500);
+                });
+            });
+        </script>
+        <script
+            src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&libraries=places&callback=initAutocomplete"
+            async defer></script>
+    </body>

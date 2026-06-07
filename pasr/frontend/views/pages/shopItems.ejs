@@ -1,0 +1,17 @@
+<% layout('layoutes/boilerplate') %>
+
+<!-- React Root Element for Shop Items -->
+<div id="react-shop-items" data-is-logged-in="<%= typeof currUser !== 'undefined' && currUser ? 'true' : 'false' %>"></div>
+
+<!-- React Bundle Assets -->
+<link rel="stylesheet" href="/dist/assets/main.css?v=1.0.1">
+<script src="/dist/assets/main.js?v=1.0.1" type="module" defer></script>
+
+<style>
+    .shop-items-container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+</style>

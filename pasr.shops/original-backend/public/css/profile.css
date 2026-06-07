@@ -1,0 +1,871 @@
+ :root {
+   --bg: #f6f8ff;
+   --card: #ffffff;
+   --text: #101828;
+   --muted: #667085;
+   --border: #e6e9f2;
+   --shadow: 0 14px 34px rgba(16, 24, 40, .08);
+   --r: 18px;
+
+   --primary: #2563eb;
+   --primary2: #1d4ed8;
+
+   --free: #16a34a;
+   --busy: #dc2626;
+   --today: #f59e0b;
+ }
+
+ * {
+   box-sizing: border-box;
+ }
+
+ body {
+   margin: 0;
+   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+   color: var(--text);
+   background:
+     radial-gradient(1200px 600px at 15% -10%, rgba(37, 99, 235, .14), transparent 55%),
+     radial-gradient(900px 600px at 85% 0%, rgba(99, 102, 241, .12), transparent 50%),
+     var(--bg);
+ }
+
+ .page {
+   width: min(1240px, 96vw);
+   margin: 18px auto 44px;
+ }
+
+ .cardin {
+   background: var(--card);
+   border: 1px solid var(--border);
+   border-radius: var(--r);
+   box-shadow: var(--shadow);
+   padding: 16px;
+ }
+
+ .muted {
+   color: var(--muted);
+ }
+
+ .small {
+   font-size: 12px;
+ }
+
+ .strong {
+   font-weight: 900;
+ }
+
+ .divider {
+   height: 1px;
+   background: var(--border);
+   margin: 14px 0;
+ }
+
+ h1,
+ h2 {
+   margin: 0;
+ }
+
+ h2 {
+   font-size: 18px;
+   letter-spacing: -.2px;
+ }
+
+ p {
+   margin: 6px 0 0;
+ }
+
+ /* =============================
+   DESKTOP GRID: 600 + 600
+============================= */
+ .layout {
+   display: grid;
+   grid-template-columns: 600px 600px;
+   gap: 16px;
+   justify-content: center;
+   align-items: start;
+ }
+
+ .col {
+   display: flex;
+   flex-direction: column;
+   gap: 16px;
+ }
+
+ /* =============================
+   PROFILE (left) width 600, height auto
+============================= */
+ .profile-card {
+   width: 600px;
+ }
+
+ .profile-grid {
+   display: grid;
+   grid-template-columns: 250px 1fr;
+   gap: 14px;
+   align-items: start;
+ }
+
+ /* Profile image box */
+ .profile-img-container {
+   width: 250px;
+   height: 250px;
+   border-radius: 50%;
+   /* overflow: hidden; Removed to show share button */
+   border: 4px solid var(--primary);
+   box-shadow: 0 10px 22px rgba(16, 24, 40, .10);
+   background: #fff;
+   position: relative;
+   cursor: pointer;
+   margin: 0 auto;
+ }
+
+ .profile-img {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+   object-position: center;
+   display: block;
+   transition: transform 0.3sease;
+ }
+
+ .profile-img-container:hover .profile-img {
+   transform: scale(1.05);
+ }
+
+ .btn-share {
+   position: absolute;
+   bottom: 15px;
+   right: 15px;
+   width: 40px;
+   height: 40px;
+   border-radius: 50%;
+   background: var(--primary);
+   color: white;
+   border: 2px solid white;
+   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+   transition: all 0.2s;
+   z-index: 10;
+ }
+
+ .btn-share:hover {
+   transform: scale(1.1);
+   background: var(--primary2);
+ }
+
+ .profile-info {
+   min-width: 0;
+ }
+
+ /* ✅ avoids clipping in grid */
+ .name {
+   font-size: 22px;
+   letter-spacing: -.3px;
+   margin-top: 2px;
+ }
+
+ .service {
+   margin-top: 6px;
+   font-weight: 900;
+   color: var(--primary);
+ }
+
+ .info-grid {
+   display: grid;
+   grid-template-columns: 1fr;
+   gap: 10px;
+   margin-top: 12px;
+ }
+
+ .info-item {
+   border: 1px solid var(--border);
+   border-radius: 14px;
+   padding: 10px 12px;
+   background: linear-gradient(180deg, #fff, #fbfcff);
+ }
+
+ .label {
+   display: block;
+   font-size: 12px;
+   color: var(--muted);
+   font-weight: 1000;
+   margin-bottom: 4px;
+ }
+
+ .value {
+   font-weight: 900;
+   font-size: 13px;
+   overflow-wrap: anywhere;
+   /* ✅ name/phone never invisible */
+   word-break: break-word;
+ }
+
+ .desc {
+   position: absolute;
+   margin-top: 12px;
+   margin-left: 10px;
+   padding: 10px 12px;
+   border: 1px dashed rgba(37, 99, 235, .25);
+   border-radius: 14px;
+   background: rgba(37, 99, 235, .04);
+   font-weight: 800;
+   color: #233150;
+   line-height: 1.35;
+ }
+
+ .actions {
+   margin-top: 12px;
+   display: flex;
+   gap: 10px;
+   flex-wrap: wrap;
+ }
+
+ /* Buttons */
+ .btn {
+   border: 1px solid var(--border);
+   padding: 12px 14px;
+   border-radius: 14px;
+   font-weight: 900;
+   cursor: pointer;
+   min-height: 44px;
+ }
+
+ /* Only apply default white bg if it's not a bootstrap modifier btn-* */
+ .btn:not([class*="btn-"]) {
+   background: #fff;
+   color: var(--text);
+ }
+
+ .btn:not([class*="btn-"]):hover {
+   background: #bfdaf6;
+ }
+
+ .btn:disabled {
+   opacity: .5;
+   cursor: not-allowed;
+ }
+
+ .primary {
+   background: var(--primary);
+   border-color: transparent;
+   color: #fff;
+ }
+
+ .primary:hover {
+   background: var(--primary2);
+ }
+
+ .ghost {
+   background: #fff;
+ }
+
+ .danger {
+   border-color: #f3c6c6;
+ }
+
+ /* =============================
+   CALENDAR (New Structure)
+============================= */
+ #calendarApp {
+   width: 100%;
+   background: var(--card);
+   border-radius: var(--r);
+   padding: 20px;
+   box-shadow: var(--shadow);
+ }
+
+ .cal-header {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   margin-bottom: 15px;
+ }
+
+ .cal-header h3 {
+   font-size: 18px;
+   font-weight: 700;
+   margin: 0;
+   color: var(--text);
+ }
+
+ .cal-nav {
+   display: flex;
+   gap: 8px;
+ }
+
+ .btn-nav {
+   background: transparent;
+   border: 1px solid var(--border);
+   border-radius: 8px;
+   padding: 6px 12px;
+   cursor: pointer;
+   color: var(--text);
+   transition: all 0.2s;
+ }
+
+ .btn-nav:hover {
+   background: #f1f5f9;
+   border-color: var(--primary);
+   color: var(--primary);
+ }
+
+ .cal-days-header {
+   display: grid;
+   grid-template-columns: repeat(7, 1fr);
+   gap: 8px;
+   margin-bottom: 8px;
+   text-align: center;
+   font-weight: 600;
+   font-size: 14px;
+   color: var(--muted);
+ }
+
+ .cal-grid {
+   display: grid;
+   grid-template-columns: repeat(7, 1fr);
+   gap: 8px;
+   position: relative;
+   z-index: 10;
+   background: pink;
+   /* DEBUG: Visible Hitbox */
+   border: 2px solid red;
+   /* DEBUG: Visible Hitbox */
+   min-height: 200px;
+   /* Force height */
+ }
+
+ .cal-day {
+   aspect-ratio: 1;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   border-radius: 8px;
+   font-size: 14px;
+   font-weight: 500;
+   color: var(--text);
+   background: #f8fafc;
+   user-select: none;
+   cursor: pointer !important;
+   /* Force pointer cursor */
+   pointer-events: auto !important;
+   /* Force events */
+   position: relative;
+   z-index: 11;
+ }
+
+ /* MODAL FIXES */
+ .modal-footer {
+   border-top: 1px solid var(--border);
+   padding: 12px;
+   background: var(--card);
+   border-bottom-left-radius: 16px;
+   border-bottom-right-radius: 16px;
+   display: flex !important;
+   justify-content: flex-end !important;
+   gap: 10px;
+ }
+
+ .modal-footer .btn {
+   margin: 0;
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 14px;
+   min-height: 40px;
+ }
+
+ .modal-footer .btn-secondary {
+   background: #f1f5f9;
+   color: var(--text);
+   border: 1px solid var(--border);
+ }
+
+ .modal-footer .btn-primary {
+   background: var(--primary);
+   color: white;
+   border: 1px solid transparent;
+ }
+
+ .modal-footer .btn-primary:hover {
+   background: var(--primary2);
+ }
+
+ .cal-day.empty {
+   background: transparent;
+ }
+
+ .cal-day.today {
+   border-color: var(--today);
+   font-weight: 700;
+   box-shadow: 0 0 0 1px var(--today);
+ }
+
+
+ /* Status Colors with Higher Specificity */
+ #calendarApp .cal-day.free {
+   background-color: var(--free) !important;
+   color: white !important;
+   border-color: var(--free) !important;
+ }
+
+ #calendarApp .cal-day.busy {
+   background-color: var(--busy) !important;
+   color: white !important;
+   border-color: var(--busy) !important;
+   opacity: 1;
+   /* Ensure not transparent */
+ }
+
+ /* Modal Styles */
+ .slot-row {
+   margin-bottom: 8px;
+ }
+
+ .slot-row .form-control {
+   max-width: 140px;
+ }
+
+ /* Hover effects for owner */
+ .cal-day.clickable:hover {
+   transform: scale(1.05);
+   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+   cursor: pointer;
+   z-index: 2;
+ }
+
+ .cal-day.readonly {
+   cursor: default;
+ }
+
+ .cal-footer {
+   margin-top: 15px;
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   flex-wrap: wrap;
+   gap: 10px;
+ }
+
+ .cal-legend {
+   display: flex;
+   gap: 12px;
+   font-size: 13px;
+   color: var(--muted);
+ }
+
+ .legend-item {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+ }
+
+ .legend-item .dot {
+   width: 10px;
+   height: 10px;
+   border-radius: 50%;
+ }
+
+ .legend-item .dot.free {
+   background-color: #22c55e;
+ }
+
+ .legend-item .dot.busy {
+   background-color: #ef4444;
+ }
+
+ .btn-save {
+   background: var(--primary);
+   color: white;
+   border: none;
+   padding: 8px 16px;
+   border-radius: 8px;
+   font-weight: 600;
+   cursor: pointer;
+   transition: background 0.2s;
+ }
+
+ .btn-save:hover {
+   background: var(--primary2);
+ }
+
+ /* =============================
+   MAP (right below calendar)
+============================= */
+ .map-card {
+   width: 600px;
+ }
+
+ .map-box {
+   height: 320px;
+   border-radius: 16px;
+   border: 1px solid var(--border);
+   overflow: hidden;
+   position: relative;
+   background:
+     radial-gradient(600px 260px at 30% 20%, rgba(37, 99, 235, .14), transparent 55%),
+     radial-gradient(600px 260px at 70% 60%, rgba(34, 197, 94, .10), transparent 55%),
+     #f7f9ff;
+ }
+
+ .map-box .map,
+ .map-box #map {
+   width: 100%;
+   height: 100%;
+ }
+
+ .map-overlay {
+   position: absolute;
+   inset: 0;
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
+   text-align: center;
+   padding: 18px;
+ }
+
+ .map-title {
+   font-weight: 1000;
+   font-size: 18px;
+   margin-bottom: 6px;
+ }
+
+ /* =============================
+   REVIEWS (left below profile)
+============================= */
+ .reviews-card {
+   width: 600px;
+ }
+
+ .sort {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+ }
+
+ .sort select {
+   width: auto;
+   padding: 10px 12px;
+   border-radius: 12px;
+   border: 1px solid var(--border);
+   font-weight: 900;
+ }
+
+ .rating-summary {
+   display: flex;
+   align-items: center;
+   gap: 12px;
+   flex-wrap: wrap;
+   margin-bottom: 12px;
+ }
+
+ .stars {
+   display: flex;
+   gap: 2px;
+   font-size: 18px;
+ }
+
+ .stars.big {
+   font-size: 20px;
+ }
+
+ .stars .dim {
+   opacity: .25;
+ }
+
+ .review-form {
+   display: grid;
+   gap: 12px;
+ }
+
+ .row {
+   display: grid;
+   grid-template-columns: 1fr 220px;
+   gap: 12px;
+ }
+
+ .field label {
+   display: block;
+   font-size: 12px;
+   font-weight: 1000;
+   color: var(--muted);
+   margin-bottom: 6px;
+ }
+
+ input,
+ select,
+ textarea {
+   width: 100%;
+   padding: 12px 12px;
+   border-radius: 14px;
+   border: 1px solid var(--border);
+   outline: none;
+   font-weight: 900;
+   background: #fff;
+ }
+
+ textarea {
+   resize: vertical;
+   min-height: 90px;
+ }
+
+ input:focus,
+ select:focus,
+ textarea:focus {
+   border-color: rgba(37, 99, 235, .35);
+   box-shadow: 0 0 0 4px rgba(37, 99, 235, .10);
+ }
+
+ .form-actions {
+   display: flex;
+   justify-content: flex-end;
+   gap: 10px;
+   flex-wrap: wrap;
+ }
+
+ .reviews {
+   display: grid;
+   gap: 12px;
+ }
+
+ .review {
+   border: 1px solid var(--border);
+   border-radius: 16px;
+   padding: 12px;
+   background: linear-gradient(180deg, #fff, #fbfcff);
+ }
+
+ .review-top {
+   display: flex;
+   justify-content: space-between;
+   gap: 12px;
+   align-items: flex-start;
+   margin-bottom: 8px;
+ }
+
+ .review-name {
+   font-weight: 1000;
+ }
+
+ .review-date {
+   font-size: 12px;
+   color: var(--muted);
+   font-weight: 900;
+ }
+
+ .review-stars {
+   font-size: 14px;
+   font-weight: 1000;
+   white-space: nowrap;
+ }
+
+ .review-text {
+   margin: 0;
+   color: #2a3550;
+   font-weight: 800;
+   line-height: 1.45;
+ }
+
+ /* Reviews wrapper */
+ .reviews {
+   max-width: 900px;
+   margin: 24px auto;
+   padding: 18px;
+   background: #ffffff;
+   border: 1px solid #e9e9ee;
+   border-radius: 16px;
+   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+ }
+
+ .reviews-header {
+   display: flex;
+   align-items: baseline;
+   justify-content: space-between;
+   gap: 12px;
+   margin-bottom: 14px;
+ }
+
+ .reviews-header h2 {
+   margin: 0;
+   font-size: 22px;
+   letter-spacing: 0.2px;
+ }
+
+ .reviews-subtitle {
+   margin: 0;
+   color: #666;
+   font-size: 13px;
+ }
+
+ .reviews-list {
+   display: grid;
+   gap: 14px;
+ }
+
+ /* Review card */
+ .review-card {
+   padding: 14px 14px 12px;
+   border: 1px solid #f0f0f4;
+   border-radius: 14px;
+   background: #fafafb;
+ }
+
+ .review-top {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 12px;
+   margin-bottom: 10px;
+ }
+
+ /* User info */
+ .review-user {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   min-width: 0;
+ }
+
+ .avatar {
+   width: 42px;
+   height: 42px;
+   border-radius: 12px;
+   background: #111;
+   color: #fff;
+   display: grid;
+   place-items: center;
+   font-weight: 700;
+   font-size: 14px;
+   flex: 0 0 auto;
+ }
+
+ .user-meta {
+   min-width: 0;
+ }
+
+ .user-name {
+   font-weight: 700;
+   font-size: 15px;
+   color: #111;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+ }
+
+ .user-sub {
+   font-size: 12px;
+   color: #6b7280;
+   margin-top: 2px;
+ }
+
+ /* Rating stars (pure CSS) */
+ .rating {
+   --star-size: 18px;
+   --filled: #f5b301;
+   --empty: #d6d6dc;
+   display: inline-flex;
+   gap: 4px;
+   align-items: center;
+   flex: 0 0 auto;
+ }
+
+ .rating .star {
+   font-size: var(--star-size);
+   line-height: 1;
+   color: var(--empty);
+ }
+
+ /* Fill based on rating */
+ .rating[data-rating="1"] .star:nth-child(-n+1),
+ .rating[data-rating="2"] .star:nth-child(-n+2),
+ .rating[data-rating="3"] .star:nth-child(-n+3),
+ .rating[data-rating="4"] .star:nth-child(-n+4),
+ .rating[data-rating="5"] .star:nth-child(-n+5) {
+   color: var(--filled);
+ }
+
+ .review-comment {
+   margin: 0;
+   font-size: 14px;
+   color: #202124;
+   line-height: 1.55;
+ }
+
+ /* =============================
+   MOBILE ORDER (exact)
+============================= */
+ @media (max-width: 1260px) {
+   .layout {
+     grid-template-columns: 1fr;
+     justify-content: stretch;
+   }
+
+   /* make cards full width */
+   .profile-card,
+   .calendar-card,
+   .map-card,
+   .reviews-card {
+     width: 100%;
+   }
+
+   /* Put everything into one flow and control order */
+   .left,
+   .right {
+     display: contents;
+   }
+
+   #profileCard {
+     order: 1;
+   }
+
+   #calendarApp {
+     order: 2;
+   }
+
+   #descriptionCard {
+     order: 3;
+   }
+
+   #gallerySection {
+     order: 4;
+   }
+
+   /* Updated ID */
+   #mapSection {
+     order: 5;
+   }
+
+   #reviewsSection {
+     order: 6;
+   }
+
+   /* inside profile: image first, then contacts, then description */
+   .profile-grid {
+     grid-template-columns: 1fr;
+   }
+
+   .profile-img-container {
+     width: 200px;
+     height: 200px;
+   }
+
+   /* ensure text never gets clipped */
+   .profile-card {
+     overflow: visible;
+   }
+
+   /* review form fields stack */
+   .row {
+     grid-template-columns: 1fr;
+   }
+ }
+
+ @media (max-width: 640px) {
+   .name {
+     font-size: 20px;
+     line-height: 1.2;
+   }
+ }

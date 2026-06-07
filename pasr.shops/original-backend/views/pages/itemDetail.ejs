@@ -1,0 +1,147 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+
+<style>
+/* CSS for the item details centered view */
+.item-detail-container { 
+    max-width: 600px; 
+    margin: 40px auto; 
+    background: #fff; 
+    padding: 32px; 
+    border-radius: 16px; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+}
+.item-detail-img-wrap {
+    width: 100%; 
+    height: 350px; 
+    border-radius: 12px; 
+    margin-bottom: 24px; 
+    background: #f9fafb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #e5e7eb;
+}
+.item-detail-img-wrap img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.item-detail-title { 
+    font-size: 26px; 
+    font-weight: 800; 
+    margin-bottom: 8px; 
+    color: #111827; 
+}
+.item-detail-price { 
+    font-size: 24px; 
+    font-weight: 800; 
+    color: #16a34a; 
+    margin-bottom: 20px; 
+}
+.item-detail-shop { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    font-size: 15px; 
+    color: #4b5563; 
+    margin-bottom: 24px; 
+    padding: 16px; 
+    background: #f3f4f6; 
+    border-radius: 12px; 
+    transition: all 0.2s ease;
+}
+.item-detail-shop:hover {
+    background: #e5e7eb;
+    transform: translateY(-2px);
+}
+.item-detail-shop .shop-icon { 
+    color: #6366f1; 
+    background: #e0e7ff;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.item-inactive-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #4b5563;
+    color: white;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+</style>
+
+<div class="item-detail-container">
+    <% 
+      const productObj = item.product || item;
+      const itemName = productObj.name || item.name;
+      const itemDesc = productObj.description || item.description || 'No description available for this item.';
+      const itemImg = (productObj.img && productObj.img.url) ? productObj.img.url : (item.img && item.img.url ? item.img.url : '');
+    %>
+    
+    <div class="item-detail-img-wrap">
+        <% if(itemImg) { %>
+            <img src="<%= itemImg %>" alt="<%= itemName %>">
+        <% } else { %>
+            <div style="color:#9ca3af; text-align:center;">
+                <i class="fa-solid fa-image fa-4x mb-2"></i>
+                <div style="font-weight: 600; font-size: 14px;">No Image</div>
+            </div>
+        <% } %>
+
+        <% if(item.quantity === 0) { %>
+            <div class="item-inactive-badge">OUT OF STOCK</div>
+        <% } %>
+    </div>
+
+    <h1 class="item-detail-title"><%= itemName %></h1>
+    <div class="item-detail-price">₹<%= item.price %></div>
+    
+    <div class="item-detail-shop d-flex align-items-center">
+        <div class="shop-icon">
+            <i class="fa-solid fa-store fs-5"></i>
+        </div>
+        <div style="flex-grow: 1;">
+            <div style="color:#111827; font-weight: 700; font-size: 16px; margin-bottom: 2px;"><%= shop.shopName %></div>
+            <div style="margin:0; font-size: 13px; color: #6b7280;"><i class="fa-solid fa-location-dot me-1"></i> <%= shop.location %></div>
+        </div>
+        <a href="/shops/<%= shop._id %>" class="btn btn-sm shadow-sm" style="background: white; border: 1px solid #d1d5db; color: #4f46e5; font-weight: 700; border-radius: 8px; white-space: nowrap;">
+            Visit Shop
+        </a>
+    </div>
+
+    <div style="margin-bottom: 30px; line-height: 1.6; color: #4b5563;">
+        <h5 style="font-size:18px; font-weight:700; color:#111827; margin-bottom:12px;">Description</h5>
+        <%= itemDesc %>
+    </div>
+    
+    <% if (item.quantity > 0) { %>
+        <form action="/api/cart/add" method="POST" class="add-to-cart-form">
+            <input type="hidden" name="itemId" value="<%= item._id %>">
+            <input type="hidden" name="shopId" value="<%= shop._id %>">
+            
+            <div class="d-flex align-items-center gap-3 mb-4 p-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                <label for="quantity" style="font-weight: 600; color: #334155; margin: 0; white-space: nowrap;">Quantity</label>
+                <input type="number" id="quantity" name="quantity" class="form-control" value="1" min="1" max="<%= item.quantity %>" style="max-width: 100px; font-weight: 600;">
+                <span style="font-size: 13px; color: #64748b; font-weight: 500;">(Available: <%= item.quantity %>)</span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-3 d-flex justify-content-center align-items-center shadow-sm" style="font-weight:800; font-size:17px; border-radius:12px; background: #6366f1; border-color: #6366f1; transition: all 0.2s;">
+                <i class="fa-solid fa-cart-shopping me-2"></i> Add to Cart
+            </button>
+        </form>
+    <% } else { %>
+        <button class="btn btn-secondary w-100 py-3 d-flex justify-content-center align-items-center" disabled style="font-weight:800; font-size:17px; border-radius:12px; background: #9ca3af; border-color: #9ca3af;">
+            <i class="fa-solid fa-ban me-2"></i> Currently Out of Stock
+        </button>
+    <% } %>
+</div>

@@ -1,0 +1,664 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <style>
+        /* Choices.js Bootstrap 5 adjustment */
+        .choices__inner {
+            border-radius: 8px;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            min-height: 48px;
+        }
+
+        .choices[data-type*="select-multiple"] .choices__button {
+            border-left: 1px solid rgba(255, 255, 255, .5);
+        }
+    </style>
+    <link rel="stylesheet" href="/css/home.css"> <!-- Reusing structure limits -->
+    <style>
+        /* Add specific KISAN SABHA STYLES here */
+        .feed-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding-top: 20px;
+        }
+
+        .post-card {
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+
+
+        .post-media img,
+        .post-media video {
+            width: 100% !important;
+            max-width: 100%;
+            height: auto !important;
+            max-height: 600px;
+            /* Sensible upper bound for large screens */
+            object-fit: contain !important;
+            background: #000;
+            display: block;
+            border-radius: 8px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.85);
+            pointer-events: none;
+            text-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+            transition: opacity 0.2s ease;
+        }
+
+        .post-actions {
+            padding: 12px 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .action-btn:hover {
+            color: #0d6efd;
+        }
+
+        .action-btn i {
+            font-size: 1.2rem;
+        }
+
+        .filter-bar {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .create-btn {
+            margin-left: auto;
+        }
+    </style>
+
+    <div class="row">
+        <div class="col-12 col-md-10 offset-md-1">
+
+            <div
+                class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mt-4 mb-3 gap-3">
+                <h2>किसान सभा (Kisan Sabha)</h2>
+                <% if(currUser) { %>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#createPostModal">
+                        <i class="fa-solid fa-plus me-2"></i> Create Post
+                    </button>
+                    <% } else { %>
+                        <a href="/alreadyLogin" class="btn btn-outline-primary">
+                            <i class="fa-solid fa-right-to-bracket me-2"></i> Login to Post
+                        </a>
+                        <% } %>
+            </div>
+
+
+
+            <div class="feed-container">
+                <% if(posts.length===0) { %>
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-seedling fa-3x mb-3"></i>
+                        <h4>No posts found</h4>
+                        <p>Be the first to share an update from your region!</p>
+                    </div>
+                    <% } %>
+
+                        <% posts.forEach(post=> { %>
+                            <div class="post-card">
+                                <div class="px-3 pt-2 pb-1 d-flex align-items-center">
+                                    <div class="author-avatar d-flex justify-content-center align-items-center me-2"
+                                        style="width:32px; height:32px; font-size:0.9rem;">
+                                        <%= post.author.name ? post.author.name.charAt(0).toUpperCase() : 'K' %>
+                                    </div>
+                                    <span class="fw-bold fs-6">
+                                        <%= post.author.name || post.author.username %>
+                                    </span>
+
+                                    <!-- Options (Top Right) -->
+                                    <div class="ms-auto d-flex align-items-center pe-2">
+                                        <% if(currUser && currUser._id.toString() !==post.author._id.toString()) { %>
+                                            <a href="javascript:void(0)" onclick="openReportModal('<%= post._id %>')"
+                                                class="text-danger text-decoration-none" title="Report Post">
+                                                <i class="fa-solid fa-flag fs-5"></i>
+                                            </a>
+                                            <% } %>
+                                                <% if(currUser && currUser._id.toString()===post.author._id.toString())
+                                                    { %>
+                                                    <form action="/kisan-sabha/<%= post._id %>?_method=DELETE"
+                                                        method="POST" class="m-0 p-0"
+                                                        onsubmit="return confirm('Are you sure you want to delete this post?');">
+
+                                                        <button type="submit"
+                                                            class="btn btn-link text-danger p-0 m-0 text-decoration-none"
+                                                            title="Delete Post">
+                                                            <i class="fa-solid fa-trash fs-5"></i>
+                                                        </button>
+                                                    </form>
+                                                    <% } %>
+                                    </div>
+                                </div>
+
+                                <a href="/kisan-sabha/<%= post._id %>" class="text-decoration-none text-dark">
+                                    <% if(post.media && post.media.length> 0) { %>
+                                        <div class="post-media">
+                                            <% if(post.media[0].type==='video' ) { %>
+                                                <div class="video-wrapper">
+                                                    <video src="<%= optimizeImage(post.media[0].url) %>" playsinline
+                                                        style="cursor: pointer;"
+                                                        onclick="event.preventDefault(); this.paused ? this.play() : this.pause();"
+                                                        onplay="this.nextElementSibling.style.opacity = '0'"
+                                                        onpause="this.nextElementSibling.style.opacity = '1'"></video>
+                                                    <i class="fa-solid fa-circle-play play-overlay"></i>
+                                                </div>
+                                                <% } else { %>
+                                                    <img src="<%= optimizeImage(post.media[0].url) %>" alt="Post image"
+                                                        loading="lazy">
+                                                    <% } %>
+                                                        <% if(post.media.length> 1) { %>
+                                                            <div class="text-center mt-1 text-muted fw-bold">
+                                                                + <%= post.media.length - 1 %> more media
+                                                            </div>
+                                                            <% } %>
+                                        </div>
+                                        <% } %>
+
+                                            <!-- Date Bottom Right -->
+                                            <div class="text-end px-3 pt-1">
+                                                <span style="font-size: 0.75rem; color: #888;">
+                                                    <%= new Date(post.createdAt).toLocaleDateString() %>
+                                                </span>
+                                            </div>
+
+                                            <!-- Description Below Media -->
+                                            <div class="px-3 pb-2 pt-1 position-relative">
+                                                <p class="mb-0 text-dark"
+                                                    style="font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
+                                                    id="desc-<%= post._id %>">
+                                                    <%= post.description %>
+                                                </p>
+                                                <% if (post.description && post.description.length> 80) { %>
+                                                    <span class="text-primary fw-bold mt-1 d-inline-block"
+                                                        style="cursor: pointer; font-size: 0.85rem;"
+                                                        onclick="event.preventDefault(); var desc = document.getElementById('desc-<%= post._id %>'); if (desc.style.webkitLineClamp === '2') { desc.style.webkitLineClamp = 'unset'; this.innerText = 'See less'; } else { desc.style.webkitLineClamp = '2'; this.innerText = 'See more'; }">See
+                                                        more</span>
+                                                    <% } %>
+                                            </div>
+                                </a>
+
+                                <div class="post-actions">
+                                    <% if(currUser) { %>
+                                        <form action="/kisan-sabha/<%= post._id %>/like" method="POST"
+                                            class="d-inline like-form">
+                                            <button type="button" class="action-btn like-btn" data-id="<%= post._id %>">
+                                                <i class="fa-regular fa-thumbs-up"></i>
+                                                <span class="like-count">
+                                                    <%= post.likeCount %>
+                                                </span> Likes
+                                            </button>
+                                        </form>
+
+                                        <button type="button" class="action-btn"
+                                            onclick="openCommentsModal('<%= post._id %>')">
+                                            <i class="fa-regular fa-comment"></i>
+                                            <span id="comment-count-<%= post._id %>">
+                                                <%= post.commentCount %>
+                                            </span> Comments
+                                        </button>
+                                        <% } else { %>
+                                            <button type="button" class="action-btn"
+                                                onclick="window.location.href='/alreadyLogin'">
+                                                <i class="fa-regular fa-thumbs-up"></i>
+                                                <span class="like-count">
+                                                    <%= post.likeCount %>
+                                                </span> Likes
+                                            </button>
+
+                                            <button type="button" class="action-btn"
+                                                onclick="window.location.href='/alreadyLogin'">
+                                                <i class="fa-regular fa-comment"></i>
+                                                <span id="comment-count-<%= post._id %>">
+                                                    <%= post.commentCount %>
+                                                </span> Comments
+                                            </button>
+                                            <% } %>
+
+                                                <button type="button" class="action-btn ms-auto"
+                                                    onclick="navigator.share({title:'Kisan Sabha', url: window.location.origin+'/kisan-sabha/<%=post._id%>'})">
+                                                    <i class="fa-solid fa-share-nodes"></i> Share
+                                                </button>
+                                </div>
+                            </div>
+                            <% }) %>
+
+                                <% if(hasMore) { %>
+                                    <div class="text-center mt-4 mb-5">
+                                        <a href="/kisan-sabha?page=<%= nextPage %>" class="btn btn-outline-primary">Load
+                                            Older Posts</a>
+                                    </div>
+                                    <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Post Modal -->
+    <% if(currUser) { %>
+        <div class="modal fade" id="createPostModal" tabindex="-1" aria-labelledby="createPostModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <form class="modal-content needs-validation create-post-form" action="/kisan-sabha" method="POST"
+                    enctype="multipart/form-data" novalidate>
+
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createPostModalLabel"><i
+                                class="fa-solid fa-seedling text-success me-2"></i>Create Kisan Sabha Post</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <input type="hidden" name="locationFallback" value="auto">
+
+                        <div class="mb-4">
+                            <label for="media" class="form-label fw-bold">Upload Photos / Videos *</label>
+                            <input class="form-control" type="file" id="media" name="media"
+                                accept="image/*,video/mp4,video/quicktime" required>
+                            <div class="form-text">Max 1 file. Supports Image or MP4 Video.</div>
+                            <div class="invalid-feedback">Please select one photo or video.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label fw-bold">What's happening in your farm?
+                                *</label>
+                            <textarea class="form-control" name="description" id="description" rows="4" maxlength="500"
+                                placeholder="Tips, issues, weather updates..." required></textarea>
+                            <div class="form-text text-end"><span id="charCount">0</span> / 500 characters</div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="stateSelect" class="form-label fw-bold">Select State(s) *</label>
+                                <select class="form-select" id="stateSelect" name="state" multiple size="3" required>
+                                    <option value="All">All States</option>
+                                    <!-- States populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <label for="districtSelect" class="form-label fw-bold">Select District(s) *</label>
+                                <select class="form-select" id="districtSelect" name="district" multiple size="3"
+                                    required>
+                                    <option value="All">All Districts</option>
+                                    <!-- Districts populated dynamically based on state -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Live Custom Preview area -->
+                        <div class="mt-4 mb-2">
+                            <hr class="mb-3">
+                            <h6 class="fw-bold mb-3 text-primary"><i class="fa-solid fa-eye me-2"></i>Live Post Preview
+                            </h6>
+                            <div class="post-card shadow-sm" id="livePreviewCard" style="display: none;">
+                                <div class="px-3 pt-2 pb-1 d-flex align-items-center">
+                                    <div class="author-avatar d-flex justify-content-center align-items-center me-2"
+                                        id="previewAvatar" style="width:32px; height:32px; font-size:0.9rem;">
+                                        <%= currUser.name ? currUser.name.charAt(0).toUpperCase() : 'K' %>
+                                    </div>
+                                    <span class="fw-bold fs-6" id="previewName">
+                                        <%= currUser.name || currUser.username %>
+                                    </span>
+                                    <div class="ms-auto pe-2">
+                                        <button class="btn btn-link text-danger p-0 m-0 text-decoration-none"
+                                            style="pointer-events: none;" title="Delete Post">
+                                            <i class="fa-solid fa-trash fs-5"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="post-media mt-0" id="previewImageContainer" style="display:none;">
+                                    <!-- Full width Image / Video goes here -->
+                                </div>
+                                <div class="text-end px-3 pt-1">
+                                    <span class="text-muted" style="font-size:0.75rem;">Just now</span>
+                                </div>
+                                <div class="px-3 pb-2 pt-1 position-relative">
+                                    <p class="mb-0 text-dark" id="previewText"
+                                        style="font-size: 0.95rem; white-space: pre-wrap; word-break: break-word;">
+                                        <!-- Typed description goes here -->
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success" id="submitBtn">
+                            <i class="fa-solid fa-paper-plane me-2"></i> Submit for Approval
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <% } %>
+
+            <!-- Comments Modal (Iframe) -->
+            <div class="modal fade" id="commentsModal" tabindex="-1" aria-labelledby="commentsModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-lg modal-fullscreen-sm-down">
+                    <div class="modal-content" style="height: 85vh;">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="commentsModalLabel"><i
+                                    class="fa-regular fa-comments me-2"></i>Comments</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-0" style="overflow: hidden;">
+                            <iframe id="commentsIframe" src=""
+                                style="width: 100%; height: 100%; border: none;"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Modal -->
+            <div class="modal fade" id="reportModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form id="reportForm" action="" method="POST">
+
+                            <div class="modal-header">
+                                <h5 class="modal-title">Report Post</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Reason</label>
+                                    <select name="reason" class="form-select" required>
+                                        <option value="spam">Spam or Misleading</option>
+                                        <option value="misinformation">Fake News / Misinformation</option>
+                                        <option value="inappropriate">Inappropriate Content</option>
+                                        <option value="hate_speech">Hate Speech</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Additional Details (Optional)</label>
+                                    <textarea name="details" class="form-control" rows="3" maxlength="300"></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger">Submit Report</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Safe injection point for JS Data -->
+            <script id="statesDataJson"
+                type="application/json"><%- JSON.stringify(typeof statesDistricts !== 'undefined' ? statesDistricts : {}) %></script>
+
+            <!-- AJAX LIKE SCRIPT -->
+            <script>
+                function openCommentsModal(postId) {
+                    const iframe = document.getElementById('commentsIframe');
+                    iframe.src = '/kisan-sabha/' + postId + '/comments-ui';
+                    const commentsModal = new bootstrap.Modal(document.getElementById('commentsModal'));
+                    commentsModal.show();
+                }
+
+                // Clear iframe on close to reset layout
+                document.getElementById('commentsModal').addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('commentsIframe').src = '';
+                });
+
+                // Listen for comment count updates from the iframe
+                window.addEventListener('message', function (event) {
+                    if (event.data && event.data.type === 'COMMENT_COUNT_UPDATE') {
+                        const countSpan = document.getElementById('comment-count-' + event.data.postId);
+                        if (countSpan) {
+                            countSpan.innerText = event.data.count;
+                        }
+                    }
+                });
+
+                if (document.getElementById('createPostModal')) {
+                    // Read server data securely without breaking IDE parsers
+                    const statesDistrictsData = JSON.parse(document.getElementById('statesDataJson').textContent);
+                    const stateSelect = document.getElementById('stateSelect');
+                    const districtSelect = document.getElementById('districtSelect');
+
+                    window.openReportModal = function (postId) {
+                        const reportForm = document.getElementById('reportForm');
+                        reportForm.action = '/kisan-sabha/' + postId + '/report';
+                        const reportModal = new bootstrap.Modal(document.getElementById('reportModal'));
+                        reportModal.show();
+                    }
+
+                    if (stateSelect && districtSelect) {
+                        const stateChoices = new Choices(stateSelect, {
+                            removeItemButton: true,
+                            searchPlaceholderValue: 'Search states...',
+                            itemSelectText: '',
+                        });
+                        const districtChoices = new Choices(districtSelect, {
+                            removeItemButton: true,
+                            searchPlaceholderValue: 'Search districts...',
+                            itemSelectText: '',
+                        });
+
+                        // Populate States initially
+                        const stateOptions = [{ value: 'All', label: 'All States' }];
+                        Object.keys(statesDistrictsData).sort().forEach(state => {
+                            stateOptions.push({ value: state, label: state });
+                        });
+                        stateChoices.setChoices(stateOptions, 'value', 'label', true);
+
+                        // Default empty district options
+                        districtChoices.setChoices([{ value: 'All', label: 'All Districts' }], 'value', 'label', true);
+
+                        // Event listener for State changes
+                        stateSelect.addEventListener('change', function () {
+                            // Clear existing choices in District dropdown
+                            districtChoices.clearStore();
+
+                            let selectedStates = stateChoices.getValue(true);
+                            // Choices.getValue(true) returns a single value if 1 selected, or array if multiple. Safely cast to array.
+                            if (!Array.isArray(selectedStates)) selectedStates = selectedStates ? [selectedStates] : [];
+
+                            const districtOptions = [{ value: 'All', label: 'All Districts' }];
+
+                            // If states are selected and "All" isn't one of them
+                            if (selectedStates.length > 0 && !selectedStates.includes("All")) {
+                                let availableDistricts = [];
+                                selectedStates.forEach(state => {
+                                    if (statesDistrictsData[state]) {
+                                        availableDistricts = availableDistricts.concat(statesDistrictsData[state]);
+                                    }
+                                });
+
+                                // Sort and add to list
+                                availableDistricts.sort().forEach(district => {
+                                    districtOptions.push({ value: district, label: district });
+                                });
+                            }
+
+                            // Inject new districts into Choices
+                            districtChoices.setChoices(districtOptions, 'value', 'label', true);
+                        });
+                    }
+
+                    // Character Counter & Live Text Preview
+                    const descInput = document.getElementById('description');
+                    const charCount = document.getElementById('charCount');
+                    const livePreviewCard = document.getElementById('livePreviewCard');
+                    const previewText = document.getElementById('previewText');
+
+                    descInput.addEventListener('input', function () {
+                        charCount.innerText = this.value.length;
+
+                        // Show card if text or media exists
+                        if (this.value.trim().length > 0 || mediaInput.files.length > 0) {
+                            livePreviewCard.style.display = 'block';
+                        } else {
+                            livePreviewCard.style.display = 'none';
+                        }
+
+                        previewText.innerText = this.value;
+                    });
+
+                    // Media Preview (Live Feed Style)
+                    const mediaInput = document.getElementById('media');
+                    const previewImageContainer = document.getElementById('previewImageContainer');
+                    const submitBtn = document.getElementById('submitBtn');
+
+                    mediaInput.addEventListener('change', function () {
+                        previewImageContainer.innerHTML = ''; // reset
+
+                        if (this.files.length > 1) {
+                            alert('You can only select 1 file.');
+                            this.value = ''; // clear
+                            livePreviewCard.style.display = descInput.value.trim().length > 0 ? 'block' : 'none';
+                            previewImageContainer.style.display = 'none';
+                            return;
+                        }
+
+                        if (this.files.length > 0) {
+                            livePreviewCard.style.display = 'block';
+                            previewImageContainer.style.display = 'block';
+
+                            const firstFile = this.files[0];
+                            const url = URL.createObjectURL(firstFile);
+                            let el;
+
+                            // Load first media item full-width
+                            if (firstFile.type.startsWith('video/')) {
+                                el = document.createElement('video');
+                                el.src = url;
+                                el.controls = true;
+                                el.playsInline = true;
+                                el.style.width = '100%';
+                                el.style.aspectRatio = '9/16';
+                                el.style.objectFit = 'cover';
+                                el.style.borderRadius = '8px';
+
+                                // Validate Video Duration (Max 2 mins / 120s)
+                                el.onloadedmetadata = function () {
+                                    if (el.duration > 120) {
+                                        alert(`Video "${firstFile.name}" is too long. The maximum allowed length is 2 minutes.`);
+                                        mediaInput.value = ''; // Clear all files
+                                        previewImageContainer.innerHTML = ''; // Clear previews
+                                        previewImageContainer.style.display = 'none';
+                                        if (descInput.value.trim().length === 0) livePreviewCard.style.display = 'none';
+                                    }
+                                };
+                            } else {
+                                el = document.createElement('img');
+                                el.src = url;
+                                el.style.width = '100%';
+                                el.style.aspectRatio = '9/16';
+                                el.style.objectFit = 'cover';
+                                el.style.borderRadius = '8px';
+                            }
+                            previewImageContainer.appendChild(el);
+
+
+                        } else {
+                            previewImageContainer.style.display = 'none';
+                            if (descInput.value.trim().length === 0) livePreviewCard.style.display = 'none';
+                        }
+                    });
+
+                    // BS5 Validation
+                    const forms = document.querySelectorAll('.needs-validation');
+                    Array.from(forms).forEach(form => {
+                        form.addEventListener('submit', event => {
+                            if (!form.checkValidity()) {
+                                event.preventDefault();
+                                event.stopPropagation();
+                            } else {
+                                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Uploading...';
+                                submitBtn.classList.add('disabled');
+                            }
+                            form.classList.add('was-validated');
+                        }, false);
+                    });
+                }
+
+                // AJAX Likes
+                document.querySelectorAll('.like-btn').forEach(btn => {
+                    btn.addEventListener('click', async function () {
+                        const id = this.getAttribute('data-id');
+                        const icon = this.querySelector('i');
+                        const countSpan = this.querySelector('.like-count');
+
+                        try {
+                            const res = await fetch(`/kisan-sabha/${id}/like`, {
+                                method: 'POST',
+                                headers: {
+                                }
+                            });
+
+                            const data = await res.json();
+
+                            if (data.success) {
+                                countSpan.innerText = data.likeCount;
+                                if (data.liked) {
+                                    icon.classList.remove('fa-regular');
+                                    icon.classList.add('fa-solid');
+                                    this.style.color = '#0d6efd';
+                                } else {
+                                    icon.classList.remove('fa-solid');
+                                    icon.classList.add('fa-regular');
+                                    this.style.color = '#666';
+                                }
+                            } else {
+                                if (res.status === 401) {
+                                    if (typeof window.showLoginModal === 'function') {
+                                        window.showLoginModal();
+                                    } else {
+                                        window.location.href = '/login';
+                                    }
+                                    return;
+                                }
+                            }
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    });
+                });
+            </script>

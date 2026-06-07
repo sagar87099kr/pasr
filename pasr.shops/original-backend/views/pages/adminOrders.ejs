@@ -1,0 +1,372 @@
+<% layout('/layoutes/boilerplate') -%>
+
+    <style>
+        /* Reset aggressive global .card styling from style.css */
+        .admin-dashboard {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0 1rem !important;
+            flex: 1 1 auto;
+        }
+
+        .admin-dashboard .row {
+            width: 100%;
+            margin: 0;
+        }
+
+        .admin-dashboard .card {
+            padding: initial !important;
+            border: none !important;
+            border-radius: 12px !important;
+            margin: 0 !important;
+            background-color: #fff;
+        }
+
+        .admin-dashboard .card.bg-primary.bg-opacity-10 {
+            background-color: rgba(13, 110, 253, 0.1) !important;
+        }
+
+        .admin-dashboard .card.bg-success.bg-opacity-10 {
+            background-color: rgba(25, 135, 84, 0.1) !important;
+        }
+
+        .admin-dashboard .card.bg-warning.bg-opacity-10 {
+            background-color: rgba(255, 193, 7, 0.1) !important;
+        }
+
+        .admin-dashboard .card.bg-danger.bg-opacity-10 {
+            background-color: rgba(220, 53, 69, 0.1) !important;
+        }
+
+        .admin-dashboard .card-header {
+            background-color: #fff !important;
+        }
+
+        .admin-dashboard .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+
+    <div class="admin-dashboard w-100 mt-4 mb-5">
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-6">
+                <h2 class="fw-bold"><i class="fa-solid fa-chart-pie text-primary me-2"></i> Admin Orders Dashboard</h2>
+                <p class="text-muted">Overview of all platform orders, deliveries, and cancellations.</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <button class="btn btn-outline-secondary" onclick="window.location.reload()">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards & Chart Row -->
+        <div class="row g-4 mb-5">
+            <!-- Stats summary -->
+            <div class="col-lg-4 col-md-12 d-flex flex-column gap-3">
+                <div class="card shadow-sm border-0 bg-primary bg-opacity-10">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-primary fw-bold text-uppercase mb-1">Total Orders</h6>
+                            <h3 class="mb-0 fw-bold">
+                                <%= stats.totalOrders %>
+                            </h3>
+                        </div>
+                        <div class="fs-1 text-primary opacity-50"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 bg-success bg-opacity-10">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-success fw-bold text-uppercase mb-1">Delivered</h6>
+                            <h3 class="mb-0 fw-bold">
+                                <%= stats.deliveredOrders %>
+                            </h3>
+                        </div>
+                        <div class="fs-1 text-success opacity-50"><i class="fa-solid fa-check-double"></i></div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 bg-warning bg-opacity-10">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-warning fw-bold text-uppercase mb-1">Active / Pending</h6>
+                            <h3 class="mb-0 fw-bold">
+                                <%= stats.activeOrders %>
+                            </h3>
+                        </div>
+                        <div class="fs-1 text-warning opacity-50"><i class="fa-solid fa-spinner"></i></div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 bg-danger bg-opacity-10">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-danger fw-bold text-uppercase mb-1">Cancelled</h6>
+                            <h3 class="mb-0 fw-bold">
+                                <%= stats.cancelledOrders %>
+                            </h3>
+                        </div>
+                        <div class="fs-1 text-danger opacity-50"><i class="fa-solid fa-ban"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pie Chart -->
+            <div class="col-lg-8 col-md-12">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+                        <h5 class="card-title fw-bold mb-0">Order Status Distribution</h5>
+                    </div>
+                    <div class="card-body d-flex justify-content-center align-items-center" style="min-height: 300px;">
+                        <% if (stats.totalOrders> 0) { %>
+                            <div class="chart-container-wrapper">
+                                <div style="position: relative; height: 350px; width: 100%; min-width: 100%;">
+                                    <canvas id="ordersPieChart"></canvas>
+                                </div>
+                            </div>
+                            <% } else { %>
+                                <div class="text-muted text-center">
+                                    <i class="fa-solid fa-chart-pie fs-1 mb-2 opacity-25"></i>
+                                    <p>No order data available to display chart.</p>
+                                </div>
+                                <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Orders Table Row -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title fw-bold mb-0">All Orders Record</h5>
+                <span class="badge bg-secondary rounded-pill">
+                    <%= orders.length %> Total
+                </span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.9rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="ps-3 py-3">Order ID / Date</th>
+                                <th scope="col" class="py-3">Customer Details</th>
+                                <th scope="col" class="py-3">Shop Details</th>
+                                <th scope="col" class="py-3">Delivery Info</th>
+                                <th scope="col" class="py-3">Items & Amount</th>
+                                <th scope="col" class="pe-3 py-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (orders && orders.length> 0) { %>
+                                <% orders.forEach(order=> { %>
+                                    <tr>
+                                        <td class="ps-3">
+                                            <div class="fw-bold text-primary">#<%= order.orderId %>
+                                            </div>
+                                            <div class="text-muted small">
+                                                <%= new Date(order.createdAt).toLocaleString('en-IN', {
+                                                    timeZone: 'Asia/Kolkata' , dateStyle: 'short' , timeStyle: 'short'
+                                                    }) %>
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <% if (order.customerId) { %>
+                                                <div class="fw-semibold">
+                                                    <%= order.customerId.name || "Unknown" %>
+                                                </div>
+                                                <div class="text-muted small"><i class="fa-solid fa-phone me-1"></i>
+                                                    <%= order.customerId.username || order.customerId.phoneNumber
+                                                        || "N/A" %>
+                                                </div>
+                                                <% } else { %>
+                                                    <span class="text-muted fst-italic">Deleted User</span>
+                                                    <% } %>
+                                        </td>
+
+                                        <td>
+                                            <% if (order.shopId) { %>
+                                                <div class="fw-semibold text-truncate" style="max-width: 150px;"
+                                                    title="<%= order.shopId.shopName %>">
+                                                    <%= order.shopId.shopName %>
+                                                </div>
+                                                <% if (order.shopId.owner) { %>
+                                                    <div class="text-muted small"><i class="fa-solid fa-phone me-1"></i>
+                                                        <%= order.shopId.owner.username || "N/A" %>
+                                                    </div>
+                                                    <% } %>
+                                                        <% } else { %>
+                                                            <span class="text-muted fst-italic">Deleted Shop</span>
+                                                            <% } %>
+                                        </td>
+
+                                        <td>
+                                            <% if (order.deliveryType==='SELF_PICKUP' ) { %>
+                                                <span class="badge bg-info text-dark mb-1"><i
+                                                        class="fa-solid fa-person-walking me-1"></i>Self Pickup</span>
+                                                <% } else if (order.selfDelivery) { %>
+                                                    <span class="badge bg-secondary mb-1"><i
+                                                            class="fa-solid fa-shop me-1"></i>Shop Delivery</span>
+                                                    <% if (order.shopId && order.shopId.owner) { %>
+                                                        <div class="fw-semibold small">By: <%= order.shopId.owner.name
+                                                                || "Owner" %>
+                                                        </div>
+                                                        <div class="text-muted small"><i
+                                                                class="fa-solid fa-phone me-1"></i>
+                                                            <%= order.shopId.owner.username %>
+                                                        </div>
+                                                        <% } %>
+                                                            <% if (order.deliveryAddress) { %>
+                                                                <div class="small text-truncate text-muted mt-1"
+                                                                    style="max-width: 200px;"
+                                                                    title="<%= order.deliveryAddress %>">
+                                                                    📍 <%= order.deliveryAddress %>
+                                                                </div>
+                                                                <% } %>
+                                                                    <% } else if (order.deliveryPartnerId ||
+                                                                        order.partnerSnapshot) { %>
+                                                                        <span class="badge bg-dark mb-1"><i
+                                                                                class="fa-solid fa-motorcycle me-1"></i>Partner
+                                                                            Delivery</span>
+                                                                        <div class="fw-semibold small">
+                                                                            <%= order.partnerSnapshot ?
+                                                                                order.partnerSnapshot.name :
+                                                                                (order.deliveryPartnerId ?
+                                                                                order.deliveryPartnerId.name : 'Partner'
+                                                                                ) %>
+                                                                        </div>
+                                                                        <div class="text-muted small"><i
+                                                                                class="fa-solid fa-phone me-1"></i>
+                                                                            <%= order.partnerSnapshot ?
+                                                                                order.partnerSnapshot.phone :
+                                                                                (order.deliveryPartnerId ?
+                                                                                order.deliveryPartnerId.contactNumber ||
+                                                                                order.deliveryPartnerId.username : 'N/A'
+                                                                                ) %>
+                                                                        </div>
+                                                                        <% } else { %>
+                                                                            <span
+                                                                                class="badge bg-light text-dark border mb-1"><i
+                                                                                    class="fa-solid fa-truck me-1"></i>Pending
+                                                                                Assignment</span>
+                                                                            <% if (order.deliveryAddress) { %>
+                                                                                <div class="small text-truncate text-muted"
+                                                                                    style="max-width: 200px;"
+                                                                                    title="<%= order.deliveryAddress %>">
+                                                                                    <%= order.deliveryAddress %>
+                                                                                </div>
+                                                                                <% } %>
+                                                                                    <% } %>
+                                        </td>
+
+                                        <td>
+                                            <div class="fw-semibold">₹<%= order.totalAmount %>
+                                            </div>
+                                            <div class="text-muted small">
+                                                <%= order.items ? order.items.length : 0 %> items (<%= order.paymentType
+                                                        %>)
+                                            </div>
+                                        </td>
+
+                                        <td class="pe-3 text-center">
+                                            <% let badgeClass='bg-secondary' ; if (order.orderStatus==='COMPLETED' )
+                                                badgeClass='bg-success' ; else if (order.orderStatus==='CANCELLED' )
+                                                badgeClass='bg-danger' ; else if (['ACCEPTED', 'READY_FOR_DELIVERY'
+                                                , 'ASSIGNED' , 'OUT_FOR_DELIVERY' ].includes(order.orderStatus))
+                                                badgeClass='bg-warning text-dark' ; else if
+                                                (order.orderStatus==='CREATED' ) badgeClass='bg-info text-dark' ; %>
+                                                <span class="badge <%= badgeClass %>">
+                                                    <%= order.orderStatus.replace(/_/g, ' ' ) %>
+                                                </span>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                                        <% } else { %>
+                                            <tr>
+                                                <td colspan="6" class="text-center py-5 text-muted">
+                                                    <i class="fa-solid fa-box-open fs-2 mb-3"></i>
+                                                    <p class="mb-0">No orders have been placed yet.</p>
+                                                </td>
+                                            </tr>
+                                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize Chart.js if data exists
+            const total = <%= stats.totalOrders || 0 %>;
+
+            if (total > 0) {
+                const ctx = document.getElementById('ordersPieChart');
+
+                if (ctx) {
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Delivered', 'Cancelled', 'Active/Pending'],
+                            datasets: [{
+                                data: [
+                                <%= stats.deliveredOrders || 0 %>, 
+                                <%= stats.cancelledOrders || 0 %>, 
+                                <%= stats.activeOrders || 0 %>
+                            ],
+                                backgroundColor: [
+                                    '#198754', // success
+                                    '#dc3545', // danger
+                                    '#ffc107'  // warning
+                                ],
+                                borderWidth: 2,
+                                borderColor: '#ffffff',
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        padding: 20,
+                                        font: {
+                                            size: 14,
+                                            family: "'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif"
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (context) {
+                                            let label = context.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed !== null) {
+                                                const val = context.parsed;
+                                                const percentage = Math.round((val / total) * 100);
+                                                label += val + ' (' + percentage + '%)';
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            },
+                            cutout: '65%'
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+    </div>

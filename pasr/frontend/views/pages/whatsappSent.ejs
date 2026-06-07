@@ -1,0 +1,39 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <link rel="stylesheet" href="/css/auth.css">
+
+    <div class="auth-container">
+        <div class="auth-card" style="text-align:center;">
+            <div
+                style="width:72px; height:72px; background:#dcfce7; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:36px;">
+                📲
+            </div>
+
+            <h1 class="auth-title" style="font-size:1.5rem;">Reset Link Ready!</h1>
+            <p style="color:#6b7280; font-size:15px; line-height:1.6; margin-bottom:28px;">
+                We found your account. Tap the button below — it will open WhatsApp and send you a password reset link
+                directly to your own number
+                <strong style="color:#1f2937;">(<%= phone %>)</strong>.
+            </p>
+
+            <a href="<%= whatsappUrl %>" target="_blank"
+                style="display:block; width:100%; background:#25D366; color:#fff; padding:15px; border-radius:12px; font-size:17px; font-weight:700; text-decoration:none; margin-bottom:16px; transition:background 0.2s;"
+                onmouseover="this.style.background='#1ebe5d'" onmouseout="this.style.background='#25D366'">
+                <i class="fa-brands fa-whatsapp" style="margin-right:8px;"></i>
+                Send Reset Link via WhatsApp
+            </a>
+
+            <div
+                style="background:#fefce8; border:1px solid #fde68a; border-radius:10px; padding:14px; text-align:left; margin-bottom:20px;">
+                <p style="font-size:13px; color:#92400e; margin:0; line-height:1.5;">
+                    ⚠️ <strong>How it works:</strong> Tap the button above → WhatsApp will open → Send the pre-filled
+                    message to yourself → Tap the link in that message to reset your password.<br><br>
+                    This link expires in <strong>30 minutes</strong>.
+                </p>
+            </div>
+
+            <p style="font-size:13px; color:#9ca3af;">
+                Wrong number? <a href="/forgot-password"
+                    style="color:#138808; font-weight:600; text-decoration:none;">Try again</a>
+            </p>
+        </div>
+    </div>

@@ -1,0 +1,91 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>My Kisan Sabha Posts</h2>
+            <a href="/kisan-sabha" class="btn btn-primary"><i class="fa-solid fa-plus me-2"></i>Create Post</a>
+        </div>
+
+        <% if(posts.length===0) { %>
+            <div class="alert alert-info py-4 text-center">
+                You haven't shared any posts yet.
+                <br>
+                <a href="/kisan-sabha" class="btn btn-sm btn-outline-primary mt-3">Share your first update</a>
+            </div>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Preview</th>
+                                <th>Status</th>
+                                <th>Location</th>
+                                <th>Engagement</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% posts.forEach(post=> { %>
+                                <tr>
+                                    <td>
+                                        <%= new Date(post.createdAt).toLocaleDateString() %>
+                                    </td>
+                                    <td style="max-width: 250px;">
+                                        <div class="text-truncate">
+                                            <%= post.description %>
+                                        </div>
+                                        <% if(post.media && post.media.length> 0) { %>
+                                            <small class="text-muted"><i class="fa-solid fa-image me-1"></i>
+                                                <%= post.media.length %> file(s)
+                                            </small>
+                                            <% } %>
+                                    </td>
+                                    <td>
+                                        <% if(post.status==='pending' ) { %>
+                                            <span class="badge bg-warning text-dark"><i
+                                                    class="fa-regular fa-clock me-1"></i>Pending Admin Approval</span>
+                                            <% } else if(post.status==='approved' ) { %>
+                                                <span class="badge bg-success"><i
+                                                        class="fa-solid fa-check me-1"></i>Live</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-danger"><i
+                                                            class="fa-solid fa-xmark me-1"></i>Rejected</span>
+                                                    <% if(post.rejectionReason) { %>
+                                                        <div class="small mt-1 text-danger">Reason: <%=
+                                                                post.rejectionReason %>
+                                                        </div>
+                                                        <% } %>
+                                                            <% } %>
+                                    </td>
+                                    <td><small>
+                                            <%= post.locationName %>
+                                        </small></td>
+                                    <td>
+                                        <span class="badge bg-light text-dark"><i
+                                                class="fa-solid fa-thumbs-up text-primary me-1"></i>
+                                            <%= post.likeCount %>
+                                        </span>
+                                        <span class="badge bg-light text-dark ms-1"><i
+                                                class="fa-solid fa-comment text-secondary me-1"></i>
+                                            <%= post.commentCount %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <% if(post.status==='approved' ) { %>
+                                            <a href="/kisan-sabha/<%= post._id %>"
+                                                class="btn btn-sm btn-outline-primary me-1">View</a>
+                                            <% } %>
+                                                <form action="/kisan-sabha/<%= post._id %>?_method=DELETE" method="POST"
+                                                    class="d-inline"
+                                                    onsubmit="return confirm('Delete this post permanently?');">
+                                                    <button class="btn btn-sm btn-outline-danger"><i
+                                                            class="fa-solid fa-trash"></i></button>
+                                                </form>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } %>
+    </div>

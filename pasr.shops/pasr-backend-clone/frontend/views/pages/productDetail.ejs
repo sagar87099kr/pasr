@@ -1,0 +1,526 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <link rel="stylesheet" href="/css/product_detail.css">
+
+    <body>
+        <div class="product-container">
+
+            <!-- LEFT COLUMN: Product Details -->
+            <div class="main-content">
+
+                <!-- Product Main Card -->
+                <section class="card-section">
+                    <div class="product-showcase">
+                        <!-- Image -->
+                        <div class="main-image-wrapper">
+                            <img src="<%= optimizeImage(product.productImage[0].url) %>"
+                                alt="<%= product.productName %>" class="main-image" />
+                            <button class="btn-share" id="shareBtn" type="button" title="Share Product">
+                                <i class="fa-solid fa-share-nodes"></i>
+                            </button>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="product-info-header">
+                            <h1 class="product-title">
+                                <%= product.productName %>
+                            </h1>
+                            <div class="seller-badge">
+                                <i class="fa-solid fa-store"></i> Sold by
+                                <a href="/seller/<%= product.owner._id %>"
+                                    style="color: inherit; text-decoration: underline; font-weight: 600;">
+                                    <%= product.owner.name %>
+                                </a>
+                            </div>
+
+                            <div class="info-grid">
+                                <div class="info-box">
+                                    <span class="info-label">Price</span>
+                                    <span class="info-value">₹<%= product.price %></span>
+                                </div>
+                                <div class="info-box">
+                                    <span class="info-label">Quantity</span>
+                                    <span class="info-value">
+                                        <%= product.quantity %> units
+                                    </span>
+                                </div>
+                                <div class="info-box">
+                                    <span class="info-label">Category</span>
+                                    <span class="info-value">
+                                        <%= product.categories %>
+                                    </span>
+                                </div>
+                                <div class="info-box">
+                                    <span class="info-label">Location</span>
+                                    <span class="info-value">
+                                        <%= product.location %>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Owner Actions -->
+                            <% if (currUser && product.owner._id.toString()===currUser._id.toString()) { %>
+                                <div class="owner-actions">
+                                    <button class="btn btn-warning" onclick="toggleEditForm()">
+                                        <i class="fa-solid fa-edit"></i> Edit
+                                    </button>
+                                    <form method="POST" action="/products/<%= product._id %>/delete?_method=DELETE"
+                                        style="margin: 0;">
+
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fa-solid fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                                <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Edit Form (Hidden by default) -->
+                    <% if (currUser && product.owner._id.toString()===currUser._id.toString()) { %>
+                        <div id="editForm"
+                            style="display: none; margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 24px;">
+                            <h3 class="section-heading" style="font-size: 18px;">Edit Product Details</h3>
+                            <form method="POST" action="/products/<%= product._id %>/edit?_method=PUT"
+                                enctype="multipart/form-data" class="needs-validation">
+
+                                <div class="mb-3">
+                                    <label for="productName" class="form-label">Product Name</label>
+                                    <input type="text" class="form-control" id="productName" name="product[productName]"
+                                        value="<%= product.productName %>" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Category</label>
+                                    <select class="form-select" name="product[categories]" required>
+                                        <option value="vegetables" <%=product.categories==='vegetables' ? 'selected'
+                                            : '' %>>🥬 Vegetables</option>
+                                        <option value="Fruits" <%=product.categories==='Fruits' ? 'selected' : '' %>>🍎
+                                            Fruits</option>
+                                        <option value="Dairy products" <%=product.categories==='Dairy products'
+                                            ? 'selected' : '' %>>🥛 Dairy</option>
+                                        <option value="Spices & Masala" <%=product.categories==='Spices & Masala'
+                                            ? 'selected' : '' %>>🌶️ Spices & Masala</option>
+                                        <option value="Household Items" <%=product.categories==='Household Items'
+                                            ? 'selected' : '' %>>🏠 Household Items</option>
+                                        <option value="Farming Tools" <%=product.categories==='Farming Tools'
+                                            ? 'selected' : '' %>>🚜 Farming Tools</option>
+                                        <option value="Poultry & Eggs" <%=product.categories==='Poultry & Eggs'
+                                            ? 'selected' : '' %>>🥚 Poultry & Eggs</option>
+                                        <option value="Grains" <%=product.categories==='Grains' ? 'selected' : '' %>>🌾
+                                            Grains</option>
+                                        <option value="Animals" <%=product.categories==='Animals' ? 'selected' : '' %>>
+                                            🐄 Animals</option>
+                                        <option value="Others" <%=product.categories==='Others' ? 'selected' : '' %>>📦
+                                            Others</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="productDescription" class="form-label">Description</label>
+                                    <textarea class="form-control" id="productDescription"
+                                        name="product[productDescription]"
+                                        rows="3"><%= product.productDescription %></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="price" class="form-label">Price (₹)</label>
+                                        <input type="number" class="form-control" id="price" name="product[price]"
+                                            value="<%= product.price %>" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="quantity" class="form-label">Quantity</label>
+                                        <input type="number" class="form-control" id="quantity" name="product[quantity]"
+                                            value="<%= product.quantity %>" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Update Product Image (Optional)</label>
+                                        <input type="file" name="productImage" class="form-control">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" for="upiId">Update UPI ID (Optional)</label>
+                                        <input type="text" name="product[upiId]" id="upiId" class="form-control"
+                                            value="<%= product.upiId %>" placeholder="e.g. 9876543210@paytm">
+
+                                        <!-- QR Preview -->
+                                        <div id="qr-preview-container"
+                                            class="mt-3 p-3 border rounded bg-white text-center"
+                                            style="display: <%= (product.upiId && product.upiId.includes('@')) ? 'block' : 'none' %>;">
+                                            <p class="small mb-2 text-muted">Scan to Verify Your UPI ID</p>
+                                            <div id="qrcode-edit" class="d-inline-block"></div>
+                                            <div class="mt-2 small font-weight-bold text-primary" id="upi-display-id">
+                                                <%= product.upiId %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    <button type="button" class="btn btn-secondary"
+                                        onclick="toggleEditForm()">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+            </div>
+            <script>
+                function toggleEditForm() {
+                    const form = document.getElementById('editForm');
+                    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+                }
+
+                // Check if URL has ?edit=true to auto-open form
+                document.addEventListener("DOMContentLoaded", () => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('edit') === 'true') {
+                        const form = document.getElementById('editForm');
+                        if (form) form.style.display = 'block';
+
+                        // Scroll to form smoothly
+                        setTimeout(() => {
+                            if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 500);
+                    }
+
+                    // UPI QR Preview Logic for Edit Form
+                    const upiInput = document.getElementById('upiId');
+                    const qrContainer = document.getElementById('qr-preview-container');
+                    const qrDiv = document.getElementById('qrcode-edit');
+                    const upiDisplay = document.getElementById('upi-display-id');
+                    let qrcode = null;
+
+                    function updateQR(val) {
+                        if (val && val.includes('@')) {
+                            if (qrContainer) qrContainer.style.display = 'block';
+                            if (upiDisplay) upiDisplay.innerText = val;
+                            const upiString = `upi://pay?pa=${val}&pn=Product%20Seller&cu=INR`;
+
+                            if (!qrcode && qrDiv) {
+                                qrcode = new QRCode(qrDiv, {
+                                    text: upiString,
+                                    width: 128,
+                                    height: 128,
+                                    colorDark: "#000000",
+                                    colorLight: "#ffffff",
+                                    correctLevel: QRCode.CorrectLevel.H
+                                });
+                            } else if (qrcode) {
+                                qrcode.clear();
+                                qrcode.makeCode(upiString);
+                            }
+                        } else {
+                            if (qrContainer) qrContainer.style.display = 'none';
+                        }
+                    }
+
+                    if (upiInput) {
+                        // Initial
+                        if (upiInput.value) updateQR(upiInput.value.trim());
+                        // On input
+                        upiInput.addEventListener('input', (e) => updateQR(e.target.value.trim()));
+                    }
+                });
+            </script>
+            <% } %>
+                </section>
+
+                <!-- Description -->
+                <section class="card-section">
+                    <h2 class="section-heading">About this Product</h2>
+                    <p class="description-text">
+                        <%= product.productDescription %>
+                    </p>
+                </section>
+
+                <!-- Products Gallery -->
+                <% if (product.productImage && product.productImage.length> 1) { %>
+                    <section class="card-section">
+                        <h2 class="section-heading">Product Gallery</h2>
+                        <div class="gallery-grid">
+                            <% product.productImage.forEach((image, index)=> { %>
+                                <img src="<%= optimizeImage(image.url) %>"
+                                    alt="<%= product.productName %> - Image <%= index + 1 %>" class="gallery-img">
+                                <% }) %>
+                        </div>
+                    </section>
+                    <% } %>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Contact Sidebar -->
+        <div class="sidebar">
+            <div class="contact-card">
+                <div class="contact-header">
+                    <div class="seller-avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <p class="seller-name">
+                        <a href="/seller/<%= product.owner._id %>" style="color: inherit; text-decoration: none;">
+                            <%= product.owner.name %>
+                        </a>
+                    </p>
+                    <p style="font-size: 13px; color: #6b7280; margin: 4px 0;">Product Owner</p>
+                </div>
+
+                <div class="seller-contact-details">
+                    <div class="contact-row">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>
+                            <%= product.location %>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Add to Cart Section -->
+                <div class="cart-action-box mt-4 p-3 border rounded bg-light">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <label class="fw-bold mb-0">Quantity:</label>
+                        <div class="circular-qty-control">
+                            <button class="qty-btn-circle" type="button" id="minusQty">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <div class="qty-value-circle" id="qtyDisplay">1</div>
+                            <button class="qty-btn-circle" type="button" id="plusQty">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                            <input type="hidden" id="prodQty" value="1" min="1" max="<%= product.quantity %>">
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success fw-bold" id="addToCartBtn">
+                            <i class="fa-solid fa-cart-plus me-1"></i> Add to Cart
+                        </button>
+                        <button class="btn btn-primary fw-bold" id="buyNowBtn">
+                            <i class="fa-solid fa-bolt me-1"></i> Buy Now
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <a href="/action/call/<%= product.owner.username %>" class="btn btn-primary flex-grow-1">
+                        <i class="fa-solid fa-phone"></i> Call
+                    </a>
+                    <a href="https://wa.me/91<%= product.owner.username %>?text=Hi,%20I%20am%20interested%20in%20your%20product:%20<%= encodeURIComponent(product.productName) %>"
+                        target="_blank" class="btn btn-success flex-grow-1"
+                        style="background-color: #25D366; border-color: #25D366;">
+                        <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                    </a>
+                </div>
+
+                <% if (product.upiId) { %>
+                    <button class="btn btn-outline-primary w-100 mt-3 fw-bold" onclick="openUpiModal()">
+                        <i class="fa-solid fa-qrcode me-1"></i> Pay with UPI QR
+                    </button>
+                    <% } %>
+            </div>
+        </div>
+
+        </div>
+
+        <!-- UPI Modal -->
+        <div id="upiModal" class="item-modal" onclick="closeUpiModal(event)">
+            <div class="item-modal-card" style="height: auto; padding: 30px; text-align: center;">
+                <span class="item-modal-close" onclick="closeUpiModal(event)">&times;</span>
+                <h2 style="margin-bottom:10px;">Scan to Pay</h2>
+                <p class="text-muted small mb-4">Pay directly to <%= product.owner.name %> using any UPI app</p>
+
+                <div id="product-qrcode-container" class="mb-4">
+                    <div id="product-qrcode" class="d-inline-block p-2 border rounded bg-white"></div>
+                    <div class="mt-2 font-weight-bold text-primary">
+                        <%= product.upiId %>
+                    </div>
+                </div>
+
+                <p class="small text-muted">Standard UPI payment for: <%= product.productName %>
+                </p>
+            </div>
+        </div>
+
+        <!-- Fullscreen Image Modal -->
+        <div id="imageModal" class="profile-img-modal" onclick="closeImageModal(event)">
+            <span class="profile-modal-close" onclick="closeImageModal(event)">&times;</span>
+            <img class="profile-modal-content" id="expandedImg">
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                // Quantity controls
+                const minusBtn = document.getElementById('minusQty');
+                const plusBtn = document.getElementById('plusQty');
+                const qtyInput = document.getElementById('prodQty');
+                const qtyDisplay = document.getElementById('qtyDisplay');
+
+                function pulseQty() {
+                    qtyDisplay.classList.remove('qty-changed');
+                    void qtyDisplay.offsetWidth; // reflow to restart animation
+                    qtyDisplay.classList.add('qty-changed');
+                }
+
+                if (minusBtn && plusBtn && qtyInput && qtyDisplay) {
+                    minusBtn.addEventListener('click', () => {
+                        let cur = parseInt(qtyInput.value);
+                        if (cur > 1) {
+                            qtyInput.value = cur - 1;
+                            qtyDisplay.innerText = cur - 1;
+                            pulseQty();
+                        }
+                    });
+                    plusBtn.addEventListener('click', () => {
+                        let cur = parseInt(qtyInput.value);
+                        const max = parseInt(qtyInput.getAttribute('max')) || 999;
+                        if (cur < max) {
+                            qtyInput.value = cur + 1;
+                            qtyDisplay.innerText = cur + 1;
+                            pulseQty();
+                        }
+                    });
+                }
+
+                // Add to Cart logic
+                const addBtn = document.getElementById('addToCartBtn');
+                const msgDiv = document.getElementById('cartMsg');
+
+                if (addBtn) {
+                    addBtn.addEventListener('click', async () => {
+                        const success = await handleAddToCart(false);
+                        if (success) window.location.reload();
+                    });
+                }
+
+                const buyBtn = document.getElementById('buyNowBtn');
+                if (buyBtn) {
+                    buyBtn.addEventListener('click', async () => {
+                        const success = await handleAddToCart(true);
+                        if (success) window.location.href = '/api/cart';
+                    });
+                }
+
+                async function handleAddToCart(silent) {
+                    const btn = silent ? buyBtn : addBtn;
+                    const originalHtml = btn.innerHTML;
+                    btn.disabled = true;
+                    if (!silent) buyBtn.disabled = true;
+                    if (silent) addBtn.disabled = true;
+                    
+                    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> ${silent ? 'Processing...' : 'Adding...'}`;
+
+                    try {
+                        const res = await fetch('/api/cart/add', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                itemId: '<%= product._id %>',
+                                quantity: parseInt(qtyInput.value)
+                            })
+                        });
+
+                        const data = await res.json();
+                        if (res.ok) {
+                            return true;
+                        } else {
+                            if (res.status === 401) {
+                                if (typeof window.showLoginModal === 'function') {
+                                    window.showLoginModal();
+                                } else {
+                                    window.location.href = '/login';
+                                }
+                            } else {
+                                showToast(data.message || 'Failed to add', 'danger');
+                            }
+                            return false;
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        showToast('Error adding to cart', 'danger');
+                        return false;
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
+                }
+
+                const shareBtn = document.getElementById('shareBtn');
+                if (shareBtn) {
+                    shareBtn.addEventListener('click', async () => {
+                        if (navigator.share) {
+                            try {
+                                await navigator.share({
+                                    title: '<%= product.productName %>',
+                                    text: 'Check out this product on Local Bazzar!',
+                                    url: window.location.href
+                                });
+                            } catch (err) {
+                                console.log('Error sharing:', err);
+                            }
+                        } else {
+                            navigator.clipboard.writeText(window.location.href);
+                            alert('Product link copied to clipboard!');
+                        }
+                    });
+                }
+            });
+
+            // Simple image gallery click to view (optional enhancement)
+            const galleryImages = document.querySelectorAll('.gallery-img');
+            const mainImage = document.querySelector('.main-image');
+
+            // Add pointer style to main image to indicate it's clickable
+            if (mainImage) {
+                mainImage.style.cursor = 'pointer';
+            }
+
+            galleryImages.forEach(img => {
+                img.addEventListener('click', () => {
+                    mainImage.src = img.src;
+                });
+            });
+
+            // Image Zoom Modal functionality
+            const imageModal = document.getElementById("imageModal");
+            const expandedImg = document.getElementById("expandedImg");
+
+            if (mainImage && imageModal && expandedImg) {
+                mainImage.addEventListener('click', () => {
+                    expandedImg.src = mainImage.src;
+                    imageModal.classList.add('show');
+                });
+            }
+
+            function closeImageModal(e) {
+                // Only close if clicking the background or the X button
+                if (e.target.id === 'imageModal' || e.target.classList.contains('profile-modal-close')) {
+                    const modal = document.getElementById('imageModal');
+                    if (modal) modal.classList.remove('show');
+                }
+            }
+
+            // UPI Modal Logic
+            function openUpiModal() {
+                const modal = document.getElementById('upiModal');
+                if (modal) {
+                    modal.style.display = 'flex';
+
+                    const upiId = "<%= product.upiId %>";
+                    const qrDiv = document.getElementById('product-qrcode');
+                    if (upiId && qrDiv && !qrDiv.firstChild) {
+                        new QRCode(qrDiv, {
+                            text: `upi://pay?pa=${upiId}&pn=<%= product.owner.name.replace(/\s/g, '%20') %>&cu=INR`,
+                            width: 200,
+                            height: 200,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    }
+                }
+            }
+
+            function closeUpiModal(e) {
+                if (!e || e.target.id === 'upiModal' || e.target.classList.contains('item-modal-close')) {
+                    const modal = document.getElementById('upiModal');
+                    if (modal) modal.style.display = 'none';
+                }
+            }
+        </script>
+    </body>
+    ```

@@ -1,0 +1,16 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "in.pasr.www.twa",
+      "sha256_cert_fingerprints": [
+        "8F:99:28:89:5E:7B:A9:26:23:F5:E5:DB:48:12:7B:F8:5D:67:50:F6:DD:1A:AD:D8:CF:3A:17:40:74:40:A2:AD",
+        "REPLACE_WITH_PLAY_STORE_SHA256_FINGERPRINT_HERE"
+      ]
+    }
+  }
+]

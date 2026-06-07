@@ -1,0 +1,299 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <style>
+        .post-card {
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            border: 1px solid #e9ecef;
+            max-width: 500px;
+        }
+
+        .post-media {
+            width: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .post-media img,
+        .post-media video {
+            width: 100% !important;
+            max-width: 100%;
+            height: auto !important;
+            max-height: 600px;
+            object-fit: contain !important;
+            display: block;
+        }
+
+        .video-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.85);
+            pointer-events: none;
+            text-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+            transition: opacity 0.2s ease;
+        }
+    </style>
+    <div class="container py-4">
+        <h2><i class="fa-solid fa-shield-halved text-danger me-2"></i>Kisan Sabha Admin Panel</h2>
+
+        <ul class="nav nav-tabs mt-4 mb-4">
+            <li class="nav-item">
+                <a class="nav-link <%= tab === 'pending' ? 'active fw-bold' : '' %>"
+                    href="/admin/kisan-sabha?tab=pending">Pending Approvals</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= tab === 'all' ? 'active fw-bold' : '' %>" href="/admin/kisan-sabha?tab=all">All
+                    Posts</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <%= tab === 'reports' ? 'active fw-bold text-danger' : '' %>"
+                    href="/admin/kisan-sabha?tab=reports">User Reports</a>
+            </li>
+        </ul>
+
+        <% if(tab==='pending' ) { %>
+            <!-- PENDING POSTS -->
+            <% if(posts.length===0) { %>
+                <div class="alert alert-success">No pending posts to review! You're all caught up.</div>
+                <% } %>
+
+                    <% posts.forEach(post=> { %>
+                        <div class="post-card">
+                            <div class="px-3 pt-3 pb-2 d-flex align-items-center">
+                                <div class="author-avatar d-flex justify-content-center align-items-center me-2 bg-light text-secondary"
+                                    style="width:40px; height:40px; font-size:1.1rem; border-radius: 50%; font-weight: bold;">
+                                    <%= post.author.name ? post.author.name.charAt(0).toUpperCase() : 'K' %>
+                                </div>
+                                <div>
+                                    <span class="fw-bold fs-6 d-block" style="line-height: 1.2;">
+                                        <%= post.author.name || post.author.username %>
+                                    </span>
+                                    <span class="text-muted" style="font-size: 0.8rem;">
+                                        <i class="fa-solid fa-clock me-1"></i>
+                                        <%= new Date(post.createdAt).toLocaleString() %>
+                                    </span>
+                                </div>
+                                <div class="ms-auto">
+                                    <span class="badge bg-warning text-dark"><i
+                                            class="fa-solid fa-hourglass-half me-1"></i>Pending</span>
+                                </div>
+                            </div>
+
+                            <% if(post.media && post.media.length> 0) { %>
+                                <div class="post-media">
+                                    <% if(post.media[0].type==='video' ) { %>
+                                        <div class="video-wrapper">
+                                            <video src="<%= post.media[0].url %>" playsinline style="cursor: pointer;"
+                                                onclick="this.paused ? this.play() : this.pause();"
+                                                onplay="this.nextElementSibling.style.opacity = '0'"
+                                                onpause="this.nextElementSibling.style.opacity = '1'"></video>
+                                            <i class="fa-solid fa-circle-play play-overlay"></i>
+                                        </div>
+                                        <% } else { %>
+                                            <a href="<%= post.media[0].url %>" target="_blank">
+                                                <img src="<%= post.media[0].url %>" alt="Post image" loading="lazy">
+                                            </a>
+                                            <% } %>
+                                                <% if(post.media.length> 1) { %>
+                                                    <div class="text-center mt-1 pb-2 text-muted fw-bold"
+                                                        style="background: #fff;">
+                                                        + <%= post.media.length - 1 %> more media
+                                                    </div>
+                                                    <% } %>
+                                </div>
+                                <% } %>
+
+                                    <div class="px-3 pb-3 pt-2">
+                                        <p class="mb-0 text-dark"
+                                            style="font-size: 1rem; white-space: pre-wrap; word-break: break-word;">
+                                            <%= post.description %>
+                                        </p>
+                                    </div>
+
+                                    <div class="px-3 pb-3 d-flex gap-2 flex-wrap">
+                                        <form action="/admin/kisan-sabha/<%= post._id %>/approve?_method=PUT"
+                                            method="POST" class="flex-grow-1">
+
+                                            <button class="btn btn-success w-100 fw-bold"><i
+                                                    class="fa-solid fa-check me-2"></i>Approve</button>
+                                        </form>
+                                        <button class="btn btn-outline-danger flex-grow-1 fw-bold"
+                                            onclick="document.getElementById('rejectForm<%= post._id %>').style.display='block'">
+                                            <i class="fa-solid fa-xmark me-2"></i>Reject...
+                                        </button>
+                                        <form action="/admin/kisan-sabha/block-user/<%= post.author._id %>?_method=PUT"
+                                            method="POST" class="w-100 mt-2"
+                                            onsubmit="return confirm('Are you sure you want to block this user permanently for Suspicious/Adult Content? They will be unable to post, review, or sell products.');">
+
+                                            <button type="submit" class="btn btn-danger w-100 fw-bold">
+                                                <i class="fa-solid fa-ban me-2"></i>Block User
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <!-- Hidden Reject Form -->
+                                    <div class="px-3 pb-3 pt-0" id="rejectForm<%= post._id %>"
+                                        style="display:none; background: #fffafb; border-top: 1px solid #fee2e2;">
+                                        <form action="/admin/kisan-sabha/<%= post._id %>/reject?_method=PUT"
+                                            method="POST" class="mt-3">
+
+                                            <label class="form-label text-danger fw-bold fs-6">Reason for
+                                                Rejection</label>
+                                            <div class="input-group">
+                                                <input type="text" name="reason" class="form-control border-danger"
+                                                    placeholder="This will be sent to the user..." required>
+                                                <button type="submit" class="btn btn-danger">Confirm</button>
+                                            </div>
+                                            <div class="form-text text-muted mt-2"><i
+                                                    class="fa-solid fa-circle-info me-1"></i> The user will be notified
+                                                of this reason and the post will be marked rejected.</div>
+                                        </form>
+                                    </div>
+                        </div>
+                        <% }) %>
+
+                            <% } else if(tab==='all' ) { %>
+                                <!-- ALL POSTS TABLE (For Hard Deletion / Moderation) -->
+                                <table class="table table-bordered table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Author</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Preview</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% posts.forEach(post=> { %>
+                                            <tr>
+                                                <td><small class="text-muted">
+                                                        <%= post._id %>
+                                                    </small></td>
+                                                <td>
+                                                    <%= post.author.username %>
+                                                </td>
+                                                <td>
+                                                    <%= new Date(post.createdAt).toLocaleDateString() %>
+                                                </td>
+                                                <td>
+                                                    <% if(post.status==='approved' ){ %><span
+                                                            class="badge bg-success">Live</span>
+                                                        <% } else if(post.status==='rejected' ){ %><span
+                                                                class="badge bg-danger">Rejected</span>
+                                                            <% } else { %><span
+                                                                    class="badge bg-warning text-dark">Pending</span>
+                                                                <% } %>
+                                                </td>
+                                                <td class="text-truncate" style="max-width: 200px;">
+                                                    <%= post.description %>
+                                                </td>
+                                                <td>
+                                                    <% if(post.status==='approved' ) { %>
+                                                        <a href="/kisan-sabha/<%= post._id %>" target="_blank"
+                                                            class="btn btn-sm btn-outline-primary">View</a>
+                                                        <% } %>
+                                                            <form
+                                                                action="/admin/kisan-sabha/<%= post._id %>?_method=DELETE"
+                                                                method="POST" class="d-inline"
+                                                                onsubmit="return confirm('Are you sure you want to delete the post?');">
+                                                                value="<%= csrfToken %>">
+
+                                                                    <button class="btn btn-sm btn-danger"><i
+                                                                            class="fa-solid fa-trash"></i></button>
+                                                            </form>
+                                                </td>
+                                            </tr>
+                                            <% }) %>
+                                    </tbody>
+                                </table>
+
+                                <% } else if(tab==='reports' ) { %>
+                                    <!-- USER REPORTS -->
+                                    <% if(reports.length===0) { %>
+                                        <div class="alert alert-secondary">No open reports.</div>
+                                        <% } %>
+
+                                            <div class="row">
+                                                <% reports.forEach(rep=> { %>
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="card border-danger shadow-sm">
+                                                            <div
+                                                                class="card-header bg-danger text-white d-flex justify-content-between">
+                                                                <strong>Reason: <%= rep.reason.toUpperCase() %></strong>
+                                                                <small>
+                                                                    <%= new Date(rep.createdAt).toLocaleDateString() %>
+                                                                </small>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <p><strong>Reported By:</strong>
+                                                                    <%= rep.reportedBy.username %>
+                                                                </p>
+                                                                <p><strong>Details:</strong>
+                                                                    <%= rep.details || '(No details provided)' %>
+                                                                </p>
+                                                                <hr>
+                                                                <p><strong>Target Post:</strong></p>
+                                                                <% if(rep.post) { %>
+                                                                    <p
+                                                                        class="small border-start border-3 ps-2 text-muted">
+                                                                        <%= rep.post.description %>
+                                                                    </p>
+                                                                    <p>Post Status: <span class="badge bg-secondary">
+                                                                            <%= rep.post.status %>
+                                                                        </span></p>
+                                                                    <a href="/kisan-sabha/<%= rep.post._id %>"
+                                                                        target="_blank"
+                                                                        class="btn btn-sm btn-outline-primary"><i
+                                                                            class="fa-solid fa-arrow-up-right-from-square"></i>
+                                                                        Inspect
+                                                                        Post</a>
+                                                                    <% } else { %>
+                                                                        <p class="text-danger">Post was deleted.</p>
+                                                                        <% } %>
+                                                            </div>
+                                                            <div class="card-footer d-flex gap-2">
+                                                                <form
+                                                                    action="/admin/kisan-sabha/reports/<%= rep._id %>?_method=PUT"
+                                                                    method="POST">
+                                                                    value="<%= csrfToken %>">
+
+                                                                        <input type="hidden" name="status"
+                                                                            value="dismissed">
+                                                                        <button
+                                                                            class="btn btn-sm btn-outline-secondary">Dismiss
+                                                                            Report
+                                                                            (Safe)</button>
+                                                                </form>
+                                                                <% if(rep.post) { %>
+                                                                    <form
+                                                                        action="/admin/kisan-sabha/<%= rep.post._id %>?_method=DELETE"
+                                                                        method="POST"
+                                                                        onsubmit="return confirm('Are you sure you want to delete the post?');">
+                                                                        value="<%= csrfToken %>">
+
+                                                                            <button class="btn btn-sm btn-danger">Delete
+                                                                                Post</button>
+                                                                    </form>
+                                                                    <% } %>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <% }) %>
+                                            </div>
+                                            <% } %>
+    </div>
