@@ -1,0 +1,156 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+    <link rel="stylesheet" href="/css/auth.css">
+
+    <style>
+        .otp-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 18px;
+            padding: 14px;
+            background: #f9fafb;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .otp-step-num {
+            min-width: 32px;
+            height: 32px;
+            background: #138808;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .otp-step-text {
+            font-size: 14px;
+            color: #4b5563;
+            line-height: 1.5;
+        }
+
+        .otp-input-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .otp-input-row input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-align: center;
+        }
+
+        .otp-input-row input:focus {
+            border-color: #138808;
+            outline: none;
+        }
+
+        .otp-input-row button {
+            flex-shrink: 0;
+        }
+
+        .timer {
+            font-size: 13px;
+            color: #9ca3af;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .timer span {
+            font-weight: 700;
+            color: #ef4444;
+        }
+    </style>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 class="auth-title">Verify Your Number</h1>
+                <p class="auth-subtitle">Confirm you own <strong>
+                        <%= phone %>
+                    </strong></p>
+            </div>
+
+            <!-- Step 1: Send OTP via WhatsApp -->
+            <div style="margin-bottom: 20px;">
+                <div class="otp-step">
+                    <div class="otp-step-num">1</div>
+                    <div class="otp-step-text">
+                        <strong>Send the OTP to yourself on WhatsApp</strong><br>
+                        Click the button below — WhatsApp will open with your OTP pre-filled as a message to your own
+                        number.
+                    </div>
+                </div>
+
+                <% const msg="Your PaSr signup OTP is: " + otp
+                    + "\n\nDo not share this with anyone. Valid for 10 minutes." ; const waUrl="https://wa.me/91" +
+                    phone + "?text=" + encodeURIComponent(msg); %>
+                    <a href="<%= waUrl %>" target="_blank"
+                        style="display:flex; align-items:center; justify-content:center; gap:10px; width:100%; background:#25D366; color:#fff; padding:14px; border-radius:12px; font-size:16px; font-weight:700; text-decoration:none; margin-bottom:20px; transition:background 0.2s;"
+                        onmouseover="this.style.background='#1ebe5d'" onmouseout="this.style.background='#25D366'">
+                        <i class="fa-brands fa-whatsapp" style="font-size:20px;"></i>
+                        Send OTP to Myself via WhatsApp
+                    </a>
+
+                    <!-- Step 2: Enter OTP -->
+                    <div class="otp-step">
+                        <div class="otp-step-num">2</div>
+                        <div class="otp-step-text">
+                            <strong>Enter the OTP you received</strong><br>
+                            Open your WhatsApp, send the message to yourself, then enter the 6-digit code below.
+                        </div>
+                    </div>
+
+                    <form action="/customer/verify-otp" method="POST">
+
+                        <div class="otp-input-row">
+                            <input type="text" name="otp" maxlength="6" placeholder="— — — — — —" pattern="\d{6}"
+                                required autocomplete="one-time-code" id="otpInput">
+                            <button class="btn btn-primary" type="submit"
+                                style="padding: 12px 22px; font-weight:700; border-radius:10px;">
+                                Verify ✓
+                            </button>
+                        </div>
+                        <p class="timer">OTP valid for <span id="countdown">10:00</span></p>
+                    </form>
+            </div>
+
+            <p style="text-align:center; font-size:13px; color:#9ca3af;">
+                Wrong number? <a href="/customer/signup"
+                    style="color:#138808; font-weight:600; text-decoration:none;">Go back & re-enter</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Countdown timer
+        let seconds = 10 * 60;
+        const el = document.getElementById('countdown');
+        const interval = setInterval(() => {
+            seconds--;
+            if (seconds <= 0) {
+                clearInterval(interval);
+                el.textContent = 'Expired';
+                el.style.color = '#ef4444';
+                return;
+            }
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            el.textContent = `${m}:${s}`;
+        }, 1000);
+
+        // Allow only digits in OTP input
+        document.getElementById('otpInput').addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').slice(0, 6);
+        });
+    </script>

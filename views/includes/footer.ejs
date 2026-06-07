@@ -1,0 +1,43 @@
+<hr>
+<footer class="footer" style="width: 100%;">
+    <div class="f-info">
+        <div class="f-info-socials">
+            <a href="https://www.instagram.com/pasr_official/" target="_blank"><i
+                    class="fa-brands fa-instagram"></i></a>
+            <a href="https://www.facebook.com/profile.php?id=61585522271464" target="_blank"><i
+                    class="fa-brands fa-facebook"></i></a>
+            <a href="https://youtube.com/@thisworldisbeautiful-iya?si=D5NXpPWf91FZve8c" target="_blank"><i
+                    class="fa-brands fa-youtube"></i></a>
+            <a href="https://x.com/pasr_officail" target="_blank"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="https://whatsapp.com/channel/0029VbBwpvI0LKZ8X8kRNQ0f" target="_blank"><i
+                    class="fa-brands fa-square-whatsapp"></i></a>
+        </div>
+        <div> PASR PRIVATE LIMITED</div>
+        <div class="city">
+            <p class="bold">Cities we are live in </p>
+            <span class="City name">Giridih</span>
+            <span class="City name">Koderma</span>
+            <span class="City name">Dhanbad</span>
+            <span class="City name">Hazaribag</span>
+        </div>
+        <div class="contact-info mt-3 text-center" style="font-size: 0.9em; color: #555;">
+            <p class="mb-1"><i class="fa-solid fa-location-dot me-2 text-danger"></i> <strong>Address:</strong> Doranda,
+                Giridih, Jharkhand, India</p>
+            <p class="mb-0"><i class="fa-solid fa-phone me-2 text-primary"></i> <strong>Contact:</strong> +91 8252271535
+            </p>
+        </div>
+        <div class="f-info-link mt-3 d-flex flex-column flex-sm-row justify-content-center align-items-center gap-3">
+            <a href="/privacy">Terms and Privacy</a>
+            <% if (typeof todayVisits !=='undefined' ) { %>
+                <div class="py-1 px-3 rounded-pill shadow-sm"
+                    style="background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #1e3a8a; font-weight: 700; border: 1px solid #bfdbfe; font-size: 0.95em;">
+                    <i class="fa-solid fa-users me-2 text-primary"></i>
+                    <%= todayVisits %> <span style="font-weight: 500; opacity: 0.9;">Visitors Today</span>
+                </div>
+                <% } %>
+        </div>
+
+
+    </div>
+
+</footer>

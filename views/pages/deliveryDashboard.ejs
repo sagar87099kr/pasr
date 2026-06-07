@@ -1,0 +1,593 @@
+<% layout('./layoutes/boilerplate.ejs') -%>
+
+    <div class="delivery-dashboard py-4 bg-light min-vh-100">
+        <div class="container">
+            <!-- Dashboard Header & Status Toggle -->
+            <div class="row mb-4 align-items-center">
+                <div class="col-8">
+                    <h2 class="fw-bold text-dark mb-0">Delivery Partner Dashboard</h2>
+                    <p class="text-muted small mb-0">Manage your active deliveries and online status.</p>
+                </div>
+                <div class="col-4 text-end">
+                    <div class="form-check form-switch d-inline-block">
+                        <input class="form-check-input fs-3" type="checkbox" id="statusToggle" <%=partner.isActive
+                            ? 'checked' : '' %>>
+                        <label class="form-check-label d-block small fw-bold mt-1" for="statusToggle">
+                            <%= partner.isActive ? 'Online' : 'Offline' %>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Stats -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm text-center p-3 h-100">
+                        <i class="fa-solid fa-truck text-primary fs-3 mb-2"></i>
+                        <div class="h4 fw-bold mb-0">
+                            <%= partner.totalDeliveries %>
+                        </div>
+                        <div class="text-muted small">Total Deliveries</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm text-center p-3 h-100">
+                        <i class="fa-solid fa-wallet text-success fs-3 mb-2"></i>
+                        <div class="h4 fw-bold mb-0">₹<%= (partner.totalEarnings || 0).toFixed(2) %>
+                        </div>
+                        <div class="text-muted small">Total Earnings</div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="card border-0 shadow-sm p-3 h-100"
+                        style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="text-muted small fw-bold text-uppercase">Pending Payout</div>
+                                <div class="h3 fw-bold mb-0 text-success">₹<%= (partner.pendingPayout || 0).toFixed(2)
+                                        %>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <% if ((partner.pendingPayout || 0)> 0) { %>
+                                    <button id="payoutRequestBtn" class="btn btn-success btn-sm fw-bold px-3 rounded-3"
+                                        onclick="requestPayout()">Request Money</button>
+                                    <button class="btn btn-outline-success btn-sm fw-bold px-3 rounded-3"
+                                        onclick="confirmReceived()">Confirm Received</button>
+                                    <% } %>
+                            </div>
+                        </div>
+                        <div class="mt-2 small text-muted">
+                            <i class="fa-solid fa-info-circle me-1"></i> Request money to notify Admin to pay your
+                            earnings.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ BROADCAST ORDERS — Available to Claim -->
+            <% if (broadcastOrders && broadcastOrders.length> 0) { %>
+                <div class="mb-4 p-3 rounded-4"
+                    style="background:linear-gradient(135deg,#fff7ed,#fef3c7);border:2px solid #fde68a;">
+                    <h5 class="fw-bold mb-3 d-flex align-items-center gap-2" style="color:#92400e;">
+                        <span style="font-size:1.4rem;">📢</span>
+                        New Orders Available to Claim
+                        <span class="badge rounded-pill ms-1" style="background:#f59e0b;color:#fff;font-size:13px;">
+                            <%= broadcastOrders.length %>
+                        </span>
+                    </h5>
+                    <div class="row g-3">
+                        <% broadcastOrders.forEach(order=> { %>
+                            <div class="col-12 col-md-6" id="broadcast-<%= order._id %>">
+                                <div class="card border-0 shadow-sm h-100" style="border-radius:14px;overflow:hidden;">
+                                    <div class="card-body p-3">
+                                        <!-- Shop -->
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <div
+                                                style="width:34px;height:34px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">
+                                                🏪</div>
+                                            <div>
+                                                <div class="fw-bold" style="font-size:13px;">
+                                                    <%= order.shopId && order.shopId.shopName ? order.shopId.shopName
+                                                        : 'Shop' %>
+                                                </div>
+                                                <div class="text-muted" style="font-size:11px;">Pick up from shop</div>
+                                            </div>
+                                            <span class="ms-auto badge bg-warning text-dark"
+                                                style="font-size:11px;">BROADCAST</span>
+                                        </div>
+
+                                        <!-- Deliver to -->
+                                        <% if (order.deliveryAddress) { %>
+                                            <div class="d-flex align-items-start gap-2 mb-2 p-2 rounded-3"
+                                                style="background:#fff7ed;font-size:12px;">
+                                                <i class="fa-solid fa-location-dot"
+                                                    style="color:#ea580c;margin-top:2px;"></i>
+                                                <span style="color:#7c2d12;">
+                                                    <%= order.deliveryAddress %>
+                                                </span>
+                                            </div>
+                                            <% } %>
+
+                                                <!-- Customer name + total -->
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <div style="font-size:12px;color:#475569;">
+                                                        👤 <%= order.customerId && order.customerId.name ?
+                                                            order.customerId.name : 'Customer' %>
+                                                            &nbsp;·&nbsp;
+                                                            <%= order.distanceInKm ? order.distanceInKm.toFixed(1)
+                                                                + ' km' : '' %>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Delivery Pricing Breakdown -->
+                                                <% if (order.partnerEarning !==undefined && order.partnerEarning !==0) {
+                                                    %>
+                                                    <div class="bg-light p-2 rounded-3 mb-3 border">
+                                                        <div
+                                                            class="d-flex justify-content-between align-items-center mb-1">
+                                                            <span class="small text-muted">Delivery Distance</span>
+                                                            <span class="small fw-bold">
+                                                                <%= order.deliveryDistance ||
+                                                                    order.distanceInKm.toFixed(1) %> km
+                                                            </span>
+                                                        </div>
+                                                        <div
+                                                            class="d-flex justify-content-between align-items-center mb-1">
+                                                            <span class="small text-muted">Est. Fuel Cost</span>
+                                                            <span class="small text-danger fw-bold">-₹<%=
+                                                                    order.estimatedFuelCost || 0 %></span>
+                                                        </div>
+                                                        <div
+                                                            class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                                            <span class="small fw-bold text-success"><i
+                                                                    class="fa-solid fa-coins me-1"></i> You Earn</span>
+                                                            <span class="fw-bold text-success fs-5">₹<%=
+                                                                    order.partnerEarning || 0 %></span>
+                                                        </div>
+                                                    </div>
+                                                    <% } else { %>
+                                                        <div
+                                                            class="d-flex justify-content-between align-items-center mb-3">
+                                                            <div class="fw-bold" style="color:#16a34a;font-size:15px;">
+                                                                Order Total: ₹<%= order.totalAmount %>
+                                                            </div>
+                                                        </div>
+                                                        <% } %>
+
+                                                            <!-- Claim button -->
+                                                            <button class="btn btn-warning w-100 fw-bold py-2 rounded-3"
+                                                                style="font-size:14px;"
+                                                                onclick="claimOrder('<%= order._id %>', this)">
+                                                                <i class="fa-solid fa-hand-point-up me-2"></i> Claim
+                                                                This Order
+                                                            </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }) %>
+                    </div>
+                </div>
+                <% } %>
+
+                    <!-- Active Orders Section -->
+                    <h4 class="fw-bold mb-3 d-flex align-items-center">
+                        <i class="fa-solid fa-box-open me-2 text-primary"></i>
+                        Active Orders
+                        <span class="badge bg-primary rounded-pill ms-2 fs-6">
+                            <%= activeOrders.length %>
+                        </span>
+                    </h4>
+
+                    <div class="row g-4" id="ordersContainer">
+                        <% if (activeOrders.length===0) { %>
+                            <div class="col-12 text-center py-5">
+                                <div class="card border-0 shadow-sm p-5">
+                                    <i class="fa-solid fa-couch fs-1 text-muted mb-3"></i>
+                                    <h5>No active orders assigned.</h5>
+                                    <p class="text-muted">Stay Online to receive new delivery requests from local shops!
+                                    </p>
+                                </div>
+                            </div>
+
+                            <% } else { %>
+                                <% activeOrders.forEach(order=> { %>
+                                    <div class="col-12 col-md-6">
+                                        <div class="card border-0 shadow-sm h-100 overflow-hidden order-card"
+                                            data-order-id="<%= order._id %>">
+                                            <!-- Order Header -->
+                                            <div
+                                                class="card-header border-0 bg-white d-flex justify-content-between align-items-center py-3">
+                                                <span
+                                                    class="badge bg-<%= order.orderStatus === 'ASSIGNED' ? 'info' : 'warning text-dark' %> rounded-pill">
+                                                    <%= order.orderStatus.replace(/_/g, ' ' ) %>
+                                                </span>
+                                                <span class="fw-bold text-muted small">ID: <%= order.orderId %></span>
+                                            </div>
+
+                                            <div class="card-body p-3">
+                                                <!-- Shop Details -->
+                                                <div class="d-flex align-items-center mb-3">
+                                                    <div class="bg-light p-2 rounded-circle me-3">
+                                                        <i class="fa-solid fa-store text-primary fs-5"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="small text-muted">Pick up from:</div>
+                                                        <div class="fw-bold">
+                                                            <%= order.shopId.shopName %>
+                                                        </div>
+                                                        <div class="small text-muted">
+                                                            <i class="fa-solid fa-location-dot me-1 text-danger"></i>
+                                                            <%= order.shopId.address %>
+                                                        </div>
+                                                        <% if (order.shopId.owner && order.shopId.owner.username) { %>
+                                                            <div class="small fw-semibold mt-1">
+                                                                <i class="fa-solid fa-phone me-1 text-success"></i><a
+                                                                    href="tel:<%= order.shopId.owner.username %>"
+                                                                    class="text-decoration-none text-dark">
+                                                                    <%= order.shopId.owner.username %>
+                                                                </a>
+                                                            </div>
+                                                            <% } %>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Customer Details -->
+                                                <div class="d-flex align-items-center mb-3">
+                                                    <div class="bg-light p-2 rounded-circle me-3">
+                                                        <i class="fa-solid fa-user text-success fs-5"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="small text-muted">Deliver to:</div>
+                                                        <div class="fw-bold">
+                                                            <%= order.customerId.name %>
+                                                        </div>
+                                                        <div class="small text-muted">Phone: <%=
+                                                                order.customerId.username %>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Order Delivery Income Summary -->
+                                                <div
+                                                    class="d-flex justify-content-between align-items-center mt-3 bg-light p-3 rounded-4 border">
+                                                    <% if (order.partnerEarning !==undefined && order.partnerEarning
+                                                        !==0) { %>
+                                                        <div class="w-100">
+                                                            <div
+                                                                class="d-flex justify-content-between align-items-center mb-1">
+                                                                <span class="small text-muted">Distance (<%=
+                                                                        order.deliveryDistance ||
+                                                                        order.distanceInKm.toFixed(1) %> km)</span>
+                                                                <span class="small fw-bold">₹<%= order.deliveryCharge ||
+                                                                        0 %></span>
+                                                            </div>
+                                                            <div
+                                                                class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                                                <span class="small text-muted">Est. Fuel Cost</span>
+                                                                <span class="small text-danger fw-bold">-₹<%=
+                                                                        order.estimatedFuelCost || 0 %></span>
+                                                            </div>
+                                                            <div
+                                                                class="d-flex justify-content-between align-items-center">
+                                                                <span class="fw-bold text-success"><i
+                                                                        class="fa-solid fa-coins me-1"></i> Final
+                                                                    Earning</span>
+                                                                <span class="fw-bold text-success fs-5">₹<%=
+                                                                        order.partnerEarning || 0 %></span>
+                                                            </div>
+                                                        </div>
+                                                        <% } else { %>
+                                                            <div>
+                                                                <div class="small text-muted">Order Total</div>
+                                                                <div class="h5 fw-bold mb-0">₹<%= order.totalAmount %>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-end">
+                                                                <div class="small text-muted">Payment Type</div>
+                                                                <div class="badge bg-white text-dark border">
+                                                                    <%= order.paymentType %>
+                                                                </div>
+                                                            </div>
+                                                            <% } %>
+                                                </div>
+                                            </div>
+
+                                            <!-- Actions Footer -->
+                                            <div class="card-footer border-0 bg-white p-3 pt-0">
+                                                <% if (order.orderStatus==='ASSIGNED' ) { %>
+                                                    <button
+                                                        class="btn btn-primary w-100 fw-bold py-2 rounded-3 pickup-btn"
+                                                        onclick="handlePickUp('<%= order._id %>')">
+                                                        <i class="fa-solid fa-truck-pickup me-2"></i> Mark as Picked Up
+                                                    </button>
+                                                    <% } else if (order.orderStatus==='OUT_FOR_DELIVERY' ) { %>
+                                                        <button
+                                                            class="btn btn-success w-100 fw-bold py-2 rounded-3 complete-btn"
+                                                            onclick="showOTPModal('<%= order._id %>')">
+                                                            <i class="fa-solid fa-check-circle me-2"></i> Complete
+                                                            Delivery
+                                                            (Enter OTP)
+                                                        </button>
+                                                        <% } %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <% }); %>
+                                        <% } %>
+                    </div>
+        </div>
+    </div>
+
+    <!-- OTP Verification Modal -->
+    <div class="modal fade" id="otpModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <div class="bg-light p-3 rounded-circle d-inline-block mb-3">
+                        <i class="fa-solid fa-key text-primary fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">Verify OTP</h5>
+                    <p class="text-muted small">Enter the 4-digit code provided by the customer.</p>
+
+                    <input type="number" id="otpInput"
+                        class="form-control form-control-lg text-center fw-bold mb-3 fs-3" placeholder="0000"
+                        maxlength="4">
+                    <div id="otpError" class="text-danger small mb-3" style="display:none;">Invalid OTP code.</div>
+
+                    <button class="btn btn-primary w-100 fw-bold py-2 rounded-3" id="confirmCompleteBtn">
+                        Verify & Complete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const statusToggle = document.getElementById('statusToggle');
+        let currentOrderId = null;
+
+        // Claim a broadcast order
+        async function claimOrder(orderId, btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Claiming...';
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch(`/delivery/api/accept-order/${orderId}`, {
+                    method: 'POST',
+                    headers: {
+                    }
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    alert('✅ ' + data.message);
+                    // Remove this broadcast card from DOM and reload to show it in active orders
+                    const card = document.getElementById('broadcast-' + orderId);
+                    if (card) card.remove();
+                    location.reload();
+                } else {
+                    alert(data.message || 'Could not claim order.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-hand-point-up me-2"></i> Claim This Order';
+                }
+            } catch (err) {
+                alert('Failed to connect.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-hand-point-up me-2"></i> Claim This Order';
+            }
+        }
+
+        // Toggle Status Logic
+        statusToggle.addEventListener('change', async (e) => {
+            const isOnline = e.target.checked;
+            const label = e.target.nextElementSibling;
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch('/delivery/toggle-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ isActive: isOnline })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    label.innerText = isOnline ? 'Online' : 'Offline';
+                    // Success message toast could be added here
+                } else {
+                    e.target.checked = !isOnline;
+                    alert(data.message);
+                }
+            } catch (err) {
+                e.target.checked = !isOnline;
+                alert('Failed to update status.');
+            }
+        });
+
+        // Handle Pick Up Action
+        async function handlePickUp(orderId) {
+            if (!confirm('Have you picked up this order from the shop?')) return;
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch(`/delivery/order/${orderId}/picked-up`, {
+                    method: 'POST',
+                    headers: {
+                    }
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('Something went wrong.');
+            }
+        }
+
+        // OTP Modal Logic
+        const otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
+        const confirmBtn = document.getElementById('confirmCompleteBtn');
+        const otpInput = document.getElementById('otpInput');
+        const otpError = document.getElementById('otpError');
+
+        function showOTPModal(orderId) {
+            currentOrderId = orderId;
+            otpInput.value = '';
+            otpError.style.display = 'none';
+            otpModal.show();
+        }
+
+        confirmBtn.addEventListener('click', async () => {
+            const otp = otpInput.value;
+            if (otp.length < 4) return alert('Enter the 4-digit OTP');
+
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch(`/delivery/order/${currentOrderId}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ otp })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    location.reload();
+                } else {
+                    otpError.innerText = data.message;
+                    otpError.style.display = 'block';
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = 'Verify & Complete';
+                }
+            } catch (err) {
+                alert('Failed to connect.');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = 'Verify & Complete';
+            }
+        });
+
+        // Payout Request Logic
+        async function requestPayout() {
+            if (!confirm("This will notify the Admin that you are requesting your pending payout. Proceed?")) return;
+            
+            const btn = document.getElementById('payoutRequestBtn');
+            const originalHtml = btn.innerHTML;
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+            }
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const res = await fetch('/delivery/request-payout', {
+                    method: 'POST',
+                    headers: {
+                    }
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    alert("✅ Request sent to Admin! They will pay you via UPI soon.");
+                    location.reload();
+                } else {
+                    alert(data.message || "Failed to send request.");
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            } catch (err) {
+                alert("Failed to connect.");
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        async function confirmReceived() {
+            if (!confirm("Confirm that you have received your pending payout from PASR? This will reset your pending balance.")) return;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const res = await fetch('/delivery/confirm-receipt', {
+                method: 'POST',
+                headers: {
+                }
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                alert("✅ Payout confirmed! Your pending balance is now zero.");
+                location.reload();
+            } else {
+                alert(data.message || "Failed to confirm receipt.");
+            }
+        }
+
+        // Live Order Polling
+        let knownBroadcastCount = <%= broadcastOrders ? broadcastOrders.length : 0 %>;
+        
+        async function pollForNewOrders() {
+            // Only poll if partner is online
+            if (!statusToggle.checked) return;
+
+            try {
+                const res = await fetch('/delivery/api/available-orders');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        const currentCount = data.orders.length;
+                        if (currentCount > knownBroadcastCount) {
+                            // Automatically refresh to show the new orders instantly!
+                            location.reload();
+                        } else if (currentCount < knownBroadcastCount) {
+                            // Update internal count so we don't infinitely reload,
+                            // but optionally reload if an order we were looking at vanished
+                            knownBroadcastCount = currentCount;
+                            location.reload(); // Reload to remove it from UI
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Polling error:", err);
+            }
+        }
+        
+        // Poll every 10 seconds
+        setInterval(pollForNewOrders, 10000);
+    </script>
+
+    <style>
+        .order-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .order-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--bs-success);
+            border-color: var(--bs-success);
+        }
+
+        .pickup-btn {
+            background: linear-gradient(135deg, #0d6efd 0%, #004dc7 100%);
+        }
+
+        .complete-btn {
+            background: linear-gradient(135deg, #198754 0%, #0c6a3f 100%);
+        }
+    </style>

@@ -1,0 +1,23 @@
+<% if (typeof success !=='undefined' && success && success.length) { %>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            showToast("<%= success %>", 'success');
+        });
+    </script>
+    <% } %>
+
+        <% if (typeof danger !=='undefined' && danger && danger.length) { %>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    showToast("<%= danger %>", 'danger');
+                });
+            </script>
+            <% } %>
+
+                <% if (typeof error !=='undefined' && error && error.length) { %>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                            showToast("<%= error %>", 'danger');
+                        });
+                    </script>
+                    <% } %>

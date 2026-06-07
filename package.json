@@ -1,0 +1,72 @@
+{
+  "name": "pasr",
+  "version": "1.0.0",
+  "description": "This the project initial all dictionary push",
+  "license": "ISC",
+  "author": "Sagar Kumar verma",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node app.js",
+    "build:ui": "vite build",
+    "dev:ui": "vite build --watch"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@googlemaps/google-maps-services-js": "^3.4.2",
+    "cloudinary": "^2.8.0",
+    "compression": "^1.8.1",
+    "connect-flash": "^0.1.1",
+    "connect-mongo": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "csrf-csrf": "^4.0.3",
+    "dotenv": "^17.2.3",
+    "ejs": "^3.1.10",
+    "ejs-mate": "^4.0.0",
+    "express": "^5.1.0",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^8.2.1",
+    "express-session": "^1.18.2",
+    "firebase-admin": "^13.7.0",
+    "helmet": "^8.1.0",
+    "joi": "^18.0.2",
+    "lucide-react": "^0.577.0",
+    "method-override": "^3.0.0",
+    "mongodb": "^7.0.0",
+    "mongoose": "^9.0.0",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0",
+    "node-cron": "^4.2.1",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
+    "passport-local-mongoose": "^9.0.1",
+    "razorpay": "^2.9.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "socket.io": "^4.8.3",
+    "xss-clean": "^0.1.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.1",
+    "baseline-browser-mapping": "^2.9.14",
+    "vite": "^8.0.0"
+  },
+  "overrides": {
+    "cloudinary": "$cloudinary"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sagar87099kr/pasr.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/sagar87099kr/pasr/issues"
+  },
+  "homepage": "https://github.com/sagar87099kr/pasr#readme"
+}

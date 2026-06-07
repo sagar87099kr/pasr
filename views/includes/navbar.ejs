@@ -1,0 +1,383 @@
+<!-- Tailwind CSS configuration for Premium Styling -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    corePlugins: { preflight: false },
+    theme: {
+      extend: {
+        colors: { primary: '#2563eb' }
+      }
+    }
+  }
+</script>
+<style>
+  /* Premium Nav Effects - No Conflict with Bootstrap */
+  .premium-nav {
+    background: rgba(255, 255, 255, 0.75) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.025);
+    z-index: 1030;
+  }
+  
+  .nav-link-modern {
+    position: relative;
+    color: #475569 !important;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    margin: 0 0.25rem;
+  }
+  .nav-link-modern:hover { color: #2563eb !important; }
+  .nav-link-modern::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #2563eb;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 2px;
+  }
+  .nav-link-modern:hover::after { width: 80%; }
+
+  .glass-dropdown {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 0.75rem !important;
+    padding: 0.5rem !important;
+    animation: dropdownFadeIn 0.2s ease-out;
+  }
+  
+  @keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .premium-btn {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white !important;
+    border: none !important;
+    font-weight: 500;
+    border-radius: 9999px !important;
+    padding: 0.375rem 1rem !important;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+    transition: all 0.2s ease;
+  }
+  .premium-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.4);
+  }
+
+  /* Profile Icon Glow */
+  .profile-icon-hover {
+    transition: all 0.3s ease;
+    color: #475569;
+  }
+  .profile-icon-hover:hover {
+    color: #2563eb;
+    filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.4));
+  }
+  
+  /* Update search bar aesthetics */
+  .header-search-form input[type="search"] {
+    border-radius: 9999px !important;
+    border: 1px solid #cbd5e1 !important;
+    padding-left: 1rem !important;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.02);
+  }
+  .header-search-form input[type="search"]:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+  }
+  .header-search-form button {
+    border-radius: 9999px !important;
+  }
+</style>
+
+<nav class="navbar navbar-expand-sm premium-nav sticky-top py-2">
+  <div class="container-fluid d-flex flex-wrap align-items-center max-w-7xl mx-auto px-lg-4">
+
+    <!-- Top Row: Home, Bell, Profile, Menu -->
+    <div class="d-flex w-100 justify-content-between align-items-center flex-nowrap order-1 gap-2 px-1">
+      
+      <!-- Left Side: Home Icon & Add Item Shortcut -->
+      <div class="d-flex align-items-center gap-2">
+        <a href="/" class="nav-link profile-icon-hover p-1 d-flex align-items-center lh-1" title="Home">
+          <i class="fa-solid fa-house fs-5"></i>
+        </a>
+
+        <!-- Add Item Shortcut (Shop Owner) -->
+        <% if (typeof userShops !== 'undefined' && userShops.length > 0) { %>
+          <% if (userShops.length === 1) { %>
+            <!-- Single Shop: Direct Link -->
+            <a href="/shops/<%= userShops[0].id %>?openAddItem=true" class="d-flex align-items-center p-1 text-decoration-none profile-icon-hover flex-shrink-0" title="Add Item to <%= userShops[0].name %>">
+              <i class="fa-solid fa-circle-plus fs-5"></i>
+            </a>
+          <% } else { %>
+            <!-- Multiple Shops: Dropdown -->
+            <div class="nav-item dropdown list-unstyled mb-0 flex-shrink-0 d-flex align-items-center">
+              <a class="nav-link p-1 text-dark position-relative profile-icon-hover d-flex align-items-center lh-1" href="#" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false" title="Add Item to Your Shops">
+                <i class="fa-solid fa-circle-plus fs-5"></i>
+              </a>
+              <ul class="dropdown-menu position-absolute glass-dropdown" style="left: 0; right: auto;">
+                <li><h6 class="dropdown-header text-primary fw-bold">Select Shop to Add Item</h6></li>
+                <% userShops.forEach(function(shop) { %>
+                  <li>
+                    <a class="dropdown-item d-flex align-items-center justify-content-between gap-3" href="/shops/<%= shop.id %>?openAddItem=true">
+                      <span><%= shop.name %></span>
+                      <i class="fa-solid fa-chevron-right text-muted" style="font-size: 10px;"></i>
+                    </a>
+                  </li>
+                <% }); %>
+              </ul>
+            </div>
+          <% } %>
+        <% } %>
+      </div>
+
+      <!-- Right Side: Service Icons & Menu -->
+      <div class="d-flex align-items-center gap-2 gap-sm-3">
+        <!-- PASR Coins -->
+        <% if (typeof currUser !== 'undefined' && currUser) { %>
+          <a href="/user" class="d-flex align-items-center gap-1 me-2 text-decoration-none profile-icon-hover" title="Your PASR Coins - View Profile">
+            <i class="fa-solid fa-coins text-warning" style="font-size: 16px;"></i>
+            <span style="font-size: 14px; font-weight: 800; color: #2563eb;">
+              <%= currUser.coins || 0 %>
+            </span>
+          </a>
+        <% } %>
+
+        <!-- Notifications -->
+        <% if (typeof currUser !== 'undefined' && currUser) { %>
+          <div class="nav-item dropdown list-unstyled mb-0 flex-shrink-0 d-flex align-items-center" id="notificationContainer">
+            <a class="nav-link notification-nav-item p-1 d-flex align-items-center lh-1" href="#" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false" id="notificationBell" data-bs-display="static">
+              <i class="fa-solid fa-bell fs-5"></i>
+              <span class="notification-badge" id="notificationBadge"></span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end notification-dropdown position-absolute glass-dropdown"
+              aria-labelledby="notificationBell">
+              <div id="notificationHeaderWrapper">
+                <div class="notification-header">
+                  <h6>Notifications</h6>
+                  <button class="mark-all-read-btn" onclick="markAllNotificationsAsRead(event)">Mark all as read</button>
+                </div>
+              </div>
+              <div class="notification-list" id="notificationList">
+                <div class="no-notifications">Loading...</div>
+              </div>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- Auth: Logged In = profile dropdown, Logged Out = Login/Signup buttons -->
+        <% if (typeof currUser !== 'undefined' && currUser) { %>
+          <!-- Profile Dropdown (logged in) -->
+          <div class="nav-item dropdown list-unstyled mb-0 d-flex align-items-center">
+            <a class="nav-link p-1 text-dark position-relative profile-icon-hover d-flex align-items-center lh-1" href="#" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              <i class="fa-solid fa-circle-user fs-5"></i>
+              <% if (typeof cartItemCount !== 'undefined' && cartItemCount > 0) { %>
+                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="width: 10px; height: 10px; transform: translate(-50%, -50%) !important;">
+                  <span class="visually-hidden">Items in cart</span>
+                </span>
+              <% } %>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end position-absolute glass-dropdown">
+              <li><a class="dropdown-item" href="/user">Profile</a></li>
+              <li><a class="dropdown-item" href="/api/orders/my-orders">My Orders</a></li>
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="/api/cart">
+                  My Cart
+                  <% if (typeof cartItemCount !== 'undefined' && cartItemCount > 0) { %>
+                    <span class="badge bg-danger rounded-pill"><%= cartItemCount %></span>
+                  <% } %>
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+                <li><h6 class="dropdown-header text-primary fw-bold">Admin Panel</h6></li>
+                <li><a class="dropdown-item" href="/admin/orders">Admin Orders</a></li>
+                <li><a class="dropdown-item" href="/admin/payouts">Admin Payouts</a></li>
+                <li><a class="dropdown-item" href="/admin/delivery-partners">Delivery Partners</a></li>
+                <li><a class="dropdown-item" href="/shops/verify">Verify Shops</a></li>
+                <li><a class="dropdown-item" href="/provider/verify">Verify Providers</a></li>
+                <li><a class="dropdown-item" href="/product/verify">Verify Products</a></li>
+                <li><a class="dropdown-item" href="/admin/kisan-sabha">Kisan Sabha Admin</a></li>
+                <li><hr class="dropdown-divider"></li>
+              <% } %>
+              <li><a class="dropdown-item" href="/logout" style="color: red;">Log Out</a></li>
+            </ul>
+          </div>
+        <% } else { %>
+          <!-- Login / Signup Buttons (not logged in) — visible in same row -->
+          <div class="d-flex align-items-center gap-2">
+            <a href="/alreadyLogin"
+              style="font-size: 13px; font-weight: 700; color: #1E3A8A; text-decoration: none; padding: 6px 14px; border: 1.5px solid #1E3A8A; border-radius: 99px; white-space: nowrap; transition: all 0.2s;"
+              onmouseover="this.style.background='#1E3A8A';this.style.color='#fff';"
+              onmouseout="this.style.background='transparent';this.style.color='#1E3A8A';">
+              Login
+            </a>
+            <a href="/customer/signup"
+              style="font-size: 13px; font-weight: 700; color: #fff; text-decoration: none; padding: 6px 14px; background: #F97316; border: 1.5px solid #F97316; border-radius: 99px; white-space: nowrap; transition: all 0.2s;"
+              onmouseover="this.style.opacity='0.85';"
+              onmouseout="this.style.opacity='1';">
+              Create
+            </a>
+          </div>
+        <% } %>
+
+        <!-- Hamburger Menu -->
+        <button class="navbar-toggler py-1 px-1 border-0 d-flex align-items-center" type="button" data-bs-toggle="collapse"
+          data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon" style="width: 1.1em; height: 1.1em;"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Row 2 (Mobile): Search Bar -->
+    <div id="react-navbar-search" class="w-100 order-2 mt-2 px-1"></div>
+
+
+    <!-- Collapsed Links -->
+    <div class="collapse navbar-collapse order-3 w-100 mt-2 mt-sm-0" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link nav-link-modern" aria-current="page" href="/home">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-modern" href="/product/seller"> Sell Your Products <span
+              class="badge bg-warning text-dark text-wrap d-inline-block"
+              style="font-size: 0.65em; max-width: 15ch; line-height: 1.1; vertical-align: middle;">Not for shop
+              owners</span></a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link nav-link-modern" href="/become/provider"> Become a Provider </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-modern" href="/shops/new"> List Your Shop </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-link-modern" href="/help"> Help </a>
+        </li>
+        <li class="nav-item" id="pwa-install-btn" style="display: none;">
+          <a class="nav-link" href="#" style="color: #2563eb; font-weight: bold;">
+            <i class="fa-solid fa-download"></i> Install App
+          </a>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</nav>
+<!-- Meta Pixel Code — deferred so it doesn't block FCP/LCP -->
+<script>
+  window.addEventListener('load', function () {
+    !function (f, b, e, v, n, t, s) {
+      if (f.fbq) return; n = f.fbq = function () {
+        n.callMethod ?
+          n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+      };
+      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+      n.queue = []; t = b.createElement(e); t.async = !0;
+      t.src = v; s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s)
+    }(window, document, 'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '883296107650724');
+    fbq('track', 'PageView');
+  });
+</script>
+<noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=883296107650724&ev=PageView&noscript=1" /></noscript>
+<!-- End Meta Pixel Code -->
+
+<% if (typeof currUser !=='undefined' && currUser) { %>
+  <script>
+    async function fetchNotifications() {
+      try {
+        const res = await fetch('/api/notifications');
+        const data = await res.json();
+        if (data.success) {
+          renderNotifications(data.notifications);
+        }
+      } catch (e) {
+        console.error('Error fetching notifications:', e);
+      }
+    }
+
+    function renderNotifications(notifications) {
+      const list = document.getElementById('notificationList');
+      const badge = document.getElementById('notificationBadge');
+      const container = document.getElementById('notificationContainer');
+      const headerWrapper = document.getElementById('notificationHeaderWrapper');
+
+      if (!list || !container || !headerWrapper) return;
+
+      if (notifications.length === 0) {
+        headerWrapper.style.display = 'none';
+        list.innerHTML = '<div class="no-notifications">No notification yet</div>';
+        if (badge) badge.style.display = 'none';
+        return;
+      }
+
+      headerWrapper.style.display = 'block';
+      if (badge) badge.style.display = 'block';
+
+      list.innerHTML = notifications.map(n => {
+        const targetUrl = n.type === 'ORDER_RECEIVED' || n.type === 'ORDER_CLAIMED' ? '/api/orders/my-shop-orders' : (n.type === 'GENERAL' ? '/user' : '/api/orders/my-orders');
+        return `
+      <a href="${targetUrl}" class="notification-item ${n.isRead ? '' : 'unread'}" onclick="markAsRead(event, '${n._id}', '${targetUrl}')">
+        <span class="notification-title">${n.title}</span>
+        <span class="notification-msg">${n.message}</span>
+        <span class="notification-time">${new Date(n.createdAt).toLocaleString()}</span>
+      </a>
+      `}).join('');
+    }
+
+    async function markAsRead(event, id, url) {
+      event.preventDefault();
+      try {
+        await fetch(`/api/notifications/mark-read/${id}`, { method: 'POST' });
+      } catch (e) {
+        console.error('Error marking as read:', e);
+      }
+      window.location.href = url;
+    }
+
+    async function markAllNotificationsAsRead(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      try {
+        const res = await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+        if (res.ok) {
+          fetchNotifications();
+        }
+      } catch (e) {
+        console.error('Error marking all as read:', e);
+      }
+    }
+
+    // Initial fetch
+    fetchNotifications();
+    // Poll every 30 seconds for faster shopkeeper alerts
+    setInterval(fetchNotifications, 30000);
+  </script>
+  <% } %>
+
+<!-- Load Compiled React App -->
+<script type="module" src="/dist/assets/main.js?v=<%= Date.now() %>"></script>
+<!-- Currently, Vite extracts CSS to a separate file, so we need to include it -->
+<link rel="stylesheet" href="/dist/assets/main.css?v=<%= Date.now() %>">
