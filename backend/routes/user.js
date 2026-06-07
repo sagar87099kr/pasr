@@ -252,8 +252,15 @@ router.post("/api/auth/login", (req, res, next) => {
             return res.status(401).json({ success: false, message: "Invalid mobile number or password" });
         }
 
-        req.logIn(user, (err) => {
+        req.logIn(user, async (err) => {
             if (err) return res.status(500).json({ success: false, message: "Internal Server Error" });
+
+            let refCode = user.referralCode;
+            if (!refCode) {
+                refCode = await generateReferralCode();
+                user.referralCode = refCode;
+                await user.save();
+            }
 
             // Generate JWT
             const token = jwt.sign(
@@ -270,7 +277,9 @@ router.post("/api/auth/login", (req, res, next) => {
                     name: user.name,
                     username: user.username,
                     address: user.address,
-                    coins: user.coins
+                    coins: user.coins,
+                    referralCode: refCode,
+                    referralCount: user.referralCount || 0
                 }
             });
         });
@@ -364,7 +373,9 @@ router.post("/api/auth/verify-otp", wrapAsync(async (req, res) => {
                 name: registeredUser.name,
                 username: registeredUser.username,
                 address: registeredUser.address,
-                coins: registeredUser.coins || 0
+                coins: registeredUser.coins || 0,
+                referralCode: registeredUser.referralCode,
+                referralCount: registeredUser.referralCount || 0
             }
         });
     });
@@ -717,6 +728,29 @@ router.post("/account/remove/permanent", isLogedin, wrapAsync(async (req, res) =
     }
 }));
 
+
+// API: Get current user profile
+router.get("/api/user/profile", isLogedin, wrapAsync(async (req, res) => {
+    let refCode = req.user.referralCode;
+    if (!refCode) {
+        refCode = await generateReferralCode();
+        req.user.referralCode = refCode;
+        await req.user.save();
+    }
+
+    res.json({
+        success: true,
+        user: {
+            id: req.user._id,
+            name: req.user.name,
+            username: req.user.username,
+            address: req.user.address,
+            coins: req.user.coins,
+            referralCode: refCode,
+            referralCount: req.user.referralCount || 0
+        }
+    });
+}));
 
 // API: Update Address
 router.post("/api/user/update-address", isLogedin, wrapAsync(userController.updateAddress));
