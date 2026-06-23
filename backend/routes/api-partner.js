@@ -37,6 +37,26 @@ const verifyToken = async (req, res, next) => {
     }
 };
 
+// GET /api/partner/me
+router.get("/partner/me", verifyToken, async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const customer = await Customer.findById(userId);
+        if (!customer) return res.status(404).json({ success: false, message: "User not found" });
+        
+        res.json({
+            success: true,
+            user: {
+                name: customer.name || '',
+                phone: customer.username ? customer.username.toString() : '',
+                address: customer.address || ''
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
 // GET /api/partner/my-profiles
 router.get("/partner/my-profiles", verifyToken, async (req, res) => {
     try {
