@@ -355,8 +355,8 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
     }
 
     const queryOptions = (baseQuery, model) => {
-        // If it's the Shop model and we have a bazaarId, filter strictly by bazaar
-        if (model.modelName === 'Shop' && bazaarId) {
+        // If it's the Shop or Provider model and we have a bazaarId, filter strictly by bazaar
+        if ((model.modelName === 'Shop' || model.modelName === 'Provider') && bazaarId) {
             return {
                 ...baseQuery,
                 bazaar: bazaarId

@@ -93,6 +93,11 @@ const providerSchema = new Schema({
     type: Boolean,
     default: false
   },
+  bazaar: {
+    type: Schema.Types.ObjectId,
+    ref: "Bazaar",
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

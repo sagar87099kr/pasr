@@ -382,6 +382,15 @@
                       name="provider[verifedBy]" placeholder="Admin">
                     <div class="invalid-feedback">It is compulsory to write.</div>
                   </div>
+                  <div class="mb-3">
+                    <label class="form-label">Assign Bazaar</label>
+                    <select name="provider[bazaar]" class="form-control" required>
+                      <option value="">-- Select a Bazaar --</option>
+                      <% for(let bazaar of bazaars) { %>
+                        <option value="<%= bazaar._id %>"><%= bazaar.bazaarName %></option>
+                      <% } %>
+                    </select>
+                  </div>
                   <input type="hidden" name="provider[verified]" value="true">
                   <button class="btn primary">Verify</button>
                 </form>

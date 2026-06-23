@@ -313,16 +313,18 @@ router.put("/update/:id",
 
 // these are verification route for provider listing
 router.get("/provider/verify", isLogedin, isadmin, async (req, res) => {
-    let providers = await Provider.find().populate("owner");
-    res.render("pages/providerverify.ejs", { providers });
+    let providers = await Provider.find().populate("owner").populate("bazaar");
+    const Bazaar = require("../data/bazaar");
+    let bazaars = await Bazaar.find({});
+    res.render("pages/providerverify.ejs", { providers, bazaars });
 });
 
 router.put("/:id/verifyprovider", isLogedin, isadmin, async (req, res) => {
 
     let { id } = req.params;
-    const { verified, verifedBy } = req.body.provider;
+    const { verified, verifedBy, bazaar } = req.body.provider;
     console.log(verified)
-    await Provider.findByIdAndUpdate(id, { verified, verifedBy });
+    await Provider.findByIdAndUpdate(id, { verified, verifedBy, bazaar });
     console.log("provider is verifed");
 });
 
