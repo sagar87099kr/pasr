@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const Order = require("../data/order");
 const Shop = require("../data/shops");
 const Product = require("../data/product");
+const Item = require("../data/item");
 const MasterProduct = require("../data/masterProduct");
 const Provider = require("../data/serviceproviders");
 const DeliveryPartner = require("../data/deliveryPartner");
@@ -117,7 +118,7 @@ router.get("/shop/orders", verifyToken, async (req, res) => {
         const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
         if (!shop) return res.status(403).json({ success: false, message: "Forbidden" });
 
-        const orders = await Order.find({ shopId }).sort({ createdAt: -1 });
+        const orders = await Order.find({ shopId }).populate("customerId").sort({ createdAt: -1 });
         res.json({ success: true, orders });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
@@ -155,7 +156,7 @@ router.get("/shop/products", verifyToken, async (req, res) => {
         const shopId = req.query.shopId;
         if (!shopId) return res.status(400).json({ success: false, message: "Missing shopId" });
 
-        const products = await Product.find({ shop: shopId }).populate("product");
+        const products = await Item.find({ shop: shopId }).populate("product");
         res.json({ success: true, products });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
@@ -171,21 +172,18 @@ router.post("/shop/products", verifyToken, async (req, res) => {
         const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
         if (!shop) return res.status(403).json({ success: false, message: "Forbidden" });
 
-        const newProduct = new Product({
+        // Item model fields: shop, product, price, quantity (number), discount, isActive
+        const newItem = new Item({
             shop: shopId,
             product: productId,
             price: price || 0,
-            originalPrice: originalPrice || 0,
-            stock: stock || 0,
-            discountPercent: discountPercent || 0,
-            offerName: offerName || "",
-            quantity: quantity || "1 piece",
-            inStock: inStock !== undefined ? inStock : true,
-            status: status || "active"
+            quantity: stock || 1,
+            discount: discountPercent || 0,
+            isActive: inStock !== false
         });
 
-        await newProduct.save();
-        res.json({ success: true, product: newProduct });
+        await newItem.save();
+        res.json({ success: true, product: newItem });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
     }
