@@ -321,6 +321,7 @@ app.use("/api/notifications", require("./routes/apiNotification.js"));
 app.use("/api/fcm", require("./routes/fcm.js"));
 app.use("/api/payment", require("./routes/payment.js"));
 app.use("/api/bazaars", require("./routes/bazaar.js"));
+app.use("/api", require("./routes/api-partner.js"));
 
 app.use((req, res, next) => {
   next(new ExpressError(404, "Page not found!"));
