@@ -23,7 +23,7 @@ const verifyToken = async (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret");
+        const decoded = jwt.verify(token, process.env.SECRET || "fallback_secret_for_dev");
         req.user = { _id: decoded.id };
         next();
     } catch (err) {
