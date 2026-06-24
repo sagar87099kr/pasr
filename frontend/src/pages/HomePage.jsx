@@ -452,7 +452,7 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon, initialBazaarName }) => 
                         WebkitOverflowScrolling: 'touch'
                     }}
                 >
-                    {['DJ/Events', 'Medical', 'Grocery', 'Repair', 'Agriculture', 'Catering', 'Vehicles', 'Decoration'].map((cat, idx) => (
+                    {['DJ/Events', 'Medical', 'Grocery', 'Repair', 'Agriculture', 'Catering', 'Vehicles', 'Decoration', 'Labour & Mistry'].map((cat, idx) => (
                         <div
                             key={idx}
                             onClick={() => {

@@ -405,7 +405,7 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
         return results;
     };
 
-    const [shops, bazaar, vehicles, farming, catering, dj, threeWheelers, filming, decoration, bandParty, homeService, heavyEquipments] = await Promise.all([
+    const [shops, bazaar, vehicles, farming, catering, dj, threeWheelers, filming, decoration, bandParty, homeService, heavyEquipments, labourAndMistry] = await Promise.all([
         fetchWithFallback(Shop, "verified", true), // Special case for Shop (all verified)
         fetchWithFallback(Product, "verified", true), // Special case for Product (all verified)
         fetchWithFallback(Provider, "categories", "Four Wheelers"),
@@ -417,7 +417,8 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
         fetchWithFallback(Provider, "categories", "Decoration"),
         fetchWithFallback(Provider, "categories", "Band Party"),
         fetchWithFallback(Provider, "categories", "Home Service provider"),
-        fetchWithFallback(Provider, "categories", "Heavy Equipments")
+        fetchWithFallback(Provider, "categories", "Heavy Equipments"),
+        fetchWithFallback(Provider, "categories", "Labour and Mistry")
     ]);
 
     res.json({
@@ -435,7 +436,8 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
             decoration,
             bandParty,
             homeService,
-            heavyEquipments
+            heavyEquipments,
+            labourAndMistry
         }
     });
 }));

@@ -51,6 +51,20 @@
             <div class="form-text text-muted small mt-1">Useful as a backup contact.</div>
           </div>
 
+          <!-- Nearest Bazaar -->
+          <div class="form-group">
+            <label class="form-label">Nearest Bazaar (Optional)</label>
+            <select class="form-control form-select" name="provider[bazaar]">
+              <option value="" selected>Select nearest bazaar...</option>
+              <% if(typeof bazaars !== 'undefined') { %>
+                <% for(let bazaar of bazaars) { %>
+                  <option value="<%= bazaar._id %>"><%= bazaar.name %> (<%= bazaar.location %>)</option>
+                <% } %>
+              <% } %>
+            </select>
+            <div class="form-text text-muted small mt-1">Select the local market closest to your operations.</div>
+          </div>
+
           <!-- Service Category -->
           <div class="form-group">
             <label class="form-label">Service Category *</label>
@@ -67,6 +81,7 @@
               <option value="Band Party">🎺 Band Party</option>
               <option value="Home Service provider">🛠️ Home Service Provider</option>
               <option value="Heavy Equipments">🏗️ Heavy Equipments</option>
+              <option value="Labour and Mistry">👷 Labour and Mistry</option>
               <option value="Others">🔹 Others</option>
             </select>
           </div>

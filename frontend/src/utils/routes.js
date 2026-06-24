@@ -46,6 +46,8 @@ export const CATEGORY_ROUTE_MAP = {
     'Home Service': '/homeservice',
     'Home Services': '/homeservice',
     'Repair': '/homeservice',
+    'Labour and Mistry': '/labour-and-mistry',
+    'Labour & Mistry': '/labour-and-mistry',
 
     // Shops & Bazaar
     'Local Bazaar': '/localMarket',

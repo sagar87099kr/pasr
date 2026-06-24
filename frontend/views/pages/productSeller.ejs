@@ -78,6 +78,20 @@
                         <div class="invalid-feedback">Please provide the location.</div>
                     </div>
 
+                    <!-- Nearest Bazaar -->
+                    <div class="form-group">
+                        <label class="form-label">Nearest Bazaar (Optional)</label>
+                        <select class="form-control form-select" name="product[bazaar]">
+                            <option value="" selected>Select nearest bazaar...</option>
+                            <% if(typeof bazaars !== 'undefined') { %>
+                                <% for(let bazaar of bazaars) { %>
+                                    <option value="<%= bazaar._id %>"><%= bazaar.name %> (<%= bazaar.location %>)</option>
+                                <% } %>
+                            <% } %>
+                        </select>
+                        <div class="form-text text-muted small mt-1">Select the local market closest to your location.</div>
+                    </div>
+
                     <!-- Image Upload -->
                     <div class="row">
                         <div class="col-md-6 form-group mt-4">

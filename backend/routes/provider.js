@@ -244,16 +244,24 @@ router.get("/heavy", findNearbyProviders("Heavy Equipments"), wrapAsync(async (r
     res.render("pages/Heavy_equipments.ejs", { allProvider });
 }));
 
+// labour and mistry
+router.get("/labour-and-mistry", findNearbyProviders("Labour and Mistry"), wrapAsync(async (req, res) => {
+    const { allProvider } = res.locals;
+    res.render("pages/labourAndMistry.ejs", { allProvider });
+}));
+
 
 // here we will get POST request send form "/providerLogin" 
 // Become a provider
-router.get("/become/provider", isLogedin, isVerifiedCustomer, (req, res) => {
-    res.render("pages/create.ejs")
-});
+router.get("/become/provider", isLogedin, isVerifiedCustomer, wrapAsync(async (req, res) => {
+    const Bazaar = require("../data/bazaar");
+    const bazaars = await Bazaar.find({});
+    res.render("pages/create.ejs", { bazaars });
+}));
 
 router.post("/become/provider", isLogedin, isNotBlocked, isVerifiedCustomer, validateprovider, upload.array('provider[personImage]', 4), wrapAsync(async (req, res) => {
 
-    let { company, experience, location, phoneNO } = req.body.provider;
+    let { company, experience, location, phoneNO, bazaar } = req.body.provider;
     let categories = req.body.provider.categories;
     const personImage = req.files;
 
@@ -267,7 +275,8 @@ router.post("/become/provider", isLogedin, isNotBlocked, isVerifiedCustomer, val
             company,
             location,
             geometry,
-            phoneNO
+            phoneNO,
+            bazaar: bazaar || null
         });
         newProvider.owner = req.user._id;
         await newProvider.save();

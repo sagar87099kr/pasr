@@ -108,13 +108,18 @@ router.get("/localMarket", wrapAsync(async (req, res) => {
 }));
 
 router.get("/product/seller", isLogedin, isVerifiedCustomer, wrapAsync(async (req, res) => {
-    res.render("pages/productSeller.ejs");
+    const Bazaar = require("../data/bazaar");
+    const bazaars = await Bazaar.find({});
+    res.render("pages/productSeller.ejs", { bazaars });
 }));
 
 router.post("/product/seller", isLogedin, itemUpload.fields([
     { name: 'productImage', maxCount: 5 }
 ]), validateProduct, wrapAsync(async (req, res) => {
     const productData = req.body.product;
+    if (!productData.bazaar) {
+        productData.bazaar = null;
+    }
     const geoData = await forwardGeocode(productData.location);
 
     const product = new Product(productData);

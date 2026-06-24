@@ -8,6 +8,8 @@ module.exports.providerSchema = Joi.object({
         experience: Joi.number().allow(""),
         company: Joi.string().allow(""),
         location: Joi.string().required(),
+        phoneNO: Joi.number().allow("", null).optional(),
+        bazaar: Joi.string().allow("", null).optional(),
     })
 });
 
@@ -122,5 +124,6 @@ module.exports.productSchema = Joi.object({
         location: Joi.string().required(),
         productDescription: Joi.string().allow(""),
         upiId: Joi.string().allow(""),
+        bazaar: Joi.string().allow("", null).optional(),
     }).required()
 });

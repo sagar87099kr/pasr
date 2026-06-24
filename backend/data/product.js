@@ -75,6 +75,11 @@ const productSchema = new Schema({
         type: String,
         default: ""
     },
+    bazaar: {
+        type: Schema.Types.ObjectId,
+        ref: "Bazaar",
+        default: null
+    },
     createdAt: {
         type: Date,
         default: Date.now
