@@ -62,6 +62,38 @@ const itemSchema = new Schema({
         type: Date,
         default: Date.now
     },
+    deliveryType: {
+        type: String,
+        enum: ['grocery', 'instant', 'standard'],
+        default: 'standard'
+    },
+    canDeliverByBike: {
+        type: Boolean,
+        default: true
+    },
+    preparationTime: {
+        type: Number,
+        default: 0
+    },
+    maxDeliveryDistance: {
+        type: Number,
+        default: 10
+    },
+    availableForDelivery: {
+        type: Boolean,
+        default: true
+    },
+    weight: {
+        type: Number,
+        default: 0
+    },
+    offerPrice: {
+        type: Number
+    },
+    maxQuantityPerOrder: {
+        type: Number,
+        default: 10
+    },
     reviews: [
         {
             type: Schema.Types.ObjectId,

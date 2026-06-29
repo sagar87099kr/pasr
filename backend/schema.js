@@ -59,7 +59,9 @@ module.exports.shopSchema = Joi.object({
             .messages({
                 'string.pattern.base': 'Invalid GST format (e.g., 22AAAAA0000A1Z5)'
             })
-            .allow("")
+            .allow(""),
+        deliveryEnabled: Joi.boolean().default(false).optional(),
+        serviceAreaRadius: Joi.number().default(10).optional()
     }).required()
         .custom((value, helpers) => {
             // If both times are provided, validate that closing is after opening
@@ -87,6 +89,14 @@ module.exports.itemSchema = Joi.object({
         description: Joi.string().allow(""),
         sizes: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional(),
         discount: Joi.number().min(0).max(100).optional(),
+        deliveryType: Joi.string().valid('grocery', 'instant', 'standard').default('standard').optional(),
+        canDeliverByBike: Joi.boolean().default(true).optional(),
+        preparationTime: Joi.number().min(0).optional(),
+        maxDeliveryDistance: Joi.number().min(0).optional(),
+        availableForDelivery: Joi.boolean().default(true).optional(),
+        weight: Joi.number().min(0).optional(),
+        offerPrice: Joi.number().min(0).optional(),
+        maxQuantityPerOrder: Joi.number().min(1).optional()
     }).required(),
     imageId: Joi.string().allow(""),
     productId: Joi.string().allow(""),
@@ -125,5 +135,13 @@ module.exports.productSchema = Joi.object({
         productDescription: Joi.string().allow(""),
         upiId: Joi.string().allow(""),
         bazaar: Joi.string().allow("", null).optional(),
+        deliveryType: Joi.string().valid('grocery', 'instant', 'standard').default('standard').optional(),
+        canDeliverByBike: Joi.boolean().default(true).optional(),
+        preparationTime: Joi.number().min(0).optional(),
+        maxDeliveryDistance: Joi.number().min(0).optional(),
+        availableForDelivery: Joi.boolean().default(true).optional(),
+        weight: Joi.number().min(0).optional(),
+        offerPrice: Joi.number().min(0).optional(),
+        maxQuantityPerOrder: Joi.number().min(1).optional()
     }).required()
 });

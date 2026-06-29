@@ -4,6 +4,47 @@ const catchAsync = require("../utils/wrapAsync");
 const { isLogedin, isadmin } = require("../middeleware");
 const adminController = require("../controllers/admin");
 
+// Admin Dashboard - Metrics API
+router.get("/dashboard", isLogedin, isadmin, catchAsync(async (req, res) => {
+    const Order = require("../data/order");
+    const DeliveryPartner = require("../data/deliveryPartner");
+    const Customer = require("../data/customers");
+
+    const orders = await Order.find();
+    let totalOrders = orders.length;
+    let cancelledOrders = 0;
+    let revenue = 0;
+    let delivered = 0;
+
+    orders.forEach(order => {
+        if (order.orderStatus === 'CANCELLED') cancelledOrders++;
+        if (order.orderStatus === 'COMPLETED' || order.orderStatus === 'DELIVERED') {
+            delivered++;
+            revenue += order.totalAmount || 0;
+        }
+    });
+
+    const activePartners = await DeliveryPartner.countDocuments({ isActive: true });
+    const totalPartners = await DeliveryPartner.countDocuments();
+    
+    // Delivery Performance Mock
+    const averageDeliveryTime = "45 mins"; 
+
+    res.json({
+        success: true,
+        dashboard: {
+            totalOrders,
+            delivered,
+            cancelledOrders,
+            revenue,
+            activePartners,
+            totalPartners,
+            averageDeliveryTime,
+            customerComplaints: 0 // Placeholder
+        }
+    });
+}));
+
 // Admin Dashboard - View All Partners
 router.get("/delivery-partners", isLogedin, isadmin, catchAsync(adminController.getAllPartners));
 

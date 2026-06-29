@@ -80,6 +80,38 @@ const productSchema = new Schema({
         ref: "Bazaar",
         default: null
     },
+    deliveryType: {
+        type: String,
+        enum: ['grocery', 'instant', 'standard'],
+        default: 'standard'
+    },
+    canDeliverByBike: {
+        type: Boolean,
+        default: true
+    },
+    preparationTime: {
+        type: Number,
+        default: 0
+    },
+    maxDeliveryDistance: {
+        type: Number,
+        default: 10
+    },
+    availableForDelivery: {
+        type: Boolean,
+        default: true
+    },
+    weight: {
+        type: Number,
+        default: 0
+    },
+    offerPrice: {
+        type: Number
+    },
+    maxQuantityPerOrder: {
+        type: Number,
+        default: 10
+    },
     createdAt: {
         type: Date,
         default: Date.now

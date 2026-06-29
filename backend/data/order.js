@@ -3,7 +3,8 @@ const Schema = mongoose.Schema;
 
 const orderSchema = new Schema({
     orderId: { type: String, unique: true, required: true },
-    customerId: { type: Schema.Types.ObjectId, ref: 'Customer', required: true },
+    customerId: { type: Schema.Types.ObjectId, ref: 'Customer', required: false }, // Optional for walk-in POS billing
+    customerName: { type: String, default: 'Guest' }, // Name of walk-in customer
     shopId: { type: Schema.Types.ObjectId, ref: 'Shop', required: true },
     items: [{
         itemId: { type: Schema.Types.ObjectId, ref: 'Item' },
@@ -40,7 +41,7 @@ const orderSchema = new Schema({
 
     orderStatus: {
         type: String,
-        enum: ['CREATED', 'ORDER_SHARED', 'PACKED', 'READY_FOR_DELIVERY', 'BROADCAST', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED'],
+        enum: ['CREATED', 'ORDER_SHARED', 'ACCEPTED', 'PACKED', 'READY_FOR_DELIVERY', 'BROADCAST', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED'],
         default: 'ORDER_SHARED'
     },
 
@@ -53,6 +54,7 @@ const orderSchema = new Schema({
         vehicle: String
     },
 
+    estimatedDeliveryTime: { type: Date },
     deliveredAt: { type: Date },
     cancellationReason: { type: String },
 

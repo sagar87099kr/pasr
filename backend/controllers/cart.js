@@ -104,6 +104,24 @@ module.exports.addToCart = async (req, res, next) => {
             actualPrice = Math.round(item.price * (1 - item.discount / 100));
         }
 
+        const category = isProduct ? item.categories : item.itemCategory;
+        const restrictedCategories = ['Mobile', 'Laptop', 'Tablet', 'Television', 'High Value Electronics', 'Electronics'];
+        if (restrictedCategories.includes(category) && actualPrice > 5000) {
+            return res.status(400).json({ success: false, message: "Delivery is not allowed for high value electronics over ₹5000. Please visit the shop to purchase this product." });
+        }
+
+        const incomingDeliveryType = item.deliveryType || 'standard';
+
+        if (cart.items.length > 0) {
+            const existingDeliveryType = cart.items[0].deliveryType;
+            if (existingDeliveryType !== incomingDeliveryType) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `You cannot mix ${existingDeliveryType} delivery items with ${incomingDeliveryType} delivery items. Please place separate orders.` 
+                });
+            }
+        }
+
         if (existingItemIndex > -1) {
             cart.items[existingItemIndex].quantity += parsedQuantity;
             // Update price to latest in case it changed or has discount
@@ -120,7 +138,11 @@ module.exports.addToCart = async (req, res, next) => {
                 shopId: shopId,
                 shopName: finalShopName,
                 shopUpiId: shopUpiId,
-                shopOwnerUsername: shopOwnerUsername
+                shopOwnerUsername: shopOwnerUsername,
+                deliveryType: incomingDeliveryType,
+                canDeliverByBike: item.canDeliverByBike !== false,
+                preparationTime: item.preparationTime || 0,
+                maxDeliveryDistance: item.maxDeliveryDistance || 10
             });
         }
 
@@ -263,10 +285,23 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
             true
         );
 
-        if (distanceInKm > 10) {
+        let maxAllowedDistance = 10;
+        if (cart.items.length > 0) {
+            maxAllowedDistance = Math.min(...cart.items.map(i => i.maxDeliveryDistance !== undefined ? i.maxDeliveryDistance : 10));
+        }
+
+        if (distanceInKm > maxAllowedDistance) {
             return res.status(400).json({
                 success: false,
-                message: "Unable to deliver to your location for now. Max delivery radius is 10 km."
+                message: `Unable to deliver to your location for now. Max delivery radius for your cart items is ${maxAllowedDistance} km.`
+            });
+        }
+
+        const canDeliverByBike = cart.items.every(i => i.canDeliverByBike !== false);
+        if (!canDeliverByBike) {
+            return res.status(400).json({
+                success: false,
+                message: "Some items in your cart cannot be delivered by bike. Pickup from Shop Only."
             });
         }
 

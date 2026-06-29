@@ -230,6 +230,23 @@ module.exports.checkoutOrder = async (req, res, next) => {
 
 
 
+        // Calculate ETA
+        let estimatedDeliveryTime = null;
+        if (deliveryType === 'HOME_DELIVERY' && shopItems.length > 0) {
+            const itemDeliveryType = shopItems[0].deliveryType || 'standard';
+            const now = new Date();
+            if (itemDeliveryType === 'instant') {
+                now.setMinutes(now.getMinutes() + 25); // Max 25 mins
+                estimatedDeliveryTime = now;
+            } else if (itemDeliveryType === 'grocery') {
+                now.setHours(now.getHours() + 2); // Max 2 hours
+                estimatedDeliveryTime = now;
+            } else {
+                now.setHours(now.getHours() + 24); // Max 24 hours
+                estimatedDeliveryTime = now;
+            }
+        }
+
         // Create Order Document
         const order = new Order({
             orderId: clientOrderId || generateOrderId(),
@@ -250,6 +267,8 @@ module.exports.checkoutOrder = async (req, res, next) => {
             partnerEarning,
             estimatedFuelCost,
             partnerProfit,
+
+            estimatedDeliveryTime,
 
             paymentType,
             paymentStatus: 'PENDING',
