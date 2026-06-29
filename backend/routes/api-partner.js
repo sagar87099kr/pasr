@@ -91,7 +91,7 @@ router.post("/partner/register-provider", verifyToken, async (req, res) => {
         if (personImage && typeof personImage === 'string') {
             const { cloudinary } = require('../cloud_con');
             const uploadRes = await cloudinary.uploader.upload(personImage, { folder: 'pasr_DEV' });
-            provider.personImage = [{ url: uploadRes.secure_url, filename: uploadRes.public_id }];
+            provider.personImage = [{ url: uploadRes.secure_url, path: uploadRes.secure_url, filename: uploadRes.public_id }];
         } else {
             provider.personImage = [];
         }
@@ -124,21 +124,22 @@ router.post("/partner/register-delivery", verifyToken, async (req, res) => {
 // POST /api/partner/register-farmer
 router.post("/partner/register-farmer", verifyToken, async (req, res) => {
     try {
-        const { farmName, category, location, phoneNumber, upiId, farmImage } = req.body;
-        const shop = new Shop({
-            shopName: farmName, category: category || "Vegetables", location: location || "India",
-            upiId: upiId || "", owner: req.user._id, verified: false, isFarmer: true,
+        const { farmName, category, location, phoneNumber, upiId, farmImage, price, quantity } = req.body;
+        const product = new Product({
+            productName: farmName, categories: category || "Vegetables", location: location || "India",
+            upiId: upiId || "", owner: req.user._id, verified: false, 
+            price: price ? Number(price) : 0, quantity: quantity ? Number(quantity) : 1,
             geometry: { type: "Point", coordinates: [77.2090, 28.6139] }
         });
         if (farmImage && typeof farmImage === 'string') {
             const { cloudinary } = require('../cloud_con');
             const uploadRes = await cloudinary.uploader.upload(farmImage, { folder: 'pasr_DEV' });
-            shop.shopImage = [{ url: uploadRes.secure_url, filename: uploadRes.public_id }];
+            product.productImage = [{ url: uploadRes.secure_url, filename: uploadRes.public_id }];
         } else {
-            shop.shopImage = [];
+            product.productImage = [];
         }
-        await shop.save();
-        res.json({ success: true, farmerId: shop._id, message: "Farmer registered successfully" });
+        await product.save();
+        res.json({ success: true, farmerId: product._id, message: "Farmer registered successfully as a product" });
     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
@@ -150,15 +151,28 @@ router.get("/partner/my-profiles", verifyToken, async (req, res) => {
         
         const profiles = [];
         
-        // 1. Shops and Farmers
+        // 1. Shops
         const shops = await Shop.find({ owner: userId });
         shops.forEach(shop => {
+            if (shop.isFarmer) return; // Legacy farmers might be here, skip or handle separately
             profiles.push({
                 _id: shop._id,
-                type: shop.isFarmer ? 'Farmer' : 'Shop Owner',
-                category: shop.category || (shop.isFarmer ? 'Agriculture' : 'Retail'),
+                type: 'Shop Owner',
+                category: shop.category || 'Retail',
                 businessName: shop.shopName,
                 image: shop.shopImage && shop.shopImage.length > 0 ? shop.shopImage[0].url : ''
+            });
+        });
+
+        // 1b. Farmers (now saved as Products)
+        const products = await Product.find({ owner: userId });
+        products.forEach(product => {
+            profiles.push({
+                _id: product._id,
+                type: 'Farmer',
+                category: product.categories || 'Agriculture',
+                businessName: product.productName,
+                image: product.productImage && product.productImage.length > 0 ? product.productImage[0].url : ''
             });
         });
 
