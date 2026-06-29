@@ -76,11 +76,11 @@ app.use(express.static(path.join(__dirname, "../frontend/public"), {
   etag: true,
   lastModified: true,
 }))
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(methodOverride("_method"));
 app.use(cookieParser(process.env.SECRET));
 app.engine("ejs", ejsMate);
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
 // Trust proxy for secure cookies behind reverse proxies (Render, Heroku, etc.)
 app.set("trust proxy", 1);

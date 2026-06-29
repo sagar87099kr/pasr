@@ -57,6 +57,90 @@ router.get("/partner/me", verifyToken, async (req, res) => {
         res.status(500).json({ success: false, message: e.message });
     }
 });
+// POST /api/partner/register-shop
+router.post("/partner/register-shop", verifyToken, async (req, res) => {
+    try {
+        const { shopName, shopDescription, category, location, openingTime, closingTime, upiId, shopImage } = req.body;
+        const shop = new Shop({
+            shopName, shopDescription: shopDescription || "", category, location: location || "India",
+            openingTime: openingTime || "09:00", closingTime: closingTime || "21:00", upiId: upiId || "",
+            owner: req.user._id, verified: false, isFarmer: false,
+            geometry: { type: "Point", coordinates: [77.2090, 28.6139] }
+        });
+        if (shopImage && typeof shopImage === 'string') {
+            const { cloudinary } = require('../cloud_con');
+            const uploadRes = await cloudinary.uploader.upload(shopImage, { folder: 'pasr_DEV' });
+            shop.shopImage = [{ url: uploadRes.secure_url, filename: uploadRes.public_id }];
+        } else {
+            shop.shopImage = [];
+        }
+        await shop.save();
+        res.json({ success: true, shopId: shop._id, message: "Shop registered successfully" });
+    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// POST /api/partner/register-provider
+router.post("/partner/register-provider", verifyToken, async (req, res) => {
+    try {
+        const { company, categories, location, experience, discription, price, personImage } = req.body;
+        const provider = new Provider({
+            company: company || "Freelancer", categories, location: location || "India",
+            experience: experience || 1, discription: discription || "", price: price || [0],
+            owner: req.user._id, verified: false, geometry: { type: "Point", coordinates: [77.2090, 28.6139] }
+        });
+        if (personImage && typeof personImage === 'string') {
+            const { cloudinary } = require('../cloud_con');
+            const uploadRes = await cloudinary.uploader.upload(personImage, { folder: 'pasr_DEV' });
+            provider.personImage = [{ url: uploadRes.secure_url, filename: uploadRes.public_id }];
+        } else {
+            provider.personImage = [];
+        }
+        await provider.save();
+        res.json({ success: true, providerId: provider._id, message: "Provider registered successfully" });
+    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// POST /api/partner/register-delivery
+router.post("/partner/register-delivery", verifyToken, async (req, res) => {
+    try {
+        const { fullName, phoneNumber, vehicleType, vehicleNumber, address, dateOfBirth, aadharNumber, panNumber } = req.body;
+        const customer = await Customer.findById(req.user._id);
+        const dp = new DeliveryPartner({
+            user: req.user._id, fullName, phoneNumber: phoneNumber || (customer ? customer.username : 0),
+            vehicleType: vehicleType || "bike", vehicleNumber: vehicleNumber || "",
+            dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : new Date("1990-01-01"),
+            address: { street: address || "India" }, workLocation: { lat: 28.6139, lng: 77.2090 },
+            documents: { aadharFront: "mock", aadharBack: "mock", panCard: "mock" },
+            aadharNumber: aadharNumber || "0000", panNumber: panNumber || "0000", isActive: false, isApproved: false
+        });
+        await dp.save();
+        res.json({ success: true, deliveryPartnerId: dp._id, message: "Delivery partner registered" });
+    } catch (e) {
+        if (e.code === 11000) return res.status(400).json({ success: false, message: "Delivery partner profile already exists." });
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// POST /api/partner/register-farmer
+router.post("/partner/register-farmer", verifyToken, async (req, res) => {
+    try {
+        const { farmName, category, location, phoneNumber, upiId, farmImage } = req.body;
+        const shop = new Shop({
+            shopName: farmName, category: category || "Vegetables", location: location || "India",
+            upiId: upiId || "", owner: req.user._id, verified: false, isFarmer: true,
+            geometry: { type: "Point", coordinates: [77.2090, 28.6139] }
+        });
+        if (farmImage && typeof farmImage === 'string') {
+            const { cloudinary } = require('../cloud_con');
+            const uploadRes = await cloudinary.uploader.upload(farmImage, { folder: 'pasr_DEV' });
+            shop.shopImage = [{ url: uploadRes.secure_url, filename: uploadRes.public_id }];
+        } else {
+            shop.shopImage = [];
+        }
+        await shop.save();
+        res.json({ success: true, farmerId: shop._id, message: "Farmer registered successfully" });
+    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
 
 // GET /api/partner/my-profiles
 router.get("/partner/my-profiles", verifyToken, async (req, res) => {
@@ -66,13 +150,13 @@ router.get("/partner/my-profiles", verifyToken, async (req, res) => {
         
         const profiles = [];
         
-        // 1. Shops
+        // 1. Shops and Farmers
         const shops = await Shop.find({ owner: userId });
         shops.forEach(shop => {
             profiles.push({
                 _id: shop._id,
-                type: 'Shop Owner',
-                category: shop.category || 'Retail',
+                type: shop.isFarmer ? 'Farmer' : 'Shop Owner',
+                category: shop.category || (shop.isFarmer ? 'Agriculture' : 'Retail'),
                 businessName: shop.shopName,
                 image: shop.shopImage && shop.shopImage.length > 0 ? shop.shopImage[0].url : ''
             });

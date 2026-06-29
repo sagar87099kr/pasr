@@ -84,7 +84,8 @@ const shopSchema = new Schema({
     isHoliday: { type: Boolean, default: false },  // Owner sets holiday today
     gstNumber: { type: String, default: "" },
     deliveryEnabled: { type: Boolean, default: false },
-    serviceAreaRadius: { type: Number, default: 10 }
+    serviceAreaRadius: { type: Number, default: 10 },
+    isFarmer: { type: Boolean, default: false }
 });
 
 shopSchema.index({ geometry: '2dsphere' });
