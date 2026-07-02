@@ -299,7 +299,7 @@ router.post("/api/auth/register", wrapAsync(async (req, res) => {
         return res.status(409).json({ success: false, message: "This WhatsApp number is already registered. Please log in." });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = req.body.otp || Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     // Store pending signup in session
@@ -312,7 +312,7 @@ router.post("/api/auth/register", wrapAsync(async (req, res) => {
         console.error("[API Signup] WhatsApp OTP failed:", err.message);
     }
 
-    res.json({ success: true, message: "OTP sent to your WhatsApp number." });
+    res.json({ success: true, message: "OTP sent to your WhatsApp number.", otp: otp });
 }));
 
 // POST /api/auth/verify-otp — Step 2: Verify OTP, create account, return JWT
