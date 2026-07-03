@@ -468,8 +468,9 @@ router.post("/shop/billing", verifyToken, async (req, res) => {
 // POST /api/shop/products
 router.post("/shop/products", verifyToken, async (req, res) => {
     try {
-        const { shopId, productId, price, originalPrice, stock, discountPercent, offerName, quantity, inStock, status, deliveryType, maxDeliveryDistance, availableForDelivery, canDeliverByBike } = req.body;
-        if (!shopId || !productId) return res.status(400).json({ success: false, message: "Missing shopId or productId" });
+        const { shopId, productId, price, originalPrice, stock, discountPercent, offerName, quantity, inStock, status, deliveryType, maxDeliveryDistance, availableForDelivery, canDeliverByBike, name, category, description, image } = req.body;
+        if (!shopId) return res.status(400).json({ success: false, message: "Missing shopId" });
+        if (!productId && !name) return res.status(400).json({ success: false, message: "Missing productId or name" });
 
         const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
         if (!shop) return res.status(403).json({ success: false, message: "Forbidden" });
@@ -477,7 +478,6 @@ router.post("/shop/products", verifyToken, async (req, res) => {
         // Item model fields: shop, product, price, quantity (number), discount, isActive
         const newItem = new Item({
             shop: shopId,
-            product: productId,
             price: price || 0,
             quantity: stock || 1,
             discount: discountPercent || 0,
@@ -488,7 +488,26 @@ router.post("/shop/products", verifyToken, async (req, res) => {
             canDeliverByBike: canDeliverByBike !== false
         });
 
+        if (productId) {
+            newItem.product = productId;
+        } else {
+            newItem.name = name;
+            newItem.itemCategory = category;
+            newItem.description = description;
+            if (image && typeof image === 'string') {
+                if (image.startsWith('data:image')) {
+                    const { cloudinary } = require('../cloud_con');
+                    const uploadRes = await cloudinary.uploader.upload(image, { folder: 'pasr_DEV' });
+                    newItem.img = { url: uploadRes.secure_url, filename: uploadRes.public_id };
+                } else {
+                    newItem.img = { url: image };
+                }
+            }
+        }
+
         await newItem.save();
+        shop.items.push(newItem._id);
+        await shop.save();
         res.json({ success: true, product: newItem });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
@@ -522,7 +541,15 @@ router.put("/shop/products/:id", verifyToken, async (req, res) => {
         if (name !== undefined) item.name = name;
         if (category !== undefined) item.itemCategory = category;
         if (description !== undefined) item.description = description;
-        if (image !== undefined) item.img = { url: image };
+        if (image !== undefined) {
+            if (image && typeof image === 'string' && image.startsWith('data:image')) {
+                const { cloudinary } = require('../cloud_con');
+                const uploadRes = await cloudinary.uploader.upload(image, { folder: 'pasr_DEV' });
+                item.img = { url: uploadRes.secure_url, filename: uploadRes.public_id };
+            } else if (image) {
+                item.img = { url: image };
+            }
+        }
         if (price !== undefined) item.price = price;
         if (stock !== undefined) item.quantity = stock;
         if (discountPercent !== undefined) item.discount = discountPercent;
@@ -549,6 +576,9 @@ router.delete("/shop/products/:id", verifyToken, async (req, res) => {
 
         const item = await Item.findOneAndDelete({ _id: req.params.id, shop: shopId });
         if (!item) return res.status(404).json({ success: false, message: "Item not found" });
+
+        shop.items.pull(req.params.id);
+        await shop.save();
 
         res.json({ success: true, message: "Item deleted successfully" });
     } catch (e) {
