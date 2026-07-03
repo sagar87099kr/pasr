@@ -198,6 +198,7 @@ const SHOP_CATEGORIES = {
         { name: "First Aid", icon: "🩹" },
         { name: "Baby Care", icon: "👶" },
         { name: "Personal Care", icon: "🧴" },
+        { name: "Blood Test", icon: "🩸" },
         { name: "General", icon: "📦" }
     ],
     "Mobile Shop": [

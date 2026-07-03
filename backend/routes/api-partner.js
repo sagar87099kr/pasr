@@ -485,23 +485,23 @@ router.post("/shop/products", verifyToken, async (req, res) => {
             deliveryType: deliveryType || 'standard',
             maxDeliveryDistance: maxDeliveryDistance ? parseInt(maxDeliveryDistance) : 10,
             availableForDelivery: availableForDelivery !== false,
-            canDeliverByBike: canDeliverByBike !== false
+            canDeliverByBike: canDeliverByBike !== false,
+            name: name,
+            itemCategory: category,
+            description: description
         });
 
         if (productId) {
             newItem.product = productId;
-        } else {
-            newItem.name = name;
-            newItem.itemCategory = category;
-            newItem.description = description;
-            if (image && typeof image === 'string') {
-                if (image.startsWith('data:image')) {
-                    const { cloudinary } = require('../cloud_con');
-                    const uploadRes = await cloudinary.uploader.upload(image, { folder: 'pasr_DEV' });
-                    newItem.img = { url: uploadRes.secure_url, filename: uploadRes.public_id };
-                } else {
-                    newItem.img = { url: image };
-                }
+        }
+
+        if (image && typeof image === 'string') {
+            if (image.startsWith('data:image')) {
+                const { cloudinary } = require('../cloud_con');
+                const uploadRes = await cloudinary.uploader.upload(image, { folder: 'pasr_DEV' });
+                newItem.img = { url: uploadRes.secure_url, filename: uploadRes.public_id };
+            } else {
+                newItem.img = { url: image };
             }
         }
 
