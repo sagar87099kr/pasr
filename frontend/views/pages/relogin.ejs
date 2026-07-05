@@ -24,18 +24,15 @@
           <div class="invalid-feedback">Please provide your password.</div>
         </div>
 
+        <div style="text-align:right; margin-bottom: 8px; margin-top: -8px;">
+          <a href="/forgot-password"
+            style="color:#f97316; font-weight:700; font-size:13px; text-decoration:none;">
+            Forgot Password?
+          </a>
+        </div>
+
         <button class="btn-submit" type="submit">Log In</button>
 
-        <% if (typeof failedAttempts !=='undefined' && failedAttempts>= 2) { %>
-          <p
-            style="text-align:center; margin-top:20px; font-size:14px; color:#6b7280; background: #fffbeb; padding: 12px; border-radius: 8px; border: 1px solid #fde68a;">
-            Having trouble logging in?<br>
-            <a href="/forgot-password"
-              style="color:#d97706; font-weight:700; text-decoration:none; display:inline-block; margin-top:6px;">
-              🔑 Recover Password
-            </a>
-          </p>
-          <% } %>
       </form>
     </div>
   </div>

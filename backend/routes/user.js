@@ -484,6 +484,81 @@ router.post("/reset-password/:token", wrapAsync(async (req, res) => {
 }));
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─── MOBILE APP — FORGOT PASSWORD (OTP-based, stateless JSON) ───────────────
+// POST /api/auth/forgot-password  →  send 6-digit OTP to user's WhatsApp
+router.post("/api/auth/forgot-password", wrapAsync(async (req, res) => {
+    const { username } = req.body;
+
+    if (!username) {
+        return res.status(400).json({ success: false, message: "Phone number is required." });
+    }
+
+    const user = await Customer.findOne({ username: Number(username) });
+    if (!user) {
+        return res.status(404).json({ success: false, message: "No account found with this WhatsApp number." });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    // Store OTP in session so we can verify it in the next step
+    req.session.passwordResetOtp = { username: String(username), otp, otpExpiry };
+    await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve()));
+
+    try {
+        await sendWhatsAppOTP(username, otp);
+    } catch (err) {
+        console.error("[API ForgotPassword] WhatsApp OTP failed:", err.message);
+        // Don't fail the request — OTP is saved in session, user can retry
+    }
+
+    res.json({ success: true, message: "OTP sent to your WhatsApp number." });
+}));
+
+// POST /api/auth/reset-password  →  verify OTP + set new password
+router.post("/api/auth/reset-password", wrapAsync(async (req, res) => {
+    const { username, otp, newPassword } = req.body;
+
+    if (!username || !otp || !newPassword) {
+        return res.status(400).json({ success: false, message: "Phone, OTP, and new password are required." });
+    }
+
+    const pending = req.session.passwordResetOtp;
+
+    if (!pending || pending.username !== String(username)) {
+        return res.status(400).json({ success: false, message: "Session expired. Please request a new OTP." });
+    }
+
+    if (Date.now() > pending.otpExpiry) {
+        req.session.passwordResetOtp = null;
+        return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
+    }
+
+    if (otp.trim() !== pending.otp) {
+        return res.status(400).json({ success: false, message: "Incorrect OTP. Please try again." });
+    }
+
+    if (newPassword.length < 4) {
+        return res.status(400).json({ success: false, message: "Password must be at least 4 characters." });
+    }
+
+    const user = await Customer.findOne({ username: Number(username) });
+    if (!user) {
+        return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    await user.setPassword(newPassword);
+    user.resetToken = null;
+    user.resetTokenExpiry = null;
+    await user.save();
+
+    // Clear the OTP from session
+    req.session.passwordResetOtp = null;
+
+    res.json({ success: true, message: "Password updated successfully! Please log in with your new password." });
+}));
+// ─────────────────────────────────────────────────────────────────────────────
+
 
 // here i am going to create a new page where people will able to see their profile. 
 router.get("/user", isLogedin, saveRedirectUrl, wrapAsync(async (req, res) => {

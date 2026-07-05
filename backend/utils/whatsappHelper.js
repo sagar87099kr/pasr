@@ -20,9 +20,12 @@ async function sendWhatsAppOTP(phone, otp) {
     const templateName = process.env.WHATSAPP_OTP_TEMPLATE_NAME || 'otp_verification';
 
     if (!phoneNumberId || !accessToken) {
-        console.warn("\n⚠️ WhatsApp API credentials missing from .env.");
-        console.warn(`Generated OTP to be sent to ${phone}: [ ${otp} ]`);
-        console.warn("Skipping real API call. Please provide credentials.\n");
+        console.log('\n' + '='.repeat(60));
+        console.log('⚠️  WhatsApp API credentials missing from .env');
+        console.log('='.repeat(60));
+        console.log(`📱 Phone: ${phone}`);
+        console.log(`🔑 OTP  : ${otp}   ← USE THIS TO TEST`);
+        console.log('='.repeat(60) + '\n');
         return { success: false, simulated: true, otp };
     }
 
