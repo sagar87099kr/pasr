@@ -122,7 +122,30 @@ module.exports.checkoutOrder = async (req, res, next) => {
             deliveryCharge = 0;
             distanceInKm = 0;
         } else {
-            // HOME_DELIVERY: location and distance logic
+            // HOME_DELIVERY: time, bazaar, location and distance logic
+            
+            // 1. Time Restriction (9 AM to 6 PM IST)
+            const now = new Date();
+            const istOffsetMs = 5.5 * 60 * 60 * 1000;
+            const nowIST = new Date(now.getTime() + istOffsetMs);
+            const istH = nowIST.getUTCHours();
+            
+            if (istH < 9 || istH >= 18) {
+                for (let revert of inventoryUpdates) {
+                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                }
+                return res.status(400).json({ success: false, message: "Sorry we can delivery product only in 9am to 6pm." });
+            }
+
+            // 2. Bazaar Restriction
+            const bazaarName = shopItems[0].bazaarName || '';
+            if (!bazaarName.toLowerCase().includes('dhanwar')) {
+                for (let revert of inventoryUpdates) {
+                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                }
+                return res.status(400).json({ success: false, message: "Home Delivery is only available for shops in Dhanwar. Please choose Self Pickup." });
+            }
+
             let cLoc = null;
             if (lat && lng) {
                 cLoc = [parseFloat(lng), parseFloat(lat)]; // [lng, lat]
@@ -166,12 +189,12 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 true
             );
 
-            // Validate Distance (Max 10km)
-            if (distanceInKm > 10) {
+            // Validate Distance (Max 5km)
+            if (distanceInKm > 5) {
                 for (let revert of inventoryUpdates) {
                     await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
                 }
-                return res.status(400).json({ success: false, message: "Delivery not available beyond 10 km." });
+                return res.status(400).json({ success: false, message: "Delivery not available beyond 5 km." });
             }
 
             // Calculate Delivery Pricing metrics
@@ -201,15 +224,27 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 deliveryAddress = `Near ${cLoc[1].toFixed(4)}, ${cLoc[0].toFixed(4)}`;
             }
 
-            // Check first-order free delivery eligibility (by mobile number)
-            const mobile = String(req.user.username);
-            const existingFreeDelivery = await FreeDeliveryUsage.findOne({ mobile });
-            if (!existingFreeDelivery) {
-                // First home-delivery order — waive delivery charge
-                firstOrderDiscount = deliveryCharge;
-                deliveryCharge = 0;
-                grantFreeDelivery = true; // flag to save usage record after order is saved
+            // Free Delivery Logic: First order is free, otherwise minimum subtotal of 57 is required
+            let isFirstOrder = false;
+            if (req.user && req.user.username) {
+                const existing = await FreeDeliveryUsage.findOne({ mobile: String(req.user.username) });
+                if (!existing) isFirstOrder = true;
             }
+
+            let effectiveDeliveryCharge = deliveryCharge;
+            if (isFirstOrder || subtotalAmount >= 57) {
+                effectiveDeliveryCharge = 0;
+                grantFreeDelivery = isFirstOrder; // Only track usage if they claimed the first order promo
+            } else {
+                // Minimum bill amount of 57 for non-first orders if they don't get free delivery
+                if (subtotalAmount + effectiveDeliveryCharge < 57) {
+                    effectiveDeliveryCharge = 57 - subtotalAmount;
+                }
+                grantFreeDelivery = false;
+            }
+
+            firstOrderDiscount = deliveryCharge - effectiveDeliveryCharge; // the actual discount given
+            deliveryCharge = effectiveDeliveryCharge;
         }
 
         let totalAmount = subtotalAmount + deliveryCharge;
@@ -247,6 +282,17 @@ module.exports.checkoutOrder = async (req, res, next) => {
             }
         }
 
+        // Determine Delivery Priority based on items' deliveryCategory
+        let deliveryPriority = 'GREEN';
+        if (shopItems.length > 0) {
+            const Item = require("../data/item");
+            const dbItems = await Item.find({ _id: { $in: shopItems.map(i => i.itemId) } });
+            for (let it of dbItems) {
+                if (it.deliveryCategory === 'quick') deliveryPriority = 'RED';
+                else if (it.deliveryCategory === 'fast' && deliveryPriority !== 'RED') deliveryPriority = 'YELLOW';
+            }
+        }
+
         // Create Order Document
         const order = new Order({
             orderId: clientOrderId || generateOrderId(),
@@ -258,6 +304,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
             totalAmount,
             distanceInKm,
             deliveryType,
+            deliveryPriority,
             deliveryAddress,
             firstOrderDiscount,
             coinDiscount,
@@ -501,6 +548,7 @@ module.exports.shopPackOrder = async (req, res, next) => {
 
         // Emit Event
         orderBus.emit("ORDER_PACKED", order);
+        orderBus.emit("DELIVERY_BROADCAST", order);
 
         res.status(200).json({ success: true, message: "Order marked as packed.", order });
     } catch (e) {

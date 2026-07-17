@@ -85,7 +85,10 @@ const shopSchema = new Schema({
     gstNumber: { type: String, default: "" },
     deliveryEnabled: { type: Boolean, default: false },
     serviceAreaRadius: { type: Number, default: 10 },
-    isFarmer: { type: Boolean, default: false }
+    isFarmer: { type: Boolean, default: false },
+    aiCatalogCredits: { type: Number, default: 5 },
+    totalAiCatalogsGenerated: { type: Number, default: 0 },
+    lastAiCreditRefillDate: { type: Date, default: Date.now }
 });
 
 shopSchema.index({ geometry: '2dsphere' });

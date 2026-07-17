@@ -3,7 +3,8 @@ const Schema = mongoose.Schema;
 const passportLocalMongoose = require("passport-local-mongoose").default;
 
 const deliveryPartnerSchema = new Schema({
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true }, // Link to standard user
+    user: { type: Schema.Types.ObjectId, ref: 'Customer', required: true, unique: true }, // Link to standard user
+    bazaar: { type: Schema.Types.ObjectId, ref: 'Bazaar' },
     fullName: { type: String, required: true },
     phoneNumber: { type: Number, required: true, unique: true },
     dateOfBirth: { type: Date, required: true },

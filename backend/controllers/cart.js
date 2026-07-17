@@ -34,16 +34,17 @@ module.exports.addToCart = async (req, res, next) => {
 
         let item = await Item.findById(itemId).populate({
             path: 'shop',
-            populate: {
-                path: 'owner'
-            }
+            populate: [
+                { path: 'owner' },
+                { path: 'bazaar' }
+            ]
         });
 
         let isProduct = false;
         if (!item) {
             // Check if it's a Local Bazar Product
             const Product = require("../data/product");
-            item = await Product.findById(itemId).populate('owner');
+            item = await Product.findById(itemId).populate('owner').populate('bazaar');
             if (item) isProduct = true;
         }
 
@@ -51,13 +52,15 @@ module.exports.addToCart = async (req, res, next) => {
             return res.status(404).json({ success: false, message: "Item not found." });
         }
 
-        let shopId, finalShopName, shopUpiId, shopOwnerUsername;
+        let shopId, finalShopName, shopUpiId, shopOwnerUsername, bazaarName, shopLocation;
 
         if (isProduct) {
             shopId = item.owner._id.toString();
             finalShopName = `Local Bazar: ${item.owner.name}`;
             shopUpiId = item.upiId || null;
             shopOwnerUsername = item.owner.username;
+            bazaarName = item.bazaar ? item.bazaar.bazaarName : null;
+            shopLocation = null; // Products might not have a strict location field on owner
         } else {
             if (!item.shop) {
                 return res.status(404).json({ success: false, message: "Shop associated with this item not found." });
@@ -66,6 +69,8 @@ module.exports.addToCart = async (req, res, next) => {
             finalShopName = shopName || item.shop.shopName || 'Local Shop';
             shopUpiId = item.shop.upiId || null;
             shopOwnerUsername = item.shop.owner ? item.shop.owner.username : null;
+            bazaarName = item.shop.bazaar ? item.shop.bazaar.bazaarName : null;
+            shopLocation = item.shop.location || null;
         }
 
         const cart = req.session.cart;
@@ -139,6 +144,8 @@ module.exports.addToCart = async (req, res, next) => {
                 shopName: finalShopName,
                 shopUpiId: shopUpiId,
                 shopOwnerUsername: shopOwnerUsername,
+                bazaarName: bazaarName,
+                shopLocation: shopLocation,
                 deliveryType: incomingDeliveryType,
                 canDeliverByBike: item.canDeliverByBike !== false,
                 preparationTime: item.preparationTime || 0,
@@ -285,15 +292,15 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
             true
         );
 
-        let maxAllowedDistance = 10;
+        let maxAllowedDistance = 5; // Updated to 5km max delivery distance
         if (cart.items.length > 0) {
-            maxAllowedDistance = Math.min(...cart.items.map(i => i.maxDeliveryDistance !== undefined ? i.maxDeliveryDistance : 10));
+            maxAllowedDistance = Math.min(5, ...cart.items.map(i => i.maxDeliveryDistance !== undefined ? i.maxDeliveryDistance : 5));
         }
 
         if (distanceInKm > maxAllowedDistance) {
             return res.status(400).json({
                 success: false,
-                message: `Unable to deliver to your location for now. Max delivery radius for your cart items is ${maxAllowedDistance} km.`
+                message: `Unable to deliver to your location for now. Max delivery radius is ${maxAllowedDistance} km.`
             });
         }
 
@@ -312,14 +319,21 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
             .filter(i => i.shopId === shopId)
             .reduce((acc, i) => acc + (i.price * i.quantity), 0);
 
-        // Check first-order free delivery eligibility by mobile number
         let isFirstOrder = false;
         if (req.user && req.user.username) {
             const existing = await FreeDeliveryUsage.findOne({ mobile: String(req.user.username) });
             if (!existing) isFirstOrder = true;
         }
 
-        const effectiveDeliveryCharge = isFirstOrder ? 0 : deliveryCharge;
+        let effectiveDeliveryCharge = deliveryCharge;
+        if (isFirstOrder || shopSubtotal >= 57) {
+            effectiveDeliveryCharge = 0;
+        } else {
+            // Minimum bill amount of 57 for non-first orders if they don't get free delivery
+            if (shopSubtotal + effectiveDeliveryCharge < 57) {
+                effectiveDeliveryCharge = 57 - shopSubtotal;
+            }
+        }
 
         res.status(200).json({
             success: true,

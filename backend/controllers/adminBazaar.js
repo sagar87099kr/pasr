@@ -1,5 +1,6 @@
 const Bazaar = require("../data/bazaar");
 const Shop = require("../data/shops");
+const Provider = require("../data/serviceproviders");
 
 module.exports.getBazaars = async (req, res, next) => {
     try {
@@ -57,5 +58,31 @@ module.exports.assignBazaarToShop = async (req, res, next) => {
         }
         req.flash("error", "Failed to update bazaar assignment.");
         res.redirect("/shops/verify");
+    }
+};
+
+module.exports.assignBazaarToProvider = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { bazaarId } = req.body;
+        
+        if (!bazaarId) {
+            await Provider.findByIdAndUpdate(id, { $unset: { bazaar: 1 } });
+        } else {
+            await Provider.findByIdAndUpdate(id, { bazaar: bazaarId });
+        }
+
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.json({ success: true, message: "Bazaar assigned successfully." });
+        }
+        
+        req.flash("success", "Bazaar assignment updated.");
+        res.redirect("/provider/verify");
+    } catch (e) {
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.status(500).json({ success: false, message: e.message });
+        }
+        req.flash("error", "Failed to update bazaar assignment.");
+        res.redirect("/provider/verify");
     }
 };

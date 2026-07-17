@@ -25,6 +25,7 @@ const orderSchema = new Schema({
     partnerProfit: { type: Number, default: 0 },
 
     deliveryType: { type: String, enum: ['HOME_DELIVERY', 'SELF_PICKUP', 'SHOP_PICKUP'], default: 'SHOP_PICKUP' },
+    deliveryPriority: { type: String, enum: ['RED', 'YELLOW', 'GREEN'], default: 'YELLOW' },
     deliveryAddress: { type: String, default: '' },
     firstOrderDiscount: { type: Number, default: 0 },
 

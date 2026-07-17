@@ -112,6 +112,11 @@ const productSchema = new Schema({
         type: Number,
         default: 10
     },
+    deliveryCategory: {
+        type: String,
+        enum: ['quick', 'fast', 'normal', 'not_deliverable'],
+        default: 'normal'
+    },
     createdAt: {
         type: Date,
         default: Date.now

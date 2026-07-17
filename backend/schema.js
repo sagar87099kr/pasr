@@ -145,3 +145,10 @@ module.exports.productSchema = Joi.object({
         maxQuantityPerOrder: Joi.number().min(1).optional()
     }).required()
 });
+
+module.exports.updateAddressSchema = Joi.object({
+    address: Joi.string().min(5).max(300).required(),
+    lat: Joi.number().optional().allow(null, ""),
+    lng: Joi.number().optional().allow(null, ""),
+    pincode: Joi.number().optional().allow(null, "")
+});

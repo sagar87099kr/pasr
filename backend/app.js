@@ -35,7 +35,7 @@ if (!dbUrl) {
   throw new Error("ATLAS_DB is missing in your .env file");
 }
 
-const clientPromise = mongoose.connect(dbUrl, { family: 4 })
+const clientPromise = mongoose.connect(dbUrl, { family: 4, tlsInsecure: true })
   .then(() => {
     console.log("connected to databases");
     return mongoose.connection.getClient();
@@ -93,7 +93,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.socket.io", "https://www.googletagmanager.com", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://cdn.jsdelivr.net", "https://translate.googleapis.com", "https://translate.google.com", "https://connect.facebook.net", "https://www.gstatic.com", "https://apis.google.com", "https://checkout.razorpay.com"],
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://www.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://maps.gstatic.com", "https://maps.googleapis.com", "https://www.facebook.com", "https://fonts.gstatic.com", "*.googleapis.com", "*.gstatic.com", "https://images.unsplash.com", "https://plus.unsplash.com", "https://lh3.googleusercontent.com", "https://lh4.googleusercontent.com", "https://lh5.googleusercontent.com", "https://lh6.googleusercontent.com", "blob:"],
+      imgSrc: ["'self'", "data:", "https://api.qrserver.com", "https://res.cloudinary.com", "https://maps.gstatic.com", "https://maps.googleapis.com", "https://www.facebook.com", "https://fonts.gstatic.com", "*.googleapis.com", "*.gstatic.com", "https://images.unsplash.com", "https://plus.unsplash.com", "https://lh3.googleusercontent.com", "https://lh4.googleusercontent.com", "https://lh5.googleusercontent.com", "https://lh6.googleusercontent.com", "blob:"],
       connectSrc: ["'self'", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://translate.googleapis.com", "https://api.mapbox.com", "https://events.mapbox.com", "https://*.googleapis.com", "https://*.firebaseio.com", "wss://*.firebaseio.com", "https://*.gstatic.com", "https://*.razorpay.com", "https://checkout.razorpay.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "https://ka-f.fontawesome.com"],
       frameSrc: ["'self'", "https://*.razorpay.com", "https://checkout.razorpay.com"],
@@ -322,7 +322,7 @@ app.use("/api/fcm", require("./routes/fcm.js"));
 app.use("/api/payment", require("./routes/payment.js"));
 app.use("/api/bazaars", require("./routes/bazaar.js"));
 app.use("/api", require("./routes/api-partner.js"));
-
+app.use("/api/admin", require("./routes/adminApi.js"));
 app.use((req, res, next) => {
   next(new ExpressError(404, "Page not found!"));
 });

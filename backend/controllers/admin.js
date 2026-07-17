@@ -1,14 +1,37 @@
 const DeliveryPartner = require("../data/deliveryPartner");
+const Bazaar = require("../data/bazaar");
 const Order = require("../data/order");
 const orderBus = require("../events/eventBus");
 
 // View all delivery partners
 module.exports.getAllPartners = async (req, res, next) => {
     try {
-        const partners = await DeliveryPartner.find({}).sort({ createdAt: -1 });
-        res.status(200).json({ success: true, partners });
+        const partners = await DeliveryPartner.find({}).populate('bazaar').sort({ createdAt: -1 });
+        const bazaars = await Bazaar.find({ isActive: true }).sort({ name: 1 });
+        res.locals.containerClass = 'container-fluid w-100 p-3 p-md-5 m-0';
+        res.render('pages/adminDeliveryPartners.ejs', { partners, bazaars });
     } catch (e) {
         next(e);
+    }
+};
+
+// Assign Bazaar to a delivery partner
+module.exports.assignBazaarToPartner = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { bazaarId } = req.body;
+        
+        if (!bazaarId) {
+            await DeliveryPartner.findByIdAndUpdate(id, { $unset: { bazaar: 1 } });
+            req.flash("success", "Bazaar assignment removed.");
+        } else {
+            await DeliveryPartner.findByIdAndUpdate(id, { bazaar: bazaarId });
+            req.flash("success", "Bazaar successfully assigned.");
+        }
+        res.redirect("/admin/delivery-partners");
+    } catch (e) {
+        req.flash("error", "Failed to update bazaar assignment.");
+        res.redirect("/admin/delivery-partners");
     }
 };
 
@@ -21,7 +44,7 @@ module.exports.approvePartner = async (req, res, next) => {
             req.flash("danger", "Delivery Partner not found.");
             return res.redirect("back"); // Adjust route based on frontend
         }
-        res.status(200).json({ success: true, message: "Partner approved successfully.", partner });
+        res.redirect("back");
     } catch (e) {
         next(e);
     }
@@ -36,7 +59,25 @@ module.exports.blockPartner = async (req, res, next) => {
             req.flash("danger", "Delivery Partner not found.");
             return res.redirect("back");
         }
-        res.status(200).json({ success: true, message: "Partner blocked successfully.", partner });
+        res.redirect("back");
+    } catch (e) {
+        next(e);
+    }
+};
+
+// Toggle active status for delivery partner
+module.exports.togglePartnerActive = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const partner = await DeliveryPartner.findById(id);
+        if (!partner) {
+            req.flash("danger", "Delivery Partner not found.");
+            return res.redirect("back");
+        }
+        partner.isActive = !partner.isActive;
+        await partner.save();
+        req.flash("success", `Delivery Partner set to ${partner.isActive ? 'Online' : 'Offline'}.`);
+        res.redirect("back");
     } catch (e) {
         next(e);
     }
@@ -106,15 +147,17 @@ module.exports.forceCancelOrder = async (req, res, next) => {
     }
 };
 
-// View KYC Documents
+// Admin - View KYC Documents
 module.exports.viewKycDocuments = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const partner = await DeliveryPartner.findById(id).select('documents aadharNumber panNumber bankDetails');
+        const partner = await DeliveryPartner.findById(id).populate('bazaar');
         if (!partner) {
-            return res.status(404).json({ success: false, message: "Partner not found." });
+            req.flash("error", "Partner not found.");
+            return res.redirect("/admin/delivery-partners");
         }
-        res.status(200).json({ success: true, kyc: partner });
+        res.locals.containerClass = 'container-fluid w-100 p-3 p-md-5 m-0';
+        res.render('pages/adminDeliveryPartnerKyc.ejs', { partner });
     } catch (e) {
         next(e);
     }

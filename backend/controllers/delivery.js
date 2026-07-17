@@ -93,7 +93,8 @@ module.exports.getDashboard = async (req, res, next) => {
         }).populate({
             path: 'shopId',
             populate: { path: 'owner', select: 'name username' }
-        }).populate('customerId');
+        }).populate('customerId')
+          .populate('items.itemId');
 
         // Fetch all BROADCAST orders that are still unclaimed (any partner can claim them)
         const broadcastOrders = await Order.find({
@@ -101,8 +102,12 @@ module.exports.getDashboard = async (req, res, next) => {
         }).populate({
             path: 'shopId',
             populate: { path: 'owner', select: 'name username' }
-        }).populate('customerId');
+        }).populate('customerId')
+          .populate('items.itemId');
 
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.json({ success: true, partner, activeOrders: assignedOrders, broadcastOrders });
+        }
         res.render("pages/deliveryDashboard.ejs", { partner, activeOrders: assignedOrders, broadcastOrders });
     } catch (e) {
         next(e);

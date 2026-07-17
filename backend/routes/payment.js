@@ -10,4 +10,8 @@ router.post("/request-payout", isLogedin, paymentController.requestPayout);
 router.post("/pay-commission", isLogedin, paymentController.payCommission);
 router.post("/verify-commission", isLogedin, paymentController.verifyCommissionPayment);
 
+// Donations
+router.post("/donate/create-order", paymentController.createDonationOrder);
+router.post("/donate/verify", paymentController.verifyDonationPayment);
+
 module.exports = router;

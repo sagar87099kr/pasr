@@ -301,3 +301,60 @@ module.exports.verifyCommissionPayment = async (req, res) => {
         res.redirect(`/shops/${shopId}`);
     }
 };
+
+module.exports.createDonationOrder = async (req, res) => {
+    try {
+        const { amount } = req.body;
+        if (!amount || isNaN(amount) || amount <= 0) {
+            return res.status(400).json({ success: false, message: "Invalid donation amount." });
+        }
+
+        const Razorpay = require('razorpay');
+        const rzp = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET
+        });
+
+        const rzpOrder = await rzp.orders.create({
+            amount: Math.round(amount * 100), // amount in paise
+            currency: 'INR',
+            receipt: `donate_${Date.now()}`
+        });
+
+        res.json({
+            success: true,
+            razorpay: {
+                id: rzpOrder.id,
+                amount: rzpOrder.amount,
+                currency: rzpOrder.currency,
+                keyId: process.env.RAZORPAY_KEY_ID
+            }
+        });
+    } catch (e) {
+        console.error("Create Donation Order Error:", e);
+        res.status(500).json({ success: false, message: "Could not initiate donation payment." });
+    }
+};
+
+module.exports.verifyDonationPayment = async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        
+        const crypto = require("crypto");
+        const secret = (process.env.RAZORPAY_KEY_SECRET || "").trim();
+        const generated_signature = crypto
+            .createHmac('sha256', secret)
+            .update(razorpay_order_id + "|" + razorpay_payment_id)
+            .digest('hex');
+
+        if (generated_signature !== razorpay_signature) {
+            return res.status(400).json({ success: false, message: "Payment signature mismatch." });
+        }
+
+        // Successfully verified donation
+        res.json({ success: true, message: "Thank you for your generous support!" });
+    } catch (e) {
+        console.error("Verify Donation Error:", e);
+        res.status(500).json({ success: false, message: "Error verifying donation." });
+    }
+};

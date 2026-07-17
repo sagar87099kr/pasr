@@ -56,6 +56,12 @@ router.post("/delivery-partners/:id/approve", isLogedin, isadmin, catchAsync(adm
 router.post("/delivery-partners/:id/block", isLogedin, isadmin, catchAsync(adminController.blockPartner));
 
 
+// Admin - Assign Bazaar
+router.post("/delivery-partners/:id/bazaar", isLogedin, isadmin, catchAsync(adminController.assignBazaarToPartner));
+
+// Admin - Toggle Active Status
+router.post("/delivery-partners/:id/toggle-active", isLogedin, isadmin, catchAsync(adminController.togglePartnerActive));
+
 // Admin - View KYC Documents
 router.get("/delivery-partners/:id/kyc", isLogedin, isadmin, catchAsync(adminController.viewKycDocuments));
 
@@ -75,7 +81,8 @@ const adminBazaarController = require("../controllers/adminBazaar");
 router.get("/bazaars", isLogedin, isadmin, catchAsync(adminBazaarController.getBazaars));
 router.post("/bazaars", isLogedin, isadmin, catchAsync(adminBazaarController.createBazaar));
 
-// Admin - Assign Bazaars to Shops
+// Admin - Assign Bazaars to Shops and Providers
 router.post("/shops/:id/assign-bazaar", isLogedin, isadmin, catchAsync(adminBazaarController.assignBazaarToShop));
+router.post("/providers/:id/assign-bazaar", isLogedin, isadmin, catchAsync(adminBazaarController.assignBazaarToProvider));
 
 module.exports = router;

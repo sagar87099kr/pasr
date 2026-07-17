@@ -94,6 +94,15 @@ const itemSchema = new Schema({
         type: Number,
         default: 10
     },
+    deliveryCategory: {
+        type: String,
+        enum: ['quick', 'fast', 'normal', 'not_deliverable'],
+        default: 'normal'
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
     reviews: [
         {
             type: Schema.Types.ObjectId,

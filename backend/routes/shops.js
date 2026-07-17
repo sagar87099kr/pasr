@@ -973,4 +973,67 @@ router.delete("/items/:id/reviews/:reviewId", isLogedin, isItemReviewAuthor, wra
     res.redirect(`/items/${id}`);
 }));
 
+// AI Catalog Credit Routes (API)
+router.get("/api/shops/:id/ai-credits", wrapAsync(async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.id);
+        if (!shop) return res.status(404).json({ error: "Shop not found" });
+
+        // Initialize for existing shops that don't have the field yet
+        if (shop.aiCatalogCredits === undefined) {
+            shop.aiCatalogCredits = 5;
+            shop.lastAiCreditRefillDate = new Date();
+            await shop.save();
+        }
+
+        // Auto-refill logic: 5 free credits every month
+        const now = new Date();
+        const lastRefill = shop.lastAiCreditRefillDate || shop.createdAt;
+        
+        if (now.getMonth() !== lastRefill.getMonth() || now.getFullYear() !== lastRefill.getFullYear()) {
+            shop.aiCatalogCredits = (shop.aiCatalogCredits || 0) + 5;
+            shop.lastAiCreditRefillDate = now;
+            await shop.save();
+        }
+
+        return res.json({ credits: shop.aiCatalogCredits });
+    } catch (e) {
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+}));
+
+router.post("/api/shops/:id/ai-credits/consume", wrapAsync(async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.id);
+        if (!shop) return res.status(404).json({ error: "Shop not found" });
+        
+        if (shop.aiCatalogCredits <= 0) {
+            return res.status(403).json({ error: "Insufficient AI credits" });
+        }
+        
+        shop.aiCatalogCredits -= 1;
+        shop.totalAiCatalogsGenerated = (shop.totalAiCatalogsGenerated || 0) + 1;
+        await shop.save();
+        
+        return res.json({ success: true, creditsRemaining: shop.aiCatalogCredits });
+    } catch (e) {
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+}));
+
+router.post("/api/shops/:id/ai-credits/add", wrapAsync(async (req, res) => {
+    try {
+        const { amount } = req.body;
+        const shop = await Shop.findById(req.params.id);
+        if (!shop) return res.status(404).json({ error: "Shop not found" });
+        
+        shop.aiCatalogCredits = (shop.aiCatalogCredits || 0) + (amount || 100);
+        await shop.save();
+        
+        return res.json({ success: true, creditsRemaining: shop.aiCatalogCredits });
+    } catch (e) {
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+}));
+
 module.exports = router;

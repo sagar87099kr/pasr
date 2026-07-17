@@ -1,13 +1,15 @@
 const Customer = require("../data/customers");
 const { forwardGeocode } = require("../utils/geocoder");
+const { updateAddressSchema } = require("../schema");
 
 module.exports.updateAddress = async (req, res, next) => {
     try {
-        const { address, lat, lng, pincode } = req.body;
-
-        if (!address) {
-            return res.status(400).json({ success: false, message: "Address is required." });
+        const { error } = updateAddressSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({ success: false, message: error.details[0].message });
         }
+
+        const { address, lat, lng, pincode } = req.body;
 
         let geometry = null;
         if (lat && lng) {
@@ -27,11 +29,23 @@ module.exports.updateAddress = async (req, res, next) => {
             }
         }
 
-        const updateData = { address };
-        if (geometry) updateData.geometry = geometry;
-        if (pincode) updateData.pincode = pincode;
+        const customer = await Customer.findById(req.user._id);
+        
+        // Save to savedAddresses if not already present
+        const existing = customer.savedAddresses.find(a => a.addressStr === address);
+        if (!existing) {
+            customer.savedAddresses.push({
+                label: 'Other',
+                addressStr: address,
+                geometry: geometry
+            });
+        }
+        
+        customer.address = address;
+        if (geometry) customer.geometry = geometry;
+        if (pincode) customer.pincode = pincode;
 
-        await Customer.findByIdAndUpdate(req.user._id, updateData);
+        await customer.save();
 
         res.status(200).json({
             success: true,
