@@ -143,14 +143,16 @@ module.exports.isProductOwner = async (req, res, next) => {
 
 module.exports.isVerifiedCustomer = async (req, res, next) => {
     try {
-        // IMPORTANT: choose the correct id source:
-        // - If your route is like /customer/:id/... use req.params.id
-        // - If you're checking logged-in customer, use req.user._id (recommended)
+        const customerId = req.user?._id;
 
-        const customerId = req.user?._id; // recommended for logged-in user
-        // const customerId = req.params.id; // if you really want param-based
+        // Helper: detect API/mobile requests
+        const isApiRequest = req.headers.authorization?.startsWith('Bearer ') ||
+            req.xhr ||
+            req.headers.accept?.includes('application/json') ||
+            (req.originalUrl.startsWith('/api/') && req.method !== 'GET');
 
         if (!customerId) {
+            if (isApiRequest) return res.status(401).json({ success: false, message: "Please login first." });
             req.flash("danger", "Please login first.");
             return res.redirect("/login");
         }
@@ -158,6 +160,7 @@ module.exports.isVerifiedCustomer = async (req, res, next) => {
         const mongoose = require('mongoose');
         if (!mongoose.Types.ObjectId.isValid(customerId)) {
             console.error(`[Middleware] Invalid customer ID for verification: ${customerId}`);
+            if (isApiRequest) return res.status(400).json({ success: false, message: "Invalid account state. Please contact support." });
             req.flash("danger", "Invalid account state. Please contact support.");
             return res.redirect("/home");
         }
@@ -165,18 +168,18 @@ module.exports.isVerifiedCustomer = async (req, res, next) => {
         const customer = await Customer.findById(customerId);
 
         if (!customer) {
+            if (isApiRequest) return res.status(404).json({ success: false, message: "Customer not found." });
             req.flash("danger", "Customer not found.");
             return res.redirect("/home");
         }
 
         if (customer.verified !== true) {
+            if (isApiRequest) return res.status(403).json({ success: false, message: "Your account is not verified. Please verify your phone number to place orders." });
             req.flash("danger", "You are not verified yet.");
             return res.redirect("/home");
         }
 
-        // optional: keep it available for next handlers
         res.locals.currentCustomer = customer;
-
         next();
     } catch (err) {
         next(err);

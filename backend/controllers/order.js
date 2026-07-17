@@ -141,17 +141,22 @@ module.exports.checkoutOrder = async (req, res, next) => {
 
 
             let cLoc = null;
-            if (lat && lng) {
-                cLoc = [parseFloat(lng), parseFloat(lat)]; // [lng, lat]
+            const parsedLat = parseFloat(lat);
+            const parsedLng = parseFloat(lng);
+            console.log(`[Checkout HOME_DELIVERY] lat=${lat} lng=${lng} → parsedLat=${parsedLat} parsedLng=${parsedLng}`);
+
+            if (isFinite(parsedLat) && isFinite(parsedLng)) {
+                cLoc = [parsedLng, parsedLat]; // [lng, lat]
             } else if (req.user.geometry && req.user.geometry.coordinates) {
                 cLoc = req.user.geometry.coordinates;
+                console.log(`[Checkout HOME_DELIVERY] Using user profile geometry: ${JSON.stringify(cLoc)}`);
             }
 
-            if (!cLoc || cLoc.length !== 2) {
+            if (!cLoc || cLoc.length !== 2 || !isFinite(cLoc[0]) || !isFinite(cLoc[1])) {
                 for (let revert of inventoryUpdates) {
                     await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
                 }
-                return res.status(400).json({ success: false, message: "Please enable location services or update your profile." });
+                return res.status(400).json({ success: false, message: "Please select a valid delivery address to continue." });
             }
 
             // Fetch Shop location
@@ -184,6 +189,18 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 sLoc[1], sLoc[0],
                 true
             );
+            console.log(`[Checkout HOME_DELIVERY] distanceInKm=${distanceInKm}`);
+
+            // Guard against NaN distance (can happen if Google Maps API fails and coords are borderline)
+            if (!isFinite(distanceInKm) || isNaN(distanceInKm)) {
+                for (let revert of inventoryUpdates) {
+                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                }
+                return res.status(400).json({ success: false, message: "Could not calculate delivery distance. Please try again." });
+            }
+
+            // Treat 0 distance as minimum 0.1 km (shop and customer at same coordinates)
+            if (distanceInKm === 0) distanceInKm = 0.1;
 
             // Validate Distance (Max 5km)
             if (distanceInKm > 5) {

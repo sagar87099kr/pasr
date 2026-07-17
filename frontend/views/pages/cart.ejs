@@ -832,6 +832,7 @@
                         } else {
                             addrPanel.style.display = 'block';
                             userInfo.style.display = 'block';
+                            updateCodVisibility(shopId, section.dataset.total);
 
                             // Load current user location if available
                             <% if (currUser && currUser.geometry && currUser.geometry.coordinates) { %>

@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@googlemaps/google-maps-services-js": "^3.4.2",
+    "axios": "^1.18.1",
     "cloudinary": "^2.8.0",
     "compression": "^1.8.1",
     "connect-flash": "^0.1.1",
@@ -36,6 +37,7 @@
     "method-override": "^3.0.0",
     "mongodb": "^7.0.0",
     "mongoose": "^9.0.0",
+    "msg91": "^2.2.8",
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
     "node-cron": "^4.2.1",

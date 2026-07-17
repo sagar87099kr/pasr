@@ -11,9 +11,12 @@ const { PRICING_TIERS, FUEL_COST_PER_KM_ONE_WAY, MAX_DELIVERY_DISTANCE } = requi
  */
 function calculateDeliveryPricing(distanceKm) {
     // 1. Validate inputs
-    if (typeof distanceKm !== 'number' || isNaN(distanceKm) || distanceKm <= 0) {
+    if (typeof distanceKm !== 'number' || isNaN(distanceKm) || distanceKm < 0) {
         throw new Error("Invalid distance provided.");
     }
+
+    // Treat 0 distance (same location or very close) as 0.1 km minimum
+    if (distanceKm === 0) distanceKm = 0.1;
 
     if (distanceKm > MAX_DELIVERY_DISTANCE) {
         throw new Error(`Delivery not available beyond ${MAX_DELIVERY_DISTANCE} km.`);

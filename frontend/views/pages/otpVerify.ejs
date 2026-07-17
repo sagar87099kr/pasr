@@ -81,17 +81,18 @@
                     </strong></p>
             </div>
 
-            <!-- Step 1: Send OTP via WhatsApp -->
+            <!-- SMS OTP notice -->
             <div style="margin-bottom: 20px;">
                 <div class="otp-step">
-                    <div class="otp-step-num">1</div>
+                    <div class="otp-step-num" style="background:#1E3A8A;">1</div>
                     <div class="otp-step-text">
-                        <strong>Send the OTP to yourself on WhatsApp</strong><br>
-                        Click the button below — WhatsApp will open with your OTP pre-filled as a message to your own
-                        number.
+                        <strong>OTP sent to your mobile number</strong><br>
+                        A 6-digit OTP has been sent to <strong>+91 <%= phone %></strong> via SMS. Check your messages.
                     </div>
                 </div>
 
+                <!--
+                    WhatsApp self-send button (commented out — replaced by MSG91 SMS)
                 <% const msg="Your PaSr signup OTP is: " + otp
                     + "\n\nDo not share this with anyone. Valid for 10 minutes." ; const waUrl="https://wa.me/91" +
                     phone + "?text=" + encodeURIComponent(msg); %>
@@ -101,13 +102,14 @@
                         <i class="fa-brands fa-whatsapp" style="font-size:20px;"></i>
                         Send OTP to Myself via WhatsApp
                     </a>
+                -->
 
                     <!-- Step 2: Enter OTP -->
                     <div class="otp-step">
                         <div class="otp-step-num">2</div>
                         <div class="otp-step-text">
                             <strong>Enter the OTP you received</strong><br>
-                            Open your WhatsApp, send the message to yourself, then enter the 6-digit code below.
+                            Enter the 6-digit code from your SMS below.
                         </div>
                     </div>
 
@@ -134,7 +136,7 @@
 
     <script>
         // Countdown timer
-        let seconds = 10 * 60;
+        let seconds = 5 * 60;
         const el = document.getElementById('countdown');
         const interval = setInterval(() => {
             seconds--;

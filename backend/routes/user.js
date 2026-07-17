@@ -15,7 +15,8 @@ const { validatecustomer, saveRedirectUrl, isLogedin, isadmin, isLoggedOut } = r
 const wrapAsync = require("../utils/wrapAsync.js");
 const userController = require("../controllers/user.js");
 const { forwardGeocode } = require("../utils/geocoder");
-const { sendWhatsAppOTP } = require("../utils/whatsappHelper");
+// const { sendWhatsAppOTP } = require("../utils/whatsappHelper"); // Replaced by MSG91
+const { sendOTP, verifyOTP } = require("../utils/msg91Helper");
 
 // Helper to generate a unique referral code
 async function generateReferralCode() {
@@ -57,13 +58,13 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
         // Check if this number is already registered
         const existing = await Customer.findOne({ username: Number(username) });
         if (existing) {
-            req.flash("danger", "This WhatsApp number is already registered. Please log in.");
+            req.flash("danger", "This mobile number is already registered. Please log in.");
             return res.redirect("/customer/signup");
         }
 
         let pincode = null;
         let geometry = null;
-        
+
         if (address && address.trim() !== '') {
             // Geocode the address to get coordinates
             const geoData = await forwardGeocode(address);
@@ -81,19 +82,16 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
             geometry = geoData.body.features[0].geometry;
         }
 
-        // Generate 6-digit OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-        // Save pending data in session (no DB write yet)
-        req.session.pendingSignup = { name, username, password, address, pincode, geometry, otp, otpExpiry, referralCode };
+        // Save pending data in session (no OTP stored here — MSG91 owns the OTP)
+        const otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes (for session expiry guard)
+        req.session.pendingSignup = { name, username, password, address, pincode, geometry, otpExpiry, referralCode };
         await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve()));
 
         try {
-            await sendWhatsAppOTP(username, otp);
+            await sendOTP(username);
         } catch (error) {
-            console.error("Failed to send OTP via WhatsApp:", error.message);
-            req.flash("warning", "There was an issue sending the WhatsApp OTP, please try again later.");
+            console.error("Failed to send OTP via MSG91:", error.message);
+            req.flash("warning", "There was an issue sending the OTP, please try again later.");
         }
 
         res.redirect("/customer/verify-otp");
@@ -131,7 +129,9 @@ router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
     }
 
     const enteredOtp = (req.body.otp || "").trim();
-    if (enteredOtp !== pending.otp) {
+    // Verify OTP with MSG91
+    const otpValid = await verifyOTP(pending.username, enteredOtp);
+    if (!otpValid) {
         req.flash("danger", "Incorrect OTP. Please try again.");
         return res.redirect("/customer/verify-otp");
     }
@@ -152,10 +152,10 @@ router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
         // Check if referred by someone
         if (pending.referralCode) {
             const ReferralUsage = require('../data/referralUsage');
-            
+
             // Critical Anti-Fraud Check: Has this mobile number EVER claimed a referral code?
             const alreadyClaimed = await ReferralUsage.findOne({ mobile: pending.username });
-            
+
             if (!alreadyClaimed) {
                 const referrer = await Customer.findOne({ referralCode: pending.referralCode.toUpperCase() });
                 if (referrer) {
@@ -166,9 +166,9 @@ router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
                     referrer.coins = (referrer.coins || 0) + 10;
                     referrer.referralCount = (referrer.referralCount || 0) + 1;
                     await referrer.save();
-                    
+
                     // Permanent ledger entry preventing future farming if they delete account
-                    await ReferralUsage.create({ 
+                    await ReferralUsage.create({
                         mobile: pending.username,
                         usedCode: pending.referralCode.toUpperCase()
                     });
@@ -183,7 +183,7 @@ router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
 
         req.login(registeredUser, (err) => {
             if (err) return next(err);
-            req.flash("success", "WhatsApp number verified! Welcome to PaSr 🎉");
+            req.flash("success", "Mobile number verified! Welcome to PaSr 🎉");
             req.session.save(() => res.redirect("/home"));
         });
 
@@ -296,23 +296,22 @@ router.post("/api/auth/register", wrapAsync(async (req, res) => {
 
     const existing = await Customer.findOne({ username: Number(username) });
     if (existing) {
-        return res.status(409).json({ success: false, message: "This WhatsApp number is already registered. Please log in." });
+        return res.status(409).json({ success: false, message: "This mobile number is already registered. Please log in." });
     }
 
-    const otp = req.body.otp || Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
 
-    // Store pending signup in session
-    req.session.pendingSignup = { name, username, password, address, otp, otpExpiry, referralCode };
+    // Store pending signup in session (MSG91 owns the OTP, not us)
+    req.session.pendingSignup = { name, username, password, address, otpExpiry, referralCode };
     await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve()));
 
     try {
-        await sendWhatsAppOTP(username, otp);
+        await sendOTP(username);
     } catch (err) {
-        console.error("[API Signup] WhatsApp OTP failed:", err.message);
+        console.error("[API Signup] MSG91 OTP failed:", err.message);
     }
 
-    res.json({ success: true, message: "OTP sent to your WhatsApp number.", otp: otp });
+    res.json({ success: true, message: "OTP sent to your mobile number via SMS." });
 }));
 
 // POST /api/auth/verify-otp — Step 2: Verify OTP, create account, return JWT
@@ -325,7 +324,9 @@ router.post("/api/auth/verify-otp", wrapAsync(async (req, res) => {
         req.session.pendingSignup = null;
         return res.status(400).json({ success: false, message: "OTP expired. Please register again." });
     }
-    if ((otp || "").trim() !== pending.otp) {
+    // Verify OTP with MSG91
+    const otpValid = await verifyOTP(pending.username, (otp || "").trim());
+    if (!otpValid) {
         return res.status(400).json({ success: false, message: "Incorrect OTP. Please try again." });
     }
 
@@ -495,24 +496,23 @@ router.post("/api/auth/forgot-password", wrapAsync(async (req, res) => {
 
     const user = await Customer.findOne({ username: Number(username) });
     if (!user) {
-        return res.status(404).json({ success: false, message: "No account found with this WhatsApp number." });
+        return res.status(404).json({ success: false, message: "No account found with this mobile number." });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
 
-    // Store OTP in session so we can verify it in the next step
-    req.session.passwordResetOtp = { username: String(username), otp, otpExpiry };
+    // Store metadata in session (MSG91 owns the OTP)
+    req.session.passwordResetOtp = { username: String(username), otpExpiry };
     await new Promise((resolve, reject) => req.session.save(err => err ? reject(err) : resolve()));
 
     try {
-        await sendWhatsAppOTP(username, otp);
+        await sendOTP(username);
     } catch (err) {
-        console.error("[API ForgotPassword] WhatsApp OTP failed:", err.message);
-        // Don't fail the request — OTP is saved in session, user can retry
+        console.error("[API ForgotPassword] MSG91 OTP failed:", err.message);
+        // Don't fail — user can retry
     }
 
-    res.json({ success: true, message: "OTP sent to your WhatsApp number." });
+    res.json({ success: true, message: "OTP sent to your mobile number via SMS." });
 }));
 
 // POST /api/auth/reset-password  →  verify OTP + set new password
@@ -534,7 +534,9 @@ router.post("/api/auth/reset-password", wrapAsync(async (req, res) => {
         return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
     }
 
-    if (otp.trim() !== pending.otp) {
+    // Verify OTP with MSG91
+    const otpValid = await verifyOTP(username, otp.trim());
+    if (!otpValid) {
         return res.status(400).json({ success: false, message: "Incorrect OTP. Please try again." });
     }
 
@@ -580,7 +582,7 @@ router.get("/user", isLogedin, saveRedirectUrl, wrapAsync(async (req, res) => {
     const higherRankUsersCount = await Customer.countDocuments({
         $or: [
             { referralCount: { $gt: userReferralCount } },
-            { 
+            {
                 referralCount: userReferralCount,
                 createdAt: { $lt: req.user.createdAt }
             }
@@ -673,7 +675,7 @@ router.post("/account/remove/permanent", isLogedin, wrapAsync(async (req, res) =
         if (currentUsername !== inputUsername) {
             console.warn(`[Account Deletion] ABORT: Username mismatch`);
             req.flash("danger", "Phone number does not match your current account.");
-            return res.redirect("/user"); 
+            return res.redirect("/user");
         }
 
         const user = await Customer.findById(userId);
@@ -713,7 +715,7 @@ router.post("/account/remove/permanent", isLogedin, wrapAsync(async (req, res) =
             for (let p of providers) {
                 if (p.personImage?.length) {
                     for (let img of p.personImage) {
-                        if (img.filename) deletePromises.push(cloudinary.uploader.destroy(img.filename).catch(e => {}));
+                        if (img.filename) deletePromises.push(cloudinary.uploader.destroy(img.filename).catch(e => { }));
                     }
                 }
                 if (p.review?.length) await Review.deleteMany({ _id: { $in: p.review } });
@@ -728,12 +730,12 @@ router.post("/account/remove/permanent", isLogedin, wrapAsync(async (req, res) =
             for (let s of shops) {
                 if (s.shopImage?.length) {
                     for (let img of s.shopImage) {
-                        if (img.filename) deletePromises.push(cloudinary.uploader.destroy(img.filename).catch(e => {}));
+                        if (img.filename) deletePromises.push(cloudinary.uploader.destroy(img.filename).catch(e => { }));
                     }
                 }
                 if (s.items?.length) {
                     for (let item of s.items) {
-                        if (item.itemImage?.filename) deletePromises.push(cloudinary.uploader.destroy(item.itemImage.filename).catch(e => {}));
+                        if (item.itemImage?.filename) deletePromises.push(cloudinary.uploader.destroy(item.itemImage.filename).catch(e => { }));
                     }
                 }
                 if (s.reviews?.length) await Review.deleteMany({ _id: { $in: s.reviews } });
@@ -748,7 +750,7 @@ router.post("/account/remove/permanent", isLogedin, wrapAsync(async (req, res) =
             for (let prod of products) {
                 if (prod.productImage?.length) {
                     for (let img of prod.productImage) {
-                        if (img.filename) deletePromises.push(cloudinary.uploader.destroy(img.filename).catch(e => {}));
+                        if (img.filename) deletePromises.push(cloudinary.uploader.destroy(img.filename).catch(e => { }));
                     }
                 }
                 await Product.findByIdAndDelete(prod._id);
@@ -762,7 +764,7 @@ router.post("/account/remove/permanent", isLogedin, wrapAsync(async (req, res) =
             for (let post of posts) {
                 if (post.media?.length) {
                     for (let m of post.media) {
-                        if (m.filename) deletePromises.push(cloudinary.uploader.destroy(m.filename).catch(e => {}));
+                        if (m.filename) deletePromises.push(cloudinary.uploader.destroy(m.filename).catch(e => { }));
                     }
                 }
                 await KeshanSabhaPost.findByIdAndDelete(post._id);
@@ -822,7 +824,8 @@ router.get("/api/user/profile", isLogedin, wrapAsync(async (req, res) => {
             address: req.user.address,
             coins: req.user.coins,
             referralCode: refCode,
-            referralCount: req.user.referralCount || 0
+            referralCount: req.user.referralCount || 0,
+            geometry: req.user.geometry || null
         }
     });
 }));
@@ -867,11 +870,11 @@ router.post("/api/user/complete-profile", isLogedin, wrapAsync(async (req, res) 
 // API: Add Saved Address
 router.post("/api/user/saved-addresses", isLogedin, wrapAsync(async (req, res) => {
     const { label, addressStr } = req.body;
-    
+
     if (!addressStr) {
         return res.status(400).json({ success: false, message: "Address is required" });
     }
-    
+
     // Geocode to get coordinates
     let geometry;
     try {
@@ -885,7 +888,7 @@ router.post("/api/user/saved-addresses", isLogedin, wrapAsync(async (req, res) =
     }
 
     const customer = await Customer.findById(req.user._id);
-    
+
     // Check if it's the first one, make it default
     const isDefault = customer.savedAddresses.length === 0;
 
@@ -904,10 +907,10 @@ router.post("/api/user/saved-addresses", isLogedin, wrapAsync(async (req, res) =
 router.delete("/api/user/saved-addresses/:addressId", isLogedin, wrapAsync(async (req, res) => {
     const { addressId } = req.params;
     const customer = await Customer.findById(req.user._id);
-    
+
     customer.savedAddresses = customer.savedAddresses.filter(addr => addr._id.toString() !== addressId);
     await customer.save();
-    
+
     res.json({ success: true, message: "Address removed", addresses: customer.savedAddresses });
 }));
 
