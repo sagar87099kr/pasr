@@ -503,18 +503,32 @@
                                     <!-- Delivery Option Selector -->
                                     <p class="fw-bold mb-2" style="color:#0f172a; font-size:15px;">How would you like to
                                         receive this order?</p>
-                                    <div class="delivery-toggle">
+                                    <% 
+                                        const now = new Date();
+                                        const istOffsetMs = 5.5 * 60 * 60 * 1000;
+                                        const nowIST = new Date(now.getTime() + istOffsetMs);
+                                        const istH = nowIST.getUTCHours();
+                                        const isDeliveryTime = (istH >= 9 && istH < 18);
+                                        const canHomeDeliver = isDeliveryTime;
+                                    %>
+                                    <div class="delivery-type-toggle">
                                         <button class="delivery-opt-btn active" data-shopid="<%= shopId %>"
                                             data-type="SELF_PICKUP">
                                             <span class="opt-icon">🏪</span>
                                             I'll Pick Up
                                         </button>
-                                        <button class="delivery-opt-btn" data-shopid="<%= shopId %>"
-                                            data-type="HOME_DELIVERY" disabled style="cursor: not-allowed; opacity: 0.7; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
-                                            <span><span class="opt-icon">🚚</span> Home Delivery</span>
-                                            <span class="badge text-warning p-0" style="font-size: 9px; letter-spacing: 0.5px; background: transparent;">COMING SOON</span>
-                                        </button>
+                                        <% if (canHomeDeliver) { %>
+                                            <button class="delivery-opt-btn" data-shopid="<%= shopId %>"
+                                                data-type="HOME_DELIVERY">
+                                                <span class="opt-icon">🚚</span> Home Delivery
+                                            </button>
+                                        <% } %>
                                     </div>
+                                    <% if (!canHomeDeliver) { %>
+                                        <div class="mt-2 text-center text-danger small fw-bold">
+                                            Home Delivery is only available between 9 AM and 6 PM.
+                                        </div>
+                                    <% } %>
 
                                     <!-- Summary Rows -->
                                     <div class="summary-row">
@@ -581,18 +595,30 @@
 
                                         <div class="addr-error text-danger mt-2" style="font-size:13px; display:none;">
                                         </div>
+
+                                        <div class="alert alert-info mt-3 p-2" style="font-size: 13px; background-color: #f0fdfa; border-color: #ccfbf1; color: #0f766e; border-radius: 8px;">
+                                            <i class="fa-solid fa-clock-rotate-left me-1"></i> <strong>24-Hour Delivery Policy:</strong> We facilitate swift 24-hour delivery for eligible categories. To process a return, requests must be submitted within <strong>1 hour</strong> of order completion. Please ensure all original company branding and logos remain fully intact on the items.
+                                        </div>
                                     </div>
 
 
                                     <div class="d-grid gap-2 mt-4">
                                         <div class="row g-2">
-                                            <div class="col-12">
-                                                <button class="btn btn-primary checkout-btn cod-btn"
+                                            <!-- COD / Pay at Shop -->
+                                            <div class="col-12 col-sm-6 cod-btn-col">
+                                                <button class="btn btn-primary checkout-btn cod-btn w-100"
                                                     data-shopid="<%= shopId %>">
                                                     <i class="fa-solid fa-store me-1"></i> <span class="cod-btn-text">Pay Directly to Shop</span>
                                                     <span
                                                         class="badge bg-success-subtle text-success border border-success-subtle ms-2 cod-avail-badge"
                                                         style="font-size: 10px;">Payment at Shop</span>
+                                                </button>
+                                            </div>
+                                            <!-- Pay Online (Razorpay) - Only for Home Delivery initially hidden if self pickup -->
+                                            <div class="col-12 col-sm-6 razorpay-btn-col" style="display: none;">
+                                                <button class="btn checkout-btn rzp-btn w-100" style="background-color: #111827; color: white;"
+                                                    data-shopid="<%= shopId %>">
+                                                    <i class="fa-solid fa-credit-card me-1"></i> Pay Online
                                                 </button>
                                             </div>
                                         </div>
@@ -683,11 +709,24 @@
                                                     data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
-                                                <% if (currUser.savedAddresses && currUser.savedAddresses.length > 0) { %>
+                                                <% 
+                                                    let allAddrs = [...(currUser.savedAddresses || [])];
+                                                    if (currUser.address && currUser.geometry && currUser.geometry.coordinates) {
+                                                        const exists = allAddrs.find(a => a.addressStr === currUser.address);
+                                                        if (!exists) {
+                                                            allAddrs.unshift({
+                                                                label: 'Home',
+                                                                addressStr: currUser.address,
+                                                                geometry: currUser.geometry
+                                                            });
+                                                        }
+                                                    }
+                                                %>
+                                                <% if (allAddrs.length > 0) { %>
                                                     <div class="mb-4">
                                                         <h6 class="fw-bold mb-2">My Saved Addresses</h6>
                                                         <div class="d-flex flex-wrap gap-2">
-                                                            <% currUser.savedAddresses.forEach(addr => { %>
+                                                            <% allAddrs.forEach(addr => { %>
                                                                 <button type="button" class="btn btn-outline-primary text-start p-2 saved-addr-btn"
                                                                     style="border-radius: 12px; flex: 1 1 calc(50% - 8px); min-width: 140px; border-width: 1.5px;"
                                                                     data-lat="<%= addr.geometry.coordinates[1] %>"
@@ -726,12 +765,14 @@
                                                 <input type="hidden" id="modal-pincode">
                                             </div>
                                             <div class="modal-footer border-0 p-3">
-                                                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
-                                                    style="border-radius: 12px; padding: 10px 20px;">Cancel</button>
-                                                <button type="button" id="save-address-btn" class="btn btn-primary"
+                                                <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal"
+                                                    style="border-radius: 12px; padding: 10px 20px; color: #64748b; background-color: #f1f5f9; border: none;">Cancel</button>
+                                                <button type="button" id="save-address-btn" class="btn text-white fw-bold shadow-sm"
+                                                    onclick="window.handleSaveAddressClick()"
                                                     disabled
-                                                    style="border-radius: 12px; padding: 10px 25px; font-weight: 700;">Save
-                                                    Address</button>
+                                                    style="border-radius: 12px; padding: 10px 25px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); border: none; transition: all 0.3s ease;">
+                                                    <i class="fa-solid fa-floppy-disk me-2"></i>Save Address
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -830,19 +871,22 @@
                 // The initPlacesForCart function is now defined globally and called below.
                 // The original code had it defined here, but the instruction moved it.
 
-                saveAddrBtn.addEventListener('click', async () => {
-                    const lat = document.getElementById('modal-lat').value;
-                    const lng = document.getElementById('modal-lng').value;
-                    const pincode = document.getElementById('modal-pincode').value;
-                    const address = tempSelectedAddress;
+                window.handleSaveAddressClick = async () => {
+                    const saveAddrBtn = document.getElementById('save-address-btn');
+                    const lat = document.getElementById('modal-lat') ? document.getElementById('modal-lat').value : null;
+                    const lng = document.getElementById('modal-lng') ? document.getElementById('modal-lng').value : null;
+                    const pincode = document.getElementById('modal-pincode') ? document.getElementById('modal-pincode').value : null;
+                    const address = window.tempSelectedAddress;
 
                     if (!lat || !lng || !address) {
-                        alert('Please select a valid address from recommendations.');
+                        alert(`Cannot save: Missing details.\nLat: ${lat}\nLng: ${lng}\nAddress: ${address}`);
                         return;
                     }
 
-                    saveAddrBtn.disabled = true;
-                    saveAddrBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+                    if(saveAddrBtn) {
+                        saveAddrBtn.disabled = true;
+                        saveAddrBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+                    }
 
                     try {
                         const res = await fetch('/api/user/update-address', {
@@ -861,25 +905,35 @@
 
                             // Recalculate fee for current section
                             const section = document.getElementById(`shop-section-${addressEditTargetShop}`);
-                            fetchDeliveryFeeForSection(section, lat, lng);
+                            if(section) {
+                                fetchDeliveryFeeForSection(section, lat, lng);
+                            }
 
                             addressModal.hide();
                             // Reset modal
-                            modalInput.value = '';
+                            const modalInput = document.getElementById('modal-places-input');
+                            if(modalInput) modalInput.value = '';
                             document.getElementById('modal-addr-preview').classList.add('d-none');
-                            saveAddrBtn.disabled = true;
-                            alert('Delivery address saved successfully!');
+                            if(saveAddrBtn) saveAddrBtn.disabled = true;
+                            // Let the UI update naturally instead of blocking with an alert
                         } else {
-                            alert('Failed to save address. Please try again.');
+                            let msg = 'Failed to save address. Please try again.';
+                            try {
+                                const errData = await res.json();
+                                if (errData.message) msg = errData.message;
+                            } catch (e) {}
+                            alert(msg);
                         }
                     } catch (e) {
                         console.error(e);
-                        alert('Error saving address.');
+                        alert('Error saving address: ' + (e.message || e));
                     } finally {
-                        saveAddrBtn.innerHTML = 'Save Address';
-                        saveAddrBtn.disabled = false;
+                        if(saveAddrBtn) {
+                            saveAddrBtn.innerHTML = 'Save Address';
+                            saveAddrBtn.disabled = false;
+                        }
                     }
-                });
+                };
 
                 if (window.google && window.google.maps && window.google.maps.places) {
                     window.initPlacesForCart();
@@ -974,14 +1028,24 @@
                         const badge = codBtn.querySelector('.cod-avail-badge');
 
                         if (deliveryType === 'HOME_DELIVERY') {
-                            if (btnText) btnText.innerText = 'Pay Directly to Shop (COD)';
-                            if (badge) badge.innerText = 'Pay to Delivery Partner';
+                            btnText.innerText = 'Cash on Delivery';
+                            if (badge) badge.innerText = 'COD';
+                            codBtn.querySelector('i').className = 'fa-solid fa-money-bill-wave me-1';
                         } else {
-                            if (btnText) btnText.innerText = 'Pay Directly to Shop';
+                            btnText.innerText = 'Pay Directly to Shop';
                             if (badge) badge.innerText = 'Payment at Shop';
+                            codBtn.querySelector('i').className = 'fa-solid fa-store me-1';
                         }
                         
-                        // Ensure button is always visible
+                        // Always show both buttons (COD/Pay at Shop AND Pay Online)
+                        const codCol = section.querySelector('.cod-btn-col');
+                        const rzpCol = section.querySelector('.razorpay-btn-col');
+                        if (codCol && rzpCol) {
+                            codCol.classList.replace('col-12', 'col-sm-6');
+                            rzpCol.style.display = 'block';
+                        }
+                        
+                        // Ensure COD button is always visible
                         codBtn.style.display = 'block';
                     }
                 }
@@ -1147,10 +1211,19 @@
                         const shopId = btn.dataset.shopid;
                         const section = document.getElementById(`shop-section-${shopId}`);
                         const deliveryType = section.dataset.deliveryType || 'SELF_PICKUP';
-                        const paymentMethodName = deliveryType === 'HOME_DELIVERY' ? 'Direct to Shop (COD)' : 'Direct to Shop';
+                        const paymentMethodName = deliveryType === 'HOME_DELIVERY' ? 'Cash on Delivery' : 'Direct to Shop';
                         
                         if (confirm(`Place ${paymentMethodName} order for this shop?`)) {
                             placeOrder(shopId, 'COD');
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.rzp-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const shopId = btn.dataset.shopid;
+                        if (confirm(`Pay securely online for this order?`)) {
+                            placeOrder(shopId, 'PREPAID');
                         }
                     });
                 });
@@ -1254,8 +1327,9 @@
 
                     document.getElementById('modal-selected-addr-text').innerText = address;
                     document.getElementById('modal-addr-preview').classList.remove('d-none');
-                    tempSelectedAddress = address;
-                    saveAddrBtn.disabled = false;
+                    window.tempSelectedAddress = address;
+                    const btn = document.getElementById('save-address-btn');
+                    if (btn) btn.disabled = false;
                 });
 
                 // Bind saved addresses buttons
@@ -1269,8 +1343,10 @@
                         document.getElementById('modal-lng').value = lng;
                         document.getElementById('modal-selected-addr-text').innerText = address;
                         document.getElementById('modal-addr-preview').classList.remove('d-none');
-                        tempSelectedAddress = address;
-                        saveAddrBtn.disabled = false;
+                        window.tempSelectedAddress = address;
+                        
+                        const saveBtn = document.getElementById('save-address-btn');
+                        if (saveBtn) saveBtn.disabled = false;
                         
                         // Visual feedback selection
                         document.querySelectorAll('.saved-addr-btn').forEach(b => {

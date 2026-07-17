@@ -1,23 +1,22 @@
-require('dotenv').config();
-const mongoose = require('mongoose');
-const DB_URL = process.env.DB_URL || 'mongodb://127.0.0.1:27017/pasr';
-mongoose.connect(DB_URL);
-const Shop = require('./data/shops.js');
-const Product = require('./data/product.js');
-const Item = require('./data/item.js');
-const MasterProduct = require('./data/masterProduct.js');
-async function run() {
-  const docs = await Promise.all([
-    Shop.find({ $or: [{ shopName: /test/i }, { shopDescription: /test/i }] }),
-    Product.find({ $or: [{ productName: /test/i }, { productDescription: /test/i }] }),
-    Item.find({ name: /test/i }),
-    MasterProduct.find({ name: /test/i })
-  ]);
-  console.log('Shops:', docs[0].map(s => s.shopName));
-  console.log('Products:', docs[1].map(p => p.productName));
-  console.log('Items:', docs[2].map(i => i.name));
-  console.log('Master:', docs[3].map(m => m.name));
-  if (docs[0].length) { await Shop.deleteMany({ _id: { $in: docs[0].map(d=>d._id) } }); console.log('Deleted shops'); }
-  process.exit(0);
+const Joi = require('joi');
+
+const updateAddressSchema = Joi.object({
+    address: Joi.string().min(5).max(300).required(),
+    lat: Joi.number().optional().allow(null, ""),
+    lng: Joi.number().optional().allow(null, ""),
+    pincode: Joi.number().optional().allow(null, "")
+});
+
+const payload = {
+    address: "Gandhi chowk, near ambesri baba mandir, Rajdhanwar, Jharkhand 825412, India",
+    lat: "24.4124",
+    lng: "85.9863",
+    pincode: "825412"
+};
+
+const { error } = updateAddressSchema.validate(payload);
+if (error) {
+    console.error("Validation error:", error.details[0].message);
+} else {
+    console.log("Validation passed!");
 }
-run();

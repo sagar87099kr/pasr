@@ -365,6 +365,13 @@
                     </div>
 
                     <div class="row">
+                      <div class="label">Bazaar</div>
+                      <div class="value">
+                        <%= provider.bazaar ? (provider.bazaar.bazaarName || provider.bazaar.name) : 'Unassigned' %>
+                      </div>
+                    </div>
+
+                    <div class="row">
                       <div class="label">Verified</div>
                       <div class="value">
                         <%=provider.verified%>
@@ -387,7 +394,7 @@
                     <select name="provider[bazaar]" class="form-control" required>
                       <option value="">-- Select a Bazaar --</option>
                       <% for(let bazaar of bazaars) { %>
-                        <option value="<%= bazaar._id %>"><%= bazaar.bazaarName %></option>
+                        <option value="<%= bazaar._id %>" <%= (provider.bazaar && provider.bazaar._id.toString() === bazaar._id.toString()) ? 'selected' : '' %>><%= bazaar.bazaarName || bazaar.name %></option>
                       <% } %>
                     </select>
                   </div>
@@ -477,6 +484,21 @@
                           <div class="label">Experience</div>
                           <div class="value">
                             <%=provider.experience%>
+                          </div>
+                        </div>
+
+                        <div class="row">
+                          <div class="label">Bazaar</div>
+                          <div class="value">
+                              <form method="POST" action="/admin/providers/<%= provider._id %>/assign-bazaar" style="display: flex; gap: 8px;">
+                                  <select name="bazaarId" style="padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
+                                      <option value="">-- Unassigned --</option>
+                                      <% bazaars.forEach(function(b) { %>
+                                          <option value="<%= b._id %>" <%= (provider.bazaar && provider.bazaar._id.toString() === b._id.toString()) ? 'selected' : '' %>><%= b.bazaarName || b.name %></option>
+                                      <% }); %>
+                                  </select>
+                                  <button type="submit" class="btn primary" style="padding: 4px 8px; font-size: 11px;">Update</button>
+                              </form>
                           </div>
                         </div>
 

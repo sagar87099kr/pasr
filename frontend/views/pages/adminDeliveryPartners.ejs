@@ -1,0 +1,146 @@
+<% layout('/layoutes/boilerplate') -%>
+
+<style>
+    .admin-dashboard {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 1rem !important;
+        flex: 1 1 auto;
+    }
+    .admin-dashboard .row {
+        width: 100%;
+        margin: 0;
+    }
+    .admin-dashboard .card {
+        padding: initial !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        margin: 0 !important;
+        background-color: #fff !important;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+</style>
+
+<div class="container-fluid py-4 admin-dashboard">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h2 class="fw-bold mb-0 text-gray-800">Delivery Partners Management</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-white p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name & Contact</th>
+                                <th>Location</th>
+                                <th>Assigned Bazaar</th>
+                                <th>Vehicle</th>
+                                <th>Stats</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if(partners && partners.length > 0) { %>
+                                <% partners.forEach(partner => { %>
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold"><%= partner.fullName %></div>
+                                            <div class="text-muted small"><%= partner.phoneNumber %></div>
+                                        </td>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 150px;" title="<%= partner.address?.city %>, <%= partner.address?.street %>">
+                                                <%= partner.address?.city || 'N/A' %>
+                                            </div>
+                                            <small class="text-muted"><%= partner.address?.pincode || '' %></small>
+                                        </td>
+                                        <td>
+                                            <form action="/admin/delivery-partners/<%= partner._id %>/bazaar" method="POST" class="d-flex align-items-center">
+                                                <select name="bazaarId" class="form-select form-select-sm" style="max-width: 150px;" onchange="this.form.submit()">
+                                                    <option value="">No Bazaar</option>
+                                                    <% if(bazaars && bazaars.length > 0) { %>
+                                                        <% bazaars.forEach(bazaar => { %>
+                                                            <option value="<%= bazaar._id %>" <%= (partner.bazaar && partner.bazaar._id.toString() === bazaar._id.toString()) ? 'selected' : '' %>>
+                                                                <%= bazaar.name %>
+                                                            </option>
+                                                        <% }) %>
+                                                    <% } %>
+                                                </select>
+                                            </form>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary"><%= partner.vehicleType %></span>
+                                            <div class="small mt-1"><%= partner.vehicleNumber %></div>
+                                        </td>
+                                        <td>
+                                            <div class="small">
+                                                <div><i class="fa-solid fa-box text-primary"></i> <%= partner.totalDeliveries %></div>
+                                                <div><i class="fa-solid fa-star text-warning"></i> <%= partner.rating.toFixed(1) %></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <% if(partner.isBlocked) { %>
+                                                <span class="badge bg-danger">Blocked</span>
+                                            <% } else if(partner.isApproved) { %>
+                                                <span class="badge bg-success">Approved</span>
+                                            <% } else { %>
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                            <% } %>
+                                            
+                                            <form action="/admin/delivery-partners/<%= partner._id %>/toggle-active" method="POST" class="d-inline">
+                                                <div class="form-check form-switch mt-1">
+                                                    <input class="form-check-input" type="checkbox" id="toggleActive<%= partner._id %>" 
+                                                           onchange="this.form.submit()" <%= partner.isActive ? 'checked' : '' %>>
+                                                    <label class="form-check-label text-<%= partner.isActive ? 'success' : 'secondary' %> fw-bold" 
+                                                           for="toggleActive<%= partner._id %>">
+                                                        <%= partner.isActive ? 'Online' : 'Offline' %>
+                                                    </label>
+                                                </div>
+                                            </form>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="/admin/delivery-partners/<%= partner._id %>/kyc" class="btn btn-outline-info" title="View KYC Documents">
+                                                    <i class="fa-solid fa-id-card"></i>
+                                                </a>
+                                                <% if(!partner.isApproved && !partner.isBlocked) { %>
+                                                    <form action="/admin/delivery-partners/<%= partner._id %>/approve" method="POST" class="d-inline">
+                                                        <button type="submit" class="btn btn-outline-success" title="Approve">
+                                                            <i class="fa-solid fa-check"></i>
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                                
+                                                <% if(partner.isBlocked) { %>
+                                                    <form action="/admin/delivery-partners/<%= partner._id %>/block" method="POST" class="d-inline">
+                                                        <button type="submit" class="btn btn-outline-secondary" title="Unblock">
+                                                            <i class="fa-solid fa-unlock"></i>
+                                                        </button>
+                                                    </form>
+                                                <% } else { %>
+                                                    <form action="/admin/delivery-partners/<%= partner._id %>/block" method="POST" class="d-inline">
+                                                        <button type="submit" class="btn btn-outline-danger" title="Block">
+                                                            <i class="fa-solid fa-ban"></i>
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No Delivery Partners found.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

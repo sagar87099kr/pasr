@@ -137,14 +137,8 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 return res.status(400).json({ success: false, message: "Sorry we can delivery product only in 9am to 6pm." });
             }
 
-            // 2. Bazaar Restriction
-            const bazaarName = shopItems[0].bazaarName || '';
-            if (!bazaarName.toLowerCase().includes('dhanwar')) {
-                for (let revert of inventoryUpdates) {
-                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-                }
-                return res.status(400).json({ success: false, message: "Home Delivery is only available for shops in Dhanwar. Please choose Self Pickup." });
-            }
+            // 2. Removed Hardcoded Bazaar Restriction (Handled by Distance Radius now)
+
 
             let cLoc = null;
             if (lat && lng) {
@@ -161,11 +155,13 @@ module.exports.checkoutOrder = async (req, res, next) => {
             }
 
             // Fetch Shop location
-            let shop = await Shop.findById(shopId);
+            let shop = await Shop.findById(shopId).populate('bazaar');
             let sLoc;
 
-            if (shop && shop.geometry && shop.geometry.coordinates) {
-                sLoc = shop.geometry.coordinates; // [lng, lat]
+            if (shop && shop.bazaar && shop.bazaar.geometry && shop.bazaar.geometry.coordinates) {
+                sLoc = shop.bazaar.geometry.coordinates; // Use Bazaar's coordinates as the delivery hub
+            } else if (shop && shop.geometry && shop.geometry.coordinates) {
+                sLoc = shop.geometry.coordinates; // Fallback to Shop's coordinates [lng, lat]
             } else {
                 // Check if it's a Local Bazar Seller
                 const Product = require("../data/product");
@@ -345,11 +341,16 @@ module.exports.checkoutOrder = async (req, res, next) => {
             );
         }
 
-
-
-        // Partial Clear cart (remove items for this shop)
-        cart.items = cart.items.filter(item => item.shopId !== shopId);
-        cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+        // Only clear items immediately for COD. 
+        // For PREPAID, items are cleared in /api/payment/verify-payment upon successful payment.
+        if (paymentType === 'COD') {
+            cart.items = cart.items.filter(i => String(i.shopId) !== String(shopId));
+            if (cart.items.length === 0) {
+                cart.totalItems = 0;
+                cart.subtotal = 0;
+            }
+            req.session.save();
+        }
 
         let razorpayOrderData = null;
         if (paymentType === 'PREPAID') {

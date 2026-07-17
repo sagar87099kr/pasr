@@ -302,31 +302,49 @@ module.exports.findNearbyProviders = (category) => {
             // Validate that we have proper coordinates [lon, lat]
             const hasValidLocation = userLocation && userLocation.coordinates && userLocation.coordinates.length === 2;
 
-            if (!hasValidLocation) {
-                // If no user location, fallback to finding all verified in category
-                console.log("No valid user geometry found, returning all providers");
-                const allProvider = await Provider.find({ categories: category, verified: true }).populate("owner");
-                res.locals.allProvider = allProvider;
-                return next();
+            let bazaarId = null;
+            if (req.headers['x-bazaar-id']) {
+                bazaarId = req.headers['x-bazaar-id'];
+            } else if (req.session.bazaarId) {
+                bazaarId = req.session.bazaarId;
             }
 
-            const rangeInKm = req.query.range ? parseFloat(req.query.range) : 10;
-            const maxDist = rangeInKm * 1000;
+            let allProvider = [];
 
-            const allProvider = await Provider.find({
-                categories: category,
-                verified: true,
-                geometry: {
-                    $near: {
-                        $geometry: {
-                            type: "Point",
-                            coordinates: userLocation.coordinates
-                        },
-                        $maxDistance: maxDist
+            if (bazaarId) {
+                console.log(`[DEBUG] findNearbyProviders: Searching for category: '${category}', bazaarId: '${bazaarId}'`);
+                // If a bazaar is selected, fetch providers assigned to this bazaar
+                allProvider = await Provider.find({
+                    categories: category,
+                    verified: true,
+                    bazaar: bazaarId
+                }).populate("owner");
+                console.log(`[DEBUG] findNearbyProviders: Found ${allProvider.length} providers for bazaar ${bazaarId}`);
+            } else if (hasValidLocation) {
+                // Fallback to geometry search if no specific bazaar is selected
+                const rangeInKm = req.query.range ? parseFloat(req.query.range) : 10;
+                const maxDist = rangeInKm * 1000;
+
+                allProvider = await Provider.find({
+                    categories: category,
+                    verified: true,
+                    geometry: {
+                        $near: {
+                            $geometry: {
+                                type: "Point",
+                                coordinates: userLocation.coordinates
+                            },
+                            $maxDistance: maxDist
+                        }
                     }
-                }
-            }).populate("owner");
+                }).populate("owner");
+            } else {
+                // If no user location and no bazaar, fallback to finding all verified in category
+                console.log("No valid user geometry found, returning all providers");
+                allProvider = await Provider.find({ categories: category, verified: true }).populate("owner");
+            }
 
+            req.nearbyProviders = allProvider;
             res.locals.allProvider = allProvider;
             next();
         } catch (e) {

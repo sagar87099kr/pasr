@@ -58,7 +58,7 @@ router.get('/data', async (req, res) => {
                     const shopName = shop ? (shop.shopName || shop.name) : 'Unknown Shop';
                     
                     return {
-                        id: d._id.toString().substring(0, 8),
+                        id: d._id.toString(),
                         status: d.orderStatus,
                         time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
                         title: `${d.items?.length || 0} items from ${shopName}`,
@@ -75,7 +75,7 @@ router.get('/data', async (req, res) => {
                 stats.rejected = 0;
                 const bazaars = await Bazaar.find({}).sort({ createdAt: -1 }).limit(500).lean();
                 data = bazaars.map(d => ({
-                    id: d._id.toString().substring(0, 8),
+                    id: d._id.toString(),
                     status: d.isActive ? 'Verified' : 'Pending',
                     time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
                     title: d.name || d.bazaarName || 'Unknown Bazaar',
@@ -85,18 +85,23 @@ router.get('/data', async (req, res) => {
                 break;
             }
             case 'providers': {
-                stats.pending = await Provider.countDocuments({ isVerified: false });
-                stats.verified = await Provider.countDocuments({ isVerified: true });
+                stats.pending = await Provider.countDocuments({ verified: false });
+                stats.verified = await Provider.countDocuments({ verified: true });
                 stats.rejected = 0;
-                const providers = await Provider.find({}).sort({ createdAt: -1 }).limit(500).lean();
-                data = providers.map(d => ({
-                    id: d._id.toString().substring(0, 8),
-                    status: d.isVerified ? 'Verified' : 'Pending',
-                    time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
-                    title: d.name || 'Unknown Provider',
-                    imageUrl: (d.images && d.images[0]) ? d.images[0].url : null,
-                    raw: d
-                }));
+                const providers = await Provider.find({}).populate('owner').sort({ createdAt: -1 }).limit(500).lean();
+                data = providers.map(d => {
+                    let img = null;
+                    if (d.personImage && d.personImage.length > 0) img = d.personImage[0].url || d.personImage[0].path;
+                    
+                    return {
+                        id: d._id.toString(),
+                        status: d.verified ? 'Verified' : 'Pending',
+                        time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
+                        title: d.company || 'Unknown Provider',
+                        imageUrl: img,
+                        raw: d
+                    };
+                });
                 break;
             }
             case 'payouts': {
@@ -111,7 +116,7 @@ router.get('/data', async (req, res) => {
                 shops.forEach(s => shopMap.set(s._id.toString(), s.shopName || s.name));
 
                 data = payouts.map(d => ({
-                    id: d._id.toString().substring(0, 8),
+                    id: d._id.toString(),
                     status: d.status || 'PENDING',
                     time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
                     title: `Payout ₹${d.amount} to ${shopMap.get(d.shop?.toString()) || 'Unknown Shop'}`,
@@ -120,18 +125,23 @@ router.get('/data', async (req, res) => {
                 break;
             }
             case 'shops': {
-                stats.pending = await Shop.countDocuments({ isVerified: false });
-                stats.verified = await Shop.countDocuments({ isVerified: true });
+                stats.pending = await Shop.countDocuments({ verified: false });
+                stats.verified = await Shop.countDocuments({ verified: true });
                 stats.rejected = 0;
                 const shops = await Shop.find({}).sort({ createdAt: -1 }).limit(500).lean();
-                data = shops.map(d => ({
-                    id: d._id.toString().substring(0, 8),
-                    status: d.isVerified ? 'Verified' : 'Pending',
-                    time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
-                    title: d.shopName || d.name || 'Unknown Shop',
-                    imageUrl: (d.images && d.images[0]) ? d.images[0].url : null,
-                    raw: d
-                }));
+                data = shops.map(d => {
+                    let img = null;
+                    if (d.shopImage && d.shopImage.length > 0) img = d.shopImage[0].url || d.shopImage[0].path;
+                    
+                    return {
+                        id: d._id.toString(),
+                        status: d.verified ? 'Verified' : 'Pending',
+                        time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
+                        title: d.shopName || d.name || 'Unknown Shop',
+                        imageUrl: img,
+                        raw: d
+                    };
+                });
                 break;
             }
             case 'delivery-partners': {
@@ -140,7 +150,7 @@ router.get('/data', async (req, res) => {
                 stats.rejected = 0;
                 const partners = await DeliveryPartner.find({}).sort({ createdAt: -1 }).limit(500).lean();
                 data = partners.map(d => ({
-                    id: d._id.toString().substring(0, 8),
+                    id: d._id.toString(),
                     status: d.isVerified ? 'Verified' : 'Pending',
                     time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
                     title: d.name || 'Unknown Partner',
@@ -150,8 +160,8 @@ router.get('/data', async (req, res) => {
                 break;
             }
             case 'products': {
-                stats.pending = await Product.countDocuments({ isVerified: false });
-                stats.verified = await Product.countDocuments({ isVerified: true });
+                stats.pending = await Product.countDocuments({ verified: false });
+                stats.verified = await Product.countDocuments({ verified: true });
                 stats.rejected = 0;
                 const products = await Product.find({}).sort({ createdAt: -1 }).limit(500).lean();
                 
@@ -168,8 +178,8 @@ router.get('/data', async (req, res) => {
                     const bazaarName = d.bazaar ? (bazaarMap.get(d.bazaar.toString()) || 'Unknown') : 'Not Assigned';
                     
                     return {
-                        id: d._id.toString().substring(0, 8),
-                        status: d.isVerified ? 'Verified' : 'Pending',
+                        id: d._id.toString(),
+                        status: d.verified ? 'Verified' : 'Pending',
                         time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
                         title: d.productName || d.name || 'Unknown Product',
                         bazaarName,
@@ -180,8 +190,8 @@ router.get('/data', async (req, res) => {
                 break;
             }
             case 'items': {
-                stats.pending = await Item.countDocuments({ isVerified: false });
-                stats.verified = await Item.countDocuments({ isVerified: true });
+                stats.pending = await Item.countDocuments({ verified: false });
+                stats.verified = await Item.countDocuments({ verified: true });
                 stats.rejected = 0;
                 const items = await Item.find({}).sort({ createdAt: -1 }).limit(500).lean();
                 
@@ -197,8 +207,8 @@ router.get('/data', async (req, res) => {
                     const bazaarId = shopDoc ? shopDoc.bazaarId : null;
                     
                     return {
-                        id: d._id.toString().substring(0, 8),
-                        status: d.isVerified ? 'Verified' : 'Pending',
+                        id: d._id.toString(),
+                        status: d.verified ? 'Verified' : 'Pending',
                         time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
                         title: d.name || 'Unknown Item',
                         shopName,
@@ -214,7 +224,7 @@ router.get('/data', async (req, res) => {
                 stats.rejected = 0;
                 const posts = await KeshanSabhaPost.find({}).sort({ createdAt: -1 }).limit(500).lean();
                 data = posts.map(d => ({
-                    id: d._id.toString().substring(0, 8),
+                    id: d._id.toString(),
                     status: d.status || 'Pending',
                     time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
                     title: d.title || 'Untitled Post',
@@ -251,19 +261,19 @@ router.post('/action', async (req, res) => {
                     await Bazaar.updateOne({ _id: payload.id }, { $set: { isActive: isVerified } });
                     break;
                 case 'providers':
-                    await Provider.updateOne({ _id: payload.id }, { $set: { isVerified } });
+                    await Provider.updateOne({ _id: payload.id }, { $set: { verified: isVerified } });
                     break;
                 case 'shops':
-                    await Shop.updateOne({ _id: payload.id }, { $set: { isVerified, verified: isVerified } });
+                    await Shop.updateOne({ _id: payload.id }, { $set: { verified: isVerified } });
                     break;
                 case 'delivery-partners':
                     await DeliveryPartner.updateOne({ _id: payload.id }, { $set: { isVerified } });
                     break;
                 case 'products':
-                    await Product.updateOne({ _id: payload.id }, { $set: { isVerified } });
+                    await Product.updateOne({ _id: payload.id }, { $set: { verified: isVerified } });
                     break;
                 case 'items':
-                    await Item.updateOne({ _id: payload.id }, { $set: { isVerified } });
+                    await Item.updateOne({ _id: payload.id }, { $set: { verified: isVerified } });
                     break;
                 case 'kisan-sabha':
                     await KeshanSabhaPost.updateOne({ _id: payload.id }, { $set: { status: isVerified ? 'Published' : 'Rejected' } });

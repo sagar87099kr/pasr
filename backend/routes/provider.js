@@ -333,8 +333,18 @@ router.put("/:id/verifyprovider", isLogedin, isadmin, async (req, res) => {
     let { id } = req.params;
     const { verified, verifedBy, bazaar } = req.body.provider;
     console.log(verified)
-    await Provider.findByIdAndUpdate(id, { verified, verifedBy, bazaar });
+    // If bazaar is empty string (e.g. they selected "Select Bazaar"), set it to null
+    const updateData = { verified: !!verified, verifedBy };
+    if (bazaar) {
+        updateData.bazaar = bazaar;
+    } else {
+        updateData.bazaar = null;
+    }
+    
+    await Provider.findByIdAndUpdate(id, updateData);
     console.log("provider is verifed");
+    req.flash("success", "Provider updated successfully");
+    res.redirect("/provider/verify");
 });
 
 router.delete("/provider/:id/verifyfail", isLogedin, isadmin, wrapAsync(async (req, res) => {

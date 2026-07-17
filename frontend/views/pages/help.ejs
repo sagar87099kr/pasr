@@ -12,39 +12,53 @@
             <!-- Video Guides / Common Issues -->
             <div class="faq-section">
                 <h2 class="section-title">Common Questions & Guides</h2>
-                <ul class="faq-list">
-                    <li class="faq-item">
-                        <a href="#" class="faq-link">
+                <div class="faq-list">
+                    <details class="faq-item-details">
+                        <summary class="faq-link">
                             <span><i class="fa-solid fa-circle-play faq-icon"></i> Issue with Login?</span>
-                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
-                        </a>
-                    </li>
-                    <li class="faq-item">
-                        <a href="#" class="faq-link">
+                            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            Please ensure you are using your registered 10-digit WhatsApp number. If you are new, click "Create" in the navigation bar to sign up.
+                        </div>
+                    </details>
+                    <details class="faq-item-details">
+                        <summary class="faq-link">
                             <span><i class="fa-solid fa-briefcase faq-icon"></i> How to become a Provider</span>
-                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
-                        </a>
-                    </li>
-                    <li class="faq-item">
-                        <a href="#" class="faq-link">
+                            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            Go to "Partner with Us" in the menu and select the Provider Registration option. Fill in your professional details and wait for verification.
+                        </div>
+                    </details>
+                    <details class="faq-item-details">
+                        <summary class="faq-link">
                             <span><i class="fa-solid fa-store faq-icon"></i> How to sell products</span>
-                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
-                        </a>
-                    </li>
-                    <li class="faq-item">
-                        <a href="#" class="faq-link">
-                            <span><i class="fa-solid fa-triangle-exclamation faq-icon"></i> Why shows "False"
-                                status?</span>
-                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
-                        </a>
-                    </li>
-                    <li class="faq-item">
-                        <a href="#" class="faq-link">
+                            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            Click "Partner with Us" and choose Shop Registration. Once approved, you can start listing products in your local bazaar!
+                        </div>
+                    </details>
+                    <details class="faq-item-details">
+                        <summary class="faq-link">
+                            <span><i class="fa-solid fa-triangle-exclamation faq-icon"></i> Why shows "False" status?</span>
+                            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            A "False" or "Unverified" status means our team is still reviewing your profile. Verification usually takes 24-48 hours.
+                        </div>
+                    </details>
+                    <details class="faq-item-details">
+                        <summary class="faq-link">
                             <span><i class="fa-solid fa-eye-slash faq-icon"></i> Provider profile not visible?</span>
-                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
-                        </a>
-                    </li>
-                </ul>
+                            <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            Make sure you are fully verified. Also, ensure your location services are active so users near you can discover your profile.
+                        </div>
+                    </details>
+                </div>
             </div>
 
             <!-- Contact Cards -->
@@ -90,25 +104,127 @@
                 <h2 class="support-title">Support Us ❤️</h2>
                 <p class="text-muted mb-4">Help us keep PaSr running and improving.</p>
 
-                <div class="qr-box">
-                    <!-- Dynamic UPI QR Code -->
-                    <% const upiId="sagarkumarv71-1@oksbi" ; %>
-                        <% const upiName="PaSr Support" ; %>
-                            <% const upiLink=`upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}`; %>
-
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=<%= encodeURIComponent(upiLink) %>"
-                                    alt="Scan to Pay" class="qr-img">
-
-                                <div class="mt-2">
-                                    <div class="upa-id">
-                                        <%= upiId %>
-                                    </div>
-                                    <br>
-                                    <a href="<%= upiLink %>" class="pay-btn">
-                                        <i class="fa-solid fa-indian-rupee-sign"></i> Pay via UPI App
-                                    </a>
-                                </div>
+                <div class="donation-amounts d-flex justify-content-center gap-2 mb-4 flex-wrap">
+                    <button class="btn btn-outline-primary donate-amt-btn active" data-amt="20">₹20</button>
+                    <button class="btn btn-outline-primary donate-amt-btn" data-amt="50">₹50</button>
+                    <button class="btn btn-outline-primary donate-amt-btn" data-amt="100">₹100</button>
+                    <button class="btn btn-outline-primary donate-amt-btn" data-amt="500">₹500</button>
+                    <input type="number" id="customDonation" class="form-control" placeholder="Other" style="width: 90px; text-align: center;">
                 </div>
+
+                <div class="qr-box p-3 border rounded mb-3" style="background: #fff; max-width: 300px; margin: 0 auto;">
+                    <img id="donateQrImg" src="" alt="Scan to Pay" class="qr-img mb-2" style="max-width: 200px;">
+                    <div class="upa-id text-muted" style="font-size: 13px;">sagarkumarv71-1@oksbi</div>
+                    <a href="#" id="upiLinkBtn" class="btn btn-success w-100 mt-2" style="font-weight: 600;">
+                        <i class="fa-solid fa-indian-rupee-sign"></i> Pay via UPI App
+                    </a>
+                </div>
+                
+                <button id="payRazorpayBtn" class="btn w-100" style="background: #111827; color: white; max-width: 300px; margin: 0 auto; display: block; font-weight: 600;">
+                    <i class="fa-solid fa-credit-card"></i> Pay Online (Cards / Netbanking)
+                </button>
             </div>
         </div>
+
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const upiId = "sagarkumarv71-1@oksbi";
+                const upiName = "PaSr Support";
+                
+                const amtBtns = document.querySelectorAll('.donate-amt-btn');
+                const customInput = document.getElementById('customDonation');
+                const qrImg = document.getElementById('donateQrImg');
+                const upiLinkBtn = document.getElementById('upiLinkBtn');
+                const payRazorpayBtn = document.getElementById('payRazorpayBtn');
+
+                let currentAmount = 20;
+
+                function updatePaymentLinks(amount) {
+                    currentAmount = parseFloat(amount) || 20;
+                    const link = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&am=${currentAmount}&cu=INR`;
+                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(link)}`;
+                    upiLinkBtn.href = link;
+                    
+                    // Update Razorpay button text
+                    payRazorpayBtn.innerHTML = `<i class="fa-solid fa-credit-card"></i> Pay ₹${currentAmount} Online`;
+                }
+
+                amtBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        amtBtns.forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        customInput.value = '';
+                        updatePaymentLinks(e.target.dataset.amt);
+                    });
+                });
+
+                customInput.addEventListener('input', (e) => {
+                    amtBtns.forEach(b => b.classList.remove('active'));
+                    if (e.target.value > 0) {
+                        updatePaymentLinks(e.target.value);
+                    } else {
+                        updatePaymentLinks(20);
+                    }
+                });
+
+                // Initial generation
+                updatePaymentLinks(20);
+
+                // Razorpay Payment
+                payRazorpayBtn.addEventListener('click', async () => {
+                    if (currentAmount < 1) {
+                        alert("Minimum donation amount is ₹1"); return;
+                    }
+                    
+                    const btnOriginal = payRazorpayBtn.innerHTML;
+                    payRazorpayBtn.innerHTML = "Processing...";
+                    payRazorpayBtn.disabled = true;
+
+                    try {
+                        const res = await fetch('/api/payment/donate/create-order', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ amount: currentAmount })
+                        });
+                        const data = await res.json();
+                        
+                        if (res.ok && data.success) {
+                            const options = {
+                                key: data.razorpay.keyId,
+                                amount: data.razorpay.amount,
+                                currency: data.razorpay.currency,
+                                order_id: data.razorpay.id,
+                                name: "PaSr Platform",
+                                description: "Support Donation",
+                                handler: async function (response) {
+                                    const verifyRes = await fetch('/api/payment/donate/verify', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify(response)
+                                    });
+                                    const vData = await verifyRes.json();
+                                    if (vData.success) {
+                                        alert("Thank you so much for your support! ❤️");
+                                        window.location.reload();
+                                    } else {
+                                        alert("Payment verification failed.");
+                                    }
+                                },
+                                theme: { color: "#2563eb" }
+                            };
+                            const rzp1 = new window.Razorpay(options);
+                            rzp1.open();
+                        } else {
+                            alert("Failed to initiate payment.");
+                        }
+                    } catch (e) {
+                        alert("Network error.");
+                    } finally {
+                        payRazorpayBtn.innerHTML = btnOriginal;
+                        payRazorpayBtn.disabled = false;
+                    }
+                });
+            });
+        </script>
     </body>

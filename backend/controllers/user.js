@@ -6,6 +6,7 @@ module.exports.updateAddress = async (req, res, next) => {
     try {
         const { error } = updateAddressSchema.validate(req.body);
         if (error) {
+            require('fs').appendFileSync('updateAddress_debug.log', 'Validation error: ' + error.details[0].message + '\n');
             return res.status(400).json({ success: false, message: error.details[0].message });
         }
 
@@ -31,6 +32,10 @@ module.exports.updateAddress = async (req, res, next) => {
 
         const customer = await Customer.findById(req.user._id);
         
+        if (!customer.savedAddresses) {
+            customer.savedAddresses = [];
+        }
+
         // Save to savedAddresses if not already present
         const existing = customer.savedAddresses.find(a => a.addressStr === address);
         if (!existing) {
@@ -47,6 +52,7 @@ module.exports.updateAddress = async (req, res, next) => {
 
         await customer.save();
 
+        require('fs').appendFileSync('updateAddress_debug.log', 'Address saved successfully for user ' + customer.username + '\n');
         res.status(200).json({
             success: true,
             message: "Address updated successfully",
@@ -54,6 +60,8 @@ module.exports.updateAddress = async (req, res, next) => {
             geometry: geometry
         });
     } catch (e) {
-        next(e);
+        require('fs').appendFileSync('updateAddress_debug.log', 'Error saving address: ' + (e.stack || e) + '\n');
+        console.error(e);
+        res.status(500).json({ success: false, message: "Internal server error: " + e.message });
     }
 };

@@ -267,11 +267,13 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "Shop ID required." });
         }
 
-        let shop = await Shop.findById(shopId);
+        let shop = await Shop.findById(shopId).populate('bazaar');
         let sLoc;
 
-        if (shop && shop.geometry && shop.geometry.coordinates) {
-            sLoc = shop.geometry.coordinates; // [lng, lat]
+        if (shop && shop.bazaar && shop.bazaar.geometry && shop.bazaar.geometry.coordinates) {
+            sLoc = shop.bazaar.geometry.coordinates; // Use Bazaar's coordinates as the delivery hub
+        } else if (shop && shop.geometry && shop.geometry.coordinates) {
+            sLoc = shop.geometry.coordinates; // Fallback to Shop's coordinates [lng, lat]
         } else {
             // Check if it's a Local Bazar Seller (stored as shopId which is owner._id)
             const Product = require("../data/product");
@@ -292,15 +294,15 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
             true
         );
 
-        let maxAllowedDistance = 5; // Updated to 5km max delivery distance
+        let maxAllowedDistance = 5; 
         if (cart.items.length > 0) {
             maxAllowedDistance = Math.min(5, ...cart.items.map(i => i.maxDeliveryDistance !== undefined ? i.maxDeliveryDistance : 5));
         }
 
         if (distanceInKm > maxAllowedDistance) {
-            return res.status(400).json({
-                success: false,
-                message: `Unable to deliver to your location for now. Max delivery radius is ${maxAllowedDistance} km.`
+            return res.status(400).json({ 
+                success: false, 
+                message: `Unable to deliver to your location for now. Max delivery radius is ${maxAllowedDistance} km.` 
             });
         }
 

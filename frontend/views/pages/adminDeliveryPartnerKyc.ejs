@@ -1,0 +1,250 @@
+<% layout('/layoutes/boilerplate') -%>
+<% 
+  function getImgUrl(url) {
+    if (!url || url === 'mock') return 'https://placehold.co/600x400/f1f5f9/a0aec0?text=No+Image';
+    return url.startsWith('http') ? url : '/' + url;
+  }
+%>
+
+<style>
+    .admin-dashboard {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 1rem !important;
+        flex: 1 1 auto;
+    }
+    .admin-dashboard .d-flex-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+        gap: 1.5rem;
+    }
+    .col-left {
+        flex: 1 1 300px;
+        max-width: 400px;
+    }
+    .col-right {
+        flex: 2 1 500px;
+    }
+    .admin-dashboard .card {
+        padding: initial !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        margin: 0 !important;
+        background-color: #fff !important;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        overflow: hidden;
+    }
+    .card-header {
+        background-color: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        font-weight: 600;
+    }
+    .kyc-image {
+        width: 100%;
+        max-height: 250px;
+        object-fit: contain;
+        background-color: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .kyc-image:hover {
+        transform: scale(1.02);
+    }
+    .profile-photo {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #e2e8f0;
+    }
+</style>
+
+<div class="container-fluid py-4 admin-dashboard">
+    <div class="d-flex-wrap mb-4 align-items-center justify-content-between w-100">
+        <div>
+            <a href="/admin/delivery-partners" class="btn btn-outline-secondary btn-sm mb-2">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to List
+            </a>
+            <h2 class="fw-bold mb-0 text-gray-800">KYC Verification</h2>
+        </div>
+        
+        <div class="btn-group">
+                <% if(!partner.isApproved && !partner.isBlocked) { %>
+                    <form action="/admin/delivery-partners/<%= partner._id %>/approve" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-success me-2">
+                            <i class="fa-solid fa-check me-1"></i> Approve Partner
+                        </button>
+                    </form>
+                <% } %>
+                
+                <% if(partner.isBlocked) { %>
+                    <form action="/admin/delivery-partners/<%= partner._id %>/block" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-outline-secondary">
+                            <i class="fa-solid fa-unlock me-1"></i> Unblock
+                        </button>
+                    </form>
+                <% } else { %>
+                    <form action="/admin/delivery-partners/<%= partner._id %>/block" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fa-solid fa-ban me-1"></i> Block
+                        </button>
+                    </form>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex-wrap">
+        <!-- Partner Summary Card -->
+        <div class="col-left">
+            <div class="card h-100">
+                <div class="card-header">Partner Details</div>
+                <div class="card-body text-center">
+                    <% if(partner.profilePhoto) { %>
+                        <img src="<%= getImgUrl(partner.profilePhoto) %>" alt="Profile Photo" class="profile-photo mb-3">
+                    <% } else { %>
+                        <div class="profile-photo bg-light d-flex align-items-center justify-content-center mx-auto mb-3">
+                            <i class="fa-solid fa-user text-muted fs-1"></i>
+                        </div>
+                    <% } %>
+                    <h4 class="fw-bold"><%= partner.fullName %></h4>
+                    <p class="text-muted mb-1"><i class="fa-solid fa-phone me-1"></i> <%= partner.phoneNumber %></p>
+                    <p class="text-muted mb-3"><i class="fa-solid fa-calendar me-1"></i> <%= new Date(partner.dateOfBirth).toLocaleDateString() %></p>
+                    
+                    <hr>
+                    
+                    <div class="text-start">
+                        <p><strong>Status:</strong> 
+                            <% if(partner.isBlocked) { %>
+                                <span class="badge bg-danger">Blocked</span>
+                            <% } else if(partner.isApproved) { %>
+                                <span class="badge bg-success">Approved</span>
+                            <% } else { %>
+                                <span class="badge bg-warning text-dark">Pending Review</span>
+                            <% } %>
+                        </p>
+                        <p><strong>Bazaar:</strong> <%= partner.bazaar ? partner.bazaar.name : 'Unassigned' %></p>
+                        <p><strong>Address:</strong><br>
+                            <%= partner.address?.street %>, <br>
+                            <%= partner.address?.city %>, <%= partner.address?.state %> - <%= partner.address?.pincode %>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Identity Documents Card -->
+        <div class="col-right">
+            <div class="card h-100">
+                <div class="card-header">Identity Documents</div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap" style="gap: 1rem;">
+                        <div style="flex: 1 1 250px;">
+                            <h6 class="fw-bold text-primary">Aadhar Card</h6>
+                            <p class="small text-muted mb-2">Number: <strong><%= partner.aadharNumber %></strong></p>
+                            <div class="mb-3">
+                                <label class="small fw-semibold">Front</label>
+                                <% if(partner.documents?.aadharFront) { %>
+                                    <a href="<%= getImgUrl(partner.documents.aadharFront) %>" target="_blank">
+                                        <img src="<%= getImgUrl(partner.documents.aadharFront) %>" class="kyc-image" alt="Aadhar Front">
+                                    </a>
+                                <% } else { %>
+                                    <div class="p-4 bg-light text-center border rounded text-muted">No image uploaded</div>
+                                <% } %>
+                            </div>
+                            <div>
+                                <label class="small fw-semibold">Back</label>
+                                <% if(partner.documents?.aadharBack) { %>
+                                    <a href="<%= getImgUrl(partner.documents.aadharBack) %>" target="_blank">
+                                        <img src="<%= getImgUrl(partner.documents.aadharBack) %>" class="kyc-image" alt="Aadhar Back">
+                                    </a>
+                                <% } else { %>
+                                    <div class="p-4 bg-light text-center border rounded text-muted">No image uploaded</div>
+                                <% } %>
+                            </div>
+                        </div>
+                        
+                        <div style="flex: 1 1 250px;">
+                            <h6 class="fw-bold text-primary">PAN Card</h6>
+                            <p class="small text-muted mb-2">Number: <strong><%= partner.panNumber %></strong></p>
+                            <div class="mb-3">
+                                <label class="small fw-semibold">Front</label>
+                                <% if(partner.documents?.panCard) { %>
+                                    <a href="<%= getImgUrl(partner.documents.panCard) %>" target="_blank">
+                                        <img src="<%= getImgUrl(partner.documents.panCard) %>" class="kyc-image" alt="PAN Card">
+                                    </a>
+                                <% } else { %>
+                                    <div class="p-4 bg-light text-center border rounded text-muted">No image uploaded</div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bank & Vehicle Details -->
+        <div style="width: 100%;">
+            <div class="d-flex-wrap mt-4">
+                <div style="flex: 1 1 350px;">
+                    <div class="card h-100">
+                        <div class="card-header">Bank Details</div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item px-0">
+                                    <span class="text-muted">Account Number:</span>
+                                    <strong class="float-end"><%= partner.bankDetails?.accountNumber || 'N/A' %></strong>
+                                </li>
+                                <li class="list-group-item px-0">
+                                    <span class="text-muted">IFSC Code:</span>
+                                    <strong class="float-end"><%= partner.bankDetails?.ifscCode || 'N/A' %></strong>
+                                </li>
+                                <li class="list-group-item px-0 border-bottom-0">
+                                    <span class="text-muted">UPI ID:</span>
+                                    <strong class="float-end"><%= partner.bankDetails?.upiId || 'N/A' %></strong>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="flex: 1 1 350px;">
+                    <div class="card h-100">
+                        <div class="card-header">Vehicle Details</div>
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap" style="gap: 1rem;">
+                                <div style="flex: 1 1 200px;">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item px-0">
+                                            <span class="text-muted">Type:</span>
+                                            <strong class="float-end text-capitalize"><%= partner.vehicleType %></strong>
+                                        </li>
+                                        <li class="list-group-item px-0 border-bottom-0">
+                                            <span class="text-muted">Number:</span>
+                                            <strong class="float-end"><%= partner.vehicleNumber || 'N/A' %></strong>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div style="flex: 1 1 150px;">
+                                    <% if(partner.vehicleImage) { %>
+                                        <a href="<%= getImgUrl(partner.vehicleImage) %>" target="_blank">
+                                            <img src="<%= getImgUrl(partner.vehicleImage) %>" class="kyc-image" style="max-height: 120px;" alt="Vehicle Image">
+                                        </a>
+                                    <% } else { %>
+                                        <div class="p-3 bg-light text-center border rounded text-muted h-100 d-flex align-items-center justify-content-center">
+                                            No vehicle image
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>

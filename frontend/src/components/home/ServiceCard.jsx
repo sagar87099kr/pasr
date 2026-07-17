@@ -146,6 +146,29 @@ const ServiceCard = ({ item }) => {
                         {item.discount}% OFF
                     </span>
                 )}
+                
+                {/* Delivery Category Badge */}
+                {isProduct && item.deliveryCategory && (
+                    <span style={{
+                        position: 'absolute',
+                        bottom: '10px',
+                        left: '10px',
+                        background: item.deliveryCategory === 'quick' ? '#16A34A' :
+                                   item.deliveryCategory === 'fast' ? '#3B82F6' :
+                                   item.deliveryCategory === 'normal' ? '#F97316' : '#EF4444',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        fontWeight: '800',
+                        color: '#FFF',
+                        zIndex: 2,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}>
+                        {item.deliveryCategory === 'quick' ? '⚡ Quick (25m)' :
+                         item.deliveryCategory === 'fast' ? '🚚 Fast (90m)' :
+                         item.deliveryCategory === 'normal' ? '📦 Normal (24h)' : '🚫 Visit Shop By Own'}
+                    </span>
+                )}
             </div>
 
             {/* Content Section */}

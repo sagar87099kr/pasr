@@ -120,6 +120,26 @@
                                                     </div>
                                                 </div>
 
+                                                <!-- Order Items Thumbnail -->
+                                                <% if (order.items && order.items.length > 0) { %>
+                                                    <div class="mb-3 d-flex flex-wrap gap-2">
+                                                        <% order.items.forEach(orderItem => { 
+                                                            const itemDoc = orderItem.itemId;
+                                                            let imgUrl = 'https://via.placeholder.com/40';
+                                                            if (itemDoc) {
+                                                                if (itemDoc.img && itemDoc.img.url) imgUrl = itemDoc.img.url;
+                                                                else if (itemDoc.productImage && itemDoc.productImage.length > 0) imgUrl = itemDoc.productImage[0].url;
+                                                            }
+                                                        %>
+                                                            <div class="d-flex align-items-center bg-light border rounded p-1" style="font-size:11px;">
+                                                                <img src="<%= imgUrl %>" alt="item" style="width:30px; height:30px; object-fit:cover; border-radius:4px; margin-right:5px;">
+                                                                <span class="text-truncate" style="max-width:80px;"><%= orderItem.name %></span>
+                                                                <span class="text-muted ms-1">x<%= orderItem.quantity %></span>
+                                                            </div>
+                                                        <% }) %>
+                                                    </div>
+                                                <% } %>
+
                                                 <!-- Delivery Pricing Breakdown -->
                                                 <% if (order.partnerEarning !==undefined && order.partnerEarning !==0) {
                                                     %>
@@ -247,6 +267,26 @@
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                <!-- Order Items Thumbnail -->
+                                                <% if (order.items && order.items.length > 0) { %>
+                                                    <div class="mb-3 d-flex flex-wrap gap-2">
+                                                        <% order.items.forEach(orderItem => { 
+                                                            const itemDoc = orderItem.itemId;
+                                                            let imgUrl = 'https://via.placeholder.com/40';
+                                                            if (itemDoc) {
+                                                                if (itemDoc.img && itemDoc.img.url) imgUrl = itemDoc.img.url;
+                                                                else if (itemDoc.productImage && itemDoc.productImage.length > 0) imgUrl = itemDoc.productImage[0].url;
+                                                            }
+                                                        %>
+                                                            <div class="d-flex align-items-center bg-light border rounded p-1" style="font-size:12px;">
+                                                                <img src="<%= imgUrl %>" alt="item" style="width:36px; height:36px; object-fit:cover; border-radius:4px; margin-right:5px;">
+                                                                <span class="text-truncate" style="max-width:100px;"><%= orderItem.name %></span>
+                                                                <span class="text-muted ms-1 fw-bold">x<%= orderItem.quantity %></span>
+                                                            </div>
+                                                        <% }) %>
+                                                    </div>
+                                                <% } %>
 
                                                 <!-- Order Delivery Income Summary -->
                                                 <div
