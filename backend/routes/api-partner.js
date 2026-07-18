@@ -468,7 +468,7 @@ router.post("/shop/billing", verifyToken, async (req, res) => {
 // POST /api/shop/products
 router.post("/shop/products", verifyToken, async (req, res) => {
     try {
-        const { shopId, productId, price, originalPrice, stock, discountPercent, offerName, quantity, inStock, status, deliveryType, maxDeliveryDistance, availableForDelivery, canDeliverByBike, name, category, description, image } = req.body;
+        const { shopId, productId, price, originalPrice, stock, discountPercent, offerName, quantity, inStock, status, deliveryType, maxDeliveryDistance, availableForDelivery, canDeliverByBike, name, category, description, image, images } = req.body;
         if (!shopId) return res.status(400).json({ success: false, message: "Missing shopId" });
         if (!productId && !name) return res.status(400).json({ success: false, message: "Missing productId or name" });
 
@@ -495,13 +495,34 @@ router.post("/shop/products", verifyToken, async (req, res) => {
             newItem.product = productId;
         }
 
-        if (image && typeof image === 'string') {
+        let uploadedImages = [];
+        const { cloudinary } = require('../cloud_con');
+        
+        // Handle array of images
+        if (images && Array.isArray(images) && images.length > 0) {
+            for (let img of images) {
+                if (typeof img === 'string') {
+                    if (img.startsWith('data:image')) {
+                        const uploadRes = await cloudinary.uploader.upload(img, { folder: 'pasr_DEV' });
+                        uploadedImages.push({ url: uploadRes.secure_url, filename: uploadRes.public_id });
+                    } else {
+                        uploadedImages.push({ url: img });
+                    }
+                }
+            }
+        } else if (image && typeof image === 'string') {
             if (image.startsWith('data:image')) {
-                const { cloudinary } = require('../cloud_con');
                 const uploadRes = await cloudinary.uploader.upload(image, { folder: 'pasr_DEV' });
-                newItem.img = { url: uploadRes.secure_url, filename: uploadRes.public_id };
+                uploadedImages.push({ url: uploadRes.secure_url, filename: uploadRes.public_id });
             } else {
-                newItem.img = { url: image };
+                uploadedImages.push({ url: image });
+            }
+        }
+
+        if (uploadedImages.length > 0) {
+            newItem.img = uploadedImages[0];
+            if (uploadedImages.length > 1) {
+                newItem.extraImages = uploadedImages.slice(1);
             }
         }
 
@@ -529,7 +550,7 @@ router.get("/shop/products/search", verifyToken, async (req, res) => {
 // PUT /api/shop/products/:id
 router.put("/shop/products/:id", verifyToken, async (req, res) => {
     try {
-        const { shopId, price, stock, discountPercent, name, category, description, image, deliveryType, maxDeliveryDistance, availableForDelivery, canDeliverByBike } = req.body;
+        const { shopId, price, stock, discountPercent, name, category, description, image, images, deliveryType, maxDeliveryDistance, availableForDelivery, canDeliverByBike } = req.body;
         if (!shopId) return res.status(400).json({ success: false, message: "Missing shopId" });
 
         const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
@@ -541,13 +562,36 @@ router.put("/shop/products/:id", verifyToken, async (req, res) => {
         if (name !== undefined) item.name = name;
         if (category !== undefined) item.itemCategory = category;
         if (description !== undefined) item.description = description;
-        if (image !== undefined) {
-            if (image && typeof image === 'string' && image.startsWith('data:image')) {
-                const { cloudinary } = require('../cloud_con');
-                const uploadRes = await cloudinary.uploader.upload(image, { folder: 'pasr_DEV' });
-                item.img = { url: uploadRes.secure_url, filename: uploadRes.public_id };
-            } else if (image) {
-                item.img = { url: image };
+        if (image !== undefined || images !== undefined) {
+            let uploadedImages = [];
+            const { cloudinary } = require('../cloud_con');
+
+            if (images && Array.isArray(images) && images.length > 0) {
+                for (let img of images) {
+                    if (typeof img === 'string') {
+                        if (img.startsWith('data:image')) {
+                            const uploadRes = await cloudinary.uploader.upload(img, { folder: 'pasr_DEV' });
+                            uploadedImages.push({ url: uploadRes.secure_url, filename: uploadRes.public_id });
+                        } else {
+                            uploadedImages.push({ url: img });
+                        }
+                    }
+                }
+            } else if (image && typeof image === 'string') {
+                if (image.startsWith('data:image')) {
+                    const uploadRes = await cloudinary.uploader.upload(image, { folder: 'pasr_DEV' });
+                    uploadedImages.push({ url: uploadRes.secure_url, filename: uploadRes.public_id });
+                } else {
+                    uploadedImages.push({ url: image });
+                }
+            }
+
+            if (uploadedImages.length > 0) {
+                item.img = uploadedImages[0];
+                item.extraImages = uploadedImages.length > 1 ? uploadedImages.slice(1) : [];
+            } else if (images && Array.isArray(images) && images.length === 0) {
+                item.img = { url: '', filename: '' };
+                item.extraImages = [];
             }
         }
         if (price !== undefined) item.price = price;
