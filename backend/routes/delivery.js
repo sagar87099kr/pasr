@@ -31,36 +31,36 @@ router.post("/register", isLogedin, upload.fields([
 ]), validateDeliveryPartner, catchAsync(deliveryController.registerPartner));
 
 // Toggle Online/Offline Status
-router.post("/toggle-status", isDeliveryPartner, catchAsync(deliveryController.toggleActiveStatus));
+router.post("/toggle-status", isLogedin, isDeliveryPartner, catchAsync(deliveryController.toggleActiveStatus));
 
 
 // View Dashboard (Profile info + Assigned Orders)
-router.get("/dashboard", isDeliveryPartner, catchAsync(deliveryController.getDashboard));
+router.get("/dashboard", isLogedin, isDeliveryPartner, catchAsync(deliveryController.getDashboard));
 
 // Partner: Mark Order as Picked Up
-router.post("/order/:orderId/picked-up", isDeliveryPartner, catchAsync(deliveryController.markPickedUp));
+router.post("/order/:orderId/picked-up", isLogedin, isDeliveryPartner, catchAsync(deliveryController.markPickedUp));
 
 
 // Partner: Verify OTP and Complete Delivery
-router.post("/order/:orderId/complete", isDeliveryPartner, catchAsync(deliveryController.verifyOTPAndComplete));
+router.post("/order/:orderId/complete", isLogedin, isDeliveryPartner, catchAsync(deliveryController.verifyOTPAndComplete));
 
 
 // Partner: Request Payout (notify admin)
-router.post("/request-payout", isDeliveryPartner, catchAsync(deliveryController.requestPayout));
+router.post("/request-payout", isLogedin, isDeliveryPartner, catchAsync(deliveryController.requestPayout));
 
 
 // Partner: Confirm Receipt of Payout (reset pending balance)
-router.post("/confirm-receipt", isDeliveryPartner, catchAsync(deliveryController.confirmReceipt));
+router.post("/confirm-receipt", isLogedin, isDeliveryPartner, catchAsync(deliveryController.confirmReceipt));
 
 
 // Delivery calculation endpoint based on distance
 router.get("/api/calculate", catchAsync(deliveryController.calculateDeliveryAPI));
 
 // API: Fetch broadcast orders dynamically
-router.get("/api/available-orders", isDeliveryPartner, catchAsync(deliveryController.getAvailableOrders));
+router.get("/api/available-orders", isLogedin, isDeliveryPartner, catchAsync(deliveryController.getAvailableOrders));
 
 // API: Accept an order
-router.post("/api/accept-order/:orderId", isDeliveryPartner, catchAsync(deliveryController.acceptOrder));
+router.post("/api/accept-order/:orderId", isLogedin, isDeliveryPartner, catchAsync(deliveryController.acceptOrder));
 
 module.exports = router;
 
