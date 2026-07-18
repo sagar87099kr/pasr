@@ -98,7 +98,8 @@ module.exports.getDashboard = async (req, res, next) => {
 
         // Fetch all BROADCAST orders that are still unclaimed (any partner can claim them)
         const broadcastOrders = await Order.find({
-            orderStatus: 'BROADCAST'
+            orderStatus: { $in: ['PACKED', 'BROADCAST', 'READY_FOR_DELIVERY'] },
+            deliveryType: 'HOME_DELIVERY'
         }).populate({
             path: 'shopId',
             populate: { path: 'owner', select: 'name username' }
@@ -270,7 +271,10 @@ module.exports.calculateDeliveryAPI = async (req, res, next) => {
 // Fetch available broadcast orders (for AJAX polling in dashboard)
 module.exports.getAvailableOrders = async (req, res, next) => {
     try {
-        const broadcastOrders = await Order.find({ orderStatus: 'BROADCAST' })
+        const broadcastOrders = await Order.find({ 
+            orderStatus: { $in: ['PACKED', 'BROADCAST', 'READY_FOR_DELIVERY'] },
+            deliveryType: 'HOME_DELIVERY'
+        })
             .populate({ path: 'shopId', populate: { path: 'owner', select: 'name username' } })
             .populate('customerId')
             .sort({ createdAt: -1 });
@@ -291,7 +295,11 @@ module.exports.acceptOrder = async (req, res, next) => {
             return res.status(403).json({ success: false, message: "You must be online and approved to accept orders." });
         }
 
-        const order = await Order.findOne({ _id: orderId, orderStatus: 'BROADCAST' });
+        const order = await Order.findOne({ 
+            _id: orderId, 
+            orderStatus: { $in: ['PACKED', 'BROADCAST', 'READY_FOR_DELIVERY'] },
+            deliveryType: 'HOME_DELIVERY'
+        });
         if (!order) {
             return res.status(404).json({ success: false, message: "Order is no longer available or already accepted." });
         }
