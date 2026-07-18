@@ -46,16 +46,41 @@ router.get('/data', async (req, res) => {
                 stats.verified = await Order.countDocuments({ ...filterQuery, orderStatus: 'COMPLETED' });
                 stats.rejected = await Order.countDocuments({ ...filterQuery, orderStatus: 'CANCELLED' });
                 
-                const orders = await Order.find(filterQuery).sort({ createdAt: -1 }).limit(500).lean();
+                const orders = await Order.find(filterQuery)
+                    .populate('customerId', 'name username')
+                    .populate({
+                        path: 'shopId',
+                        populate: { path: 'owner', select: 'name username' }
+                    })
+                    .populate('deliveryPartnerId', 'fullName phoneNumber')
+                    .populate({
+                        path: 'items.itemId',
+                        select: 'img productImage'
+                    })
+                    .sort({ createdAt: -1 })
+                    .limit(500)
+                    .lean();
                 
-                const shopIds = orders.map(o => o.shopId).filter(Boolean);
-                const shops = await Shop.find({ _id: { $in: shopIds } }).lean();
-                const shopMap = new Map();
-                shops.forEach(s => shopMap.set(s._id.toString(), s));
-
                 data = orders.map(d => {
-                    const shop = shopMap.get(d.shopId?.toString());
+                    const shop = d.shopId;
                     const shopName = shop ? (shop.shopName || shop.name) : 'Unknown Shop';
+                    const shopPhone = shop && shop.owner ? shop.owner.username : 'No Phone';
+                    
+                    const customerName = d.customerId ? d.customerId.name : 'Guest';
+                    const customerPhone = d.customerId ? d.customerId.username : 'No Phone';
+
+                    const partnerName = d.deliveryPartnerId ? d.deliveryPartnerId.fullName : null;
+                    const partnerPhone = d.deliveryPartnerId ? d.deliveryPartnerId.phoneNumber : null;
+
+                    let imageUrl = null;
+                    if (d.items && d.items.length > 0 && d.items[0].itemId) {
+                        const itemDoc = d.items[0].itemId;
+                        if (itemDoc.img && itemDoc.img.url) {
+                            imageUrl = itemDoc.img.url;
+                        } else if (itemDoc.productImage && itemDoc.productImage.length > 0) {
+                            imageUrl = itemDoc.productImage[0].url;
+                        }
+                    }
                     
                     return {
                         id: d._id.toString(),
@@ -63,8 +88,17 @@ router.get('/data', async (req, res) => {
                         time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
                         title: `${d.items?.length || 0} items from ${shopName}`,
                         shopName,
-                        imageUrl: null,
-                        raw: { ...d, shopName, bazaarName: 'Unknown' }
+                        imageUrl,
+                        raw: { 
+                            ...d, 
+                            shopName, 
+                            shopPhone,
+                            customerName,
+                            customerPhone,
+                            partnerName,
+                            partnerPhone,
+                            bazaarName: 'Unknown' 
+                        }
                     };
                 });
                 break;
