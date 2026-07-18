@@ -854,7 +854,7 @@ module.exports.claimBroadcastOrder = async (req, res, next) => {
 module.exports.completeOrder = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { otp } = req.body;
+        const otp = req.body.otp || req.body.deliveryOTP;
         const Order = require("../data/order");
         const Shop = require("../data/shops");
         const DeliveryPartner = require("../data/deliveryPartner");

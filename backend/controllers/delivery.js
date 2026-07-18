@@ -209,6 +209,11 @@ module.exports.verifyOTPAndComplete = async (req, res, next) => {
         partner.totalDeliveries = (partner.totalDeliveries || 0) + 1;
         await partner.save();
 
+        order.orderStatus = 'COMPLETED';
+        order.deliveredAt = new Date();
+        order.paymentStatus = 'COLLECTED';
+        await order.save();
+
         res.status(200).json({ success: true, message: "Delivery completed successfully! Earnings updated.", order });
 
     } catch (e) {

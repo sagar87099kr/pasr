@@ -262,8 +262,12 @@
                                                         <div class="fw-bold">
                                                             <%= order.customerId.name %>
                                                         </div>
-                                                        <div class="small text-muted">Phone: <%=
-                                                                order.customerId.username %>
+                                                        <div class="small fw-semibold mt-1">
+                                                            <i class="fa-solid fa-phone me-1 text-success"></i><a
+                                                                href="tel:<%= order.customerId.username %>"
+                                                                class="text-decoration-none text-dark">
+                                                                <%= order.customerId.username %>
+                                                            </a>
                                                         </div>
                                                     </div>
                                                 </div>
