@@ -631,3 +631,109 @@ router.delete("/shop/products/:id", verifyToken, async (req, res) => {
 });
 
 module.exports = router;
+
+router.post("/shop/request-payout", verifyToken, async (req, res) => {
+    try {
+        const shop = await Shop.findOne({ owner: req.user._id });
+        if (!shop) {
+            return res.status(404).json({ success: false, message: "Shop not found." });
+        }
+
+        const TransactionHistory = require("../data/TransactionHistory");
+        
+        // 1. Find the orders that make up this payout
+        const unsettledOrders = await Order.find({
+            shopId: shop._id,
+            orderStatus: 'COMPLETED',
+            settlementStatus: { $in: ['PENDING', 'REQUESTED'] }
+        });
+
+        const payoutOrders = unsettledOrders.filter(order => {
+            let earningsForShop = 0;
+            if (order.paymentType === 'PREPAID') {
+                earningsForShop = (order.subtotalAmount || 0);
+                if (order.selfDelivery && order.deliveryType === 'HOME_DELIVERY') {
+                    earningsForShop += (order.deliveryCharge || 0);
+                }
+                if (order.selfDelivery) {
+                    earningsForShop -= (order.pasrCommission || 0);
+                } else if (order.deliveryPartnerId) {
+                    earningsForShop -= (order.deliveryCharge || 0);
+                }
+            } else if (order.paymentType === 'COD') {
+                earningsForShop = (order.coinDiscount || 0);
+                if (order.selfDelivery) {
+                    earningsForShop -= (order.pasrCommission || 0);
+                } else if (order.deliveryPartnerId) {
+                    earningsForShop -= (order.deliveryCharge || 0);
+                }
+            }
+            return earningsForShop > 0;
+        });
+
+        if (payoutOrders.length === 0) {
+            return res.status(400).json({ success: false, message: "No eligible completed orders found for payout." });
+        }
+
+        // Calculate total amount
+        const payoutAmount = payoutOrders.reduce((sum, order) => {
+            let earningsForShop = 0;
+            if (order.paymentType === 'PREPAID') {
+                earningsForShop = (order.subtotalAmount || 0);
+                if (order.selfDelivery && order.deliveryType === 'HOME_DELIVERY') {
+                    earningsForShop += (order.deliveryCharge || 0);
+                }
+                if (order.selfDelivery) {
+                    earningsForShop -= (order.pasrCommission || 0);
+                } else if (order.deliveryPartnerId) {
+                    earningsForShop -= (order.deliveryCharge || 0);
+                }
+            } else if (order.paymentType === 'COD') {
+                earningsForShop = (order.coinDiscount || 0);
+                if (order.selfDelivery) {
+                    earningsForShop -= (order.pasrCommission || 0);
+                } else if (order.deliveryPartnerId) {
+                    earningsForShop -= (order.deliveryCharge || 0);
+                }
+            }
+            return sum + earningsForShop;
+        }, 0);
+
+        // Check if there is already a pending payout request
+        const existingPending = await TransactionHistory.findOne({
+            shopId: shop._id,
+            type: 'PAYOUT_TO_SHOP',
+            status: 'PENDING'
+        });
+
+        if (existingPending) {
+            return res.status(400).json({ success: false, message: "You already have a pending payout request." });
+        }
+
+        const orderIds = payoutOrders.map(o => o.orderId);
+
+        // 2. Create a PENDING Payout Transaction for manual approval
+        await TransactionHistory.create({
+            shopId: shop._id,
+            type: 'PAYOUT_TO_SHOP',
+            amount: payoutAmount,
+            status: 'PENDING',
+            metadata: {
+                upiId: shop.upiId || 'Not Provided',
+                ordersSettled: orderIds,
+                requestDate: new Date()
+            }
+        });
+
+        // 3. Mark Orders as REQUESTED
+        await Order.updateMany(
+            { _id: { $in: payoutOrders.map(o => o._id) } },
+            { $set: { settlementStatus: 'REQUESTED' } }
+        );
+
+        res.json({ success: true, message: `Payout request for ₹${payoutAmount.toFixed(2)} submitted successfully.` });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Failed to process payout request." });
+    }
+});
