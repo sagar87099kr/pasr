@@ -52,24 +52,8 @@ const ShopItemsPage = ({ isLoggedIn }) => {
     }, [searchQuery]);
 
     useEffect(() => {
-        // Try to get browser location
-        if ("geolocation" in navigator) {
-            setTimeout(() => {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        setUserLoc({ lat: latitude, lon: longitude, resolved: true });
-                    },
-                    (error) => {
-                        console.warn("Geolocation denied or failed:", error);
-                        setUserLoc({ lat: null, lon: null, resolved: true });
-                    },
-                    { timeout: 10000 }
-                );
-            }, 5000);
-        } else {
-            setUserLoc({ lat: null, lon: null, resolved: true });
-        }
+        // Do not automatically ask for location permission. Let user fill it manually if needed.
+        setUserLoc({ lat: null, lon: null, resolved: true });
     }, []);
 
     useEffect(() => {

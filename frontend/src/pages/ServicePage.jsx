@@ -51,29 +51,8 @@ const ServicePage = ({ isLoggedIn, initialLat, initialLon }) => {
             }
         };
 
-        if ("geolocation" in navigator && !userLoc.resolved) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    setUserLoc({ lat: latitude, lon: longitude, resolved: true });
-                    fetchDiscovery(latitude, longitude);
-                    fetch('/set-location', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ latitude, longitude })
-                    });
-                },
-                (error) => {
-                    console.warn("Geolocation denied or failed:", error);
-                    setUserLoc({ lat: null, lon: null, resolved: true });
-                    fetchDiscovery();
-                },
-                { timeout: 10000 }
-            );
-        } else {
-            setUserLoc({ lat: null, lon: null, resolved: true });
-            fetchDiscovery();
-        }
+        setUserLoc({ lat: null, lon: null, resolved: true });
+        fetchDiscovery();
     }, []);
 
     const getSliderData = (realData) => {

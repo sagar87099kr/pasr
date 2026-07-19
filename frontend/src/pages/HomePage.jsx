@@ -114,31 +114,10 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon, initialBazaarName }) => 
             }
         };
 
-        // Try to get browser location ONLY if we don't already have one resolved from session
-        if ("geolocation" in navigator && !userLoc.resolved) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    setUserLoc({ lat: latitude, lon: longitude, resolved: true });
-                    fetchDiscovery(latitude, longitude);
-                    // Also sync with session for other pages
-                    fetch('/set-location', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ latitude, longitude })
-                    });
-                },
-                (error) => {
-                    console.warn("Geolocation denied or failed:", error);
-                    setUserLoc({ lat: null, lon: null, resolved: true });
-                    fetchDiscovery(); // Fallback to session/database location
-                },
-                { timeout: 5000 }
-            );
-        } else {
-            setUserLoc({ lat: null, lon: null, resolved: true });
-            fetchDiscovery();
-        }
+        // Do not automatically ask for location permission. Let user fill it manually if needed.
+        // We will just fetch discovery using the session location if available.
+        setUserLoc({ lat: null, lon: null, resolved: true });
+        fetchDiscovery();
     }, []);
 
     // Only return database items. If empty, return empty array to hide the section.
