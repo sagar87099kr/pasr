@@ -640,7 +640,7 @@ router.post("/shop/request-payout", verifyToken, async (req, res) => {
             return res.status(404).json({ success: false, message: "Shop not found." });
         }
 
-        const TransactionHistory = require("../data/TransactionHistory");
+        const TransactionHistory = require("../data/transactionHistory");
         
         // 1. Find the orders that make up this payout
         const unsettledOrders = await Order.find({
