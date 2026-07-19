@@ -409,32 +409,21 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
         unsettledOrders.forEach(order => {
             let earningsForShop = 0; // Net balance for this specific order
 
-            if (order.paymentType === 'PREPAID') {
-                // PASR collected everything online (Full Subtotal + Delivery)
-                earningsForShop = (order.subtotalAmount || 0);
+            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup';
+            const actualItemPrice = order.subtotalAmount || ((order.totalAmount || 0) + (order.coinDiscount || 0));
 
-                // If shop delivered it, they also get the delivery charge PASR collected
-                if (order.selfDelivery && order.deliveryType === 'HOME_DELIVERY') {
-                    earningsForShop += (order.deliveryCharge || 0);
-                }
-
-                // Deduct Platform Debt (Commission or Delivery Partner Fee)
-                if (order.selfDelivery) {
+            if (isSelfPickup) {
+                if (order.paymentType === 'PREPAID') {
+                    earningsForShop = actualItemPrice;
+                    if (order.deliveryType === 'HOME_DELIVERY') {
+                        earningsForShop += (order.deliveryCharge || 0);
+                    }
                     earningsForShop -= (order.pasrCommission || 0);
-                } else if (order.deliveryPartnerId) {
-                    earningsForShop -= (order.deliveryCharge || 0);
+                } else {
+                    earningsForShop = (order.coinDiscount || 0) - (order.pasrCommission || 0);
                 }
-            } else if (order.paymentType === 'COD') {
-                // Shop/Partner already has the cash (Subtotal + Delivery - Coins)
-                // PASR only needs to pay the Shop for the coins they accepted
-                earningsForShop = (order.coinDiscount || 0);
-
-                // Deduct Platform Debt (Commission or Delivery Partner Fee)
-                if (order.selfDelivery) {
-                    earningsForShop -= (order.pasrCommission || 0);
-                } else if (order.deliveryPartnerId) {
-                    earningsForShop -= (order.deliveryCharge || 0);
-                }
+            } else {
+                earningsForShop = actualItemPrice;
             }
 
             // Categorize the net result

@@ -651,23 +651,21 @@ router.post("/shop/request-payout", verifyToken, async (req, res) => {
 
         const payoutOrders = unsettledOrders.filter(order => {
             let earningsForShop = 0;
-            if (order.paymentType === 'PREPAID') {
-                earningsForShop = (order.subtotalAmount || 0);
-                if (order.selfDelivery && order.deliveryType === 'HOME_DELIVERY') {
-                    earningsForShop += (order.deliveryCharge || 0);
-                }
-                if (order.selfDelivery) {
+            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup';
+            const actualItemPrice = order.subtotalAmount || ((order.totalAmount || 0) + (order.coinDiscount || 0));
+
+            if (isSelfPickup) {
+                if (order.paymentType === 'PREPAID') {
+                    earningsForShop = actualItemPrice;
+                    if (order.deliveryType === 'HOME_DELIVERY') {
+                        earningsForShop += (order.deliveryCharge || 0);
+                    }
                     earningsForShop -= (order.pasrCommission || 0);
-                } else if (order.deliveryPartnerId) {
-                    earningsForShop -= (order.deliveryCharge || 0);
+                } else {
+                    earningsForShop = (order.coinDiscount || 0) - (order.pasrCommission || 0);
                 }
-            } else if (order.paymentType === 'COD') {
-                earningsForShop = (order.coinDiscount || 0);
-                if (order.selfDelivery) {
-                    earningsForShop -= (order.pasrCommission || 0);
-                } else if (order.deliveryPartnerId) {
-                    earningsForShop -= (order.deliveryCharge || 0);
-                }
+            } else {
+                earningsForShop = actualItemPrice;
             }
             return earningsForShop > 0;
         });
@@ -679,23 +677,21 @@ router.post("/shop/request-payout", verifyToken, async (req, res) => {
         // Calculate total amount
         const payoutAmount = payoutOrders.reduce((sum, order) => {
             let earningsForShop = 0;
-            if (order.paymentType === 'PREPAID') {
-                earningsForShop = (order.subtotalAmount || 0);
-                if (order.selfDelivery && order.deliveryType === 'HOME_DELIVERY') {
-                    earningsForShop += (order.deliveryCharge || 0);
-                }
-                if (order.selfDelivery) {
+            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup';
+            const actualItemPrice = order.subtotalAmount || ((order.totalAmount || 0) + (order.coinDiscount || 0));
+
+            if (isSelfPickup) {
+                if (order.paymentType === 'PREPAID') {
+                    earningsForShop = actualItemPrice;
+                    if (order.deliveryType === 'HOME_DELIVERY') {
+                        earningsForShop += (order.deliveryCharge || 0);
+                    }
                     earningsForShop -= (order.pasrCommission || 0);
-                } else if (order.deliveryPartnerId) {
-                    earningsForShop -= (order.deliveryCharge || 0);
+                } else {
+                    earningsForShop = (order.coinDiscount || 0) - (order.pasrCommission || 0);
                 }
-            } else if (order.paymentType === 'COD') {
-                earningsForShop = (order.coinDiscount || 0);
-                if (order.selfDelivery) {
-                    earningsForShop -= (order.pasrCommission || 0);
-                } else if (order.deliveryPartnerId) {
-                    earningsForShop -= (order.deliveryCharge || 0);
-                }
+            } else {
+                earningsForShop = actualItemPrice;
             }
             return sum + earningsForShop;
         }, 0);
