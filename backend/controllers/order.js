@@ -343,20 +343,9 @@ module.exports.checkoutOrder = async (req, res, next) => {
             await FreeDeliveryUsage.create({ mobile: String(req.user.username), usedAt: new Date() });
         }
 
-        // Create Event for Seller
+        // Create Event for Seller — notificationService.js handles FCM push
         orderBus.emit("ORDER_CREATED", order);
 
-        // Notify Seller
-        const sellerInfo = await getOrderSellerDetails(order);
-        if (sellerInfo && sellerInfo.sellerId && typeof createNotification === 'function') {
-            await createNotification(
-                sellerInfo.sellerId,
-                'ORDER_RECEIVED',
-                order._id,
-                'New Order Received',
-                `You have a new order: ${order.orderId}`
-            );
-        }
 
         // Only clear items immediately for COD. 
         // For PREPAID, items are cleared in /api/payment/verify-payment upon successful payment.

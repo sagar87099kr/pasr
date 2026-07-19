@@ -224,7 +224,7 @@
     <div class="container">
 
         <!-- Location Prompt -->
-        <% if (!lat || !lng) { %>
+        <% if ((!lat || !lng) && typeof bazaarId === 'undefined' || ((!lat || !lng) && !bazaarId)) { %>
             <div class="row justify-content-center">
                 <div class="col-md-6">
                     <div class="location-request-card">
@@ -393,7 +393,7 @@
                                 10 ? '0' : '' ) + istM; var shopIsClosed=false; if (!shop.isActive || shop.isHoliday) {
                                 shopIsClosed=true; } else if (shop.openingTime && shop.closingTime) {
                                 shopIsClosed=!(nowStr>= shop.openingTime && nowStr <= shop.closingTime); } var
-                                    isOwner=currUser && shop.owner._id.equals(currUser._id); var
+                                    isOwner=currUser && shop.owner && shop.owner._id ? shop.owner._id.equals(currUser._id) : false; var
                                     isOpenNow=!shopIsClosed; %>
 
                                     <a href="/shops/<%= shop._id %>" class="shop-list-card" <% if (!isOwner &&
