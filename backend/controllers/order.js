@@ -591,6 +591,7 @@ module.exports.getCustomerOrders = async (req, res, next) => {
                 populate: { path: 'product', select: 'img' },
                 select: 'img product'
             })
+            .populate('deliveryPartnerId', 'fullName phoneNumber profilePhoto')
             .sort({ createdAt: -1 });
 
         // Resolve seller details for each order to handle both Shops and Local Bazar

@@ -219,6 +219,7 @@ router.get("/shop/orders", verifyToken, async (req, res) => {
 
         const orders = await Order.find({ shopId })
             .populate("customerId")
+            .populate("deliveryPartnerId")
             .populate({
                 path: "items.itemId",
                 populate: { path: "product" }

@@ -215,6 +215,15 @@ module.exports.verifyOTPAndComplete = async (req, res, next) => {
         order.paymentStatus = 'COLLECTED';
         await order.save();
 
+        // Notify Customer that delivery is complete
+        await createNotification(
+            order.customerId,
+            'ORDER_STATUS_UPDATE',
+            order._id,
+            'Order Delivered! 🎉',
+            `Your order ${order.orderId} has been successfully delivered. Enjoy!`
+        );
+
         res.status(200).json({ success: true, message: "Delivery completed successfully! Earnings updated.", order });
 
     } catch (e) {
