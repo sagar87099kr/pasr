@@ -877,7 +877,7 @@
                     const lat = document.getElementById('modal-lat') ? document.getElementById('modal-lat').value : null;
                     const lng = document.getElementById('modal-lng') ? document.getElementById('modal-lng').value : null;
                     const pincode = document.getElementById('modal-pincode') ? document.getElementById('modal-pincode').value : null;
-                    const address = tempSelectedAddress;
+                    const address = window.tempSelectedAddress;
 
                     if (!lat || !lng || !address) {
                         alert(`Cannot save: Missing details.\nLat: ${lat}\nLng: ${lng}\nAddress: ${address}`);
@@ -1328,7 +1328,7 @@
 
                     document.getElementById('modal-selected-addr-text').innerText = address;
                     document.getElementById('modal-addr-preview').classList.remove('d-none');
-                    tempSelectedAddress = address;
+                    window.tempSelectedAddress = address;
                     const btn = document.getElementById('save-address-btn');
                     if (btn) btn.disabled = false;
                 });
@@ -1344,7 +1344,7 @@
                         document.getElementById('modal-lng').value = lng;
                         document.getElementById('modal-selected-addr-text').innerText = address;
                         document.getElementById('modal-addr-preview').classList.remove('d-none');
-                        tempSelectedAddress = address;
+                        window.tempSelectedAddress = address;
                         
                         const saveBtn = document.getElementById('save-address-btn');
                         if (saveBtn) saveBtn.disabled = false;

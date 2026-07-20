@@ -42,6 +42,7 @@ const getFcmOptions = (payload) => ({
     android: {
         priority: "high",
         notification: {
+            channelId: "pasr_orders",
             priority: "high",
             defaultSound: true,
             defaultVibrateTimings: true
@@ -78,12 +79,21 @@ orderBus.on("ORDER_CREATED", async (order) => {
         const customerName = customer ? customer.name : "A customer";
         const itemsList = order.items.map(i => `${i.name} (x${i.quantity})`).join(", ");
 
-        // Send ONE Push Notification to Seller via FCM
+        // 1. Create Internal Notification for Seller
+        await createNotification(
+            seller._id,
+            'ORDER_RECEIVED',
+            order._id,
+            'New Order Received',
+            `${customerName} ordered: ${itemsList}. Total: ₹${order.totalAmount}`
+        );
+
+        // 2. Send Push Notification to Seller via FCM
         if (seller.fcmToken) {
             const message = getFcmOptions({
                 notification: {
                     title: "🔔 New Order Received!",
-                    body: `${customerName} ordered: ${itemsList}. Total: ₹${order.totalAmount}`
+                    body: `${customerName} ordered: ${itemsList}`
                 },
                 data: {
                     orderId: String(order._id),

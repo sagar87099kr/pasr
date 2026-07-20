@@ -249,7 +249,7 @@ router.get("/shop/settings", verifyToken, async (req, res) => {
 // PUT /api/shop/settings
 router.put("/shop/settings", verifyToken, async (req, res) => {
     try {
-        const { shopId, shopName, shopDescription, category, location, openingTime, closingTime, upiId, gstNumber } = req.body;
+        const { shopId, shopName, shopDescription, category, location, openingTime, closingTime, upiId } = req.body;
         if (!shopId) return res.status(400).json({ success: false, message: "Missing shopId" });
 
         const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
@@ -262,7 +262,6 @@ router.put("/shop/settings", verifyToken, async (req, res) => {
         if (openingTime) shop.openingTime = openingTime;
         if (closingTime) shop.closingTime = closingTime;
         if (upiId !== undefined) shop.upiId = upiId;
-        if (gstNumber !== undefined) shop.gstNumber = gstNumber;
         
         await shop.save();
         res.json({ success: true, message: "Settings saved successfully", shop });

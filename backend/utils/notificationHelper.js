@@ -28,31 +28,11 @@ const createNotification = async (recipientId, type, orderId, title, message, im
             const admin = require("firebase-admin");
             if (admin.apps.length > 0) {
                 const payload = {
-                    notification: {
-                        title: String(title || ''),
-                        body: String(message || '')
-                    },
                     data: {
                         title: String(title || ''),
                         body: String(message || ''),
                         orderId: String(orderId || ''),
                         type: String(type || '')
-                    },
-                    android: {
-                        priority: "high",
-                        notification: {
-                            priority: "high",
-                            defaultSound: true,
-                            defaultVibrateTimings: true
-                        }
-                    },
-                    apns: {
-                        payload: {
-                            aps: {
-                                contentAvailable: true,
-                                sound: "default"
-                            }
-                        }
                     },
                     token: customer.fcmToken
                 };
