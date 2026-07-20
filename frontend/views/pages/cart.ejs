@@ -1038,12 +1038,17 @@
                             codBtn.querySelector('i').className = 'fa-solid fa-store me-1';
                         }
                         
-                        // Always show both buttons (COD/Pay at Shop AND Pay Online)
+                        // Show Pay Online button ONLY for HOME_DELIVERY
                         const codCol = section.querySelector('.cod-btn-col');
                         const rzpCol = section.querySelector('.razorpay-btn-col');
                         if (codCol && rzpCol) {
-                            codCol.classList.replace('col-12', 'col-sm-6');
-                            rzpCol.style.display = 'block';
+                            if (deliveryType === 'HOME_DELIVERY') {
+                                codCol.classList.replace('col-12', 'col-sm-6');
+                                rzpCol.style.display = 'block';
+                            } else {
+                                codCol.classList.replace('col-sm-6', 'col-12');
+                                rzpCol.style.display = 'none';
+                            }
                         }
                         
                         // Ensure COD button is always visible

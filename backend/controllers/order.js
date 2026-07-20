@@ -374,10 +374,8 @@ module.exports.checkoutOrder = async (req, res, next) => {
             if (totalAmount === 0) {
                 // If coins cover the entire amount, mark as VERIFIED directly
                 order.paymentStatus = 'VERIFIED';
-                // Automatically move order to READY_FOR_DELIVERY since it effectively paid
-                order.orderStatus = 'READY_FOR_DELIVERY';
                 await order.save();
-                orderBus.emit("ORDER_READY", order);
+                orderBus.emit("PAYMENT_VERIFIED", order);
             } else {
                 const Razorpay = require('razorpay');
                 const rzp = new Razorpay({
