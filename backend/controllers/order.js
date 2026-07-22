@@ -130,11 +130,11 @@ module.exports.checkoutOrder = async (req, res, next) => {
             const nowIST = new Date(now.getTime() + istOffsetMs);
             const istH = nowIST.getUTCHours();
             
-            if (istH < 9 || istH >= 18) {
+            if (istH < 9 || istH >= 20) {
                 for (let revert of inventoryUpdates) {
                     await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
                 }
-                return res.status(400).json({ success: false, message: "Sorry we can delivery product only in 9am to 6pm." });
+                return res.status(400).json({ success: false, message: "Sorry we can delivery product only in 9am to 8pm." });
             }
 
             // 2. Removed Hardcoded Bazaar Restriction (Handled by Distance Radius now)
