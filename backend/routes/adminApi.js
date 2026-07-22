@@ -42,7 +42,7 @@ router.get('/data', async (req, res) => {
                     };
                 }
 
-                stats.pending = await Order.countDocuments({ ...filterQuery, orderStatus: 'PENDING' });
+                stats.pending = await Order.countDocuments({ ...filterQuery, orderStatus: 'CREATED' });
                 stats.verified = await Order.countDocuments({ ...filterQuery, orderStatus: 'COMPLETED' });
                 stats.rejected = await Order.countDocuments({ ...filterQuery, orderStatus: 'CANCELLED' });
                 

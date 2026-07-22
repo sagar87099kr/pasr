@@ -204,8 +204,8 @@ router.get("/shops", wrapAsync(async (req, res) => {
         if (req.user) {
             const Order = require("../data/order.js");
             shops.sort((a, b) => {
-                const aIsOwner = a.owner._id.equals(req.user._id);
-                const bIsOwner = b.owner._id.equals(req.user._id);
+                const aIsOwner = a.owner && a.owner._id.equals(req.user._id);
+                const bIsOwner = b.owner && b.owner._id.equals(req.user._id);
                 if (aIsOwner && !bIsOwner) return -1;
                 if (!aIsOwner && bIsOwner) return 1;
                 return 0;
@@ -213,7 +213,7 @@ router.get("/shops", wrapAsync(async (req, res) => {
 
             // For owned shops, check if they have pending orders
             const pendingOrderShops = await Order.find({
-                shopId: { $in: shops.filter(s => s.owner._id.equals(req.user._id)).map(s => s._id) },
+                shopId: { $in: shops.filter(s => s.owner && s.owner._id.equals(req.user._id)).map(s => s._id) },
                 orderStatus: 'CREATED'
             }).distinct('shopId');
 
@@ -221,7 +221,7 @@ router.get("/shops", wrapAsync(async (req, res) => {
 
             shops = shops.map(shop => {
                 const shopObj = shop.toObject();
-                if (req.user && shop.owner._id.equals(req.user._id)) {
+                if (req.user && shop.owner && shop.owner._id.equals(req.user._id)) {
                     shopObj.hasPendingOrders = pendingShopIds.includes(shop._id.toString());
                 } else {
                     shopObj.hasPendingOrders = false;

@@ -292,7 +292,7 @@ router.get("/shop/dashboard", verifyToken, async (req, res) => {
         let revenue = 0;
 
         orders.forEach(order => {
-            if (new Date(order.createdAt) >= startOfDay) todaysOrders++;
+            if (new Date(order.createdAt) >= startOfDay && order.orderStatus !== 'CANCELLED') todaysOrders++;
             
             if (['CREATED', 'ACCEPTED', 'PACKED', 'BROADCAST', 'ASSIGNED'].includes(order.orderStatus)) pendingOrders++;
             if (order.orderStatus === 'READY_FOR_DELIVERY') readyForPickup++;
@@ -336,7 +336,7 @@ router.post("/shop/orders/verify-otp", verifyToken, async (req, res) => {
             return res.status(400).json({ success: false, message: "Invalid OTP" });
         }
 
-        order.orderStatus = 'DELIVERED';
+        order.orderStatus = 'COMPLETED';
         await order.save();
 
         res.json({ success: true, message: "OTP verified successfully", order });
