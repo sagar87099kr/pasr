@@ -322,3 +322,40 @@ module.exports.acceptOrder = async (req, res, next) => {
         res.status(500).json({ success: false, message: e.message });
     }
 };
+
+// Fetch partner's delivery history (Completed or Cancelled)
+module.exports.getHistory = async (req, res, next) => {
+    try {
+        const partner = req.deliveryPartner;
+        const historyOrders = await Order.find({
+            deliveryPartnerId: partner._id,
+            orderStatus: { $in: ['COMPLETED', 'CANCELLED'] }
+        })
+        .populate({ path: 'shopId', populate: { path: 'owner', select: 'name username' } })
+        .populate('customerId')
+        .sort({ deliveredAt: -1, updatedAt: -1 });
+
+        res.status(200).json({ success: true, history: historyOrders });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+};
+
+// Update partner settings
+module.exports.updateSettings = async (req, res, next) => {
+    try {
+        const partner = req.deliveryPartner;
+        const { fullName, address, vehicleType, vehicleNumber } = req.body;
+
+        if (fullName) partner.fullName = fullName;
+        if (address) partner.address = address;
+        if (vehicleType) partner.vehicleType = vehicleType;
+        if (vehicleNumber) partner.vehicleNumber = vehicleNumber;
+
+        await partner.save();
+
+        res.status(200).json({ success: true, message: "Settings updated successfully", partner });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+};

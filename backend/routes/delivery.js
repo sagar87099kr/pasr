@@ -62,5 +62,11 @@ router.get("/api/available-orders", isLogedin, isDeliveryPartner, catchAsync(del
 // API: Accept an order
 router.post("/api/accept-order/:orderId", isLogedin, isDeliveryPartner, catchAsync(deliveryController.acceptOrder));
 
+// API: Get History
+router.get("/api/history", isLogedin, isDeliveryPartner, catchAsync(deliveryController.getHistory));
+
+// API: Update Settings
+router.put("/api/settings", isLogedin, isDeliveryPartner, catchAsync(deliveryController.updateSettings));
+
 module.exports = router;
 
