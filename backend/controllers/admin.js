@@ -50,15 +50,18 @@ module.exports.approvePartner = async (req, res, next) => {
     }
 };
 
-// Block a delivery partner
+// Toggle block status for a delivery partner
 module.exports.blockPartner = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const partner = await DeliveryPartner.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
+        const partner = await DeliveryPartner.findById(id);
         if (!partner) {
             req.flash("danger", "Delivery Partner not found.");
             return res.redirect("back");
         }
+        partner.isBlocked = !partner.isBlocked;
+        await partner.save();
+        req.flash("success", `Delivery Partner has been ${partner.isBlocked ? 'blocked' : 'unblocked'}.`);
         res.redirect("back");
     } catch (e) {
         next(e);
