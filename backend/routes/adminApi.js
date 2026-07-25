@@ -138,6 +138,60 @@ router.get('/data', async (req, res) => {
                 });
                 break;
             }
+            case 'partner-cash': {
+                const orders = await Order.find({
+                    orderStatus: 'COMPLETED',
+                    paymentType: 'COD'
+                }).populate('deliveryPartnerId', 'fullName phoneNumber').sort({ createdAt: -1 }).lean();
+
+                const grouped = {};
+                orders.forEach(o => {
+                    if (!o.deliveryPartnerId) return; 
+                    
+                    const dateObj = new Date(o.createdAt);
+                    const dateStr = dateObj.toLocaleDateString('en-GB'); 
+                    const partnerId = o.deliveryPartnerId._id.toString();
+                    const key = `${partnerId}_${dateStr}`;
+                    
+                    if (!grouped[key]) {
+                        grouped[key] = {
+                            partnerId,
+                            partnerName: o.deliveryPartnerId.fullName,
+                            partnerPhone: o.deliveryPartnerId.phoneNumber,
+                            dateStr,
+                            dateObj,
+                            totalAmount: 0,
+                            remitted: true,
+                            orders: []
+                        };
+                    }
+                    
+                    grouped[key].orders.push({
+                        id: o._id.toString(),
+                        orderId: o.orderId || o._id.toString(),
+                        amount: o.totalAmount,
+                        remitted: o.cashRemittedToAdmin || false
+                    });
+                    
+                    grouped[key].totalAmount += o.totalAmount;
+                    if (!o.cashRemittedToAdmin) {
+                        grouped[key].remitted = false;
+                    }
+                });
+
+                data = Object.values(grouped).sort((a, b) => b.dateObj - a.dateObj).map((g) => ({
+                    id: `${g.partnerId}_${g.dateStr.replace(/\\//g, '-')}`,
+                    status: g.remitted ? 'Verified' : 'Pending', 
+                    time: g.dateStr,
+                    title: `₹${g.totalAmount} by ${g.partnerName}`,
+                    raw: g
+                }));
+                
+                stats.pending = data.filter(d => d.status === 'Pending').length;
+                stats.verified = data.filter(d => d.status === 'Verified').length;
+                stats.rejected = 0;
+                break;
+            }
             case 'payouts': {
                 stats.pending = await TransactionHistory.countDocuments({ type: 'PAYOUT_TO_SHOP', status: 'PENDING' });
                 stats.verified = await TransactionHistory.countDocuments({ type: 'PAYOUT_TO_SHOP', status: 'COMPLETED' });
@@ -347,6 +401,21 @@ router.post('/action', async (req, res) => {
             await Model.updateOne(
                 { _id: payload.id },
                 { $set: { price: Number(payload.newPrice) } }
+            );
+        } else if (action === 'MARK_REMITTED') {
+            const [partnerId, dateStr] = payload.id.split('_'); // 'partnerId_DD-MM-YYYY'
+            const [day, month, year] = dateStr.split('-');
+            const startOfDay = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+            const endOfDay = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
+            
+            await Order.updateMany(
+                { 
+                    deliveryPartnerId: partnerId,
+                    orderStatus: 'COMPLETED',
+                    paymentType: 'COD',
+                    createdAt: { $gte: startOfDay, $lte: endOfDay }
+                },
+                { $set: { cashRemittedToAdmin: true } }
             );
         }
 

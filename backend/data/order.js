@@ -64,6 +64,7 @@ const orderSchema = new Schema({
 
     // Financial Settlement
     settlementStatus: { type: String, enum: ['PENDING', 'REQUESTED', 'SETTLED'], default: 'PENDING' },
+    cashRemittedToAdmin: { type: Boolean, default: false },
 
     coinDiscount: { type: Number, default: 0 }
 }, { timestamps: true });
