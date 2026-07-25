@@ -105,6 +105,14 @@ const customerSchema = new Schema({
   coins: {
     type: Number,
     default: 5
+  },
+  consecutiveCancellations: {
+    type: Number,
+    default: 0
+  },
+  mandatoryOnlineOrdersCount: {
+    type: Number,
+    default: 0
   }
 });
 

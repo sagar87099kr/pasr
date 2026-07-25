@@ -65,6 +65,15 @@ module.exports.checkoutOrder = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "Please specify delivery type: HOME_DELIVERY or SELF_PICKUP." });
         }
 
+        // Cancellation Penalty Check
+        if (paymentType === 'COD') {
+            const Customer = require("../data/customers");
+            const customer = await Customer.findById(req.user._id);
+            if (customer && customer.mandatoryOnlineOrdersCount > 0) {
+                return res.status(403).json({ success: false, message: "COD disabled due to consecutive cancellations. Please use online payment." });
+            }
+        }
+
         // 1.5 Order Safety: Prevent duplicate orders
         if (clientOrderId) {
             const existingOrder = await Order.findOne({ orderId: clientOrderId });
@@ -202,12 +211,33 @@ module.exports.checkoutOrder = async (req, res, next) => {
             // Treat 0 distance as minimum 0.1 km (shop and customer at same coordinates)
             if (distanceInKm === 0) distanceInKm = 0.1;
 
-            // Validate Distance (Max 5km)
-            if (distanceInKm > 5) {
+            // Validate Distance based on time (IST)
+            const currentUtc = new Date();
+            const istOffset = 5.5 * 60 * 60 * 1000;
+            const istDate = new Date(currentUtc.getTime() + istOffset);
+            const istHour = istDate.getUTCHours();
+            
+            if (istHour < 9 || istHour >= 20) {
                 for (let revert of inventoryUpdates) {
                     await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
                 }
-                return res.status(400).json({ success: false, message: "Delivery not available beyond 5 km." });
+                return res.status(400).json({ success: false, message: "Home Delivery is only available between 9 AM and 8 PM." });
+            }
+
+            let maxAllowedDistance = 5;
+            if (istHour >= 18 && istHour < 20) {
+                maxAllowedDistance = 3;
+            }
+
+            if (shopItems && shopItems.length > 0) {
+                maxAllowedDistance = Math.min(maxAllowedDistance, ...shopItems.map(i => i.maxDeliveryDistance !== undefined ? i.maxDeliveryDistance : maxAllowedDistance));
+            }
+
+            if (distanceInKm > maxAllowedDistance) {
+                for (let revert of inventoryUpdates) {
+                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+                }
+                return res.status(400).json({ success: false, message: `Delivery not available beyond ${maxAllowedDistance} km at this time.` });
             }
 
             // Calculate Delivery Pricing metrics
@@ -927,6 +957,17 @@ module.exports.completeOrder = async (req, res, next) => {
         order.paymentStatus = 'COLLECTED';
         await order.save();
 
+        // Cancellation Penalty Reset Logic
+        const Customer = require("../data/customers");
+        const compCustomer = await Customer.findById(order.customerId);
+        if (compCustomer) {
+            compCustomer.consecutiveCancellations = 0;
+            if (compCustomer.mandatoryOnlineOrdersCount > 0) {
+                compCustomer.mandatoryOnlineOrdersCount -= 1;
+            }
+            await compCustomer.save();
+        }
+
         // Emit Event
         orderBus.emit("ORDER_COMPLETED", order);
 
@@ -1044,12 +1085,25 @@ module.exports.cancelOrder = async (req, res, next) => {
             );
         }
 
-        // Refund Coins
-        if (order.coinDiscount && order.coinDiscount > 0) {
-            const Customer = require("../data/customers");
-            const cancelCustomer = await Customer.findById(order.customerId);
-            if (cancelCustomer) {
+        // Refund Coins & Apply Cancellation Penalty
+        const Customer = require("../data/customers");
+        const cancelCustomer = await Customer.findById(order.customerId);
+        if (cancelCustomer) {
+            let customerUpdated = false;
+            if (order.coinDiscount && order.coinDiscount > 0) {
                 cancelCustomer.coins = (cancelCustomer.coins || 0) + order.coinDiscount;
+                customerUpdated = true;
+            }
+
+            if (isCustomer) {
+                cancelCustomer.consecutiveCancellations = (cancelCustomer.consecutiveCancellations || 0) + 1;
+                if (cancelCustomer.consecutiveCancellations > 2) {
+                    cancelCustomer.mandatoryOnlineOrdersCount = 3;
+                }
+                customerUpdated = true;
+            }
+
+            if (customerUpdated) {
                 await cancelCustomer.save();
             }
         }

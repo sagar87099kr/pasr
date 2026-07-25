@@ -215,6 +215,17 @@ module.exports.verifyOTPAndComplete = async (req, res, next) => {
         order.paymentStatus = 'COLLECTED';
         await order.save();
 
+        // Cancellation Penalty Reset Logic
+        const Customer = require("../data/customers");
+        const compCustomer = await Customer.findById(order.customerId);
+        if (compCustomer) {
+            compCustomer.consecutiveCancellations = 0;
+            if (compCustomer.mandatoryOnlineOrdersCount > 0) {
+                compCustomer.mandatoryOnlineOrdersCount -= 1;
+            }
+            await compCustomer.save();
+        }
+
         // Notify Customer that delivery is complete
         await createNotification(
             order.customerId,

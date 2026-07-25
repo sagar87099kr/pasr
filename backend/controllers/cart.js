@@ -295,8 +295,26 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
         );
 
         let maxAllowedDistance = 5; 
+        
+        // Time-based max distance check (IST)
+        const currentUtc = new Date();
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const istDate = new Date(currentUtc.getTime() + istOffset);
+        const istHour = istDate.getUTCHours();
+        
+        if (istHour < 9 || istHour >= 20) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Home Delivery is only available between 9 AM and 8 PM.` 
+            });
+        }
+
+        if (istHour >= 18 && istHour < 20) {
+            maxAllowedDistance = 3;
+        }
+
         if (cart.items.length > 0) {
-            maxAllowedDistance = Math.min(5, ...cart.items.map(i => i.maxDeliveryDistance !== undefined ? i.maxDeliveryDistance : 5));
+            maxAllowedDistance = Math.min(maxAllowedDistance, ...cart.items.map(i => i.maxDeliveryDistance !== undefined ? i.maxDeliveryDistance : maxAllowedDistance));
         }
 
         if (distanceInKm > maxAllowedDistance) {

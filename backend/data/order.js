@@ -45,6 +45,9 @@ const orderSchema = new Schema({
         enum: ['CREATED', 'ORDER_SHARED', 'ACCEPTED', 'PACKED', 'READY_FOR_DELIVERY', 'BROADCAST', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED'],
         default: 'ORDER_SHARED'
     },
+    
+    adminVerified: { type: Boolean, default: false },
+
 
     shareableLink: { type: String }, // Link to view this order summary
 

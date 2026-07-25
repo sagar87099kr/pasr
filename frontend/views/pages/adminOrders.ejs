@@ -182,6 +182,10 @@
                                                     <%= order.customerId.username || order.customerId.phoneNumber
                                                         || "N/A" %>
                                                 </div>
+                                                <div class="text-muted small mt-1" style="max-width: 200px;">
+                                                    <i class="fa-solid fa-location-dot me-1"></i>
+                                                    <%= order.deliveryAddress || order.customerId.address || "No Address Provided" %>
+                                                </div>
                                                 <% } else { %>
                                                     <span class="text-muted fst-italic">Deleted User</span>
                                                     <% } %>
@@ -269,6 +273,13 @@
                                                 <%= order.items ? order.items.length : 0 %> items (<%= order.paymentType
                                                         %>)
                                             </div>
+                                            <% if (order.items && order.items.length > 0) { %>
+                                                <ul class="text-muted small mb-0 ps-3 mt-1" style="font-size: 0.8rem; list-style-type: circle;">
+                                                <% order.items.forEach(item => { %>
+                                                    <li><%= item.quantity %>x <%= item.itemId ? item.itemId.name : item.name %></li>
+                                                <% }) %>
+                                                </ul>
+                                            <% } %>
                                         </td>
 
                                         <td class="pe-3 text-center">
@@ -277,10 +288,31 @@
                                                 badgeClass='bg-danger' ; else if (['ACCEPTED', 'READY_FOR_DELIVERY'
                                                 , 'ASSIGNED' , 'OUT_FOR_DELIVERY' ].includes(order.orderStatus))
                                                 badgeClass='bg-warning text-dark' ; else if
-                                                (order.orderStatus==='CREATED' ) badgeClass='bg-info text-dark' ; %>
-                                                <span class="badge <%= badgeClass %>">
-                                                    <%= order.orderStatus.replace(/_/g, ' ' ) %>
-                                                </span>
+                                                (order.orderStatus==='CREATED' || order.orderStatus==='ORDER_SHARED') badgeClass='bg-info text-dark' ; %>
+                                                <div class="mb-2">
+                                                    <span class="badge <%= badgeClass %>">
+                                                        <%= order.orderStatus.replace(/_/g, ' ' ) %>
+                                                    </span>
+                                                </div>
+
+                                                <% if (!order.adminVerified && order.orderStatus !== 'CANCELLED' && order.orderStatus !== 'COMPLETED') { %>
+                                                    <div class="d-flex flex-column gap-1">
+                                                        <form action="/admin/orders/<%= order._id %>/verify" method="POST" class="m-0">
+                                                            <button type="submit" class="btn btn-sm btn-success w-100" style="font-size: 0.75rem;">
+                                                                <i class="fa-solid fa-check me-1"></i> Approve
+                                                            </button>
+                                                        </form>
+                                                        <form action="/admin/orders/<%= order._id %>/cancel" method="POST" class="m-0" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100" style="font-size: 0.75rem;">
+                                                                <i class="fa-solid fa-xmark me-1"></i> Reject
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                <% } else if (order.adminVerified) { %>
+                                                    <span class="badge bg-success bg-opacity-10 text-success border border-success" style="font-size: 0.7rem;">
+                                                        <i class="fa-solid fa-shield-check"></i> Verified
+                                                    </span>
+                                                <% } %>
                                         </td>
                                     </tr>
                                     <% }) %>

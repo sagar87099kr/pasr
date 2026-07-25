@@ -86,6 +86,24 @@ module.exports.togglePartnerActive = async (req, res, next) => {
     }
 };
 
+// Verify Order
+module.exports.verifyOrder = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const order = await Order.findById(id);
+        if (!order) {
+            req.flash("danger", "Order not found.");
+            return res.redirect("back");
+        }
+        order.adminVerified = true;
+        await order.save();
+        req.flash("success", `Order #${order.orderId} verified successfully and sent to shop!`);
+        res.redirect("back");
+    } catch (e) {
+        next(e);
+    }
+};
+
 // View all orders
 module.exports.getAllOrders = async (req, res, next) => {
     try {
@@ -98,6 +116,7 @@ module.exports.getAllOrders = async (req, res, next) => {
                 populate: { path: 'owner' }
             })
             .populate('deliveryPartnerId')
+            .populate('items.itemId')
             .sort({ createdAt: -1 });
         // Compute stats
         let totalOrders = orders.length;

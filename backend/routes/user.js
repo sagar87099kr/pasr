@@ -825,7 +825,8 @@ router.get("/api/user/profile", isLogedin, wrapAsync(async (req, res) => {
             coins: req.user.coins,
             referralCode: refCode,
             referralCount: req.user.referralCount || 0,
-            geometry: req.user.geometry || null
+            geometry: req.user.geometry || null,
+            mandatoryOnlineOrdersCount: req.user.mandatoryOnlineOrdersCount || 0
         }
     });
 }));

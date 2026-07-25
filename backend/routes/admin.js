@@ -68,6 +68,9 @@ router.get("/delivery-partners/:id/kyc", isLogedin, isadmin, catchAsync(adminCon
 // Admin - View All Orders
 router.get("/orders", isLogedin, isadmin, catchAsync(adminController.getAllOrders));
 
+// Admin - Verify Order
+router.post("/orders/:id/verify", isLogedin, isadmin, catchAsync(adminController.verifyOrder));
+
 // Admin - Force Cancel Order
 router.post("/orders/:id/cancel", isLogedin, isadmin, catchAsync(adminController.forceCancelOrder));
 

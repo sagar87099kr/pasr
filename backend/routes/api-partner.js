@@ -217,7 +217,7 @@ router.get("/shop/orders", verifyToken, async (req, res) => {
         const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
         if (!shop) return res.status(403).json({ success: false, message: "Forbidden" });
 
-        const orders = await Order.find({ shopId })
+        const orders = await Order.find({ shopId, adminVerified: true })
             .populate("customerId")
             .populate("deliveryPartnerId")
             .populate({
@@ -282,7 +282,7 @@ router.get("/shop/dashboard", verifyToken, async (req, res) => {
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
 
-        const orders = await Order.find({ shopId });
+        const orders = await Order.find({ shopId, adminVerified: true });
         
         let todaysOrders = 0;
         let pendingOrders = 0;
@@ -338,6 +338,17 @@ router.post("/shop/orders/verify-otp", verifyToken, async (req, res) => {
 
         order.orderStatus = 'COMPLETED';
         await order.save();
+
+        // Cancellation Penalty Reset Logic
+        const Customer = require("../data/customers");
+        const compCustomer = await Customer.findById(order.customerId);
+        if (compCustomer) {
+            compCustomer.consecutiveCancellations = 0;
+            if (compCustomer.mandatoryOnlineOrdersCount > 0) {
+                compCustomer.mandatoryOnlineOrdersCount -= 1;
+            }
+            await compCustomer.save();
+        }
 
         res.json({ success: true, message: "OTP verified successfully", order });
     } catch (e) {

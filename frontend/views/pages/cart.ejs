@@ -508,8 +508,7 @@
                                         const istOffsetMs = 5.5 * 60 * 60 * 1000;
                                         const nowIST = new Date(now.getTime() + istOffsetMs);
                                         const istH = nowIST.getUTCHours();
-                                        const isDeliveryTime = (istH >= 9 && istH < 18);
-                                        const canHomeDeliver = isDeliveryTime;
+                                        const canHomeDeliver = (istH >= 9 && istH < 20);
                                     %>
                                     <div class="delivery-type-toggle">
                                         <button class="delivery-opt-btn active" data-shopid="<%= shopId %>"
@@ -526,7 +525,7 @@
                                     </div>
                                     <% if (!canHomeDeliver) { %>
                                         <div class="mt-2 text-center text-danger small fw-bold">
-                                            Home Delivery is only available between 9 AM and 6 PM.
+                                            Home Delivery is only available between 9 AM and 8 PM.
                                         </div>
                                     <% } %>
 
@@ -599,10 +598,20 @@
                                         <div class="alert alert-info mt-3 p-2" style="font-size: 13px; background-color: #f0fdfa; border-color: #ccfbf1; color: #0f766e; border-radius: 8px;">
                                             <i class="fa-solid fa-clock-rotate-left me-1"></i> <strong>24-Hour Delivery Policy:</strong> We facilitate swift 24-hour delivery for eligible categories. To process a return, requests must be submitted within <strong>1 hour</strong> of order completion. Please ensure all original company branding and logos remain fully intact on the items.
                                         </div>
+
+                                        <div class="alert alert-warning mt-2 p-2" style="font-size: 13px; background-color: #fffbeb; border-color: #fef3c7; color: #92400e; border-radius: 8px;">
+                                            <i class="fa-solid fa-truck-fast me-1"></i> <strong>Home Delivery Rules:</strong> Available up to <strong>5 km</strong> between <strong>9 AM - 6 PM</strong>, and up to <strong>3 km</strong> between <strong>6 PM - 8 PM</strong>.
+                                        </div>
                                     </div>
 
 
-                                    <div class="d-grid gap-2 mt-4">
+                                    <% if (currUser && currUser.mandatoryOnlineOrdersCount > 0) { %>
+                                        <div class="alert alert-danger mt-3 p-2" style="font-size: 13px;">
+                                            <i class="fa-solid fa-triangle-exclamation me-1"></i> <strong>Penalty Active:</strong> Since you have cancelled your orders continuously, you need to pay online first to receive this order. Complete <strong><%= currUser.mandatoryOnlineOrdersCount %></strong> more online orders to unlock Cash on Delivery.
+                                        </div>
+                                    <% } %>
+                                    
+                                    <div class="d-grid gap-2 mt-4" data-penalized="<%= (currUser && currUser.mandatoryOnlineOrdersCount > 0) ? 'true' : 'false' %>">
                                         <div class="row g-2">
                                             <!-- COD / Pay at Shop -->
                                             <div class="col-12 col-sm-6 cod-btn-col">
@@ -1038,14 +1047,23 @@
                             codBtn.querySelector('i').className = 'fa-solid fa-store me-1';
                         }
                         
-                        // Show Pay Online button ONLY for HOME_DELIVERY
+                        // Show Pay Online button ONLY for HOME_DELIVERY or if Penalized
                         const codCol = section.querySelector('.cod-btn-col');
                         const rzpCol = section.querySelector('.razorpay-btn-col');
+                        const isPenalized = section.querySelector('.d-grid').getAttribute('data-penalized') === 'true';
+
                         if (codCol && rzpCol) {
-                            if (deliveryType === 'HOME_DELIVERY') {
+                            if (isPenalized) {
+                                codCol.style.display = 'none';
+                                rzpCol.style.display = 'block';
+                                rzpCol.classList.replace('col-sm-6', 'col-12');
+                            } else if (deliveryType === 'HOME_DELIVERY') {
+                                codCol.style.display = 'block';
                                 codCol.classList.replace('col-12', 'col-sm-6');
                                 rzpCol.style.display = 'block';
+                                rzpCol.classList.replace('col-12', 'col-sm-6');
                             } else {
+                                codCol.style.display = 'block';
                                 codCol.classList.replace('col-sm-6', 'col-12');
                                 rzpCol.style.display = 'none';
                             }
