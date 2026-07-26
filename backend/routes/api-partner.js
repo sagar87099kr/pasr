@@ -9,6 +9,7 @@ const MasterProduct = require("../data/masterProduct");
 const Provider = require("../data/serviceproviders");
 const DeliveryPartner = require("../data/deliveryPartner");
 const Customer = require("../data/customers");
+const orderBus = require("../events/eventBus");
 
 // Middleware to verify JWT token
 const verifyToken = async (req, res, next) => {
@@ -217,7 +218,7 @@ router.get("/shop/orders", verifyToken, async (req, res) => {
         const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
         if (!shop) return res.status(403).json({ success: false, message: "Forbidden" });
 
-        const orders = await Order.find({ shopId, adminVerified: true })
+        const orders = await Order.find({ shopId })
             .populate("customerId")
             .populate("deliveryPartnerId")
             .populate({
@@ -282,7 +283,7 @@ router.get("/shop/dashboard", verifyToken, async (req, res) => {
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
 
-        const orders = await Order.find({ shopId, adminVerified: true });
+        const orders = await Order.find({ shopId });
         
         let todaysOrders = 0;
         let pendingOrders = 0;
@@ -339,6 +340,9 @@ router.post("/shop/orders/verify-otp", verifyToken, async (req, res) => {
         order.orderStatus = 'COMPLETED';
         await order.save();
 
+        // Emit COMPLETED event to trigger customer notification
+        orderBus.emit("ORDER_COMPLETED", order);
+
         // Cancellation Penalty Reset Logic
         const Customer = require("../data/customers");
         const compCustomer = await Customer.findById(order.customerId);
@@ -374,25 +378,31 @@ router.put("/shop/orders/:id/status", verifyToken, async (req, res) => {
         order.orderStatus = status;
         await order.save();
 
-        if (status === 'PACKED' && order.customerId) {
-            try {
-                const { createNotification } = require("../utils/notificationHelper");
-                if (typeof createNotification === 'function') {
-                    const isPickup = order.deliveryType === 'SELF_PICKUP' || order.deliveryType === 'SHOP_PICKUP';
-                    const message = isPickup 
-                        ? "Your order is packed and ready for pickup." 
-                        : "Your order is packed and awaiting a delivery partner.";
-                    await createNotification(
-                        order.customerId,
-                        "Order Packed",
-                        message,
-                        "order_update",
-                        order._id
-                    );
-                }
-            } catch (err) {
-                console.error("Error sending packed notification:", err);
-            }
+        // Emit corresponding orderBus event for real-time FCM notification dispatch
+        switch (status) {
+            case 'ACCEPTED':
+                orderBus.emit("ORDER_ACCEPTED", order);
+                break;
+            case 'REJECTED':
+                orderBus.emit("ORDER_REJECTED", order);
+                break;
+            case 'PACKED':
+            case 'READY_FOR_DELIVERY':
+                orderBus.emit("ORDER_PACKED", order);
+                break;
+            case 'OUT_FOR_DELIVERY':
+                orderBus.emit("ORDER_OUT_FOR_DELIVERY", order);
+                break;
+            case 'COMPLETED':
+            case 'DELIVERED':
+                orderBus.emit("ORDER_COMPLETED", order);
+                break;
+            case 'CANCELLED':
+                orderBus.emit("ORDER_CANCELLED", { order, cancelledBy: 'SHOP' });
+                break;
+            default:
+                orderBus.emit("ORDER_STATUS_UPDATE", { order, event: status });
+                break;
         }
 
         res.json({ success: true, message: "Order status updated", order });

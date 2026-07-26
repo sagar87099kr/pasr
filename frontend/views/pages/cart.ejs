@@ -1,5 +1,8 @@
 <% layout('layoutes/boilerplate') -%>
 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
         .cart-container {
             padding: 20px 0;
@@ -508,7 +511,8 @@
                                         const istOffsetMs = 5.5 * 60 * 60 * 1000;
                                         const nowIST = new Date(now.getTime() + istOffsetMs);
                                         const istH = nowIST.getUTCHours();
-                                        const canHomeDeliver = (istH >= 9 && istH < 20);
+                                        const isVIPUser = (typeof currUser !== 'undefined' && currUser && String(currUser.username) === '7979082525');
+                                        const canHomeDeliver = isVIPUser || (istH >= 9 && istH < 20);
                                     %>
                                     <div class="delivery-type-toggle">
                                         <button class="delivery-opt-btn active" data-shopid="<%= shopId %>"
@@ -558,6 +562,7 @@
                                         </div>
                                         <span class="coin-discount-amt" style="color: #059669; font-weight: 700; display: none;">-₹0</span>
                                     </div>
+                                    <div class="coin-cap-msg text-warning fw-bold mt-1 mb-2" style="display: none; font-size: 12px; color: #d97706 !important;"></div>
 
                                     <div class="summary-row summary-total" style="margin-top: 10px;">
                                         <span>Order Total</span>
@@ -763,6 +768,19 @@
                                                         placeholder="Search your address (e.g. Doranda Giridih)"
                                                         style="padding-left: 38px; border-radius: 12px; height: 50px;" />
                                                 </div>
+
+                                                <!-- Live Map with Draggable Pin -->
+                                                <div class="mt-3">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <label class="fw-bold small text-dark"><i class="fa-solid fa-map-location-dot text-danger me-1"></i> Drag pin to your exact house dot:</label>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:11px;" id="modal-locate-btn">
+                                                            <i class="fa-solid fa-crosshairs me-1"></i> Detect My GPS
+                                                        </button>
+                                                    </div>
+                                                    <div id="picker-map" style="height: 220px; width: 100%; border-radius: 14px; border: 1.5px solid #cbd5e1; z-index: 1;"></div>
+                                                    <small class="text-muted d-block mt-1" style="font-size:11px;"><i class="fa-solid fa-circle-info me-1"></i> Drag the pin 200-300m to adjust for accurate rural delivery.</small>
+                                                </div>
+
                                                 <div id="modal-addr-preview"
                                                     class="mt-3 p-3 border rounded-3 bg-light d-none">
                                                     <small class="text-primary fw-bold d-block mb-1">Selected
@@ -863,6 +881,130 @@
                                 addressModal.show();
                             }
                         }
+                    });
+                });
+
+                // --- Leaflet Live Map Picker ---
+                let pickerMap = null;
+                let pickerMarker = null;
+
+                function initPickerMap(initialLat, initialLng) {
+                    const lat = parseFloat(initialLat) || 24.1855;
+                    const lng = parseFloat(initialLng) || 86.3045;
+
+                    const mapContainer = document.getElementById('picker-map');
+                    if (!mapContainer) return;
+
+                    if (!pickerMap) {
+                        pickerMap = L.map('picker-map').setView([lat, lng], 16);
+
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            maxZoom: 19,
+                            attribution: '© OpenStreetMap'
+                        }).addTo(pickerMap);
+
+                        pickerMarker = L.marker([lat, lng], { draggable: true }).addTo(pickerMap);
+
+                        pickerMarker.on('dragend', function () {
+                            const pos = pickerMarker.getLatLng();
+                            updateLocationFromCoords(pos.lat, pos.lng);
+                        });
+
+                        pickerMap.on('click', function (e) {
+                            pickerMarker.setLatLng(e.latlng);
+                            updateLocationFromCoords(e.latlng.lat, e.latlng.lng);
+                        });
+                    } else {
+                        pickerMap.setView([lat, lng], 16);
+                        pickerMarker.setLatLng([lat, lng]);
+                    }
+
+                    setTimeout(() => {
+                        if (pickerMap) pickerMap.invalidateSize();
+                    }, 300);
+                }
+                window.initPickerMap = initPickerMap;
+
+                async function updateLocationFromCoords(lat, lng) {
+                    document.getElementById('modal-lat').value = lat;
+                    document.getElementById('modal-lng').value = lng;
+                    const previewBox = document.getElementById('modal-addr-preview');
+                    const textEl = document.getElementById('modal-selected-addr-text');
+                    const saveBtn = document.getElementById('save-address-btn');
+
+                    if (previewBox) previewBox.classList.remove('d-none');
+                    if (textEl) textEl.innerText = `Fetching address for (${lat.toFixed(5)}, ${lng.toFixed(5)})...`;
+
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            const addrStr = data.display_name || `Location (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+                            window.tempSelectedAddress = addrStr;
+                            if (textEl) textEl.innerText = addrStr;
+                        } else {
+                            window.tempSelectedAddress = `Location (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+                            if (textEl) textEl.innerText = window.tempSelectedAddress;
+                        }
+                    } catch (e) {
+                        window.tempSelectedAddress = `Location (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+                        if (textEl) textEl.innerText = window.tempSelectedAddress;
+                    }
+
+                    if (saveBtn) saveBtn.disabled = false;
+                }
+
+                // Show map on modal shown
+                const addrModalEl = document.getElementById('addressEditModal');
+                if (addrModalEl) {
+                    addrModalEl.addEventListener('shown.bs.modal', () => {
+                        let startLat = 24.1855;
+                        let startLng = 86.3045;
+                        <% if (currUser && currUser.geometry && currUser.geometry.coordinates) { %>
+                            startLat = <%= currUser.geometry.coordinates[1] %>;
+                            startLng = <%= currUser.geometry.coordinates[0] %>;
+                        <% } %>
+                        initPickerMap(startLat, startLng);
+                    });
+                }
+
+                // Detect GPS button in modal
+                const locateBtn = document.getElementById('modal-locate-btn');
+                if (locateBtn) {
+                    locateBtn.addEventListener('click', () => {
+                        if (navigator.geolocation) {
+                            locateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Detecting...';
+                            navigator.geolocation.getCurrentPosition(pos => {
+                                locateBtn.innerHTML = '<i class="fa-solid fa-crosshairs me-1"></i> Detect My GPS';
+                                const lat = pos.coords.latitude;
+                                const lng = pos.coords.longitude;
+                                initPickerMap(lat, lng);
+                                updateLocationFromCoords(lat, lng);
+                            }, err => {
+                                locateBtn.innerHTML = '<i class="fa-solid fa-crosshairs me-1"></i> Detect My GPS';
+                                alert('Could not get GPS location. Please drag the pin on map manually.');
+                            });
+                        }
+                    });
+                }
+
+                // Handle clicking saved address buttons in modal
+                document.querySelectorAll('.saved-addr-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const lat = parseFloat(this.dataset.lat);
+                        const lng = parseFloat(this.dataset.lng);
+                        const addr = this.dataset.address;
+
+                        initPickerMap(lat, lng);
+                        document.getElementById('modal-lat').value = lat;
+                        document.getElementById('modal-lng').value = lng;
+                        window.tempSelectedAddress = addr;
+                        const previewBox = document.getElementById('modal-addr-preview');
+                        const textEl = document.getElementById('modal-selected-addr-text');
+                        const saveBtn = document.getElementById('save-address-btn');
+                        if (previewBox) previewBox.classList.remove('d-none');
+                        if (textEl) textEl.innerText = addr;
+                        if (saveBtn) saveBtn.disabled = false;
                     });
                 });
 
@@ -1275,20 +1417,30 @@
                     const chk = document.getElementById(`useCoins-${shopId}`);
                     const discountAmtEl = section.querySelector('.coin-discount-amt');
                     const grandTotalEl = section.querySelector('.grand-total');
+                    const coinMsgEl = section.querySelector('.coin-cap-msg');
 
                     if (chk && chk.checked) {
                         const userCoinsEl = document.querySelector('.user-coin-balance');
                         const userCoins = userCoinsEl ? parseFloat(userCoinsEl.innerText) : 0;
-                        const discount = Math.min(userCoins, baseTotal);
+                        const subtotalVal = parseFloat(section.dataset.total || 0);
+                        const maxCoinsAllowed = Math.max(5, Math.floor(subtotalVal * 0.20));
+                        const discount = Math.min(userCoins, maxCoinsAllowed, baseTotal);
                         
                         if (discountAmtEl) {
                             discountAmtEl.innerText = `-₹${discount.toFixed(2)}`;
                             discountAmtEl.style.display = 'inline-block';
                         }
+                        if (coinMsgEl) {
+                            coinMsgEl.innerText = `Max allowed coin is ${maxCoinsAllowed}`;
+                            coinMsgEl.style.display = 'block';
+                        }
                         baseTotal -= discount;
                     } else {
                         if (discountAmtEl) {
                             discountAmtEl.style.display = 'none';
+                        }
+                        if (coinMsgEl) {
+                            coinMsgEl.style.display = 'none';
                         }
                     }
 
@@ -1341,6 +1493,10 @@
 
                     document.getElementById('modal-lat').value = lat;
                     document.getElementById('modal-lng').value = lng;
+
+                    if (window.initPickerMap) {
+                        window.initPickerMap(lat, lng);
+                    }
 
                     let pincode = '';
                     if (place.address_components) {

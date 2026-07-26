@@ -36,7 +36,11 @@ const getOrderSellerDetails = async (order) => {
     return null;
 };
 
-// Common FCM options for high priority delivery (essential for background/closed app)
+// Helpers to retrieve role-specific FCM tokens
+const getSellerToken = (seller) => seller.partnerFcmToken || seller.fcmToken;
+const getCustomerToken = (customer) => customer.customerFcmToken || customer.fcmToken;
+
+// Common FCM options for high priority delivery with default sound
 const getFcmOptions = (payload) => ({
     ...payload,
     android: {
@@ -44,6 +48,7 @@ const getFcmOptions = (payload) => ({
         notification: {
             channelId: "pasr_orders",
             priority: "high",
+            sound: "default",
             defaultSound: true,
             defaultVibrateTimings: true
         }
@@ -79,45 +84,24 @@ orderBus.on("ORDER_CREATED", async (order) => {
         const customerName = customer ? customer.name : "A customer";
         const itemsList = order.items.map(i => `${i.name} (x${i.quantity})`).join(", ");
 
-        // 1. Create Internal Notification for Seller
+        // Send single Notification (In-App + FCM Push) for Seller
         await createNotification(
             seller._id,
             'ORDER_RECEIVED',
             order._id,
-            'New Order Received',
+            '🔔 New Order Received!',
             `${customerName} ordered: ${itemsList}. Total: ₹${order.totalAmount}`
         );
 
-        // 2. Send Push Notification to Seller via FCM
-        if (seller.fcmToken) {
-            const message = getFcmOptions({
-                notification: {
-                    title: "🔔 New Order Received!",
-                    body: `${customerName} ordered: ${itemsList}`
-                },
-                data: {
-                    orderId: String(order._id),
-                    type: "ORDER_RECEIVED"
-                },
-                token: seller.fcmToken
-            });
-            await admin.messaging().send(message);
-        }
-
-        // 3. Send Push Notification to Customer (for COD)
-        if (order.paymentType === 'COD' && customer && customer.fcmToken) {
-            const cMessage = getFcmOptions({
-                notification: {
-                    title: "🎯 Order Placed Successfully!",
-                    body: `Your COD order from ${sellerName} for ₹${order.totalAmount} has been sent to the seller.`
-                },
-                data: {
-                    orderId: String(order._id),
-                    type: "ORDER_CREATED"
-                },
-                token: customer.fcmToken
-            });
-            await admin.messaging().send(cMessage);
+        // Send Notification for Customer App (for COD)
+        if (order.paymentType === 'COD' && customer) {
+            await createNotification(
+                customer._id,
+                'ORDER_CREATED',
+                order._id,
+                '🎯 Order Placed Successfully!',
+                `Your COD order from ${sellerName} for ₹${order.totalAmount} has been sent to the seller.`
+            );
         }
     } catch (err) {
         console.error("Error in ORDER_CREATED notification:", err);
@@ -128,6 +112,8 @@ orderBus.on("ORDER_CREATED", async (order) => {
 const statusEvents = [
     "PAYMENT_VERIFIED",
     "ORDER_ACCEPTED",
+    "ORDER_REJECTED",
+    "ORDER_PACKED",
     "ORDER_READY",
     "ORDER_OUT_FOR_DELIVERY",
     "ORDER_COMPLETED",
@@ -135,47 +121,75 @@ const statusEvents = [
 ];
 
 statusEvents.forEach(event => {
-    orderBus.on(event, async (order) => {
+    orderBus.on(event, async (data) => {
         try {
+            // Support both direct order object or payload wrapper { order, cancelledBy }
+            const order = data.order || data;
+            const cancelledBy = data.cancelledBy || (order.cancellationReason && order.cancellationReason.includes('Customer') ? 'CUSTOMER' : 'SHOP');
+
             const mongoose = require('mongoose');
             let customer = null;
-            if (mongoose.Types.ObjectId.isValid(order.customerId)) {
-                customer = await Customer.findById(order.customerId);
+            const custId = (order.customerId && order.customerId._id) ? order.customerId._id : order.customerId;
+            if (custId) {
+                customer = await Customer.findById(custId);
             }
             if (!customer) return;
 
             const sellerDetails = await getOrderSellerDetails(order);
             const sellerName = sellerDetails ? sellerDetails.name : "the seller";
 
+            // If Customer cancelled order -> Notify Seller App!
+            if (event === "ORDER_CANCELLED" && cancelledBy === 'CUSTOMER') {
+                if (sellerDetails && sellerDetails.seller) {
+                    await createNotification(
+                        sellerDetails.seller._id,
+                        'ORDER_CANCELLED_BY_CUSTOMER',
+                        order._id,
+                        '❌ Order Cancelled by Customer',
+                        `Customer ${customer.name || 'User'} cancelled Order #${order.orderId || order._id}.`
+                    );
+                }
+                return;
+            }
+
+            // Otherwise, Shopkeeper/System updated status -> Notify Customer App!
             let title, body;
+            const displayOrderId = order.orderId || (order._id ? order._id.toString() : '');
             switch (event) {
                 case "PAYMENT_VERIFIED":
                     title = "Payment Successful";
-                    body = `Your secure online payment of ₹${order.totalAmount} for order ${order.orderId} was verified!`;
+                    body = `Your secure online payment of ₹${order.totalAmount} for order ${displayOrderId} was verified!`;
                     break;
                 case "ORDER_ACCEPTED":
                     title = "Order Accepted";
-                    body = `Your order ${order.orderId} from ${sellerName} has been accepted.`;
+                    body = `Your order ${displayOrderId} from ${sellerName} has been accepted.`;
                     break;
+                case "ORDER_REJECTED":
+                    title = "Order Declined";
+                    body = `Your order ${displayOrderId} from ${sellerName} could not be accepted.`;
+                    break;
+                case "ORDER_PACKED":
                 case "ORDER_READY":
-                    title = "Order Ready";
-                    body = `Your order ${order.orderId} from ${sellerName} is packed and ready for delivery.`;
+                    title = "Order Packed";
+                    body = `Your order ${displayOrderId} from ${sellerName} is packed and ready for delivery.`;
                     break;
                 case "ORDER_OUT_FOR_DELIVERY":
                     title = "Order Out for Delivery";
-                    body = `Your order ${order.orderId} from ${sellerName} is on the way!`;
+                    body = `Your order ${displayOrderId} from ${sellerName} is on the way!`;
                     break;
                 case "ORDER_COMPLETED":
                     title = "Order Completed";
-                    body = `Your order ${order.orderId} has been delivered. Enjoy!`;
+                    body = `Your order ${displayOrderId} has been delivered. Enjoy!`;
                     break;
                 case "ORDER_CANCELLED":
                     title = "Order Cancelled";
-                    body = `Your order ${order.orderId} from ${sellerName} has been cancelled.`;
+                    body = `Your order ${displayOrderId} from ${sellerName} has been cancelled by the shop.`;
                     break;
             }
 
-            // 1. Internal Notification for Customer
+            console.log(`[notificationService] Event ${event} triggered for customer ${customer._id}: ${title}`);
+
+            // Single Notification (In-App + FCM Push) for Customer
             await createNotification(
                 customer._id,
                 'ORDER_STATUS_UPDATE',
@@ -184,32 +198,15 @@ statusEvents.forEach(event => {
                 body
             );
 
-            // 2. FCM Push for Customer
-            if (customer.fcmToken) {
-                const message = getFcmOptions({
-                    notification: { title, body },
-                    data: {
-                        orderId: String(order._id),
-                        type: "ORDER_STATUS_UPDATE"
-                    },
-                    token: customer.fcmToken
-                });
-                await admin.messaging().send(message);
-            }
-
-            // 3. IF PAYMENT_VERIFIED, ALSO NOTIFY SELLER!
+            // IF PAYMENT_VERIFIED, ALSO NOTIFY SELLER!
             if (event === "PAYMENT_VERIFIED" && sellerDetails && sellerDetails.seller) {
-                const { seller } = sellerDetails;
-                if (seller.fcmToken) {
-                    await admin.messaging().send(getFcmOptions({
-                        notification: {
-                            title: "💸 Payment Verified!",
-                            body: `Customer paid ₹${order.totalAmount} online for Order ${order.orderId}. Please start packing!`
-                        },
-                        data: { orderId: String(order._id), type: "PAYMENT_VERIFIED" },
-                        token: seller.fcmToken
-                    }));
-                }
+                await createNotification(
+                    sellerDetails.seller._id,
+                    'PAYMENT_VERIFIED',
+                    order._id,
+                    '💸 Payment Verified!',
+                    `Customer paid ₹${order.totalAmount} online for Order ${order.orderId}. Please start packing!`
+                );
             }
         } catch (err) {
             console.error(`Error in ${event} notification:`, err);

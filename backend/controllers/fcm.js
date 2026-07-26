@@ -12,9 +12,15 @@ module.exports.saveCustomerToken = async (req, res) => {
     }
 
     const customer = await Customer.findById(req.user._id);
-    const isNewSubscription = !customer.fcmToken;
+    const isNewSubscription = !customer || (!customer.customerFcmToken && !customer.fcmToken);
 
-    await Customer.findByIdAndUpdate(req.user._id, { fcmToken });
+    // Remove this token from any other accounts first to prevent cross-account notifications
+    await Customer.updateMany(
+        { _id: { $ne: req.user._id }, $or: [{ customerFcmToken: fcmToken }, { fcmToken: fcmToken }] },
+        { $set: { customerFcmToken: null, fcmToken: null } }
+    );
+
+    await Customer.findByIdAndUpdate(req.user._id, { customerFcmToken: fcmToken, fcmToken });
 
     // Send Welcome Push Notification only once
     if (isNewSubscription) {
@@ -44,10 +50,16 @@ module.exports.saveShopToken = async (req, res) => {
     }
 
     const customer = await Customer.findById(req.user._id);
-    const isNewSubscription = !customer.fcmToken;
+    const isNewSubscription = !customer || (!customer.partnerFcmToken);
 
-    // Assuming we update the token for the Customer who owns the shop
-    await Customer.findByIdAndUpdate(req.user._id, { fcmToken });
+    // Remove this token from any other accounts first to prevent cross-account notifications
+    await Customer.updateMany(
+        { _id: { $ne: req.user._id }, partnerFcmToken: fcmToken },
+        { $set: { partnerFcmToken: null } }
+    );
+
+    // Save token as partnerFcmToken for the Customer who owns the shop
+    await Customer.findByIdAndUpdate(req.user._id, { partnerFcmToken: fcmToken });
 
     // Send Welcome Push Notification only once
     if (isNewSubscription) {

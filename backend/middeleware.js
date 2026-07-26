@@ -362,12 +362,15 @@ module.exports.findNearbyProviders = (category) => {
     }
 }
 module.exports.isDeliveryPartner = async (req, res, next) => {
+    const isApi = req.headers.authorization?.startsWith('Bearer ') || req.xhr || req.headers.accept?.includes('application/json') || req.originalUrl.startsWith('/delivery/');
     if (!req.isAuthenticated()) {
+        if (isApi) return res.status(401).json({ success: false, message: "You must be logged in." });
         req.flash("danger", "You must be logged in.");
         return res.redirect("/alreadyLogin");
     }
     const partner = await DeliveryPartner.findOne({ user: req.user._id });
     if (!partner) {
+        if (isApi) return res.status(403).json({ success: false, message: "You are not registered as a Delivery Partner." });
         req.flash("danger", "You are not registered as a Delivery Partner.");
         return res.redirect("/home");
     }

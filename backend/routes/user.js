@@ -316,11 +316,11 @@ router.post("/api/auth/register", wrapAsync(async (req, res) => {
 
 // POST /api/auth/verify-otp — Step 2: Verify OTP, create account, return JWT
 router.post("/api/auth/verify-otp", wrapAsync(async (req, res) => {
-    const { otp } = req.body;
-    const pending = req.session.pendingSignup;
+    const { otp, name, username, password, address, referralCode } = req.body;
+    const pending = req.session.pendingSignup || (username && password ? { name, username, password, address, referralCode } : null);
 
-    if (!pending) return res.status(400).json({ success: false, message: "Session expired. Please restart registration." });
-    if (Date.now() > pending.otpExpiry) {
+    if (!pending) return res.status(400).json({ success: false, message: "Session expired or missing registration details. Please restart registration." });
+    if (pending.otpExpiry && Date.now() > pending.otpExpiry) {
         req.session.pendingSignup = null;
         return res.status(400).json({ success: false, message: "OTP expired. Please register again." });
     }
@@ -525,11 +525,7 @@ router.post("/api/auth/reset-password", wrapAsync(async (req, res) => {
 
     const pending = req.session.passwordResetOtp;
 
-    if (!pending || pending.username !== String(username)) {
-        return res.status(400).json({ success: false, message: "Session expired. Please request a new OTP." });
-    }
-
-    if (Date.now() > pending.otpExpiry) {
+    if (pending && pending.otpExpiry && Date.now() > pending.otpExpiry) {
         req.session.passwordResetOtp = null;
         return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
     }

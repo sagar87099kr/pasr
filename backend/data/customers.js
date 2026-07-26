@@ -87,6 +87,14 @@ const customerSchema = new Schema({
     type: String,
     default: null
   },
+  customerFcmToken: {
+    type: String,
+    default: null
+  },
+  partnerFcmToken: {
+    type: String,
+    default: null
+  },
   referralCode: {
     type: String,
     unique: true,
