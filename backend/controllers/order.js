@@ -1059,6 +1059,7 @@ module.exports.cancelOrder = async (req, res, next) => {
             if (order.coinDiscount && order.coinDiscount > 0) {
                 cancelCustomer.coins = (cancelCustomer.coins || 0) + order.coinDiscount;
                 customerUpdated = true;
+                order.isRefunded = true; // Mark as refunded
             }
 
             if (isCustomer) {

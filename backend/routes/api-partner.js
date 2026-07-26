@@ -375,6 +375,34 @@ router.put("/shop/orders/:id/status", verifyToken, async (req, res) => {
         
         if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
+        // Prevent double processing for already cancelled/rejected orders
+        if (order.orderStatus === 'CANCELLED' || order.orderStatus === 'REJECTED') {
+            return res.status(400).json({ success: false, message: `Order is already ${order.orderStatus}` });
+        }
+
+        // Handle Shop Cancellation / Rejection
+        if (status === 'CANCELLED' || status === 'REJECTED') {
+            // 1. Refund Coins
+            if (order.coinDiscount && order.coinDiscount > 0 && !order.isRefunded) {
+                const cancelCustomer = await Customer.findById(order.customerId);
+                if (cancelCustomer) {
+                    cancelCustomer.coins = (cancelCustomer.coins || 0) + order.coinDiscount;
+                    await cancelCustomer.save();
+                    order.isRefunded = true;
+                }
+            }
+
+            // 2. Restock Inventory
+            for (let orderItem of order.items) {
+                await Item.updateOne(
+                    { _id: orderItem.itemId }, 
+                    { $inc: { quantity: orderItem.quantity } }
+                );
+            }
+            
+            order.cancellationReason = "Cancelled by Shop";
+        }
+
         order.orderStatus = status;
         await order.save();
 

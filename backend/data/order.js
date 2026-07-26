@@ -61,6 +61,8 @@ const orderSchema = new Schema({
     estimatedDeliveryTime: { type: Date },
     deliveredAt: { type: Date },
     cancellationReason: { type: String },
+    isRefunded: { type: Boolean, default: false }, // Tracks if coins were refunded
+
 
     // Financial Settlement
     settlementStatus: { type: String, enum: ['PENDING', 'REQUESTED', 'SETTLED'], default: 'PENDING' },
