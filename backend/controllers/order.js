@@ -131,6 +131,12 @@ module.exports.checkoutOrder = async (req, res, next) => {
             deliveryCharge = 0;
             distanceInKm = 0;
         } else {
+            // TEMPORARY: FORCED SERVER MAINTENANCE (DISABLE HOME DELIVERY)
+            for (let revert of inventoryUpdates) {
+                await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
+            }
+            return res.status(400).json({ success: false, message: "Home delivery is temporarily unavailable due to server maintenance." });
+
             // HOME_DELIVERY: time, bazaar, location and distance logic
             
             // 1. Time Restriction (9 AM to 6 PM IST)
