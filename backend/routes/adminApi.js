@@ -27,7 +27,7 @@ router.use(checkAdmin);
 // Fetch Data Endpoint
 router.get('/data', async (req, res) => {
     try {
-        const { tab, filterParam } = req.query;
+        const { tab, filterParam, skip = 0, limit = 20 } = req.query;
         let stats = { pending: 0, verified: 0, rejected: 0 };
         let data = [];
 
@@ -58,7 +58,8 @@ router.get('/data', async (req, res) => {
                         select: 'img productImage'
                     })
                     .sort({ createdAt: -1 })
-                    .limit(500)
+                    .skip(Number(skip))
+                    .limit(Number(limit))
                     .lean();
                 
                 data = orders.map(d => {
@@ -107,7 +108,7 @@ router.get('/data', async (req, res) => {
                 stats.pending = await Bazaar.countDocuments({ isActive: false });
                 stats.verified = await Bazaar.countDocuments({ isActive: true });
                 stats.rejected = 0;
-                const bazaars = await Bazaar.find({}).sort({ createdAt: -1 }).limit(500).lean();
+                const bazaars = await Bazaar.find({}).sort({ createdAt: -1 }).skip(Number(skip)).limit(Number(limit)).lean();
                 data = bazaars.map(d => ({
                     id: d._id.toString(),
                     status: d.isActive ? 'Verified' : 'Pending',
@@ -122,7 +123,7 @@ router.get('/data', async (req, res) => {
                 stats.pending = await Provider.countDocuments({ verified: false });
                 stats.verified = await Provider.countDocuments({ verified: true });
                 stats.rejected = 0;
-                const providers = await Provider.find({}).populate('owner').sort({ createdAt: -1 }).limit(500).lean();
+                const providers = await Provider.find({}).populate('owner').sort({ createdAt: -1 }).skip(Number(skip)).limit(Number(limit)).lean();
                 data = providers.map(d => {
                     let img = null;
                     if (d.personImage && d.personImage.length > 0) img = d.personImage[0].url || d.personImage[0].path;
@@ -196,7 +197,7 @@ router.get('/data', async (req, res) => {
                 stats.pending = await TransactionHistory.countDocuments({ type: 'PAYOUT_TO_SHOP', status: 'PENDING' });
                 stats.verified = await TransactionHistory.countDocuments({ type: 'PAYOUT_TO_SHOP', status: 'COMPLETED' });
                 stats.rejected = await TransactionHistory.countDocuments({ type: 'PAYOUT_TO_SHOP', status: 'FAILED' });
-                const payouts = await TransactionHistory.find({ type: 'PAYOUT_TO_SHOP' }).sort({ createdAt: -1 }).limit(500).lean();
+                const payouts = await TransactionHistory.find({ type: 'PAYOUT_TO_SHOP' }).sort({ createdAt: -1 }).skip(Number(skip)).limit(Number(limit)).lean();
                 
                 const shopIds = payouts.map(p => p.shop).filter(Boolean);
                 const shops = await Shop.find({ _id: { $in: shopIds } }).lean();
@@ -216,7 +217,7 @@ router.get('/data', async (req, res) => {
                 stats.pending = await Shop.countDocuments({ verified: false });
                 stats.verified = await Shop.countDocuments({ verified: true });
                 stats.rejected = 0;
-                const shops = await Shop.find({}).sort({ createdAt: -1 }).limit(500).lean();
+                const shops = await Shop.find({}).sort({ createdAt: -1 }).skip(Number(skip)).limit(Number(limit)).lean();
                 data = shops.map(d => {
                     let img = null;
                     if (d.shopImage && d.shopImage.length > 0) img = d.shopImage[0].url || d.shopImage[0].path;
@@ -236,7 +237,7 @@ router.get('/data', async (req, res) => {
                 stats.pending = await DeliveryPartner.countDocuments({ isVerified: false });
                 stats.verified = await DeliveryPartner.countDocuments({ isVerified: true });
                 stats.rejected = 0;
-                const partners = await DeliveryPartner.find({}).sort({ createdAt: -1 }).limit(500).lean();
+                const partners = await DeliveryPartner.find({}).sort({ createdAt: -1 }).skip(Number(skip)).limit(Number(limit)).lean();
                 data = partners.map(d => ({
                     id: d._id.toString(),
                     status: d.isVerified ? 'Verified' : 'Pending',
@@ -251,7 +252,7 @@ router.get('/data', async (req, res) => {
                 stats.pending = await Product.countDocuments({ verified: false });
                 stats.verified = await Product.countDocuments({ verified: true });
                 stats.rejected = 0;
-                const products = await Product.find({}).sort({ createdAt: -1 }).limit(500).lean();
+                const products = await Product.find({}).sort({ createdAt: -1 }).skip(Number(skip)).limit(Number(limit)).lean();
                 
                 const bazaarIds = products.map(p => p.bazaar).filter(Boolean);
                 const bazaars = await Bazaar.find({ _id: { $in: bazaarIds } }).lean();
@@ -281,7 +282,7 @@ router.get('/data', async (req, res) => {
                 stats.pending = await Item.countDocuments({ verified: false });
                 stats.verified = await Item.countDocuments({ verified: true });
                 stats.rejected = 0;
-                const items = await Item.find({}).sort({ createdAt: -1 }).limit(500).lean();
+                const items = await Item.find({}).sort({ createdAt: -1 }).skip(Number(skip)).limit(Number(limit)).lean();
                 
                 const shopIds = items.map(i => i.shop).filter(Boolean);
                 const shops = await Shop.find({ _id: { $in: shopIds } }).lean();
@@ -310,7 +311,7 @@ router.get('/data', async (req, res) => {
                 stats.pending = await KeshanSabhaPost.countDocuments({ status: 'Pending' });
                 stats.verified = await KeshanSabhaPost.countDocuments({ status: 'Published' });
                 stats.rejected = 0;
-                const posts = await KeshanSabhaPost.find({}).sort({ createdAt: -1 }).limit(500).lean();
+                const posts = await KeshanSabhaPost.find({}).sort({ createdAt: -1 }).skip(Number(skip)).limit(Number(limit)).lean();
                 data = posts.map(d => ({
                     id: d._id.toString(),
                     status: d.status || 'Pending',
