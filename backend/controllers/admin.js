@@ -93,12 +93,12 @@ module.exports.verifyOrder = async (req, res, next) => {
         const order = await Order.findById(id);
         if (!order) {
             req.flash("danger", "Order not found.");
-            return res.redirect("back");
+            return res.redirect("/admin/orders");
         }
         order.adminVerified = true;
         await order.save();
         req.flash("success", `Order #${order.orderId} verified successfully and sent to shop!`);
-        res.redirect("back");
+        res.redirect("/admin/orders");
     } catch (e) {
         next(e);
     }
@@ -152,7 +152,7 @@ module.exports.forceCancelOrder = async (req, res, next) => {
 
         if (!order) {
             req.flash("danger", "Order not found.");
-            return res.redirect("back");
+            return res.redirect("/admin/orders");
         }
 
         // If order was assigned, decrement partner's current orders
@@ -163,7 +163,8 @@ module.exports.forceCancelOrder = async (req, res, next) => {
         }
 
         orderBus.emit("ORDER_CANCELLED", order);
-        res.status(200).json({ success: true, message: "Order cancelled.", order });
+        req.flash("success", "Order cancelled successfully.");
+        res.redirect("/admin/orders");
     } catch (e) {
         next(e);
     }

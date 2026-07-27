@@ -365,7 +365,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
             paymentStatus: 'PENDING',
             deliveryOTP: otpUtil.generateOTP(),
             orderStatus: 'CREATED',
-            adminVerified: true
+            adminVerified: deliveryType === 'SELF_PICKUP'
         });
 
         await order.save();
@@ -646,6 +646,7 @@ module.exports.getShopOrders = async (req, res, next) => {
 
         const orders = await Order.find({
             shopId: { $in: allShopIds },
+            adminVerified: true,
             $nor: [{ paymentType: 'PREPAID', paymentStatus: 'PENDING' }]
         })
             .populate({
