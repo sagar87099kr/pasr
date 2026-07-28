@@ -298,9 +298,16 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
         });
 
     if (!shop) {
-        req.flash("error", "Shop not found");
-        return res.redirect("/shops");
+        return res.status(404).render("pages/error.ejs", { message: "Sorry, this shop could not be found or has been removed." });
     }
+
+    const seo = {
+        title: `${shop.shopName || 'Shop'} in ${shop.city || 'Giridih'} | PASR`,
+        description: `Visit ${shop.shopName} on PASR. Located at ${shop.location || shop.city}. ${shop.description || 'Find local products and fresh goods at great prices.'}`,
+        image: (shop.img && shop.img.url) ? shop.img.url : 'https://www.pasr.in/images/icon.jpeg',
+        url: `https://www.pasr.in/shops/${shop._id}`
+    };
+
 
     const isOwner = req.user && shop.owner._id.equals(req.user._id);
 
@@ -409,7 +416,7 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
         unsettledOrders.forEach(order => {
             let earningsForShop = 0; // Net balance for this specific order
 
-            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup';
+            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup' || order.deliveryType === 'SELF_PICKUP';
             const actualItemPrice = order.subtotalAmount || ((order.totalAmount || 0) + (order.coinDiscount || 0));
 
             if (isSelfPickup) {
@@ -462,7 +469,8 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             totalPendingPayout,
             totalRequestedPayout,
             totalDueToPasr,
-            SHOP_CATEGORIES
+            SHOP_CATEGORIES,
+            seo
         });
     } else {
         // Customer View: Only items with quantity > 0 AND having an image
@@ -502,7 +510,8 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             totalPendingPayout: 0,
             totalRequestedPayout: 0,
             totalDueToPasr: 0,
-            SHOP_CATEGORIES
+            SHOP_CATEGORIES,
+            seo
         });
     }
 }));
@@ -517,6 +526,9 @@ router.post("/shops/:id/reviews", isLogedin, isNotBlocked, validatereview, wrapA
     shop.reviews.push(newReview);
     await newReview.save();
     await shop.save();
+    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+        return res.status(201).json({ success: true, message: "Review added successfully", review: newReview });
+    }
     req.flash("success", "New review created");
     res.redirect(`/shops/${id}`);
 }));
@@ -545,6 +557,9 @@ router.delete("/shops/:id/reviews/:reviewId", isLogedin, isShopReviewAuthor, wra
     let { id, reviewId } = req.params;
     await Shop.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
     await Review.findByIdAndDelete(reviewId);
+    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+        return res.status(200).json({ success: true, message: "Review deleted successfully" });
+    }
     req.flash("success", "Review deleted");
     res.redirect(`/shops/${id}`);
 }));
@@ -864,8 +879,7 @@ router.get("/items/:id", wrapAsync(async (req, res) => {
         });
     
     if (!item) {
-        req.flash("danger", "Item not found");
-        return res.redirect("/home");
+        return res.status(404).render("pages/error.ejs", { message: "Sorry, this product could not be found or has been removed." });
     }
     
     // Check if shop is verified
@@ -877,11 +891,19 @@ router.get("/items/:id", wrapAsync(async (req, res) => {
         return res.redirect("/home");
     }
 
+    let itemName = item.product ? item.product.productName : item.itemCategory;
+    const seo = {
+        title: `Buy ${itemName || 'Product'} at ${item.shop.shopName || 'Shop'} | PASR`,
+        description: `Get ${itemName || 'this product'} from ${item.shop.shopName} for ₹${item.price}. Available now on PASR Local Bazaar.`,
+        image: (item.img && item.img.url) ? item.img.url : ((item.product && item.product.img && item.product.img.url) ? item.product.img.url : 'https://www.pasr.in/images/icon.jpeg'),
+        url: `https://www.pasr.in/items/${item._id}`
+    };
+
     if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
         return res.json({ success: true, item, shop: item.shop, isOwner: (req.user && item.shop.owner.equals(req.user._id)) });
     }
 
-    res.render("pages/itemDetail.ejs", { item, shop: item.shop, isOwner: (req.user && item.shop.owner.equals(req.user._id)) });
+    res.render("pages/itemDetail.ejs", { item, shop: item.shop, isOwner: (req.user && item.shop.owner.equals(req.user._id)), seo });
 }));
 
 // Add Extra Images for Item
@@ -958,6 +980,9 @@ router.delete("/items/:id/reviews/:reviewId", isLogedin, isItemReviewAuthor, wra
     let { id, reviewId } = req.params;
     await Item.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
     await Review.findByIdAndDelete(reviewId);
+    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+        return res.status(200).json({ success: true, message: "Review deleted successfully" });
+    }
     req.flash("success", "Review deleted");
     res.redirect(`/items/${id}`);
 }));

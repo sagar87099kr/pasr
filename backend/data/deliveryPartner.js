@@ -43,7 +43,8 @@ const deliveryPartnerSchema = new Schema({
     isBlocked: { type: Boolean, default: false }, // Controlled by Admin
     currentOrders: { type: Number, default: 0 },
     maxOrdersLimit: { type: Number, default: 2 },
-    rating: { type: Number, default: 0 },
+    rating: { type: Number, default: 5 },
+    ratingCount: { type: Number, default: 0 },
     totalDeliveries: { type: Number, default: 0 },
     failedDeliveries: { type: Number, default: 0 },
     totalEarnings: { type: Number, default: 0 },

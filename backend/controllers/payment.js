@@ -56,6 +56,7 @@ module.exports.verifyPayment = async (req, res, next) => {
 
         // Only update the existing database order
         order.paymentStatus = 'VERIFIED';
+        order.orderStatus = 'ORDER_SHARED';
         order.razorpayPaymentId = razorpay_payment_id;
         order.razorpaySignature = razorpay_signature;
 
@@ -72,6 +73,7 @@ module.exports.verifyPayment = async (req, res, next) => {
         // Ensure session save since we modified cart and pendingOrders
         req.session.save(async () => {
             orderBus.emit("PAYMENT_VERIFIED", order);
+            orderBus.emit("ORDER_CREATED", order); // Notify seller now that payment is confirmed
             res.status(200).json({ success: true, message: "Payment verified successfully.", orderId: order.orderId });
         });
 
@@ -112,7 +114,7 @@ module.exports.requestPayout = async (req, res) => {
 
         const payoutOrders = unsettledOrders.filter(order => {
             let earningsForShop = 0;
-            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup';
+            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup' || order.deliveryType === 'SELF_PICKUP';
             const actualItemPrice = order.subtotalAmount || ((order.totalAmount || 0) + (order.coinDiscount || 0));
 
             if (isSelfPickup) {

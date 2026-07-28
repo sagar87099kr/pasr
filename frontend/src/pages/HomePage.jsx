@@ -47,7 +47,7 @@ const HomePage = ({ isLoggedIn, initialLat, initialLon, initialBazaarName }) => 
                     url += `lat=${userLoc.lat}&lon=${userLoc.lon}&`;
                 }
                 if (selectedItemCat !== "All") {
-                    url += `category=${encodeURIComponent(selectedItemCat)}`;
+                    url += `shopCategory=${encodeURIComponent(selectedItemCat)}`;
                 }
 
                 const response = await fetch(url);

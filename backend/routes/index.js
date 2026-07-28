@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { forwardGeocode, reverseGeocode } = require("../utils/geocoder");
 const Product = require("../data/product.js");
+const Item = require("../data/item.js");
 const Customer = require("../data/customers.js");
 const Shop = require("../data/shops.js");
 const Provider = require("../data/serviceproviders.js");
@@ -444,5 +445,57 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
 
 // Route to fetch items for the homepage
 router.get("/api/home/items", itemController.getHomeItems);
+
+// Sitemap generation route
+router.get("/sitemap.xml", wrapAsync(async (req, res) => {
+    // Get all approved shops
+    const shops = await Shop.find({ isApproved: true }, '_id updatedAt');
+    // Get all available items from approved shops (filtering complex in one query, so we'll just get all items and assume they are public)
+    const items = await Item.find({ isAvailable: true }, '_id updatedAt');
+
+    const baseUrl = 'https://www.pasr.in';
+    
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>${baseUrl}/</loc>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>`;
+
+    // Add Shop URLs
+    for (let shop of shops) {
+        xml += `
+    <url>
+        <loc>${baseUrl}/shops/${shop._id}</loc>
+        <lastmod>${shop.updatedAt ? shop.updatedAt.toISOString() : new Date().toISOString()}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>`;
+    }
+
+    // Add Item URLs
+    for (let item of items) {
+        xml += `
+    <url>
+        <loc>${baseUrl}/items/${item._id}</loc>
+        <lastmod>${item.updatedAt ? item.updatedAt.toISOString() : new Date().toISOString()}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+    </url>`;
+    }
+
+    xml += `
+</urlset>`;
+
+    res.header('Content-Type', 'application/xml');
+    res.send(xml);
+}));
+
+// Robots.txt route
+router.get("/robots.txt", (req, res) => {
+    res.type('text/plain');
+    res.send("User-agent: *\nAllow: /\nSitemap: https://www.pasr.in/sitemap.xml");
+});
 
 module.exports = router;

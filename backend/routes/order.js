@@ -11,6 +11,9 @@ router.post("/checkout", isLogedin, isVerifiedCustomer, catchAsync(orderControll
 // Customer: View their own orders
 router.get("/my-orders", isLogedin, catchAsync(orderController.getCustomerOrders));
 
+// Customer: Rate Delivery Partner
+router.post("/rate-partner/:partnerId", isLogedin, catchAsync(orderController.rateDeliveryPartner));
+
 // Shopkeeper: View Order Request (Public/Direct Link)
 router.get("/request/:orderId", catchAsync(orderController.renderOrderRequest));
 

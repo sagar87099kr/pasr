@@ -131,12 +131,6 @@ module.exports.checkoutOrder = async (req, res, next) => {
             deliveryCharge = 0;
             distanceInKm = 0;
         } else {
-            // TEMPORARY: FORCED SERVER MAINTENANCE (DISABLE HOME DELIVERY)
-            for (let revert of inventoryUpdates) {
-                await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-            }
-            return res.status(400).json({ success: false, message: "Home delivery is temporarily unavailable due to server maintenance." });
-
             // HOME_DELIVERY: time, bazaar, location and distance logic
             
             // 1. Time Restriction (9 AM to 6 PM IST)
@@ -382,7 +376,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
             paymentType,
             paymentStatus: 'PENDING',
             deliveryOTP: otpUtil.generateOTP(),
-            orderStatus: 'CREATED',
+            orderStatus: (paymentType === 'PREPAID' && totalAmount > 0) ? 'CREATED' : 'ORDER_SHARED',
             adminVerified: deliveryType === 'SELF_PICKUP'
         });
 
@@ -393,8 +387,10 @@ module.exports.checkoutOrder = async (req, res, next) => {
             await FreeDeliveryUsage.create({ mobile: String(req.user.username), usedAt: new Date() });
         }
 
-        // Create Event for Seller (handled by notificationService)
-        orderBus.emit("ORDER_CREATED", order);
+        // Only emit event immediately for COD or zero-amount prepaid (fully paid by coins)
+        if (paymentType === 'COD' || (paymentType === 'PREPAID' && totalAmount === 0)) {
+            orderBus.emit("ORDER_CREATED", order);
+        }
 
         // Only clear items immediately for COD. 
         // For PREPAID, items are cleared in /api/payment/verify-payment upon successful payment.
@@ -412,6 +408,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
             if (totalAmount === 0) {
                 // If coins cover the entire amount, mark as VERIFIED directly
                 order.paymentStatus = 'VERIFIED';
+                order.orderStatus = 'ORDER_SHARED';
                 await order.save();
                 orderBus.emit("PAYMENT_VERIFIED", order);
             } else {
@@ -603,7 +600,7 @@ module.exports.getCustomerOrders = async (req, res, next) => {
                 populate: { path: 'product', select: 'img' },
                 select: 'img product'
             })
-            .populate('deliveryPartnerId', 'fullName phoneNumber profilePhoto')
+            .populate('deliveryPartnerId', 'fullName phoneNumber profilePhoto rating ratingCount totalDeliveries')
             .sort({ createdAt: -1 });
 
         // Resolve seller details for each order to handle both Shops and Local Bazar
@@ -1150,6 +1147,36 @@ module.exports.renderOrderRequest = async (req, res, next) => {
             customer, 
             shop: sellerDetails 
         });
+    } catch (e) {
+        next(e);
+    }
+};
+
+module.exports.rateDeliveryPartner = async (req, res, next) => {
+    try {
+        const { partnerId } = req.params;
+        const { rating } = req.body;
+        
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ success: false, message: "Invalid rating" });
+        }
+
+        const DeliveryPartner = require("../data/deliverypartner");
+        const partner = await DeliveryPartner.findById(partnerId);
+        
+        if (!partner) {
+            return res.status(404).json({ success: false, message: "Delivery partner not found" });
+        }
+
+        const newRatingCount = (partner.ratingCount || 0) + 1;
+        const currentTotalRating = (partner.rating || 5) * (partner.ratingCount || 0);
+        const newRating = (currentTotalRating + Number(rating)) / newRatingCount;
+
+        partner.rating = parseFloat(newRating.toFixed(1));
+        partner.ratingCount = newRatingCount;
+        await partner.save();
+
+        res.json({ success: true, message: "Rating submitted successfully" });
     } catch (e) {
         next(e);
     }

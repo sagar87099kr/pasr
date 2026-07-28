@@ -68,29 +68,44 @@
                             <% if (requests && requests.length> 0) { %>
                                 <% requests.forEach(req=> { %>
                                     <tr id="payout-row-<%= req._id %>">
-                                        
-                                        <!-- Shop & Owner Column -->
+                                        <!-- Shop/Partner & Owner Column -->
                                         <td class="ps-3">
-                                            <div class="fw-bold text-primary">
-                                                <i class="fa-solid fa-store me-1 text-muted"></i>
-                                                <%= req.shopId ? req.shopId.shopName : 'Unknown Shop' %>
-                                            </div>
-                                            <% if (req.shopId && req.shopId.owner) { %>
-                                                <div class="fw-semibold small mt-1">
-                                                    <%= req.shopId.owner.name || "Unknown Owner" %>
+                                            <% if (req.type === 'PAYOUT_TO_DELIVERY_PARTNER') { %>
+                                                <div class="fw-bold text-info">
+                                                    <i class="fa-solid fa-motorcycle me-1 text-muted"></i>
+                                                    <%= req.deliveryPartnerId ? req.deliveryPartnerId.fullName : 'Unknown Partner' %>
+                                                    <span class="badge bg-info text-dark ms-2">Delivery Partner</span>
                                                 </div>
-                                                <div class="text-muted small mt-1">
-                                                    <i class="fa-solid fa-phone me-1"></i> <%= req.shopId.owner.username %>
-                                                </div>
+                                                <% if (req.deliveryPartnerId) { %>
+                                                    <div class="text-muted small mt-1">
+                                                        <i class="fa-solid fa-phone me-1"></i> <%= req.deliveryPartnerId.phoneNumber %>
+                                                    </div>
+                                                <% } %>
                                             <% } else { %>
-                                                <div class="text-muted small fst-italic mt-1">No Owner Data</div>
+                                                <div class="fw-bold text-primary">
+                                                    <i class="fa-solid fa-store me-1 text-muted"></i>
+                                                    <%= req.shopId ? req.shopId.shopName : 'Unknown Shop' %>
+                                                    <span class="badge bg-primary ms-2">Shop</span>
+                                                </div>
+                                                <% if (req.shopId && req.shopId.owner) { %>
+                                                    <div class="fw-semibold small mt-1">
+                                                        <%= req.shopId.owner.name || "Unknown Owner" %>
+                                                    </div>
+                                                    <div class="text-muted small mt-1">
+                                                        <i class="fa-solid fa-phone me-1"></i> <%= req.shopId.owner.username %>
+                                                    </div>
+                                                <% } else { %>
+                                                    <div class="text-muted small fst-italic mt-1">No Owner Data</div>
+                                                <% } %>
                                             <% } %>
                                         </td>
 
                                         <!-- Payout Details Column -->
                                         <% 
                                             const upiId = req.metadata ? req.metadata.upiId : ''; 
-                                            const shopNameStr = req.shopId ? req.shopId.shopName : 'Pasr Merchant';
+                                            const entityNameStr = req.type === 'PAYOUT_TO_DELIVERY_PARTNER' 
+                                                ? (req.deliveryPartnerId ? req.deliveryPartnerId.fullName : 'Delivery Partner')
+                                                : (req.shopId ? req.shopId.shopName : 'Pasr Merchant');
                                             const amountStr = req.amount;
                                         %>
                                         <td>
@@ -103,7 +118,7 @@
                                                         <i class="fa-regular fa-copy"></i>
                                                     </button>
                                                     <button class="btn btn-sm btn-outline-primary p-1 px-2" title="View QR Code"
-                                                        onclick="showQRCode('<%= upiId %>', '<%= shopNameStr %>', '<%= amountStr %>')">
+                                                        onclick="showQRCode('<%= upiId %>', '<%= entityNameStr %>', '<%= amountStr %>')">
                                                         <i class="fa-solid fa-qrcode"></i> QR
                                                     </button>
                                                 </div>
@@ -129,7 +144,13 @@
                                                     <i class="fa-solid fa-check-circle me-1"></i> Mark as Paid
                                                 </button>
                                                 
-                                                <% if (req.shopId && req.shopId.owner && req.shopId.owner.username) { %>
+                                                <% if (req.type === 'PAYOUT_TO_DELIVERY_PARTNER' && req.deliveryPartnerId && req.deliveryPartnerId.phoneNumber) { %>
+                                                    <a href="https://wa.me/91<%= req.deliveryPartnerId.phoneNumber %>?text=Hello <%= encodeURIComponent(req.deliveryPartnerId.fullName || 'Partner') %>, your PASR pending payout of ₹<%= amountStr %> has been successfully transferred to your UPI ID <%= encodeURIComponent(upiId) %>. Please find the payment screenshot attached." 
+                                                       target="_blank" 
+                                                       class="btn btn-outline-success btn-sm">
+                                                        <i class="fa-brands fa-whatsapp fs-6 me-1"></i> Send Receipt
+                                                    </a>
+                                                <% } else if (req.shopId && req.shopId.owner && req.shopId.owner.username) { %>
                                                     <a href="https://wa.me/91<%= req.shopId.owner.username %>?text=Hello <%= encodeURIComponent(req.shopId.owner.name || 'Merchant') %>, your PASR pending payout of ₹<%= amountStr %> has been successfully transferred to your UPI ID <%= encodeURIComponent(upiId) %>. Please find the payment screenshot attached." 
                                                        target="_blank" 
                                                        class="btn btn-outline-success btn-sm">
@@ -193,19 +214,33 @@
                             <% if (settledRequests && settledRequests.length > 0) { %>
                                 <% settledRequests.forEach(req => { %>
                                     <tr>
-                                        <!-- Shop & Owner Column -->
+                                        <!-- Shop/Partner & Owner Column -->
                                         <td class="ps-3">
-                                            <div class="fw-bold text-dark">
-                                                <i class="fa-solid fa-store me-1 text-muted"></i>
-                                                <%= req.shopId ? req.shopId.shopName : 'Unknown Shop' %>
-                                            </div>
-                                            <% if (req.shopId && req.shopId.owner) { %>
-                                                <div class="fw-semibold small mt-1">
-                                                    <%= req.shopId.owner.name || "Unknown Owner" %>
+                                            <% if (req.type === 'PAYOUT_TO_DELIVERY_PARTNER') { %>
+                                                <div class="fw-bold text-dark">
+                                                    <i class="fa-solid fa-motorcycle me-1 text-muted"></i>
+                                                    <%= req.deliveryPartnerId ? req.deliveryPartnerId.fullName : 'Unknown Partner' %>
+                                                    <span class="badge bg-info text-dark ms-2">Delivery Partner</span>
                                                 </div>
-                                                <div class="text-muted small mt-1">
-                                                    <i class="fa-solid fa-phone me-1"></i> <%= req.shopId.owner.username %>
+                                                <% if (req.deliveryPartnerId) { %>
+                                                    <div class="text-muted small mt-1">
+                                                        <i class="fa-solid fa-phone me-1"></i> <%= req.deliveryPartnerId.phoneNumber %>
+                                                    </div>
+                                                <% } %>
+                                            <% } else { %>
+                                                <div class="fw-bold text-dark">
+                                                    <i class="fa-solid fa-store me-1 text-muted"></i>
+                                                    <%= req.shopId ? req.shopId.shopName : 'Unknown Shop' %>
+                                                    <span class="badge bg-primary ms-2">Shop</span>
                                                 </div>
+                                                <% if (req.shopId && req.shopId.owner) { %>
+                                                    <div class="fw-semibold small mt-1">
+                                                        <%= req.shopId.owner.name || "Unknown Owner" %>
+                                                    </div>
+                                                    <div class="text-muted small mt-1">
+                                                        <i class="fa-solid fa-phone me-1"></i> <%= req.shopId.owner.username %>
+                                                    </div>
+                                                <% } %>
                                             <% } %>
                                         </td>
 

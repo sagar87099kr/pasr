@@ -512,8 +512,7 @@
                                         const nowIST = new Date(now.getTime() + istOffsetMs);
                                         const istH = nowIST.getUTCHours();
                                         const isVIPUser = (typeof currUser !== 'undefined' && currUser && String(currUser.username) === '7979082525');
-                                        // FORCED SERVER MAINTENANCE (DISABLE HOME DELIVERY)
-                                        const canHomeDeliver = false;
+                                        const canHomeDeliver = isVIPUser || (istH >= 9 && istH < 20);
                                     %>
                                     <div class="delivery-type-toggle">
                                         <button class="delivery-opt-btn active" data-shopid="<%= shopId %>"
@@ -528,12 +527,7 @@
                                             </button>
                                         <% } %>
                                     </div>
-                                    <% if (!canHomeDeliver) { %>
-                                        <div class="mt-2 text-center text-danger small fw-bold px-3">
-                                            Home delivery is temporarily unavailable due to server maintenance.<br>
-                                            <span style="font-size: 0.9em; font-weight: 500;">सर्वर में काम चलने के कारण होम डिलीवरी उपलब्ध नहीं है।</span>
-                                        </div>
-                                    <% } %>
+
 
                                     <!-- Summary Rows -->
                                     <div class="summary-row">

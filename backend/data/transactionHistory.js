@@ -5,11 +5,16 @@ const transactionHistorySchema = new Schema({
     shopId: {
         type: Schema.Types.ObjectId,
         ref: 'Shop',
-        required: true
+        required: false
+    },
+    deliveryPartnerId: {
+        type: Schema.Types.ObjectId,
+        ref: 'DeliveryPartner',
+        required: false
     },
     type: {
         type: String,
-        enum: ['PAYOUT_TO_SHOP', 'COMMISSION_PAID_TO_PASR'],
+        enum: ['PAYOUT_TO_SHOP', 'COMMISSION_PAID_TO_PASR', 'PAYOUT_TO_DELIVERY_PARTNER'],
         required: true
     },
     amount: {

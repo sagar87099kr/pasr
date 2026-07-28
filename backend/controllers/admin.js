@@ -209,24 +209,27 @@ module.exports.getPayoutRequests = async (req, res, next) => {
         const limit = 20;
         const skip = (page - 1) * limit;
 
-        const totalPending = await TransactionHistory.countDocuments({ type: 'PAYOUT_TO_SHOP', status: 'PENDING' });
+        const totalPending = await TransactionHistory.countDocuments({ 
+            type: { $in: ['PAYOUT_TO_SHOP', 'PAYOUT_TO_DELIVERY_PARTNER'] }, 
+            status: 'PENDING' 
+        });
         const requests = await TransactionHistory.find({
-            type: 'PAYOUT_TO_SHOP',
+            type: { $in: ['PAYOUT_TO_SHOP', 'PAYOUT_TO_DELIVERY_PARTNER'] },
             status: 'PENDING'
         }).populate({
             path: 'shopId',
             populate: { path: 'owner' }
-        }).sort({ createdAt: -1 }).skip(skip).limit(limit);
+        }).populate('deliveryPartnerId').sort({ createdAt: -1 }).skip(skip).limit(limit);
 
         const totalPages = Math.ceil(totalPending / limit);
 
         const settledRequests = await TransactionHistory.find({
-            type: 'PAYOUT_TO_SHOP',
+            type: { $in: ['PAYOUT_TO_SHOP', 'PAYOUT_TO_DELIVERY_PARTNER'] },
             status: 'SUCCESS'
         }).populate({
             path: 'shopId',
             populate: { path: 'owner' }
-        }).sort({ updatedAt: -1 }).limit(20);
+        }).populate('deliveryPartnerId').sort({ updatedAt: -1 }).limit(20);
 
         res.render('pages/adminPayouts.ejs', { 
             requests,
@@ -250,6 +253,20 @@ module.exports.approvePayout = async (req, res, next) => {
 
         if (!transaction || transaction.status !== 'PENDING') {
             return res.status(404).json({ success: false, message: "Pending transaction not found." });
+        }
+
+        if (transaction.type === 'PAYOUT_TO_SHOP') {
+            const shop = await Shop.findById(transaction.shopId);
+            if (shop) {
+                shop.pendingPayout = Math.max(0, (shop.pendingPayout || 0) - transaction.amount);
+                await shop.save();
+            }
+        } else if (transaction.type === 'PAYOUT_TO_DELIVERY_PARTNER') {
+            const partner = await DeliveryPartner.findById(transaction.deliveryPartnerId);
+            if (partner) {
+                partner.pendingPayout = Math.max(0, (partner.pendingPayout || 0) - transaction.amount);
+                await partner.save();
+            }
         }
 
         // 1. Mark transaction as SUCCESS

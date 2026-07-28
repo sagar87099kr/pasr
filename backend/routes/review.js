@@ -23,6 +23,9 @@ router.post("/:id/reviews",
         await newReview.save();
         await provider.save();
         console.log("new review was saved");
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.status(201).json({ success: true, message: "Review added successfully", review: newReview });
+        }
         req.flash("success", "New review is created");
         res.redirect(`/provider/${id}/profile`);
     }));
@@ -35,6 +38,9 @@ router.delete("/provider/:id/review/:reviewId", isLogedin,
         let { id, reviewId } = req.params;
         await Provider.findByIdAndUpdate(id, { $pull: { review: reviewId } });
         await Review.findByIdAndDelete(reviewId);
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.status(200).json({ success: true, message: "Review deleted successfully" });
+        }
         req.flash("danger", "You have delete this review");
         res.redirect(`/provider/${id}/profile`);
     }));

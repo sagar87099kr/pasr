@@ -700,7 +700,7 @@ router.post("/shop/request-payout", verifyToken, async (req, res) => {
 
         const payoutOrders = unsettledOrders.filter(order => {
             let earningsForShop = 0;
-            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup';
+            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup' || order.deliveryType === 'SELF_PICKUP';
             const actualItemPrice = order.subtotalAmount || ((order.totalAmount || 0) + (order.coinDiscount || 0));
 
             if (isSelfPickup) {
@@ -726,7 +726,7 @@ router.post("/shop/request-payout", verifyToken, async (req, res) => {
         // Calculate total amount
         const payoutAmount = payoutOrders.reduce((sum, order) => {
             let earningsForShop = 0;
-            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup';
+            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup' || order.deliveryType === 'SELF_PICKUP';
             const actualItemPrice = order.subtotalAmount || ((order.totalAmount || 0) + (order.coinDiscount || 0));
 
             if (isSelfPickup) {

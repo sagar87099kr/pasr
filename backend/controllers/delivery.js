@@ -1,5 +1,6 @@
 const DeliveryPartner = require("../data/deliveryPartner");
 const Order = require("../data/order");
+const TransactionHistory = require("../data/transactionHistory");
 const User = require("../data/customers"); // Using Customer model as User reference
 const { createNotification } = require("../utils/notificationHelper");
 const { calculateDeliveryPricing } = require("../utils/deliveryPricing");
@@ -94,7 +95,8 @@ module.exports.getDashboard = async (req, res, next) => {
             path: 'shopId',
             populate: { path: 'owner', select: 'name username' }
         }).populate('customerId')
-          .populate('items.itemId');
+          .populate('items.itemId')
+          .sort({ createdAt: -1 });
 
         // Fetch all BROADCAST orders that are still unclaimed (any partner can claim them)
         const broadcastOrders = await Order.find({
@@ -104,7 +106,8 @@ module.exports.getDashboard = async (req, res, next) => {
             path: 'shopId',
             populate: { path: 'owner', select: 'name username' }
         }).populate('customerId')
-          .populate('items.itemId');
+          .populate('items.itemId')
+          .sort({ createdAt: -1 });
 
         // Fetch upcoming orders (CREATED, ACCEPTED) that are not yet ready/packed
         const upcomingOrders = await Order.find({
@@ -114,7 +117,8 @@ module.exports.getDashboard = async (req, res, next) => {
             path: 'shopId',
             populate: { path: 'owner', select: 'name username' }
         }).populate('customerId')
-          .populate('items.itemId');
+          .populate('items.itemId')
+          .sort({ createdAt: -1 });
 
         if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
             return res.json({ success: true, partner, activeOrders: assignedOrders, broadcastOrders, upcomingOrders });
@@ -256,8 +260,35 @@ module.exports.verifyOTPAndComplete = async (req, res, next) => {
 module.exports.requestPayout = async (req, res, next) => {
     try {
         const partner = req.deliveryPartner;
-        // In a real app, this would send an FCM to the admin or log a request
-        // For now, we simulate success as the user requested "first implement then i will check"
+        
+        if (!partner.pendingPayout || partner.pendingPayout <= 0) {
+            return res.status(400).json({ success: false, message: "No pending payout available to request." });
+        }
+
+        // Check if there is already a pending request for this partner
+        const existingRequest = await TransactionHistory.findOne({
+            deliveryPartnerId: partner._id,
+            status: 'PENDING',
+            type: 'PAYOUT_TO_DELIVERY_PARTNER'
+        });
+
+        if (existingRequest) {
+            return res.status(400).json({ success: false, message: "You already have a pending payout request." });
+        }
+
+        const payoutRequest = new TransactionHistory({
+            deliveryPartnerId: partner._id,
+            type: 'PAYOUT_TO_DELIVERY_PARTNER',
+            amount: partner.pendingPayout,
+            status: 'PENDING',
+            metadata: {
+                upiId: partner.bankDetails?.upiId || '',
+                bankDetails: partner.bankDetails
+            }
+        });
+
+        await payoutRequest.save();
+
         console.log(`Payout requested by partner: ${partner.fullName} (Pending: ₹${partner.pendingPayout})`);
 
         // Emit event for potential custom logic

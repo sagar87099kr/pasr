@@ -63,6 +63,7 @@ const orderSchema = new Schema({
     deliveredAt: { type: Date },
     cancellationReason: { type: String },
     isRefunded: { type: Boolean, default: false }, // Tracks if coins were refunded
+    reviewNotificationSent: { type: Boolean, default: false },
 
 
     // Financial Settlement

@@ -6,7 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>PASR - Kisan Sabha & Local Bazaar</title>
-
+    
+    <!-- Favicon for Browser & Google Search Results -->
+    <link rel="icon" type="image/jpeg" href="/images/icon.jpeg" sizes="48x48">
+    <link rel="apple-touch-icon" href="/images/icon.jpeg">
     <!-- Performance: Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -391,6 +394,51 @@
                                             toast.show();
                                         }
                                     </script>
+
+    <!-- Advanced SEO Elements -->
+    <!-- Canonical Link -->
+    <link rel="canonical" href="<%= typeof seo !== 'undefined' && seo.url ? seo.url : 'https://www.pasr.in' %>">
+
+    <!-- Robots -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#2563eb">
+
+    <!-- Organization and WebSite Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://www.pasr.in/#organization",
+          "name": "PASR - Perfectly Assured Service and Rentals",
+          "url": "https://www.pasr.in",
+          "logo": "https://www.pasr.in/images/icon.jpeg",
+          "description": "PASR connects you directly with local farmers, shopkeepers, and service providers. Discover fresh goods in the Local Bazaar and join the Kisan Sabha community.",
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.pasr.in/#website",
+          "url": "https://www.pasr.in",
+          "name": "PASR",
+          "publisher": {
+            "@id": "https://www.pasr.in/#organization"
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://www.pasr.in/search?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
 </head>
 
 <body data-logged-in="<%= (typeof currUser !== 'undefined' && currUser) ? 'true' : 'false' %>">
