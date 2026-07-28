@@ -520,12 +520,13 @@
                                             <span class="opt-icon">🏪</span>
                                             I'll Pick Up
                                         </button>
-                                        <% if (canHomeDeliver) { %>
-                                            <button class="delivery-opt-btn" data-shopid="<%= shopId %>"
-                                                data-type="HOME_DELIVERY">
-                                                <span class="opt-icon">🚚</span> Home Delivery
-                                            </button>
-                                        <% } %>
+                                        <button class="delivery-opt-btn" data-shopid="<%= shopId %>"
+                                            data-type="HOME_DELIVERY" <% if (!canHomeDeliver) { %>disabled style="opacity: 0.6; cursor: not-allowed;"<% } %>>
+                                            <span class="opt-icon">🚚</span> Home Delivery
+                                            <% if (!canHomeDeliver) { %>
+                                                <div style="font-size: 10px; color: #dc2626; margin-top: 4px;">(Available 9 AM to 8 PM)</div>
+                                            <% } %>
+                                        </button>
                                     </div>
 
 
