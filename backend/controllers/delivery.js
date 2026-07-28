@@ -106,10 +106,20 @@ module.exports.getDashboard = async (req, res, next) => {
         }).populate('customerId')
           .populate('items.itemId');
 
+        // Fetch upcoming orders (CREATED, ACCEPTED) that are not yet ready/packed
+        const upcomingOrders = await Order.find({
+            orderStatus: { $in: ['CREATED', 'ACCEPTED'] },
+            deliveryType: 'HOME_DELIVERY'
+        }).populate({
+            path: 'shopId',
+            populate: { path: 'owner', select: 'name username' }
+        }).populate('customerId')
+          .populate('items.itemId');
+
         if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
-            return res.json({ success: true, partner, activeOrders: assignedOrders, broadcastOrders });
+            return res.json({ success: true, partner, activeOrders: assignedOrders, broadcastOrders, upcomingOrders });
         }
-        res.render("pages/deliveryDashboard.ejs", { partner, activeOrders: assignedOrders, broadcastOrders });
+        res.render("pages/deliveryDashboard.ejs", { partner, activeOrders: assignedOrders, broadcastOrders, upcomingOrders });
     } catch (e) {
         next(e);
     }

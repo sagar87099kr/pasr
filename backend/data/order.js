@@ -14,6 +14,7 @@ const orderSchema = new Schema({
     }],
     subtotalAmount: { type: Number, required: true },
     deliveryCharge: { type: Number, default: 0 },
+    platformFee: { type: Number, default: 5 },
     totalAmount: { type: Number, required: true },
     distanceInKm: { type: Number, default: 0 },
 

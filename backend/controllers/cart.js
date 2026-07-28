@@ -346,12 +346,12 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
         }
 
         let effectiveDeliveryCharge = deliveryCharge;
-        if (isFirstOrder || shopSubtotal >= 57) {
+        if (isFirstOrder || shopSubtotal >= 77) {
             effectiveDeliveryCharge = 0;
         } else {
-            // Minimum bill amount of 57 for non-first orders if they don't get free delivery
-            if (shopSubtotal + effectiveDeliveryCharge < 57) {
-                effectiveDeliveryCharge = 57 - shopSubtotal;
+            // If they don't get free delivery, minimum order value is 77
+            if (shopSubtotal + effectiveDeliveryCharge < 77) {
+                effectiveDeliveryCharge = 77 - shopSubtotal;
             }
         }
 

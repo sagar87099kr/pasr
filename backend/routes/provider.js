@@ -125,7 +125,7 @@ router.get("/search", wrapAsync(async (req, res) => {
 
     let [providers, shops, products, items] = await Promise.all([
         Provider.find(providerFilter).populate("owner"),
-        Shop.find(shopFilter).populate("owner"),
+        Shop.find(shopFilter).sort({ isSponsored: -1 }).populate("owner"),
         Product.find(productFilter).populate("owner"),
         Item.find(itemFilter).populate("shop").limit(100) // limit items to 100 to avoid heavy load
     ]);
@@ -526,7 +526,7 @@ router.get("/api/search/suggestions", wrapAsync(async (req, res) => {
 
     let [providers, shops, products, items] = await Promise.all([
         Provider.find({ ...providerFilter, verified: true }).limit(3).select('company categories location'),
-        Shop.find({ ...shopFilter, verified: true }).limit(3).select('shopName category location'),
+        Shop.find({ ...shopFilter, verified: true }).sort({ isSponsored: -1 }).limit(3).select('shopName category location'),
         Product.find({ ...productFilter, verified: true }).limit(3).select('productName price location categories'),
         Item.find(itemFilter).populate({ path: "shop", match: { verified: true }, select: "shopName location" }).limit(5).select('name price img shop')
     ]);

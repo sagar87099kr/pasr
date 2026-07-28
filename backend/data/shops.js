@@ -79,6 +79,7 @@ const shopSchema = new Schema({
         default: Date.now
     },
     dueToPasr: { type: Number, default: 0 },
+    isSponsored: { type: Boolean, default: false },
     upiId: { type: String, default: "" },
     isActive: { type: Boolean, default: true },   // Owner manually sets shop open/closed
     isHoliday: { type: Boolean, default: false },  // Owner sets holiday today

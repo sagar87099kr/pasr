@@ -811,6 +811,15 @@ router.get("/api/user/profile", isLogedin, wrapAsync(async (req, res) => {
         await req.user.save();
     }
 
+    const Order = require("../data/order");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todaysOrders = await Order.find({
+        customerId: req.user._id,
+        createdAt: { $gte: today }
+    });
+    const coinsUsedToday = todaysOrders.reduce((sum, order) => sum + (order.coinDiscount || 0), 0);
+
     res.json({
         success: true,
         user: {
@@ -822,7 +831,8 @@ router.get("/api/user/profile", isLogedin, wrapAsync(async (req, res) => {
             referralCode: refCode,
             referralCount: req.user.referralCount || 0,
             geometry: req.user.geometry || null,
-            mandatoryOnlineOrdersCount: req.user.mandatoryOnlineOrdersCount || 0
+            mandatoryOnlineOrdersCount: req.user.mandatoryOnlineOrdersCount || 0,
+            coinsUsedToday: coinsUsedToday
         }
     });
 }));

@@ -273,7 +273,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 deliveryAddress = `Near ${cLoc[1].toFixed(4)}, ${cLoc[0].toFixed(4)}`;
             }
 
-            // Free Delivery Logic: First order is free, otherwise minimum subtotal of 57 is required
+            // Free Delivery Logic: First order is free, otherwise minimum subtotal of 77 is required
             let isFirstOrder = false;
             if (req.user && req.user.username) {
                 const existing = await FreeDeliveryUsage.findOne({ mobile: String(req.user.username) });
@@ -281,13 +281,13 @@ module.exports.checkoutOrder = async (req, res, next) => {
             }
 
             let effectiveDeliveryCharge = deliveryCharge;
-            if (isFirstOrder || subtotalAmount >= 57) {
+            if (isFirstOrder || subtotalAmount >= 77) {
                 effectiveDeliveryCharge = 0;
                 grantFreeDelivery = isFirstOrder; // Only track usage if they claimed the first order promo
             } else {
-                // Minimum bill amount of 57 for non-first orders if they don't get free delivery
-                if (subtotalAmount + effectiveDeliveryCharge < 57) {
-                    effectiveDeliveryCharge = 57 - subtotalAmount;
+                // Minimum bill amount of 77 for non-first orders if they don't get free delivery
+                if (subtotalAmount + effectiveDeliveryCharge < 77) {
+                    effectiveDeliveryCharge = 77 - subtotalAmount;
                 }
                 grantFreeDelivery = false;
             }
@@ -296,15 +296,26 @@ module.exports.checkoutOrder = async (req, res, next) => {
             deliveryCharge = effectiveDeliveryCharge;
         }
 
-        let totalAmount = subtotalAmount + deliveryCharge;
+        let platformFee = 5;
+        let totalAmount = subtotalAmount + deliveryCharge + platformFee;
 
-        // Apply Coin Discount (Capped at 20% of subtotal order value)
+        // Apply Coin Discount (Capped at 50% of subtotal order value, max ₹50)
         let coinDiscount = 0;
         if (useCoins === true || useCoins === 'true') {
             const Customer = require("../data/customers");
             const customerDoc = await Customer.findById(customerId);
             if (customerDoc && customerDoc.coins > 0) {
-                const maxAllowedCoins = Math.max(5, Math.floor(subtotalAmount * 0.20));
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const todaysOrders = await Order.find({
+                    customerId: customerId,
+                    createdAt: { $gte: today }
+                });
+                const coinsUsedToday = todaysOrders.reduce((sum, ord) => sum + (ord.coinDiscount || 0), 0);
+                
+                const remainingDailyLimit = Math.max(0, 50 - coinsUsedToday);
+                const fiftyPercent = Math.floor(subtotalAmount * 0.50);
+                const maxAllowedCoins = Math.min(remainingDailyLimit, fiftyPercent);
                 coinDiscount = Math.min(customerDoc.coins, maxAllowedCoins, totalAmount);
                 totalAmount -= coinDiscount;
                 
@@ -351,6 +362,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
             items: shopItems,
             subtotalAmount,
             deliveryCharge,
+            platformFee,
             totalAmount,
             distanceInKm,
             deliveryType,

@@ -198,7 +198,7 @@ router.get("/shops", wrapAsync(async (req, res) => {
         'geometry.coordinates': { $exists: true, $ne: [] }
     });
 
-    shops = await Shop.find(query).populate('owner').populate('reviews');
+    shops = await Shop.find(query).sort({ isSponsored: -1 }).populate('owner').populate('reviews');
 
         // Prioritize owned shop to the top
         if (req.user) {
