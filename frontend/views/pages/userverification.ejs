@@ -159,13 +159,11 @@
 <body>
   <div class="main-container" style="max-width: 1200px; margin: 0 auto;">
 
-    <% const unverified=customers.filter(c=> !c.verified).reverse();
-      const verified = customers.filter(c => c.verified).reverse();
-      %>
-
       <!-- SECTION 1: PENDING VERIFICATION -->
-      <h2 style="margin: 30px 0 20px; color: #991b1b; text-align: center;">Pending Verification (<%= unverified.length
-          %>)</h2>
+      <div style="text-align: center; margin: 30px 0 20px;">
+          <h2 style="color: #991b1b; margin-bottom: 5px;">Pending Verification (<%= typeof pendingCount !== 'undefined' ? pendingCount : unverified.length %>)</h2>
+          <p style="color: #666; font-size: 14px; margin: 0;">Total Customers: <%= typeof totalCustomers !== 'undefined' ? totalCustomers : 'N/A' %> (Showing 20 most recent)</p>
+      </div>
 
       <div class="card-grid"
         style="display: flex; flex-direction: row-reverse; flex-wrap: wrap; gap: 24px; justify-content: center;">
@@ -226,7 +224,7 @@
       <!-- SECTION 2: VERIFIED -->
       <h2
         style="margin: 50px 0 20px; color: #065f46; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
-        Verified Customers (<%= verified.length %>)</h2>
+        Verified Customers (<%= typeof verifiedCount !== 'undefined' ? verifiedCount : verified.length %>)</h2>
 
       <div class="card-grid"
         style="display: flex; flex-direction: row-reverse; flex-wrap: wrap; gap: 24px; justify-content: center;">

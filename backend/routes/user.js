@@ -595,8 +595,14 @@ router.get("/customer/verify", isLogedin, isadmin, async (req, res) => {
         req.flash("error", "Unauthorized: Only super-admin can access this page.");
         return res.redirect("/");
     }
-    let customers = await Customer.find();
-    res.render("pages/userverification.ejs", { customers });
+    const totalCustomers = await Customer.countDocuments();
+    const pendingCount = await Customer.countDocuments({ verified: false });
+    const verifiedCount = await Customer.countDocuments({ verified: true });
+    
+    const unverified = await Customer.find({ verified: false }).sort({ createdAt: -1 }).limit(20);
+    const verified = await Customer.find({ verified: true }).sort({ createdAt: -1 }).limit(20);
+
+    res.render("pages/userverification.ejs", { unverified, verified, totalCustomers, pendingCount, verifiedCount });
 });
 
 // set value true

@@ -273,12 +273,9 @@
 <body>
     <main class="container">
 
-        <% const unverifiedShops=shops.filter(s=> !s.verified).reverse();
-            const verifiedShops = shops.filter(s => s.verified).reverse();
-            %>
-
             <!-- SECTION 1: PENDING VERIFICATION -->
-            <h2 style="margin: 30px 0 20px; color: #991b1b;">Pending Verification (<%= unverifiedShops.length %>)</h2>
+            <h2 style="margin: 30px 0 5px; color: #991b1b;">Pending Verification (<%= typeof pendingCount !== 'undefined' ? pendingCount : unverifiedShops.length %>)</h2>
+            <p style="color: #666; font-size: 14px; margin: 0 0 20px 0;">Total Shops: <%= typeof totalShops !== 'undefined' ? totalShops : 'N/A' %> (Showing 20 most recent)</p>
 
             <% if(unverifiedShops.length===0) { %>
                 <p style="color: #666;">No pending verifications.</p>
@@ -396,7 +393,7 @@
                             <!-- SECTION 2: VERIFIED SHOPS -->
                             <h2
                                 style="margin: 50px 0 20px; color: #065f46; border-top: 1px solid #eee; padding-top: 20px;">
-                                Verified Shops (<%= verifiedShops.length %>)
+                                Verified Shops (<%= typeof verifiedCount !== 'undefined' ? verifiedCount : verifiedShops.length %>)
                             </h2>
 
                             <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">

@@ -38,10 +38,24 @@ const isShopOwner = async (req, res, next) => {
 
 // Shop Verification Route (Admin Only)
 router.get("/shops/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
-    // Fetch all shops to display pending and verified
-    const shops = await Shop.find({}).populate('owner').populate('bazaar');
+    const totalShops = await Shop.countDocuments();
+    const pendingCount = await Shop.countDocuments({ verified: false });
+    const verifiedCount = await Shop.countDocuments({ verified: true });
+
+    const unverifiedShops = await Shop.find({ verified: false })
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .populate('owner')
+        .populate('bazaar');
+
+    const verifiedShops = await Shop.find({ verified: true })
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .populate('owner')
+        .populate('bazaar');
+
     const bazaars = await require("../data/bazaar").find({}).sort({ name: 1 });
-    res.render("pages/shopVerification.ejs", { shops, bazaars });
+    res.render("pages/shopVerification.ejs", { unverifiedShops, verifiedShops, totalShops, pendingCount, verifiedCount, bazaars });
 }));
 
 // Verify Shop Action

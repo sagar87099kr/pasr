@@ -1,6 +1,7 @@
 const DeliveryPartner = require("../data/deliveryPartner");
 const Bazaar = require("../data/bazaar");
 const Order = require("../data/order");
+const Shop = require("../data/shops");
 const orderBus = require("../events/eventBus");
 
 // View all delivery partners
@@ -272,10 +273,11 @@ module.exports.approvePayout = async (req, res, next) => {
         // 1. Mark transaction as SUCCESS
         transaction.status = 'SUCCESS';
         transaction.metadata = {
-            ...transaction.metadata,
+            ...(transaction.metadata || {}),
             approvedAt: new Date(),
             approvedBy: req.user.username
         };
+        transaction.markModified('metadata');
         await transaction.save();
 
         // 2. Mark associated orders as SETTLED
