@@ -30,6 +30,7 @@ router.get('/data', async (req, res) => {
         const { tab, filterParam, skip = 0, limit = 20 } = req.query;
         let stats = { pending: 0, verified: 0, rejected: 0 };
         let data = [];
+        let dashboardData = null;
 
         switch (tab) {
             case 'orders': {
@@ -322,17 +323,67 @@ router.get('/data', async (req, res) => {
                 break;
             }
             case 'dashboard': {
-                // Simplified dashboard stats
-                stats.pending = `₹0.00`;
-                stats.verified = `₹0.00`;
-                stats.rejected = `0`;
-                // Logic omitted for brevity, it will just return 0 for now. Can fully port aggregation pipeline later if needed.
-                data = [];
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const sevenDaysAgo = new Date(today);
+                sevenDaysAgo.setDate(today.getDate() - 6);
+
+                const todayStats = await Order.aggregate([
+                    { $match: { 
+                        createdAt: { $gte: today },
+                        orderStatus: 'COMPLETED' 
+                    }},
+                    { $group: {
+                        _id: null,
+                        numberOfOrders: { $sum: 1 },
+                        totalOrderPrice: { $sum: { $ifNull: ["$totalAmount", 0] } },
+                        coinsUsed: { $sum: { $ifNull: ["$coinDiscount", 0] } },
+                        pasrRevenue: { $sum: { $add: [{ $ifNull: ["$platformFee", 0] }, { $ifNull: ["$deliveryCharge", 0] }] } }
+                    }}
+                ]);
+
+                const graphDataAgg = await Order.aggregate([
+                    { $match: { 
+                        createdAt: { $gte: sevenDaysAgo },
+                        orderStatus: 'COMPLETED'
+                    }},
+                    { $group: {
+                        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                        orders: { $sum: 1 },
+                        revenue: { $sum: { $add: [{ $ifNull: ["$platformFee", 0] }, { $ifNull: ["$deliveryCharge", 0] }] } },
+                        coins: { $sum: { $ifNull: ["$coinDiscount", 0] } },
+                        amount: { $sum: { $ifNull: ["$totalAmount", 0] } }
+                    }},
+                    { $sort: { _id: 1 } }
+                ]);
+
+                const todayData = todayStats[0] || { numberOfOrders: 0, totalOrderPrice: 0, coinsUsed: 0, pasrRevenue: 0 };
+                
+                dashboardData = {
+                    todayStats: {
+                        numberOfOrders: todayData.numberOfOrders,
+                        totalOrderPrice: todayData.totalOrderPrice,
+                        coinsUsed: todayData.coinsUsed,
+                        pasrRevenue: todayData.pasrRevenue
+                    },
+                    graphData: graphDataAgg.map(item => ({
+                        date: item._id,
+                        orders: item.orders,
+                        revenue: item.revenue,
+                        coins: item.coins,
+                        amount: item.amount
+                    }))
+                };
                 break;
             }
         }
 
-        res.json({ success: true, stats, requests: data });
+        if (dashboardData) {
+            res.json({ success: true, stats, requests: data, dashboardData });
+        } else {
+            res.json({ success: true, stats, requests: data });
+        }
     } catch (error) {
         console.error('Admin API Error:', error);
         res.status(500).json({ success: false, message: error.message });
@@ -404,8 +455,8 @@ router.post('/action', async (req, res) => {
                 { $set: { price: Number(payload.newPrice) } }
             );
         } else if (action === 'MARK_REMITTED') {
-            const [partnerId, dateStr] = payload.id.split('_'); // 'partnerId_DD-MM-YYYY'
-            const [day, month, year] = dateStr.split('-');
+            const [partnerId, dateStr] = payload.id.split('_');
+            const [day, month, year] = dateStr.includes('-') ? dateStr.split('-') : dateStr.split('/');
             const startOfDay = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
             const endOfDay = new Date(`${year}-${month}-${day}T23:59:59.999Z`);
             
