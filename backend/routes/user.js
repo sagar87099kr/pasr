@@ -162,11 +162,6 @@ router.post("/customer/verify-otp", wrapAsync(async (req, res, next) => {
                     newCustomer.referredBy = referrer._id;
                     newCustomer.coins = 5; // Reward new user
 
-                    // Reward referrer
-                    referrer.coins = (referrer.coins || 0) + 10;
-                    referrer.referralCount = (referrer.referralCount || 0) + 1;
-                    await referrer.save();
-
                     // Permanent ledger entry preventing future farming if they delete account
                     await ReferralUsage.create({
                         mobile: pending.username,
@@ -346,9 +341,6 @@ router.post("/api/auth/verify-otp", wrapAsync(async (req, res) => {
             if (referrer) {
                 newCustomer.referredBy = referrer._id;
                 newCustomer.coins = 5;
-                referrer.coins = (referrer.coins || 0) + 10;
-                referrer.referralCount = (referrer.referralCount || 0) + 1;
-                await referrer.save();
                 await ReferralUsage.create({ mobile: pending.username, usedCode: pending.referralCode.toUpperCase() });
             }
         }
@@ -586,7 +578,13 @@ router.get("/user", isLogedin, saveRedirectUrl, wrapAsync(async (req, res) => {
     });
     const currentUserRank = higherRankUsersCount + 1;
 
-    res.render("pages/provider_profile.ejs", { listings, products, shops, kisanPosts, deliveryPartner, top3Referrals, currentUserRank });
+    // Fetch user's referred friends
+    const referredFriends = await Customer.find({ referredBy: req.user._id })
+        .select('name createdAt referralRewardClaimed')
+        .sort({ createdAt: -1 })
+        .lean();
+
+    res.render("pages/provider_profile.ejs", { listings, products, shops, kisanPosts, deliveryPartner, top3Referrals, currentUserRank, referredFriends });
 }));
 
 // these are verification route for customers 
