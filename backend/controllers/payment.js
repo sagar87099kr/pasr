@@ -114,18 +114,16 @@ module.exports.requestPayout = async (req, res) => {
 
         const payoutOrders = unsettledOrders.filter(order => {
             let earningsForShop = 0;
-            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup' || order.deliveryType === 'SELF_PICKUP';
-            const actualItemPrice = order.subtotalAmount || ((order.totalAmount || 0) + (order.coinDiscount || 0));
+            const isSelfPickup = order.deliveryType === 'Self Pickup' || order.deliveryType === 'SELF_PICKUP';
+            const actualItemPrice = order.subtotalAmount || Math.max(0, (order.totalAmount || 0) + (order.coinDiscount || 0) - (order.deliveryCharge || 0) - 5);
 
             if (isSelfPickup) {
+                earningsForShop = order.coinDiscount || 0;
+            } else if (order.selfDelivery) {
                 if (order.paymentType === 'PREPAID') {
-                    earningsForShop = actualItemPrice;
-                    if (order.deliveryType === 'HOME_DELIVERY') {
-                        earningsForShop += (order.deliveryCharge || 0);
-                    }
-                    earningsForShop -= (order.pasrCommission || 0);
+                    earningsForShop = actualItemPrice + (order.deliveryCharge || 0);
                 } else {
-                    earningsForShop = (order.coinDiscount || 0) - (order.pasrCommission || 0);
+                    earningsForShop = order.coinDiscount || 0;
                 }
             } else {
                 earningsForShop = actualItemPrice;

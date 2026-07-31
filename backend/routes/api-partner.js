@@ -218,7 +218,7 @@ router.get("/shop/orders", verifyToken, async (req, res) => {
         const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
         if (!shop) return res.status(403).json({ success: false, message: "Forbidden" });
 
-        const orders = await Order.find({ shopId })
+        const orders = await Order.find({ shopId, $nor: [{ paymentType: 'PREPAID', paymentStatus: 'PENDING' }, { orderStatus: 'PENDING_PAYMENT' }] })
             .populate("customerId")
             .populate("deliveryPartnerId")
             .populate({
@@ -226,7 +226,12 @@ router.get("/shop/orders", verifyToken, async (req, res) => {
                 populate: { path: "product" }
             })
             .sort({ createdAt: -1 });
-        res.json({ success: true, orders });
+        const mappedOrders = orders.map(o => {
+            const obj = o.toObject();
+            obj.totalAmount = obj.subtotalAmount || obj.totalAmount;
+            return obj;
+        });
+        res.json({ success: true, orders: mappedOrders });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
     }
@@ -283,14 +288,14 @@ router.get("/shop/dashboard", verifyToken, async (req, res) => {
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
 
-        const orders = await Order.find({ shopId });
+        const orders = await Order.find({ shopId, $nor: [{ paymentType: 'PREPAID', paymentStatus: 'PENDING' }, { orderStatus: 'PENDING_PAYMENT' }] });
         
         let todaysOrders = 0;
         let pendingOrders = 0;
         let readyForPickup = 0;
         let cancelled = 0;
         let delivered = 0;
-        let revenue = 0;
+        let totalRevenue = 0;
 
         orders.forEach(order => {
             if (new Date(order.createdAt) >= startOfDay && order.orderStatus !== 'CANCELLED') todaysOrders++;
@@ -300,7 +305,7 @@ router.get("/shop/dashboard", verifyToken, async (req, res) => {
             if (order.orderStatus === 'CANCELLED') cancelled++;
             if (order.orderStatus === 'COMPLETED' || order.orderStatus === 'DELIVERED') {
                 delivered++;
-                revenue += order.totalAmount || 0;
+                totalRevenue += order.subtotalAmount || order.totalAmount || 0;
             }
         });
 
@@ -312,7 +317,7 @@ router.get("/shop/dashboard", verifyToken, async (req, res) => {
                 readyForPickup,
                 cancelled,
                 delivered,
-                revenue,
+                revenue: totalRevenue,
                 averagePreparationTime: 15 // Placeholder
             }
         });
@@ -433,7 +438,10 @@ router.put("/shop/orders/:id/status", verifyToken, async (req, res) => {
                 break;
         }
 
-        res.json({ success: true, message: "Order status updated", order });
+        const mappedOrder = order.toObject();
+        mappedOrder.totalAmount = mappedOrder.subtotalAmount || mappedOrder.totalAmount;
+
+        res.json({ success: true, order: mappedOrder, message: "Order status updated" });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
     }
@@ -700,18 +708,16 @@ router.post("/shop/request-payout", verifyToken, async (req, res) => {
 
         const payoutOrders = unsettledOrders.filter(order => {
             let earningsForShop = 0;
-            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup' || order.deliveryType === 'SELF_PICKUP';
-            const actualItemPrice = order.subtotalAmount || ((order.totalAmount || 0) + (order.coinDiscount || 0));
+            const isSelfPickup = order.deliveryType === 'Self Pickup' || order.deliveryType === 'SELF_PICKUP';
+            const actualItemPrice = order.subtotalAmount || Math.max(0, (order.totalAmount || 0) + (order.coinDiscount || 0) - (order.deliveryCharge || 0) - 5);
 
             if (isSelfPickup) {
+                earningsForShop = order.coinDiscount || 0;
+            } else if (order.selfDelivery) {
                 if (order.paymentType === 'PREPAID') {
-                    earningsForShop = actualItemPrice;
-                    if (order.deliveryType === 'HOME_DELIVERY') {
-                        earningsForShop += (order.deliveryCharge || 0);
-                    }
-                    earningsForShop -= (order.pasrCommission || 0);
+                    earningsForShop = actualItemPrice + (order.deliveryCharge || 0);
                 } else {
-                    earningsForShop = (order.coinDiscount || 0) - (order.pasrCommission || 0);
+                    earningsForShop = order.coinDiscount || 0;
                 }
             } else {
                 earningsForShop = actualItemPrice;

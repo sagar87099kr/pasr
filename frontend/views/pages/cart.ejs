@@ -542,6 +542,10 @@
                                             <span class="delivery-amt">₹0</span>
                                         </span>
                                     </div>
+                                    <div class="summary-row handling-fee-row" style="margin-top: 5px;">
+                                        <span>Order Handling Fee</span>
+                                        <span class="text-muted">₹5</span>
+                                    </div>
 
                                     <!-- First-order free delivery badge -->
                                     <div class="first-order-badge" style="display:none;">
@@ -849,7 +853,8 @@
                             subCard.querySelector('.first-order-badge').style.display = 'none';
                             const subtotalEl = section.querySelector('.summary-row span:last-child');
                             const subtotal = parseFloat(subtotalEl ? subtotalEl.innerText.replace('₹', '') : '0') || 0;
-                            subCard.querySelector('.grand-total').innerText = `₹${subtotal}`;
+                            const platformFee = 5;
+                            subCard.querySelector('.grand-total').innerText = `₹${subtotal + platformFee}`;
                             section.dataset.deliveryOk = 'true';
                             section.dataset.total = subtotal;
                             updateCodVisibility(shopId, subtotal);
@@ -1142,7 +1147,7 @@
                                 firstOrderBadge.style.display = 'none';
                             }
 
-                            subCard.querySelector('.grand-total').innerText = `₹${data.total}`;
+                            subCard.querySelector('.grand-total').innerText = `₹${data.total + 5}`;
                             subCard.querySelector('.delivery-row').style.display = 'flex';
                             if (addrErrorEl) addrErrorEl.style.display = 'none';
                             section.dataset.deliveryOk = 'true';
@@ -1442,7 +1447,7 @@
                     }
 
                     if (grandTotalEl) {
-                        grandTotalEl.innerText = `₹${Math.max(0, baseTotal)}`;
+                        grandTotalEl.innerText = `₹${Math.max(0, baseTotal + 5)}`;
                     }
 
                     // Update COD eligibility based on original dataset total, not discounted total.

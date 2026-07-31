@@ -579,7 +579,7 @@
                                                     (COD)
                                                 </div>
                                                 <div class="pay-status-msg" style="color:#166534;">Collect <strong>₹<%=
-                                                            order.totalAmount %>
+                                                            order.subtotalAmount %>
                                                     </strong> in cash when delivering.</div>
                                                 <% if (order.coinDiscount && order.coinDiscount > 0) { %>
                                                 <div class="pay-status-msg mt-2" style="color:#059669; font-size: 13px; font-weight: 600; background: #d1fae5; padding: 6px 10px; border-radius: 6px; border: 1px solid #a7f3d0;">
@@ -593,7 +593,7 @@
                                                         <div class="pay-type-label" style="color:#15803d;">✅ UPI — PAID
                                                         </div>
                                                         <div class="pay-status-msg" style="color:#166534;">Payment of ₹
-                                                            <%= order.totalAmount %> verified. No amount to collect.
+                                                            <%= order.subtotalAmount %> verified. No amount to collect.
                                                         </div>
                                                     </div>
                                                     <% } else { %>
@@ -604,11 +604,11 @@
                                                             <div class="pay-status-msg" style="color:#92400e;">
                                                                 <% if (order.orderStatus==='COMPLETED' ) { %>
                                                                     Payment verification pending. Please check your shop
-                                                                    profile to confirm ₹<%= order.totalAmount %> was
+                                                                    profile to confirm ₹<%= order.subtotalAmount %> was
                                                                         received via UPI.
                                                                         <% } else { %>
                                                                             Customer claims to have paid ₹<%=
-                                                                                order.totalAmount %> via UPI. Verify in
+                                                                                order.subtotalAmount %> via UPI. Verify in
                                                                                 your
                                                                                 bank/app before preparing the order.
                                                                                 <% } %>
