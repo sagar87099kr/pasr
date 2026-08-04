@@ -88,4 +88,16 @@ router.post("/bazaars", isLogedin, isadmin, catchAsync(adminBazaarController.cre
 router.post("/shops/:id/assign-bazaar", isLogedin, isadmin, catchAsync(adminBazaarController.assignBazaarToShop));
 router.post("/providers/:id/assign-bazaar", isLogedin, isadmin, catchAsync(adminBazaarController.assignBazaarToProvider));
 
+// Admin - Toggle Sponsored Status
+router.post("/shops/:id/toggle-sponsor", isLogedin, isadmin, catchAsync(async (req, res) => {
+    const Shop = require("../data/shops");
+    const shop = await Shop.findById(req.params.id);
+    if (shop) {
+        shop.isSponsored = req.body.isSponsored === 'on';
+        await shop.save();
+        req.flash("success", "Shop sponsored status updated!");
+    }
+    res.redirect("/shops/verify");
+}));
+
 module.exports = router;

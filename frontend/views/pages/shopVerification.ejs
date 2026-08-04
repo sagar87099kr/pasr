@@ -482,6 +482,15 @@
                                                         </form>
                                                     </div>
                                                 </div>
+                                                <div class="row">
+                                                    <div class="label">Sponsored</div>
+                                                    <div class="value">
+                                                        <form method="POST" action="/admin/shops/<%= shop._id %>/toggle-sponsor" style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                                                            <input type="checkbox" name="isSponsored" onchange="this.form.submit()" <%= shop.isSponsored ? 'checked' : '' %> style="width: 16px; height: 16px; cursor: pointer;">
+                                                            <span style="font-size: 13px; color: #6b7280;">(Check to mark as sponsored)</span>
+                                                        </form>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </aside>
                                     </div>

@@ -403,6 +403,15 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
             results = await model.find({ [categoryField]: categoryValue }).sort({ createdAt: -1 }).populate("owner");
         }
         
+        // In-memory sort to bring sponsored items (like shops) to the top
+        if (results.length > 0 && typeof results[0].isSponsored !== 'undefined') {
+            results.sort((a, b) => {
+                const aSponsored = a.isSponsored ? 1 : 0;
+                const bSponsored = b.isSponsored ? 1 : 0;
+                return bSponsored - aSponsored; // 1 (true) before 0 (false)
+            });
+        }
+        
         return results;
     };
 
