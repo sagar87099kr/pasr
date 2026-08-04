@@ -273,6 +273,17 @@
 <body>
     <main class="container">
 
+        <!-- SEARCH BAR -->
+        <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+            <form action="/shops/verify" method="GET" style="display: flex; gap: 10px; width: 100%; max-width: 600px;">
+                <input type="text" name="q" placeholder="Search shop by name..." value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>" style="flex: 1; padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px;">
+                <button type="submit" class="btn primary">Search</button>
+                <% if (typeof searchQuery !== 'undefined' && searchQuery) { %>
+                    <a href="/shops/verify" class="btn" style="text-decoration: none; display: flex; align-items: center;">Clear</a>
+                <% } %>
+            </form>
+        </div>
+
             <!-- SECTION 1: PENDING VERIFICATION -->
             <h2 style="margin: 30px 0 5px; color: #991b1b;">Pending Verification (<%= typeof pendingCount !== 'undefined' ? pendingCount : unverifiedShops.length %>)</h2>
             <p style="color: #666; font-size: 14px; margin: 0 0 20px 0;">Total Shops: <%= typeof totalShops !== 'undefined' ? totalShops : 'N/A' %> (Showing 20 most recent)</p>

@@ -38,24 +38,33 @@ const isShopOwner = async (req, res, next) => {
 
 // Shop Verification Route (Admin Only)
 router.get("/shops/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
+    const { q } = req.query;
+    let unverifiedQuery = { verified: false };
+    let verifiedQuery = { verified: true };
+    
+    if (q) {
+        unverifiedQuery.shopName = { $regex: q, $options: 'i' };
+        verifiedQuery.shopName = { $regex: q, $options: 'i' };
+    }
+
     const totalShops = await Shop.countDocuments();
     const pendingCount = await Shop.countDocuments({ verified: false });
     const verifiedCount = await Shop.countDocuments({ verified: true });
 
-    const unverifiedShops = await Shop.find({ verified: false })
+    const unverifiedShops = await Shop.find(unverifiedQuery)
         .sort({ createdAt: -1 })
-        .limit(20)
+        .limit(q ? 100 : 20)
         .populate('owner')
         .populate('bazaar');
 
-    const verifiedShops = await Shop.find({ verified: true })
+    const verifiedShops = await Shop.find(verifiedQuery)
         .sort({ createdAt: -1 })
-        .limit(20)
+        .limit(q ? 100 : 20)
         .populate('owner')
         .populate('bazaar');
 
     const bazaars = await require("../data/bazaar").find({}).sort({ name: 1 });
-    res.render("pages/shopVerification.ejs", { unverifiedShops, verifiedShops, totalShops, pendingCount, verifiedCount, bazaars });
+    res.render("pages/shopVerification.ejs", { unverifiedShops, verifiedShops, totalShops, pendingCount, verifiedCount, bazaars, searchQuery: q || "" });
 }));
 
 // Verify Shop Action
