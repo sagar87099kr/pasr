@@ -129,6 +129,12 @@ module.exports.checkoutOrder = async (req, res, next) => {
         let firstOrderDiscount = 0;
         let grantFreeDelivery = false;
         let deliveryAddress = '';
+        let isFirstOrder = false;
+
+        if (req.user && req.user.username) {
+            const existing = await FreeDeliveryUsage.findOne({ mobile: String(req.user.username) });
+            if (!existing) isFirstOrder = true;
+        }
 
         if (deliveryType === 'SELF_PICKUP') {
             // Self-pickup: no delivery charge, no distance calculation needed
@@ -272,11 +278,6 @@ module.exports.checkoutOrder = async (req, res, next) => {
             }
 
             // Free Delivery Logic: First order is free, otherwise minimum subtotal of 77 is required
-            let isFirstOrder = false;
-            if (req.user && req.user.username) {
-                const existing = await FreeDeliveryUsage.findOne({ mobile: String(req.user.username) });
-                if (!existing) isFirstOrder = true;
-            }
 
             let effectiveDeliveryCharge = deliveryCharge;
             if (isFirstOrder || subtotalAmount >= 77) {

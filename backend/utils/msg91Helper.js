@@ -30,8 +30,13 @@ async function sendOTP(phone) {
         return { simulated: true, otp: "123456" };
     }
 
-    const phoneStr = String(phone).trim();
-    const mobile = phoneStr.startsWith("91") ? phoneStr : `91${phoneStr}`;
+    let cleanPhone = String(phone).replace(/\D/g, '');
+    if (cleanPhone.length === 10) {
+        cleanPhone = '91' + cleanPhone;
+    } else if (cleanPhone.length === 11 && cleanPhone.startsWith('0')) {
+        cleanPhone = '91' + cleanPhone.substring(1);
+    }
+    const mobile = cleanPhone;
 
     const otpLength = process.env.MSG91_OTP_LENGTH || "6";
     const otpExpiry = process.env.MSG91_OTP_EXPIRY || "5";
@@ -85,10 +90,13 @@ async function verifyOTP(phone, otp) {
         return otp === "123456";
     }
 
-    const phoneStr = String(phone).trim();
-    const mobile = phoneStr.startsWith("91")
-        ? phoneStr
-        : `91${phoneStr}`;
+    let cleanPhone = String(phone).replace(/\D/g, '');
+    if (cleanPhone.length === 10) {
+        cleanPhone = '91' + cleanPhone;
+    } else if (cleanPhone.length === 11 && cleanPhone.startsWith('0')) {
+        cleanPhone = '91' + cleanPhone.substring(1);
+    }
+    const mobile = cleanPhone;
 
     const url =
         `${BASE_URL}/verify?mobile=${mobile}&otp=${otp}`;
