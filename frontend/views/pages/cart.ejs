@@ -542,9 +542,9 @@
                                             <span class="delivery-amt">₹0</span>
                                         </span>
                                     </div>
-                                    <div class="summary-row handling-fee-row" style="margin-top: 5px;">
+                                    <div class="summary-row handling-fee-row" style="margin-top: 5px; display: none;">
                                         <span>Order Handling Fee</span>
-                                        <span class="text-muted">₹5</span>
+                                        <span class="handling-fee-amt text-muted">₹0</span>
                                     </div>
 
                                     <!-- First-order free delivery badge -->
@@ -853,10 +853,12 @@
                             subCard.querySelector('.first-order-badge').style.display = 'none';
                             const subtotalEl = section.querySelector('.summary-row span:last-child');
                             const subtotal = parseFloat(subtotalEl ? subtotalEl.innerText.replace('₹', '') : '0') || 0;
-                            const platformFee = 5;
-                            subCard.querySelector('.grand-total').innerText = `₹${subtotal + platformFee}`;
+                            section.dataset.platformFee = '0';
+                            const handlingFeeRow = subCard.querySelector('.handling-fee-row');
+                            if(handlingFeeRow) handlingFeeRow.style.display = 'none';
                             section.dataset.deliveryOk = 'true';
                             section.dataset.total = subtotal;
+                            updateSectionTotal(shopId);
                             updateCodVisibility(shopId, subtotal);
                         } else {
                             addrPanel.style.display = 'block';
@@ -1121,6 +1123,14 @@
                                 }
                                 subCard.querySelector('.delivery-row').style.display = 'none';
                                 section.dataset.deliveryOk = 'false';
+                                section.dataset.platformFee = '5';
+                                const handlingFeeRow = subCard.querySelector('.handling-fee-row');
+                                const handlingFeeAmt = handlingFeeRow ? handlingFeeRow.querySelector('.handling-fee-amt, span:last-child') : null;
+                                if (handlingFeeRow && handlingFeeAmt) {
+                                    handlingFeeRow.style.display = 'flex';
+                                    handlingFeeAmt.innerHTML = `₹5`;
+                                }
+                                updateSectionTotal(shopId);
                                 return;
                             }
 
@@ -1131,7 +1141,12 @@
                             const firstOrderBadge = subCard.querySelector('.first-order-badge');
                             const firstOrderSaveEl = subCard.querySelector('.first-order-save-amt');
 
+                            let platformFee = 5;
+                            const handlingFeeRow = subCard.querySelector('.handling-fee-row');
+                            const handlingFeeAmt = handlingFeeRow ? handlingFeeRow.querySelector('.handling-fee-amt, span:last-child') : null;
+
                             if (data.isFirstOrder) {
+                                platformFee = 0;
                                 deliveryAmtEl.innerText = 'FREE';
                                 deliveryAmtEl.style.color = '#059669';
                                 deliveryAmtEl.style.fontWeight = '800';
@@ -1139,15 +1154,23 @@
                                 originalPriceEl.style.display = 'inline';
                                 firstOrderSaveEl.innerText = `₹${data.deliveryCharge}`;
                                 firstOrderBadge.style.display = 'flex';
+                                if (handlingFeeRow && handlingFeeAmt) {
+                                    handlingFeeRow.style.display = 'flex';
+                                    handlingFeeAmt.innerHTML = `<span style="text-decoration: line-through; color: #94a3b8; margin-right: 5px;">₹5</span><span style="color: #059669; font-weight: 800;">FREE 🎉</span>`;
+                                }
                             } else {
                                 deliveryAmtEl.innerText = `₹${data.deliveryCharge}`;
                                 deliveryAmtEl.style.color = '';
                                 deliveryAmtEl.style.fontWeight = '';
                                 originalPriceEl.style.display = 'none';
                                 firstOrderBadge.style.display = 'none';
+                                if (handlingFeeRow && handlingFeeAmt) {
+                                    handlingFeeRow.style.display = 'flex';
+                                    handlingFeeAmt.innerHTML = `₹5`;
+                                }
                             }
 
-                            subCard.querySelector('.grand-total').innerText = `₹${data.total + 5}`;
+                            section.dataset.platformFee = platformFee;
                             subCard.querySelector('.delivery-row').style.display = 'flex';
                             if (addrErrorEl) addrErrorEl.style.display = 'none';
                             section.dataset.deliveryOk = 'true';
@@ -1162,6 +1185,14 @@
                                 addrErrorEl.style.display = 'block';
                             }
                             section.dataset.deliveryOk = 'false';
+                            section.dataset.platformFee = '5';
+                            const handlingFeeRow = subCard.querySelector('.handling-fee-row');
+                            const handlingFeeAmt = handlingFeeRow ? handlingFeeRow.querySelector('.handling-fee-amt, span:last-child') : null;
+                            if (handlingFeeRow && handlingFeeAmt) {
+                                handlingFeeRow.style.display = 'flex';
+                                handlingFeeAmt.innerHTML = `₹5`;
+                            }
+                            updateSectionTotal(shopId);
                         }
                     } catch (e) {
                         console.error(e);
@@ -1169,6 +1200,15 @@
                             addrErrorEl.innerText = 'Failed to calculate delivery fee. Please try again.';
                             addrErrorEl.style.display = 'block';
                         }
+                        section.dataset.deliveryOk = 'false';
+                        section.dataset.platformFee = '5';
+                        const handlingFeeRow = subCard.querySelector('.handling-fee-row');
+                        const handlingFeeAmt = handlingFeeRow ? handlingFeeRow.querySelector('.handling-fee-amt, span:last-child') : null;
+                        if (handlingFeeRow && handlingFeeAmt) {
+                            handlingFeeRow.style.display = 'flex';
+                            handlingFeeAmt.innerHTML = `₹5`;
+                        }
+                        updateSectionTotal(shopId);
                     }
                 }
 
@@ -1425,7 +1465,7 @@
                         const userCoinsEl = document.querySelector('.user-coin-balance');
                         const userCoins = userCoinsEl ? parseFloat(userCoinsEl.innerText) : 0;
                         const subtotalVal = parseFloat(section.dataset.total || 0);
-                        const maxCoinsAllowed = Math.max(5, Math.floor(subtotalVal * 0.20));
+                        const maxCoinsAllowed = Math.min(50, Math.floor(subtotalVal * 0.50));
                         const discount = Math.min(userCoins, maxCoinsAllowed, baseTotal);
                         
                         if (discountAmtEl) {
@@ -1446,8 +1486,21 @@
                         }
                     }
 
+                    const pFee = parseFloat(section.dataset.platformFee || 0);
+                    let finalTotal = Math.max(0, baseTotal + pFee);
                     if (grandTotalEl) {
-                        grandTotalEl.innerText = `₹${Math.max(0, baseTotal + 5)}`;
+                        // Apply struck-through original total if coin discount is active
+                        const coinDiscountAmt = parseFloat(discountAmtEl ? discountAmtEl.innerText.replace('-₹', '') : '0') || 0;
+                        if (coinDiscountAmt > 0 && chk && chk.checked) {
+                            const originalGrandTotal = baseTotal + coinDiscountAmt + pFee;
+                            grandTotalEl.innerHTML = `<span style="text-decoration: line-through; color: #94a3b8; margin-right: 5px; font-size: 14px;">₹${originalGrandTotal}</span> ₹${finalTotal}`;
+                            const summaryTotalLabel = section.querySelector('.summary-total span:first-child');
+                            if (summaryTotalLabel) summaryTotalLabel.innerText = 'Net Payable';
+                        } else {
+                            grandTotalEl.innerText = `₹${finalTotal}`;
+                            const summaryTotalLabel = section.querySelector('.summary-total span:first-child');
+                            if (summaryTotalLabel) summaryTotalLabel.innerText = 'Order Total';
+                        }
                     }
 
                     // Update COD eligibility based on original dataset total, not discounted total.

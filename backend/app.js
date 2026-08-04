@@ -35,7 +35,7 @@ if (!dbUrl) {
   throw new Error("ATLAS_DB is missing in your .env file");
 }
 
-const clientPromise = mongoose.connect(dbUrl, { family: 4, tlsInsecure: true })
+const clientPromise = mongoose.connect(dbUrl, { family: 4 })
   .then(() => {
     console.log("connected to databases");
     return mongoose.connection.getClient();

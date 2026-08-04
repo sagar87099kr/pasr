@@ -114,6 +114,10 @@ const customerSchema = new Schema({
     type: Number,
     default: 5
   },
+  referralRewardClaimed: {
+    type: Boolean,
+    default: false
+  },
   consecutiveCancellations: {
     type: Number,
     default: 0

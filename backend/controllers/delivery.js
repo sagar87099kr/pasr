@@ -107,7 +107,8 @@ module.exports.getDashboard = async (req, res, next) => {
             populate: { path: 'owner', select: 'name username' }
         }).populate('customerId')
           .populate('items.itemId')
-          .sort({ createdAt: -1 });
+          .sort({ createdAt: -1 })
+          .limit(50);
 
         // Fetch upcoming orders (CREATED, ACCEPTED) that are not yet ready/packed
         const upcomingOrders = await Order.find({
@@ -118,7 +119,8 @@ module.exports.getDashboard = async (req, res, next) => {
             populate: { path: 'owner', select: 'name username' }
         }).populate('customerId')
           .populate('items.itemId')
-          .sort({ createdAt: -1 });
+          .sort({ createdAt: -1 })
+          .limit(50);
 
         if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
             return res.json({ success: true, partner, activeOrders: assignedOrders, broadcastOrders, upcomingOrders });
@@ -238,6 +240,20 @@ module.exports.verifyOTPAndComplete = async (req, res, next) => {
                 compCustomer.mandatoryOnlineOrdersCount -= 1;
             }
             await compCustomer.save();
+
+            // Handle Deferred Referral Reward
+            if (compCustomer.referredBy && !compCustomer.referralRewardClaimed) {
+                const updatedCustomer = await Customer.findOneAndUpdate(
+                    { _id: compCustomer._id, referralRewardClaimed: { $ne: true } },
+                    { $set: { referralRewardClaimed: true } }
+                );
+                if (updatedCustomer) {
+                    await Customer.updateOne(
+                        { _id: compCustomer.referredBy },
+                        { $inc: { coins: 10, referralCount: 1 } }
+                    );
+                }
+            }
         }
 
         // Notify Customer that delivery is complete
@@ -379,15 +395,27 @@ module.exports.acceptOrder = async (req, res, next) => {
 module.exports.getHistory = async (req, res, next) => {
     try {
         const partner = req.deliveryPartner;
+        const skip = parseInt(req.query.skip) || 0;
+        
         const historyOrders = await Order.find({
             deliveryPartnerId: partner._id,
             orderStatus: { $in: ['COMPLETED', 'CANCELLED'] }
         })
         .populate({ path: 'shopId', populate: { path: 'owner', select: 'name username' } })
         .populate('customerId')
-        .sort({ deliveredAt: -1, updatedAt: -1 });
+        .sort({ deliveredAt: -1, updatedAt: -1 })
+        .skip(skip)
+        .limit(20);
 
-        res.status(200).json({ success: true, history: historyOrders });
+        // Calculate total cash collected from users for COMPLETED COD orders
+        const allCompletedCod = await Order.find({
+            deliveryPartnerId: partner._id,
+            orderStatus: 'COMPLETED',
+            paymentType: 'COD'
+        });
+        const totalCollectedCash = allCompletedCod.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+        res.status(200).json({ success: true, history: historyOrders, totalCollectedCash });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
     }

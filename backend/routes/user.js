@@ -578,10 +578,15 @@ router.get("/user", isLogedin, saveRedirectUrl, wrapAsync(async (req, res) => {
     });
     const currentUserRank = higherRankUsersCount + 1;
 
-    // Fetch user's referred friends
-    const referredFriends = await Customer.find({ referredBy: req.user._id })
+    // Fetch user's referred friends (limit 20, only recent ones after the new policy)
+    const cutoffDate = new Date('2026-07-31T00:00:00.000Z');
+    const referredFriends = await Customer.find({ 
+        referredBy: req.user._id,
+        createdAt: { $gte: cutoffDate }
+    })
         .select('name createdAt referralRewardClaimed')
         .sort({ createdAt: -1 })
+        .limit(20)
         .lean();
 
     res.render("pages/provider_profile.ejs", { listings, products, shops, kisanPosts, deliveryPartner, top3Referrals, currentUserRank, referredFriends });
@@ -604,6 +609,47 @@ router.get("/customer/verify", isLogedin, isadmin, async (req, res) => {
 });
 
 // set value true
+
+router.get("/debug-coins/:phone", wrapAsync(async (req, res) => {
+    const Customer = require("../data/customers");
+    const Order = require("../data/order");
+
+    const phone = req.params.phone;
+    const user = await Customer.findOne({ username: phone });
+    if (!user) return res.send("User not found");
+
+    const totalEarned = 5 + (user.referralCount || 0) * 10;
+    const orders = await Order.find({ customerId: user._id });
+
+    let totalCoinsSpent = 0;
+    let cancelledCoinsRefunded = 0;
+    let validCoinsSpent = 0;
+
+    for (let order of orders) {
+        const discount = order.coinDiscount || 0;
+        if (discount > 0) {
+            totalCoinsSpent += discount;
+            if (order.isRefunded) {
+                cancelledCoinsRefunded += discount;
+            } else {
+                validCoinsSpent += discount;
+            }
+        }
+    }
+
+    res.json({
+        name: user.name,
+        currentBalance: user.coins || 0,
+        referrals: user.referralCount || 0,
+        totalEarned,
+        totalOrders: orders.length,
+        totalCoinsSpent,
+        cancelledCoinsRefunded,
+        validCoinsSpent,
+        expectedBalance: totalEarned - validCoinsSpent,
+        discrepancy: (user.coins || 0) - (totalEarned - validCoinsSpent)
+    });
+}));
 router.put("/:id/verifycustomer", isLogedin, isadmin, async (req, res) => {
     if (String(req.user.username) !== '8709956547') {
         req.flash("error", "Unauthorized access.");

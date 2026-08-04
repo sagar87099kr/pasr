@@ -294,7 +294,10 @@ module.exports.checkoutOrder = async (req, res, next) => {
             deliveryCharge = effectiveDeliveryCharge;
         }
 
-        let platformFee = 5;
+        let platformFee = (deliveryType === 'HOME_DELIVERY') ? 5 : 0;
+        if (isFirstOrder) {
+            platformFee = 0;
+        }
         let totalAmount = subtotalAmount + deliveryCharge + platformFee;
 
         // Apply Coin Discount (Capped at 50% of subtotal order value, max ₹50)
@@ -590,6 +593,10 @@ module.exports.shopPackOrder = async (req, res, next) => {
 // 5. Customer Gets their Orders & Shop Orders
 module.exports.getCustomerOrders = async (req, res, next) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
         // Find if this user owns any shops
         const ownedShops = await Shop.find({ owner: req.user._id }).select('_id');
         const shopIds = ownedShops.map(s => s._id);
@@ -605,7 +612,12 @@ module.exports.getCustomerOrders = async (req, res, next) => {
                 select: 'img product'
             })
             .populate('deliveryPartnerId', 'fullName phoneNumber profilePhoto rating ratingCount totalDeliveries')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit + 1);
+
+        const hasMore = orders.length > limit;
+        if (hasMore) orders.pop();
 
         // Resolve seller details for each order to handle both Shops and Local Bazar
         const processedOrders = await Promise.all(orders.map(async (order) => {
@@ -636,7 +648,7 @@ module.exports.getCustomerOrders = async (req, res, next) => {
 
         // Return JSON for API
         if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
-            return res.json({ success: true, orders: processedOrders });
+            return res.json({ success: true, orders: processedOrders, hasMore });
         }
 
         // Render the page
@@ -663,6 +675,10 @@ module.exports.getShopOrders = async (req, res, next) => {
         // Fetch orders for all owned shops (including Local Bazar where shopId = owner _id)
         const allShopIds = [...shopIds.map(id => require('mongoose').Types.ObjectId.createFromHexString(id)), req.user._id];
 
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
+
         const orders = await Order.find({
             shopId: { $in: allShopIds },
             adminVerified: true,
@@ -673,7 +689,12 @@ module.exports.getShopOrders = async (req, res, next) => {
                 populate: { path: 'product', select: 'img' },
                 select: 'img product'
             })
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit + 1);
+
+        const hasMore = orders.length > limit;
+        if (hasMore) orders.pop();
 
         // Resolve customer & shop details
         const processedOrders = await Promise.all(orders.map(async (order) => {
@@ -710,9 +731,12 @@ module.exports.getShopOrders = async (req, res, next) => {
             return orderObj;
         }));
 
-        const pendingCount = processedOrders.filter(o =>
-            ['CREATED', 'ACCEPTED', 'READY_FOR_DELIVERY'].includes(o.orderStatus)
-        ).length;
+        const pendingCount = await Order.countDocuments({
+            shopId: { $in: allShopIds },
+            adminVerified: true,
+            orderStatus: { $in: ['CREATED', 'ACCEPTED', 'READY_FOR_DELIVERY'] },
+            $nor: [{ paymentType: 'PREPAID', paymentStatus: 'PENDING' }]
+        });
 
         res.render("pages/shopOrders.ejs", {
             orders: processedOrders,
@@ -1038,9 +1062,20 @@ module.exports.cancelOrder = async (req, res, next) => {
             return res.status(400).json({ success: false, message: `Cannot cancel order in ${order.orderStatus} state.` });
         }
 
+        // ATOMIC LOCK: Optimistic Concurrency Control
+        const lockedOrder = await Order.findOneAndUpdate(
+            { _id: order._id, orderStatus: order.orderStatus },
+            { $set: { orderStatus: 'CANCELLED', cancellationReason: isCustomer ? "Cancelled by Customer" : "Cancelled by Shop" } },
+            { new: true }
+        );
+
+        if (!lockedOrder) {
+            return res.status(400).json({ success: false, message: "Order state has already been changed or cancelled." });
+        }
+
         // Process Razorpay Refund if Prepaid
-        if (order.paymentType === 'PREPAID' && order.paymentStatus === 'VERIFIED') {
-            if (order.razorpayPaymentId) {
+        if (lockedOrder.paymentType === 'PREPAID' && lockedOrder.paymentStatus === 'VERIFIED') {
+            if (lockedOrder.razorpayPaymentId) {
                 const Razorpay = require('razorpay');
                 const rzp = new Razorpay({
                     key_id: process.env.RAZORPAY_KEY_ID,
@@ -1049,22 +1084,22 @@ module.exports.cancelOrder = async (req, res, next) => {
                 
                 try {
                     // Razorpay accepts amounts in paise
-                    await rzp.payments.refund(order.razorpayPaymentId, { 
-                        amount: Math.round(order.totalAmount * 100) 
+                    await rzp.payments.refund(lockedOrder.razorpayPaymentId, { 
+                        amount: Math.round(lockedOrder.totalAmount * 100) 
                     });
-                    order.paymentStatus = 'REFUNDED'; // Mark as refunded!
+                    lockedOrder.paymentStatus = 'REFUNDED'; // Mark as refunded!
+                    await lockedOrder.save();
                 } catch (refundError) {
                     console.error("Razorpay Refund Error:", refundError);
-                    return res.status(500).json({ success: false, message: "Failed to process automated refund via Razorpay. Contact support." });
+                    // Do not return error, the order is already atomically cancelled.
+                    // Just log it and continue so the UI updates and they don't retry.
                 }
-            } else {
-                 return res.status(500).json({ success: false, message: "Missing Razorpay Payment ID to process refund." });
             }
         }
 
         // Restock Inventory
         const Item = require("../data/item");
-        for (let orderItem of order.items) {
+        for (let orderItem of lockedOrder.items) {
             await Item.updateOne(
                 { _id: orderItem.itemId }, 
                 { $inc: { quantity: orderItem.quantity } }
@@ -1073,38 +1108,35 @@ module.exports.cancelOrder = async (req, res, next) => {
 
         // Refund Coins & Apply Cancellation Penalty
         const Customer = require("../data/customers");
-        const cancelCustomer = await Customer.findById(order.customerId);
-        if (cancelCustomer) {
-            let customerUpdated = false;
-            if (order.coinDiscount && order.coinDiscount > 0) {
-                cancelCustomer.coins = (cancelCustomer.coins || 0) + order.coinDiscount;
-                customerUpdated = true;
-                order.isRefunded = true; // Mark as refunded
-            }
-
-            if (isCustomer) {
-                if (String(cancelCustomer.username) !== '7979082525') {
-                    cancelCustomer.consecutiveCancellations = (cancelCustomer.consecutiveCancellations || 0) + 1;
-                    if (cancelCustomer.consecutiveCancellations > 2) {
-                        cancelCustomer.mandatoryOnlineOrdersCount = 3;
-                    }
-                    customerUpdated = true;
-                }
-            }
-
-            if (customerUpdated) {
-                await cancelCustomer.save();
-            }
+        
+        if (lockedOrder.coinDiscount && lockedOrder.coinDiscount > 0 && !lockedOrder.isRefunded) {
+             const refundLock = await Order.findOneAndUpdate(
+                 { _id: lockedOrder._id, isRefunded: { $ne: true } },
+                 { $set: { isRefunded: true } }
+             );
+             if (refundLock) {
+                 await Customer.updateOne(
+                     { _id: lockedOrder.customerId },
+                     { $inc: { coins: lockedOrder.coinDiscount } }
+                 );
+             }
         }
 
-        order.orderStatus = 'CANCELLED';
-        order.cancellationReason = isCustomer ? "Cancelled by Customer" : "Cancelled by Shop";
-        await order.save();
-        
-        // Emit Event for Real-Time Push Notification Routing
-        orderBus.emit("ORDER_CANCELLED", { order, cancelledBy: isCustomer ? 'CUSTOMER' : 'SHOP' });
+        if (isCustomer) {
+             const cancelCustomer = await Customer.findById(lockedOrder.customerId).select('username consecutiveCancellations');
+             if (cancelCustomer && String(cancelCustomer.username) !== '7979082525') {
+                 let updateQuery = { $inc: { consecutiveCancellations: 1 } };
+                 if ((cancelCustomer.consecutiveCancellations || 0) + 1 > 2) {
+                     updateQuery.$set = { mandatoryOnlineOrdersCount: 3 };
+                 }
+                 await Customer.updateOne({ _id: lockedOrder.customerId }, updateQuery);
+             }
+        }
 
-        res.status(200).json({ success: true, message: "Order cancelled successfully.", orderStatus: order.orderStatus });
+        // Emit Event for Real-Time Push Notification Routing
+        orderBus.emit("ORDER_CANCELLED", { order: lockedOrder, cancelledBy: isCustomer ? 'CUSTOMER' : 'SHOP' });
+
+        res.status(200).json({ success: true, message: "Order cancelled successfully.", orderStatus: lockedOrder.orderStatus });
 
     } catch (e) {
         next(e);

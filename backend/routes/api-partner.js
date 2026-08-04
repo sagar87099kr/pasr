@@ -385,60 +385,90 @@ router.put("/shop/orders/:id/status", verifyToken, async (req, res) => {
             return res.status(400).json({ success: false, message: `Order is already ${order.orderStatus}` });
         }
 
+        // ATOMIC LOCK: Optimistic Concurrency Control to prevent rapid click race conditions
+        const lockedOrder = await Order.findOneAndUpdate(
+            { _id: order._id, orderStatus: order.orderStatus },
+            { $set: { orderStatus: status } },
+            { new: true }
+        );
+
+        if (!lockedOrder) {
+            return res.status(400).json({ success: false, message: "Order state has already been changed." });
+        }
+
         // Handle Shop Cancellation / Rejection
         if (status === 'CANCELLED' || status === 'REJECTED') {
-            // 1. Refund Coins
-            if (order.coinDiscount && order.coinDiscount > 0 && !order.isRefunded) {
-                const cancelCustomer = await Customer.findById(order.customerId);
-                if (cancelCustomer) {
-                    cancelCustomer.coins = (cancelCustomer.coins || 0) + order.coinDiscount;
-                    await cancelCustomer.save();
-                    order.isRefunded = true;
+            // 1. Refund Coins (with secondary atomic lock to be absolutely safe)
+            if (lockedOrder.coinDiscount && lockedOrder.coinDiscount > 0 && !lockedOrder.isRefunded) {
+                const refundLock = await Order.findOneAndUpdate(
+                    { _id: lockedOrder._id, isRefunded: { $ne: true } },
+                    { $set: { isRefunded: true } }
+                );
+                if (refundLock) {
+                    await Customer.updateOne(
+                        { _id: lockedOrder.customerId },
+                        { $inc: { coins: lockedOrder.coinDiscount } }
+                    );
                 }
             }
 
             // 2. Restock Inventory
-            for (let orderItem of order.items) {
+            for (let orderItem of lockedOrder.items) {
                 await Item.updateOne(
                     { _id: orderItem.itemId }, 
                     { $inc: { quantity: orderItem.quantity } }
                 );
             }
             
-            order.cancellationReason = "Cancelled by Shop";
+            lockedOrder.cancellationReason = "Cancelled by Shop";
+            await lockedOrder.save();
         }
 
-        order.orderStatus = status;
-        await order.save();
+        // Handle Deferred Referral Reward
+        if (status === 'COMPLETED' || status === 'DELIVERED') {
+            const customer = await Customer.findById(lockedOrder.customerId);
+            if (customer && customer.referredBy && !customer.referralRewardClaimed) {
+                const updatedCustomer = await Customer.findOneAndUpdate(
+                    { _id: customer._id, referralRewardClaimed: { $ne: true } },
+                    { $set: { referralRewardClaimed: true } }
+                );
+                if (updatedCustomer) {
+                    await Customer.updateOne(
+                        { _id: customer.referredBy },
+                        { $inc: { coins: 10, referralCount: 1 } }
+                    );
+                }
+            }
+        }
 
         // Emit corresponding orderBus event for real-time FCM notification dispatch
         switch (status) {
             case 'ACCEPTED':
-                orderBus.emit("ORDER_ACCEPTED", order);
+                orderBus.emit("ORDER_ACCEPTED", lockedOrder);
                 break;
             case 'REJECTED':
-                orderBus.emit("ORDER_REJECTED", order);
+                orderBus.emit("ORDER_REJECTED", lockedOrder);
                 break;
             case 'PACKED':
             case 'READY_FOR_DELIVERY':
-                orderBus.emit("ORDER_PACKED", order);
+                orderBus.emit("ORDER_PACKED", lockedOrder);
                 break;
             case 'OUT_FOR_DELIVERY':
-                orderBus.emit("ORDER_OUT_FOR_DELIVERY", order);
+                orderBus.emit("ORDER_OUT_FOR_DELIVERY", lockedOrder);
                 break;
             case 'COMPLETED':
             case 'DELIVERED':
-                orderBus.emit("ORDER_COMPLETED", order);
+                orderBus.emit("ORDER_COMPLETED", lockedOrder);
                 break;
             case 'CANCELLED':
-                orderBus.emit("ORDER_CANCELLED", { order, cancelledBy: 'SHOP' });
+                orderBus.emit("ORDER_CANCELLED", { order: lockedOrder, cancelledBy: 'SHOP' });
                 break;
             default:
-                orderBus.emit("ORDER_STATUS_UPDATE", { order, event: status });
+                orderBus.emit("ORDER_STATUS_UPDATE", { order: lockedOrder, event: status });
                 break;
         }
 
-        const mappedOrder = order.toObject();
+        const mappedOrder = lockedOrder.toObject();
         mappedOrder.totalAmount = mappedOrder.subtotalAmount || mappedOrder.totalAmount;
 
         res.json({ success: true, order: mappedOrder, message: "Order status updated" });

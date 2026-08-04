@@ -10,6 +10,7 @@ module.exports.getHomeItems = async (req, res) => {
 
         const pageNum = parseInt(page) || 1;
         const limitNum = parseInt(limit) || 10;
+        const skipNum = (pageNum - 1) * limitNum;
 
         if (lat && lon) {
             userLocation = {
@@ -21,12 +22,11 @@ module.exports.getHomeItems = async (req, res) => {
         } else if (req.user && req.user.geometry) {
             userLocation = req.user.geometry;
         }
+
         let query = { 
             isActive: true, 
             quantity: { $gt: 0 }
         };
-        const allShops = await Shop.find().select('_id');
-        const allShopIds = allShops.map(s => s._id);
 
         let bazaarId = null;
         if (req.headers['x-bazaar-id']) {
@@ -35,13 +35,13 @@ module.exports.getHomeItems = async (req, res) => {
             bazaarId = req.session.bazaarId;
         }
 
+        let shopIds = null;
+
         if (bazaarId) {
-            // Strict assigned bazaar filtering
             let bazaarShops = await Shop.find({ bazaar: bazaarId }).select('_id');
-            const shopIds = bazaarShops.map(s => s._id);
+            shopIds = bazaarShops.map(s => s._id);
             query.shop = { $in: shopIds };
         } else if (userLocation && userLocation.coordinates && userLocation.coordinates.length === 2) {
-            // Fallback: Find shops strictly within 10 km
             let nearbyShops = await Shop.find({
                 geometry: {
                     $near: {
@@ -50,31 +50,86 @@ module.exports.getHomeItems = async (req, res) => {
                     }
                 }
             }).select('_id');
-
-            const shopIds = nearbyShops.map(s => s._id);
+            shopIds = nearbyShops.map(s => s._id);
             query.shop = { $in: shopIds };
-        } else {
-            // If no location provided, filter by all shops globally
-            query.shop = { $in: allShopIds };
+        }
+
+        if (minDiscount) {
+            query.discount = { $gte: parseInt(minDiscount) };
+        }
+
+        if (category && category !== "All") {
+            const products = await MasterProduct.find({ category: new RegExp('^' + category + '$', 'i') }).select('_id');
+            query.product = { $in: products.map(p => p._id) };
+        }
+
+        if (shopCategory && shopCategory !== "All Shops") {
+            const categoryShops = await Shop.find({ category: new RegExp('^' + shopCategory + '$', 'i') }).select('_id');
+            const categoryShopIds = categoryShops.map(s => s._id.toString());
+            
+            if (query.shop && query.shop.$in) {
+                const intersection = query.shop.$in.filter(id => categoryShopIds.includes(id.toString()));
+                query.shop.$in = intersection;
+            } else {
+                query.shop = { $in: categoryShops.map(s => s._id) };
+            }
+        }
+
+        if (q) {
+            const searchTerm = q.toLowerCase();
+            const matchingProducts = await MasterProduct.find({ name: { $regex: searchTerm, $options: 'i' } }).select('_id');
+            const matchingShops = await Shop.find({ shopName: { $regex: searchTerm, $options: 'i' } }).select('_id');
+            
+            query.$or = [
+                { name: { $regex: searchTerm, $options: 'i' } },
+                { itemCategory: { $regex: searchTerm, $options: 'i' } },
+                { product: { $in: matchingProducts.map(p => p._id) } },
+                { shop: { $in: matchingShops.map(s => s._id) } }
+            ];
+            
+            if (query.shop) {
+                const originalShopFilter = query.shop;
+                delete query.shop;
+                query.$and = [{ shop: originalShopFilter }];
+            }
+        }
+
+        if (minPrice || maxPrice) {
+            const computedPriceExpr = {
+                $cond: {
+                    if: { $gt: ["$discount", 0] },
+                    then: { $subtract: ["$price", { $divide: [{ $multiply: ["$price", "$discount"] }, 100] }] },
+                    else: "$price"
+                }
+            };
+            
+            query.$expr = { $and: [] };
+            if (minPrice) query.$expr.$and.push({ $gte: [computedPriceExpr, parseInt(minPrice)] });
+            if (maxPrice) query.$expr.$and.push({ $lte: [computedPriceExpr, parseInt(maxPrice)] });
+        }
+
+        let sortQuery = { createdAt: -1 };
+        if (sort === 'discount_desc') {
+            sortQuery = { discount: -1, createdAt: -1 };
+        } else if (sort === 'price_asc' || sort === 'price_desc') {
+            sortQuery = { price: sort === 'price_asc' ? 1 : -1 };
         }
 
         const items = await Item.find(query)
-            .populate({
-                path: "product",
-                select: "name img category" // 'category' in MasterProduct schema
-            })
-            .populate({
-                path: "shop",
-                select: "shopName location category" // 'shopName', 'category' in Shop schema
-            })
-            .sort({ createdAt: -1 }); 
+            .populate({ path: "product", select: "name img category" })
+            .populate({ path: "shop", select: "shopName location category" })
+            .sort(sortQuery)
+            .skip(skipNum)
+            .limit(limitNum + 1); 
+
+        const hasMore = items.length > limitNum;
+        if (hasMore) items.pop();
 
         let allFormattedItems = items.map(item => {
             const productRef = item.product || {};
             const shopRef = item.shop || {};
             const imgObj = productRef.img?.url ? productRef.img : (item.img?.url ? item.img : null);
             
-            // Calculate actual price for filtering and sorting
             const actualPrice = item.price && item.discount > 0 
                 ? Math.round(item.price * (1 - item.discount / 100))
                 : item.price;
@@ -86,7 +141,7 @@ module.exports.getHomeItems = async (req, res) => {
                 shopId: shopRef._id,
                 price: item.price,
                 discount: item.discount || 0,
-                actualPrice: actualPrice, // Pre-calculated for frontend use
+                actualPrice: actualPrice,
                 image: imgObj?.url || null,
                 category: productRef.category || item.itemCategory || "",
                 parentCategory: shopRef.category || "General",
@@ -95,66 +150,14 @@ module.exports.getHomeItems = async (req, res) => {
             };
         });
 
-        // Calculate distinct active categories BEFORE applying filters like shopCategory
-        const activeCategories = [...new Set(allFormattedItems.map(item => item.parentCategory))].filter(Boolean);
-
-        // --- Apply Professional Filters ---
-        
-        // 1. Search filter
-        if (q) {
-            const searchTerm = q.toLowerCase();
-            allFormattedItems = allFormattedItems.filter(item => 
-                item.productName.toLowerCase().includes(searchTerm) || 
-                item.shopName.toLowerCase().includes(searchTerm) ||
-                item.category.toLowerCase().includes(searchTerm)
-            );
-        }
-
-        // 2. Category filter (Product Category)
-        if (category && category !== "All") {
-            allFormattedItems = allFormattedItems.filter(item => 
-                item.category && item.category.toLowerCase() === category.toLowerCase()
-            );
-        }
-
-        // 2b. Shop Category Filter
-        if (shopCategory && shopCategory !== "All Shops") {
-            allFormattedItems = allFormattedItems.filter(item => 
-                item.parentCategory && item.parentCategory.toLowerCase() === shopCategory.toLowerCase()
-            );
-        }
-
-        // 3. Discount filter
-        if (minDiscount) {
-            allFormattedItems = allFormattedItems.filter(item => item.discount >= parseInt(minDiscount));
-        }
-
-        // 4. Price range filter
-        if (minPrice) {
-            allFormattedItems = allFormattedItems.filter(item => item.actualPrice >= parseInt(minPrice));
-        }
-        if (maxPrice) {
-            allFormattedItems = allFormattedItems.filter(item => item.actualPrice <= parseInt(maxPrice));
-        }
-
-        // --- Apply Sorting ---
         if (sort === 'price_asc') {
             allFormattedItems.sort((a, b) => a.actualPrice - b.actualPrice);
         } else if (sort === 'price_desc') {
             allFormattedItems.sort((a, b) => b.actualPrice - a.actualPrice);
-        } else if (sort === 'discount_desc') {
-            allFormattedItems.sort((a, b) => b.discount - a.discount);
-        } else {
-            // Default: Newest
-            allFormattedItems.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
 
-        const startIndex = (pageNum - 1) * limitNum;
-        const endIndex = pageNum * limitNum;
-        const paginatedItems = allFormattedItems.slice(startIndex, endIndex);
-        const hasMore = endIndex < allFormattedItems.length;
+        const activeCategories = [...new Set(allFormattedItems.map(item => item.parentCategory))].filter(Boolean);
 
-        // Define a prioritized list of 'Major' categories that users use most often.
         const MAJOR_CATEGORIES = [
             { name: "Staples & Grains", parent: "Grocery", icon: "🌾" },
             { name: "Fresh Vegetables", parent: "Vegetables & Fruits", icon: "🥦" },
@@ -169,28 +172,19 @@ module.exports.getHomeItems = async (req, res) => {
             { name: "DJ and Tent", parent: "DJ/Events", icon: "🎵" }
         ];
 
-        // Format SHOP_CATEGORIES for the 'More' modal (full list)
-        const allSystemCategories = [
-            { name: "All", parent: "General", icon: "📦" },
-            ...MAJOR_CATEGORIES
-        ];
-
+        const allSystemCategories = [{ name: "All", parent: "General", icon: "📦" }, ...MAJOR_CATEGORIES];
         const seenNames = new Set(allSystemCategories.map(c => c.name));
 
         Object.entries(SHOP_CATEGORIES).forEach(([parent, children]) => {
             children.forEach(child => {
                 if (!seenNames.has(child.name)) {
-                    allSystemCategories.push({
-                        name: child.name,
-                        parent: parent,
-                        icon: child.icon || "📦"
-                    });
+                    allSystemCategories.push({ name: child.name, parent: parent, icon: child.icon || "📦" });
                     seenNames.add(child.name);
                 }
             });
         });
 
-        res.status(200).json({ items: paginatedItems, hasMore, categories: allSystemCategories, activeCategories });
+        res.status(200).json({ items: allFormattedItems, hasMore, categories: allSystemCategories, activeCategories });
     } catch (error) {
         console.error("Error fetching homepage items:", error);
         res.status(500).json({ error: "Server Error" });
