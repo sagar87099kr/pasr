@@ -131,11 +131,17 @@ router.get("/search", wrapAsync(async (req, res) => {
     ]);
 
     // Apply verification filtering
+    // Apply strict verification and stock filtering for public search
     if (!req.user || !req.user.isAdmin) {
-        providers = providers.filter(p => p.verified || (req.user && p.owner && p.owner._id.equals(req.user._id)));
-        shops = shops.filter(s => s.verified || (req.user && s.owner && s.owner._id.equals(req.user._id)));
-        products = products.filter(p => p.verified || (req.user && p.owner && p.owner._id.equals(req.user._id)));
-        items = items.filter(item => item.shop && (item.shop.verified || (req.user && item.shop.owner && item.shop.owner.equals(req.user._id))));
+        providers = providers.filter(p => p.verified === true);
+        shops = shops.filter(s => s.verified === true && s.isActive !== false);
+        products = products.filter(p => p.verified === true);
+        items = items.filter(item => {
+            const isShopVerified = item.shop && item.shop.verified === true;
+            const inStock = item.quantity > 0;
+            const isActive = item.isActive !== false;
+            return isShopVerified && inStock && isActive;
+        });
     }
 
     if (req.headers.accept && req.headers.accept.includes("application/json")) {

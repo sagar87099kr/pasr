@@ -38,7 +38,7 @@ module.exports.getHomeItems = async (req, res) => {
         let shopIds = null;
 
         if (bazaarId) {
-            let bazaarShops = await Shop.find({ bazaar: bazaarId }).select('_id');
+            let bazaarShops = await Shop.find({ bazaar: bazaarId, verified: true, isActive: true }).select('_id');
             shopIds = bazaarShops.map(s => s._id);
             query.shop = { $in: shopIds };
         } else if (userLocation && userLocation.coordinates && userLocation.coordinates.length === 2) {
@@ -48,7 +48,9 @@ module.exports.getHomeItems = async (req, res) => {
                         $geometry: { type: "Point", coordinates: userLocation.coordinates },
                         $maxDistance: 10000
                     }
-                }
+                },
+                verified: true,
+                isActive: true
             }).select('_id');
             shopIds = nearbyShops.map(s => s._id);
             query.shop = { $in: shopIds };
@@ -77,8 +79,8 @@ module.exports.getHomeItems = async (req, res) => {
 
         if (q) {
             const searchTerm = q.toLowerCase();
-            const matchingProducts = await MasterProduct.find({ name: { $regex: searchTerm, $options: 'i' } }).select('_id');
-            const matchingShops = await Shop.find({ shopName: { $regex: searchTerm, $options: 'i' } }).select('_id');
+            const matchingProducts = await MasterProduct.find({ name: { $regex: searchTerm, $options: 'i' }, verified: true }).select('_id');
+            const matchingShops = await Shop.find({ shopName: { $regex: searchTerm, $options: 'i' }, verified: true, isActive: true }).select('_id');
             
             query.$or = [
                 { name: { $regex: searchTerm, $options: 'i' } },

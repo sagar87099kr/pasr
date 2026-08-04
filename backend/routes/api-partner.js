@@ -629,7 +629,7 @@ router.get("/shop/products/search", verifyToken, async (req, res) => {
         const { q } = req.query;
         if (!q) return res.json({ success: true, suggestions: [] });
 
-        const suggestions = await MasterProduct.find({ name: new RegExp(q, "i") }).limit(20);
+        const suggestions = await MasterProduct.find({ name: new RegExp(q, "i"), verified: true }).limit(20);
         res.json({ success: true, suggestions });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
