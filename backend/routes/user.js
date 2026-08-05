@@ -91,7 +91,8 @@ router.post("/customer/signup", validatecustomer, wrapAsync(async (req, res, nex
             await sendOTP(username);
         } catch (error) {
             console.error("Failed to send OTP via MSG91:", error.message);
-            req.flash("warning", "There was an issue sending the OTP, please try again later.");
+            req.flash("warning", "There was an issue sending the OTP. " + error.message);
+            return res.redirect("/customer/signup");
         }
 
         res.redirect("/customer/verify-otp");
@@ -304,6 +305,7 @@ router.post("/api/auth/register", wrapAsync(async (req, res) => {
         await sendOTP(username);
     } catch (err) {
         console.error("[API Signup] MSG91 OTP failed:", err.message);
+        return res.status(400).json({ success: false, message: "Failed to send OTP: " + err.message });
     }
 
     res.json({ success: true, message: "OTP sent to your mobile number via SMS." });
@@ -501,7 +503,7 @@ router.post("/api/auth/forgot-password", wrapAsync(async (req, res) => {
         await sendOTP(username);
     } catch (err) {
         console.error("[API ForgotPassword] MSG91 OTP failed:", err.message);
-        // Don't fail — user can retry
+        return res.status(400).json({ success: false, message: "Failed to send OTP: " + err.message });
     }
 
     res.json({ success: true, message: "OTP sent to your mobile number via SMS." });

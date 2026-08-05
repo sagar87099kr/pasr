@@ -44,7 +44,7 @@ async function sendOTP(phone) {
     try {
         const response = await axios.post(
             "https://control.msg91.com/api/v5/otp",
-            null,
+            {}, // pass empty object instead of null to prevent 400 Bad Request on some servers
             {
                 params: {
                     mobile,
@@ -75,6 +75,10 @@ async function sendOTP(phone) {
         };
     } catch (err) {
         console.error("MSG91 Send OTP Error:", err.message);
+        if (err.response && err.response.data) {
+            console.error("MSG91 Error Details:", err.response.data);
+            throw new Error(err.response.data.message || err.message);
+        }
         throw err;
     }
 }
