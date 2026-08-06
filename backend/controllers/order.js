@@ -65,9 +65,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "Please specify delivery type: HOME_DELIVERY or SELF_PICKUP." });
         }
 
-        if (deliveryType === 'SELF_PICKUP' && paymentType === 'PREPAID') {
-            return res.status(400).json({ success: false, message: "Online payment is not available for Self Pickup. Please pay at the shop." });
-        }
+        // Allow PREPAID for SELF_PICKUP so penalized users (who are forced to use PREPAID) can checkout.
 
         // Cancellation Penalty Check
         if (paymentType === 'COD') {
