@@ -176,7 +176,8 @@ module.exports.viewCart = (req, res) => {
     
     if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
         const coins = req.user && req.user.coins ? req.user.coins : 0;
-        return res.json({ success: true, cart: req.session.cart, coins: coins });
+        const isPrepaidOnly = req.user ? req.user.isPrepaidOnly : false;
+        return res.json({ success: true, cart: req.session.cart, coins: coins, isPrepaidOnly: isPrepaidOnly });
     }
     
     // Render an EJS page
@@ -332,7 +333,11 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
             });
         }
 
-        const deliveryCharge = chargeUtil.calculateDeliveryCharge(distanceInKm);
+        const { calculateDeliveryPricing } = require("../utils/deliveryPricing");
+        const pricing = calculateDeliveryPricing(distanceInKm);
+        
+        let deliveryCharge = pricing.customerCharge;
+        let customerChargeOptions = pricing.customerChargeOptions;
 
         // Subtotal for THIS shop
         const shopSubtotal = cart.items
@@ -346,25 +351,67 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
         }
 
         let effectiveDeliveryCharge = deliveryCharge;
-        if (isFirstOrder || shopSubtotal >= 77) {
+        const freeDeliveryThreshold = pricing.freeDeliveryThreshold || 150;
+        
+        if (isFirstOrder || shopSubtotal >= freeDeliveryThreshold) {
             effectiveDeliveryCharge = 0;
+            customerChargeOptions = [0]; // Free delivery
         } else {
-            // If they don't get free delivery, minimum order value is 77
-            if (shopSubtotal + effectiveDeliveryCharge < 77) {
-                effectiveDeliveryCharge = 77 - shopSubtotal;
+            // Check if they had a saved preference (this requires customer context, we can just return options for now)
+            if (shopSubtotal + effectiveDeliveryCharge < freeDeliveryThreshold && shopSubtotal < freeDeliveryThreshold) {
+                // Keep the logic if needed
             }
         }
+        let platformFee = isFirstOrder ? 0 : 5;
 
         res.status(200).json({
             success: true,
             distance: distanceInKm.toFixed(1),
             deliveryCharge,
             effectiveDeliveryCharge,
+            platformFee,
+            customerChargeOptions,
             isFirstOrder,
             subtotal: shopSubtotal,
-            total: shopSubtotal + effectiveDeliveryCharge
+            freeDeliveryThreshold,
+            total: shopSubtotal + effectiveDeliveryCharge + platformFee
         });
     } catch (e) {
         next(e);
     }
 };
+
+module.exports.getCartRecommendations = async (req, res, next) => {
+    try {
+        const { shopIds } = req.query;
+        if (!shopIds) {
+            return res.status(400).json({ success: false, message: "Missing shopIds" });
+        }
+
+        const shopIdArray = shopIds.split(",");
+        const Item = require("../data/item");
+
+        // Get current cart item IDs to exclude them from recommendations
+        const currentCartItemIds = [];
+        if (req.session.cart && req.session.cart.items) {
+            req.session.cart.items.forEach(item => currentCartItemIds.push(item.itemId.toString()));
+        }
+
+        const recommendations = await Item.find({
+            owner: { $in: shopIdArray },
+            isAvailable: true,
+            quantity: { $gt: 0 },
+            _id: { $nin: currentCartItemIds }
+        }).limit(15).lean();
+
+        // Optional: Randomize or sort by some popularity metric
+        const shuffled = recommendations.sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 10);
+
+        res.status(200).json({ success: true, items: selected });
+    } catch (error) {
+        console.error("Error fetching recommendations:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+

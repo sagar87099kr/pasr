@@ -159,6 +159,17 @@
 <body>
   <div class="main-container" style="max-width: 1200px; margin: 0 auto;">
 
+      <!-- SEARCH BAR -->
+      <div style="margin: 20px 0; display: flex; justify-content: center;">
+        <form action="/customer/verify" method="GET" style="display: flex; gap: 10px; width: 100%; max-width: 500px;">
+          <input type="text" name="search" class="form-control" placeholder="Search by name or mobile..." value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>">
+          <button type="submit" class="btn btn-primary">Search</button>
+          <% if(typeof searchQuery !== 'undefined' && searchQuery) { %>
+            <a href="/customer/verify" class="btn btn-outline-secondary">Clear</a>
+          <% } %>
+        </form>
+      </div>
+
       <!-- SECTION 1: PENDING VERIFICATION -->
       <div style="text-align: center; margin: 30px 0 20px;">
           <h2 style="color: #991b1b; margin-bottom: 5px;">Pending Verification (<%= typeof pendingCount !== 'undefined' ? pendingCount : unverified.length %>)</h2>
@@ -186,6 +197,9 @@
                     <span class="dot"></span>
                     verification: <%=customer.verified%> by <%=customer.verifedBy%>
                   </span>
+                  <% if(customer.isPrepaidOnly) { %>
+                    <span class="badge false" style="margin-left: 8px;">Prepaid Only</span>
+                  <% } %>
                 </div>
 
                 <div class="details">
@@ -210,12 +224,11 @@
                     </div>
                   </div>
                 </div>
-                <div class="action">
-                  <span class="#">
-                    <span class="dot"></span>
-                    <button class="badge false" style="margin-top: 2px;"
-                      onclick="openAdminDeleteConfirm('<%=customer._id%>')">Delete customer</button>
-                  </span>
+                <div class="action" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button class="badge false" style="margin-top: 2px;"
+                    onclick="openAdminDeleteConfirm('<%=customer._id%>')">Delete customer</button>
+                  <button class="badge <%= customer.isPrepaidOnly ? 'true' : 'false' %>" style="margin-top: 2px;"
+                    onclick="togglePrepaid('<%=customer._id%>', this)"><%= customer.isPrepaidOnly ? 'Unmark Prepaid' : 'Mark Prepaid Only' %></button>
                 </div>
               </section>
               <%}%>
@@ -242,6 +255,9 @@
                 <span class="dot"></span>
                 verification: <%=customer.verified%> by <%=customer.verifedBy%>
               </span>
+              <% if(customer.isPrepaidOnly) { %>
+                <span class="badge false" style="margin-left: 8px;">Prepaid Only</span>
+              <% } %>
             </div>
 
             <div class="details">
@@ -268,8 +284,9 @@
             </div>
 
             <!-- Actions -->
-            <div class="action">
-              <!-- No actions for verified customers -->
+            <div class="action" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="badge <%= customer.isPrepaidOnly ? 'true' : 'false' %>" style="margin-top: 2px;"
+                onclick="togglePrepaid('<%=customer._id%>', this)"><%= customer.isPrepaidOnly ? 'Unmark Prepaid' : 'Mark Prepaid Only' %></button>
             </div>
           </section>
           <%}%>
@@ -311,6 +328,22 @@
   </div>
 
   <script>
+    async function togglePrepaid(customerId, btnElement) {
+      if (!confirm("Are you sure you want to toggle 'Prepaid Only' for this customer?")) return;
+      try {
+        const response = await fetch(`/customer/toggle-prepaid/${customerId}`, { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+          window.location.reload();
+        } else {
+          alert("Error: " + data.message);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Failed to toggle status.");
+      }
+    }
+
     function openAdminDeleteConfirm(customerId) {
       const modal = document.getElementById('adminDeleteModal');
       const form = document.getElementById('adminDeleteForm');

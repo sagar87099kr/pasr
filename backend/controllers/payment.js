@@ -4,6 +4,72 @@ const orderBus = require("../events/eventBus");
 const TransactionHistory = require("../data/transactionHistory");
 const Shop = require("../data/shops");
 const axios = require("axios");
+const Customer = require("../data/customers");
+
+module.exports.createPenaltyPayment = async (req, res, next) => {
+    try {
+        const customer = await Customer.findById(req.user._id);
+        if (!customer || customer.pendingPenalty <= 0) {
+            return res.status(400).json({ success: false, message: "No pending penalty." });
+        }
+
+        const Razorpay = require('razorpay');
+        const rzp = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET
+        });
+
+        const rzpOrder = await rzp.orders.create({
+            amount: Math.round(customer.pendingPenalty * 100),
+            currency: "INR",
+            receipt: `PENALTY_${customer._id}_${Date.now()}`
+        });
+
+        res.status(200).json({
+            success: true,
+            razorpay: {
+                id: rzpOrder.id,
+                amount: rzpOrder.amount,
+                currency: rzpOrder.currency,
+                keyId: process.env.RAZORPAY_KEY_ID
+            }
+        });
+    } catch (e) {
+        console.error("Penalty order error", e);
+        next(e);
+    }
+};
+
+module.exports.verifyPenaltyPayment = async (req, res, next) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return res.status(400).json({ success: false, message: "Missing required payment details." });
+        }
+
+        const secret = (process.env.RAZORPAY_KEY_SECRET || "").trim();
+        const generated_signature = crypto
+            .createHmac("sha256", secret)
+            .update(razorpay_order_id + "|" + razorpay_payment_id)
+            .digest("hex");
+
+        if (generated_signature !== razorpay_signature) {
+            return res.status(400).json({ success: false, message: "Payment verification failed." });
+        }
+
+        const customer = await Customer.findById(req.user._id);
+        if (customer) {
+            customer.pendingPenalty = 0;
+            // The counter does not reset according to user's request:
+            // "no after this if they again cancle it will again charged 25 rupess"
+            await customer.save();
+        }
+
+        res.status(200).json({ success: true, message: "Penalty cleared successfully." });
+    } catch (e) {
+        next(e);
+    }
+};
 
 module.exports.verifyPayment = async (req, res, next) => {
     try {

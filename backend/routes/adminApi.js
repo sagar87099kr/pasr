@@ -24,6 +24,31 @@ const checkAdmin = (req, res, next) => {
 
 router.use(checkAdmin);
 
+// Update Customer Penalty Endpoint
+router.post('/customers/:id/penalty', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { pendingPenalty } = req.body;
+        
+        if (pendingPenalty === undefined) {
+            return res.status(400).json({ success: false, message: 'pendingPenalty is required' });
+        }
+        
+        const customer = await Customer.findById(id);
+        if (!customer) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+        
+        customer.pendingPenalty = pendingPenalty;
+        await customer.save();
+        
+        res.json({ success: true, message: 'Penalty updated successfully', customer });
+    } catch (error) {
+        console.error('Error updating penalty:', error);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+});
+
 // Fetch Data Endpoint
 router.get('/data', async (req, res) => {
     try {

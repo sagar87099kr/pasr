@@ -37,13 +37,21 @@ module.exports.createBazaar = async (req, res, next) => {
 module.exports.assignBazaarToShop = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { bazaarId } = req.body;
+        const { bazaarId, commissionPercentage } = req.body;
+        
+        let updateData = {};
         
         if (!bazaarId) {
-            await Shop.findByIdAndUpdate(id, { $unset: { bazaar: 1 } });
+            updateData.$unset = { bazaar: 1 };
         } else {
-            await Shop.findByIdAndUpdate(id, { bazaar: bazaarId });
+            updateData.bazaar = bazaarId;
         }
+
+        if (commissionPercentage !== undefined) {
+            updateData.commissionPercentage = parseFloat(commissionPercentage) || 0;
+        }
+
+        await Shop.findByIdAndUpdate(id, updateData);
 
         // If it's an AJAX request expecting JSON
         if (req.headers.accept && req.headers.accept.includes('application/json')) {

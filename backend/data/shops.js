@@ -58,6 +58,10 @@ const shopSchema = new Schema({
         type: Boolean,
         default: false
     },
+    commissionPercentage: {
+        type: Number,
+        default: 0
+    },
     verifiedBy: {
         type: String, // Admin name
         default: ""

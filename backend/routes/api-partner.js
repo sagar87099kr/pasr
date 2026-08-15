@@ -357,6 +357,20 @@ router.post("/shop/orders/verify-otp", verifyToken, async (req, res) => {
                 compCustomer.mandatoryOnlineOrdersCount -= 1;
             }
             await compCustomer.save();
+
+            // Handle Deferred Referral Reward
+            if (compCustomer.referredBy && !compCustomer.referralRewardClaimed) {
+                const updatedCustomer = await Customer.findOneAndUpdate(
+                    { _id: compCustomer._id, referralRewardClaimed: { $ne: true } },
+                    { $set: { referralRewardClaimed: true } }
+                );
+                if (updatedCustomer) {
+                    await Customer.updateOne(
+                        { _id: compCustomer.referredBy },
+                        { $inc: { coins: 10, referralCount: 1 } }
+                    );
+                }
+            }
         }
 
         res.json({ success: true, message: "OTP verified successfully", order });
@@ -752,6 +766,7 @@ router.post("/shop/request-payout", verifyToken, async (req, res) => {
             } else {
                 earningsForShop = actualItemPrice;
             }
+            earningsForShop -= (order.shopCommission || 0);
             return earningsForShop > 0;
         });
 
@@ -778,6 +793,7 @@ router.post("/shop/request-payout", verifyToken, async (req, res) => {
             } else {
                 earningsForShop = actualItemPrice;
             }
+            earningsForShop -= (order.shopCommission || 0);
             return sum + earningsForShop;
         }, 0);
 

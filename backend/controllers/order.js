@@ -54,7 +54,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
         }
 
         // 1. Extract inputs
-        const { paymentType, lat, lng, shopId, orderId: clientOrderId, deliveryType, useCoins } = req.body;
+        const { paymentType, lat, lng, shopId, orderId: clientOrderId, deliveryType, useCoins, selectedDeliveryCharge } = req.body;
         const customerId = req.user._id;
 
         if (!shopId) {
@@ -68,9 +68,27 @@ module.exports.checkoutOrder = async (req, res, next) => {
         // Allow PREPAID for SELF_PICKUP so penalized users (who are forced to use PREPAID) can checkout.
 
         // Cancellation Penalty Check
+        const Customer = require("../data/customers");
+        const customer = await Customer.findById(req.user._id);
+        if (customer && customer.pendingPenalty > 0) {
+            return res.status(403).json({ 
+                success: false, 
+                hasPenalty: true, 
+                message: "You have a pending cancellation penalty. Please pay it to continue shopping.",
+                penaltyAmount: customer.pendingPenalty
+            });
+        }
+
+        // Force Prepaid Check
+        if (customer && customer.isPrepaidOnly && paymentType === 'COD') {
+            return res.status(403).json({
+                success: false,
+                isPrepaidOnly: true,
+                message: "Due to past delivery issues, your account is restricted to Prepaid orders only."
+            });
+        }
+
         if (paymentType === 'COD') {
-            const Customer = require("../data/customers");
-            const customer = await Customer.findById(req.user._id);
             if (customer && customer.mandatoryOnlineOrdersCount > 0 && String(customer.username) !== '7979082525') {
                 return res.status(403).json({ success: false, message: "COD disabled due to consecutive cancellations. Please use online payment." });
             }
@@ -134,6 +152,8 @@ module.exports.checkoutOrder = async (req, res, next) => {
             if (!existing) isFirstOrder = true;
         }
 
+        let shop = null;
+
         if (deliveryType === 'SELF_PICKUP') {
             // Self-pickup: no delivery charge, no distance calculation needed
             deliveryCharge = 0;
@@ -177,7 +197,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
             }
 
             // Fetch Shop location
-            let shop = await Shop.findById(shopId).populate('bazaar');
+            shop = await Shop.findById(shopId).populate('bazaar');
             let sLoc;
 
             if (shop && shop.bazaar && shop.bazaar.geometry && shop.bazaar.geometry.coordinates) {
@@ -248,15 +268,27 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 return res.status(400).json({ success: false, message: `Delivery not available beyond ${maxAllowedDistance} km at this time.` });
             }
 
+            let freeDeliveryThreshold = 150; // Fallback
             // Calculate Delivery Pricing metrics
             try {
-                const pricing = calculateDeliveryPricing(distanceInKm);
+                const pricing = calculateDeliveryPricing(distanceInKm, selectedDeliveryCharge || null);
                 deliveryCharge = pricing.customerCharge;
                 deliveryDistance = pricing.distance;
                 pasrCommission = pricing.pasrCommission;
                 partnerEarning = pricing.partnerEarning;
                 estimatedFuelCost = pricing.estimatedFuelCost;
                 partnerProfit = pricing.partnerProfit;
+                freeDeliveryThreshold = pricing.freeDeliveryThreshold || 150;
+
+                // Save this preference to the user's address if possible (background task)
+                if (selectedDeliveryCharge && req.user) {
+                    const Customer = require("../data/customers");
+                    Customer.updateOne(
+                        { _id: req.user._id, "savedAddresses.addressStr": deliveryAddress },
+                        { $set: { "savedAddresses.$.preferredDeliveryCharge": pricing.customerCharge } }
+                    ).exec().catch(console.error); // Fire and forget
+                }
+
             } catch (pricingError) {
                 for (let revert of inventoryUpdates) {
                     await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
@@ -275,16 +307,16 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 deliveryAddress = `Near ${cLoc[1].toFixed(4)}, ${cLoc[0].toFixed(4)}`;
             }
 
-            // Free Delivery Logic: First order is free, otherwise minimum subtotal of 77 is required
+            // Free Delivery Logic: First order is free, otherwise minimum subtotal based on dynamic threshold
 
             let effectiveDeliveryCharge = deliveryCharge;
-            if (isFirstOrder || subtotalAmount >= 77) {
+            if (isFirstOrder || subtotalAmount >= freeDeliveryThreshold) {
                 effectiveDeliveryCharge = 0;
                 grantFreeDelivery = isFirstOrder; // Only track usage if they claimed the first order promo
             } else {
-                // Minimum bill amount of 77 for non-first orders if they don't get free delivery
-                if (subtotalAmount + effectiveDeliveryCharge < 77) {
-                    effectiveDeliveryCharge = 77 - subtotalAmount;
+                // Minimum bill amount of dynamic threshold for non-first orders if they don't get free delivery
+                if (subtotalAmount + effectiveDeliveryCharge < freeDeliveryThreshold) {
+                    effectiveDeliveryCharge = freeDeliveryThreshold - subtotalAmount;
                 }
                 grantFreeDelivery = false;
             }
@@ -293,10 +325,16 @@ module.exports.checkoutOrder = async (req, res, next) => {
             deliveryCharge = effectiveDeliveryCharge;
         }
 
-        let platformFee = (deliveryType === 'HOME_DELIVERY') ? 5 : 0;
-        if (isFirstOrder) {
-            platformFee = 0;
+        let platformFee = 0;
+        if (deliveryType === 'HOME_DELIVERY' && !isFirstOrder) {
+            platformFee = 5;
         }
+
+        let shopCommission = 0;
+        if (deliveryType === 'HOME_DELIVERY' && shop) {
+            shopCommission = (subtotalAmount * (shop.commissionPercentage || 0)) / 100;
+        }
+
         let totalAmount = subtotalAmount + deliveryCharge + platformFee;
 
         // Apply Coin Discount (Capped at 50% of subtotal order value, max ₹50)
@@ -373,6 +411,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
 
             deliveryDistance,
             pasrCommission,
+            shopCommission,
             partnerEarning,
             estimatedFuelCost,
             partnerProfit,
@@ -975,6 +1014,20 @@ module.exports.completeOrder = async (req, res, next) => {
                 compCustomer.mandatoryOnlineOrdersCount -= 1;
             }
             await compCustomer.save();
+
+            // Handle Deferred Referral Reward
+            if (compCustomer.referredBy && !compCustomer.referralRewardClaimed) {
+                const updatedCustomer = await Customer.findOneAndUpdate(
+                    { _id: compCustomer._id, referralRewardClaimed: { $ne: true } },
+                    { $set: { referralRewardClaimed: true } }
+                );
+                if (updatedCustomer) {
+                    await Customer.updateOne(
+                        { _id: compCustomer.referredBy },
+                        { $inc: { coins: 10, referralCount: 1 } }
+                    );
+                }
+            }
         }
 
         // Emit Event
@@ -1105,21 +1158,10 @@ module.exports.cancelOrder = async (req, res, next) => {
             );
         }
 
-        // Refund Coins & Apply Cancellation Penalty
+        // Apply Cancellation Penalty
         const Customer = require("../data/customers");
         
-        if (lockedOrder.coinDiscount && lockedOrder.coinDiscount > 0 && !lockedOrder.isRefunded) {
-             const refundLock = await Order.findOneAndUpdate(
-                 { _id: lockedOrder._id, isRefunded: { $ne: true } },
-                 { $set: { isRefunded: true } }
-             );
-             if (refundLock) {
-                 await Customer.updateOne(
-                     { _id: lockedOrder.customerId },
-                     { $inc: { coins: lockedOrder.coinDiscount } }
-                 );
-             }
-        }
+        // Removed coin refund logic as per requirements. Coins used for a cancelled order are lost.
 
         if (isCustomer) {
              const cancelCustomer = await Customer.findById(lockedOrder.customerId).select('username consecutiveCancellations');
@@ -1127,6 +1169,7 @@ module.exports.cancelOrder = async (req, res, next) => {
                  let updateQuery = { $inc: { consecutiveCancellations: 1 } };
                  if ((cancelCustomer.consecutiveCancellations || 0) + 1 > 2) {
                      updateQuery.$set = { mandatoryOnlineOrdersCount: 3 };
+                     updateQuery.$inc.pendingPenalty = 25; // Apply ₹25 penalty
                  }
                  await Customer.updateOne({ _id: lockedOrder.customerId }, updateQuery);
              }

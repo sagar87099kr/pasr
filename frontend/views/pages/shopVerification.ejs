@@ -376,6 +376,13 @@
                                                 <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">(Select before verifying)</div>
                                             </div>
                                         </div>
+                                        <div class="row">
+                                            <div class="label">Commission (%)</div>
+                                            <div class="value">
+                                                <input type="number" step="0.01" min="0" placeholder="e.g. 10" onchange="document.getElementById('hiddenCommissionInput_<%= shop._id %>').value = this.value" style="padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 100%; max-width: 250px;">
+                                                <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">PASR Cut on items (optional)</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </aside>
                             </div>
@@ -392,6 +399,7 @@
                                     </div>
                                     <input type="hidden" name="verified" value="true">
                                     <input type="hidden" name="bazaarId" id="hiddenBazaarInput_<%= shop._id %>" value="">
+                                    <input type="hidden" name="commissionPercentage" id="hiddenCommissionInput_<%= shop._id %>" value="0">
                                     <button class="btn primary">Verify</button>
                                 </form>
                                 <button type="button" class="btn primary"
@@ -480,7 +488,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="row">
-                                                    <div class="label">Bazaar</div>
+                                                    <div class="label">Bazaar & Comm.</div>
                                                     <div class="value">
                                                         <form method="POST" action="/admin/shops/<%= shop._id %>/assign-bazaar" style="display: flex; gap: 8px;">
                                                             <select name="bazaarId" style="padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
@@ -489,6 +497,7 @@
                                                                     <option value="<%= b._id %>" <%= (shop.bazaar && shop.bazaar._id.toString() === b._id.toString()) ? 'selected' : '' %>><%= b.name %></option>
                                                                 <% }); %>
                                                             </select>
+                                                            <input type="number" step="0.01" min="0" name="commissionPercentage" value="<%= shop.commissionPercentage || 0 %>" placeholder="Comm (%)" style="padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 80px;" title="Commission Percentage">
                                                             <button type="submit" class="btn primary" style="padding: 4px 10px; font-size: 12px;">Save</button>
                                                         </form>
                                                     </div>

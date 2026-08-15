@@ -70,7 +70,7 @@ router.get("/shops/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
 // Verify Shop Action
 router.put("/shops/:id/verify", isLogedin, isadmin, wrapAsync(async (req, res) => {
     const { id } = req.params;
-    const { verifiedBy, bazaarId } = req.body;
+    const { verifiedBy, bazaarId, commissionPercentage } = req.body;
     
     // Determine if shop was previously unverified
     const previousShopState = await Shop.findById(id);
@@ -79,6 +79,10 @@ router.put("/shops/:id/verify", isLogedin, isadmin, wrapAsync(async (req, res) =
     const updateData = { verified: true, verifiedBy };
     if (bazaarId) {
         updateData.bazaar = bazaarId;
+    }
+    
+    if (commissionPercentage !== undefined) {
+        updateData.commissionPercentage = parseFloat(commissionPercentage) || 0;
     }
 
     const shop = await Shop.findByIdAndUpdate(id, updateData, { new: true });
@@ -453,6 +457,9 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             } else {
                 earningsForShop = actualItemPrice;
             }
+
+            // Subtract Shop Commission (PASR cut on items)
+            earningsForShop -= (order.shopCommission || 0);
 
             // Categorize the net result
             if (earningsForShop > 0) {

@@ -604,10 +604,39 @@ router.get("/customer/verify", isLogedin, isadmin, async (req, res) => {
     const pendingCount = await Customer.countDocuments({ verified: false });
     const verifiedCount = await Customer.countDocuments({ verified: true });
     
-    const unverified = await Customer.find({ verified: false }).sort({ createdAt: -1 }).limit(20);
-    const verified = await Customer.find({ verified: true }).sort({ createdAt: -1 }).limit(20);
+    let query = {};
+    const searchQuery = req.query.search;
+    if (searchQuery) {
+        query = {
+            $or: [
+                { name: { $regex: searchQuery, $options: 'i' } },
+                { username: { $regex: searchQuery, $options: 'i' } }
+            ]
+        };
+    }
 
-    res.render("pages/userverification.ejs", { unverified, verified, totalCustomers, pendingCount, verifiedCount });
+    const unverified = await Customer.find({ ...query, verified: false }).sort({ createdAt: -1 }).limit(50);
+    const verified = await Customer.find({ ...query, verified: true }).sort({ createdAt: -1 }).limit(50);
+
+    res.render("pages/userverification.ejs", { unverified, verified, totalCustomers, pendingCount, verifiedCount, searchQuery });
+});
+
+// Toggle Prepaid Only route
+router.post("/customer/toggle-prepaid/:id", isLogedin, isadmin, async (req, res) => {
+    if (String(req.user.username) !== '8709956547') {
+        return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+    try {
+        const customer = await Customer.findById(req.params.id);
+        if (!customer) return res.status(404).json({ success: false, message: "Customer not found" });
+
+        customer.isPrepaidOnly = !customer.isPrepaidOnly;
+        await customer.save();
+
+        res.json({ success: true, isPrepaidOnly: customer.isPrepaidOnly });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
 });
 
 // set value true

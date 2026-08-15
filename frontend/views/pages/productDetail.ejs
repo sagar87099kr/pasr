@@ -38,9 +38,9 @@
                                     <span class="info-value">₹<%= product.price %></span>
                                 </div>
                                 <div class="info-box">
-                                    <span class="info-label">Quantity</span>
+                                    <span class="info-label">Stock Status</span>
                                     <span class="info-value">
-                                        <%= product.quantity %> units
+                                        <%= product.quantity > 0 ? 'In Stock' : 'Out of Stock' %>
                                     </span>
                                 </div>
                                 <div class="info-box">

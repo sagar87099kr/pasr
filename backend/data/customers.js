@@ -54,7 +54,8 @@ const customerSchema = new Schema({
       type: { type: String, enum: ['Point'] },
       coordinates: { type: [Number] }
     },
-    isDefault: { type: Boolean, default: false }
+    isDefault: { type: Boolean, default: false },
+    preferredDeliveryCharge: { type: Number, default: null }
   }],
   verified: {
     type: Boolean,
@@ -112,7 +113,7 @@ const customerSchema = new Schema({
   },
   coins: {
     type: Number,
-    default: 5
+    default: 0
   },
   referralRewardClaimed: {
     type: Boolean,
@@ -125,6 +126,14 @@ const customerSchema = new Schema({
   mandatoryOnlineOrdersCount: {
     type: Number,
     default: 0
+  },
+  pendingPenalty: {
+    type: Number,
+    default: 0
+  },
+  isPrepaidOnly: {
+    type: Boolean,
+    default: false
   }
 });
 

@@ -14,4 +14,8 @@ router.post("/verify-commission", isLogedin, paymentController.verifyCommissionP
 router.post("/donate/create-order", paymentController.createDonationOrder);
 router.post("/donate/verify", paymentController.verifyDonationPayment);
 
+// Penalty
+router.post("/penalty/create", isLogedin, paymentController.createPenaltyPayment);
+router.post("/penalty/verify", isLogedin, paymentController.verifyPenaltyPayment);
+
 module.exports = router;

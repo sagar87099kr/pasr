@@ -9,7 +9,7 @@ const { PRICING_TIERS, FUEL_COST_PER_KM_ONE_WAY, MAX_DELIVERY_DISTANCE } = requi
  * @returns {object} The pricing breakdown including customer charge, pasr commission, partner earning, and estimated fuel cost.
  * @throws {Error} If distance exceeds the maximum allowed distance.
  */
-function calculateDeliveryPricing(distanceKm) {
+function calculateDeliveryPricing(distanceKm, selectedCharge = null) {
     // 1. Validate inputs
     if (typeof distanceKm !== 'number' || isNaN(distanceKm) || distanceKm < 0) {
         throw new Error("Invalid distance provided.");
@@ -34,7 +34,15 @@ function calculateDeliveryPricing(distanceKm) {
     }
 
     // 4. Calculate components
-    const customerCharge = tier.customerCharge;
+    const customerChargeOptions = tier.customerChargeOptions || [];
+    
+    // Determine the active customer charge based on user selection or fallback to minimum
+    let customerCharge = customerChargeOptions[0]; // Default to lowest
+    
+    if (selectedCharge !== null && customerChargeOptions.includes(Number(selectedCharge))) {
+        customerCharge = Number(selectedCharge);
+    }
+
     const pasrCommission = tier.pasrCommission;
 
     // Partner Earnings calculation
@@ -50,7 +58,9 @@ function calculateDeliveryPricing(distanceKm) {
     return {
         distance: roundedDistance,        // The rounded distance used for calculation
         rawDistance: Number(distanceKm.toFixed(2)), // Original precise distance
-        customerCharge,
+        customerChargeOptions,            // Array of selectable delivery charges
+        customerCharge,                   // The effective customer charge used
+        freeDeliveryThreshold: tier.freeDeliveryThreshold, // Threshold for free delivery
         pasrCommission,
         partnerEarning,
         estimatedFuelCost,

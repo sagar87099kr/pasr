@@ -25,5 +25,8 @@ router.post("/clear", cartController.clearCart);
 // Calculate Delivery Fee Preview
 router.post("/delivery-fee", cartController.calculateDeliveryFee);
 
+// Get Cart Recommendations
+router.get("/recommendations", catchAsync(cartController.getCartRecommendations));
+
 
 module.exports = router;

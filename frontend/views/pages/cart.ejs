@@ -47,7 +47,7 @@
         .cart-item {
             display: flex;
             align-items: center;
-            padding: 16px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #f1f5f9;
         }
 
@@ -56,11 +56,11 @@
         }
 
         .cart-item img {
-            width: 80px;
-            height: 80px;
+            width: 50px;
+            height: 50px;
             object-fit: cover;
-            border-radius: 12px;
-            margin-right: 15px;
+            border-radius: 8px;
+            margin-right: 12px;
             flex-shrink: 0;
             border: 1px solid #f1f5f9;
         }
@@ -71,17 +71,17 @@
         }
 
         .cart-item-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 700;
             color: #0f172a;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .cart-item-price {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 800;
             color: #10b981;
         }
@@ -89,21 +89,21 @@
         .cart-item-actions {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
         }
 
         .cart-qty-controls {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
         }
 
         .cart-qty-btn {
             background: white;
             border: 1.5px solid #e2e8f0;
             color: #475569;
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             cursor: pointer;
             font-size: 10px;
@@ -124,13 +124,13 @@
             font-weight: 800;
             color: white;
             background: #6366f1;
-            width: 32px;
-            height: 32px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 13px;
+            font-size: 11px;
             box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
             border: 1.5px solid white;
             position: relative;
@@ -153,13 +153,13 @@
             cursor: pointer;
             background: rgba(239, 68, 68, 0.05);
             border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .shop-summary-card {
@@ -393,23 +393,82 @@
         }
 
         @media (max-width: 576px) {
-            .cart-item {
-                flex-wrap: wrap;
+            .cart-item img {
+                width: 60px;
+                height: 60px;
+                margin-right: 10px;
             }
-
-            .cart-item-actions {
-                width: 100%;
-                justify-content: space-between;
-                margin-top: 10px;
-                padding-left: 95px;
+            .cart-item-title {
+                font-size: 14px;
+            }
+            .cart-item-price {
+                font-size: 14px;
+            }
+            .cart-qty-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 10px;
+            }
+            .cart-qty-value {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+            }
+            .cart-remove-btn {
+                width: 28px;
+                height: 28px;
             }
         }
+    @media (max-width: 992px) {
+        .cart-layout-grid {
+            grid-template-columns: 1fr !important;
+        }
+    }
+    .recommendation-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 12px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        transition: all 0.2s;
+    }
+    .recommendation-card:hover {
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border-color: #cbd5e1;
+    }
+    .rec-img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+        background: #f1f5f9;
+    }
+    .rec-info {
+        flex: 1;
+    }
+    .rec-add-btn {
+        background: #eef2ff;
+        color: #4338ca;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+    }
+    .rec-add-btn:hover {
+        background: #e0e7ff;
+    }
     </style>
 
     <% containerClass='container py-4' ; %>
 
-        <div class="cart-container" style="max-width: 900px; margin: 0 auto; display: block;">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="cart-layout-grid" style="display: grid; grid-template-columns: 1fr 320px; gap: 24px; max-width: 1200px; margin: 0 auto;">
+            <div class="cart-main-content">
+                <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="cart-header m-0">My Cart</h1>
                 <% if (cart && cart.items.length> 0) { %>
                     <button id="clearCartBtn" class="btn btn-sm btn-outline-danger"
@@ -463,6 +522,50 @@
                                                 <div class="cart-item-title">
                                                     <%= item.name %>
                                                 </div>
+                                                <% 
+                                                const dCat = item.deliveryCategory || item.deliveryMode || item.deliveryType || '';
+                                                if (dCat) { 
+                                                    let badgeText = '';
+                                                    let badgeColor = '';
+                                                    let badgeBg = '';
+                                                    let badgeBorder = '';
+                                                    let icon = '';
+                                                    
+                                                    if (dCat === 'quick') {
+                                                        badgeText = 'Quick Delivery (25m)';
+                                                        badgeColor = '#D97706';
+                                                        badgeBg = '#FFFBEB';
+                                                        badgeBorder = '#FDE68A';
+                                                        icon = 'fa-bolt';
+                                                    } else if (dCat === 'fast') {
+                                                        badgeText = 'Fast Delivery (90m)';
+                                                        badgeColor = '#059669';
+                                                        badgeBg = '#ECFDF5';
+                                                        badgeBorder = '#A7F3D0';
+                                                        icon = 'fa-truck-fast';
+                                                    } else if (dCat === 'normal') {
+                                                        badgeText = 'Normal Delivery (24h)';
+                                                        badgeColor = '#2563EB';
+                                                        badgeBg = '#EFF6FF';
+                                                        badgeBorder = '#BFDBFE';
+                                                        icon = 'fa-box';
+                                                    } else if (dCat === 'not_deliverable') {
+                                                        badgeText = 'Visit Shop to Pickup';
+                                                        badgeColor = '#DC2626';
+                                                        badgeBg = '#FEF2F2';
+                                                        badgeBorder = '#FECACA';
+                                                        icon = 'fa-store';
+                                                    }
+                                                    
+                                                    if (badgeText) {
+                                                %>
+                                                    <div style="display: inline-block; background-color: <%= badgeBg %>; color: <%= badgeColor %>; border: 1px solid <%= badgeBorder %>; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; margin-top: 4px; margin-bottom: 4px;">
+                                                        <i class="fa-solid <%= icon %>" style="margin-right: 3px;"></i> <%= badgeText %>
+                                                    </div>
+                                                <% 
+                                                    }
+                                                } 
+                                                %>
                                                 <div class="cart-item-price">
                                                     <% if (item.originalPrice && item.originalPrice > item.price) { %>
                                                         <span style="text-decoration: line-through; color: #94a3b8; font-size: 0.8em; margin-right: 4px;">₹<%= item.originalPrice %></span>
@@ -494,7 +597,7 @@
                                 <!-- Add More Items button -->
                                 <div class="px-2 pb-1">
                                     <a href="/shops/<%= shopId %>" class="btn btn-sm w-100 fw-600"
-                                        style="background:#eef2ff;color:#4338ca;border-radius:10px;font-size:13px;font-weight:700;border:1.5px dashed #6366f1;padding:8px 0;display:block;text-align:center;text-decoration:none;">
+                                        style="background:#eef2ff;color:#4338ca;border-radius:8px;font-size:12px;font-weight:700;border:1.5px dashed #6366f1;padding:6px 0;display:block;text-align:center;text-decoration:none;margin-top:4px;">
                                         <i class="fa-solid fa-plus me-1"></i> Add More Items from <%= group.shopName %>
                                     </a>
                                 </div>
@@ -515,12 +618,12 @@
                                         const canHomeDeliver = isVIPUser || (istH >= 9 && istH < 20);
                                     %>
                                     <div class="delivery-type-toggle">
-                                        <button class="delivery-opt-btn active" data-shopid="<%= shopId %>"
+                                        <button class="delivery-opt-btn <%= !canHomeDeliver ? 'active' : '' %>" data-shopid="<%= shopId %>"
                                             data-type="SELF_PICKUP">
                                             <span class="opt-icon">🏪</span>
                                             I'll Pick Up
                                         </button>
-                                        <button class="delivery-opt-btn" data-shopid="<%= shopId %>"
+                                        <button class="delivery-opt-btn <%= canHomeDeliver ? 'active' : '' %>" data-shopid="<%= shopId %>"
                                             data-type="HOME_DELIVERY" <% if (!canHomeDeliver) { %>disabled style="opacity: 0.6; cursor: not-allowed;"<% } %>>
                                             <span class="opt-icon">🚚</span> Home Delivery
                                             <% if (!canHomeDeliver) { %>
@@ -615,9 +718,13 @@
                                         <div class="alert alert-danger mt-3 p-2" style="font-size: 13px;">
                                             <i class="fa-solid fa-triangle-exclamation me-1"></i> <strong>Penalty Active:</strong> Since you have cancelled your orders continuously, you need to pay online first to receive this order. Complete <strong><%= currUser.mandatoryOnlineOrdersCount %></strong> more online orders to unlock Cash on Delivery.
                                         </div>
+                                    <% } else if (currUser && currUser.isPrepaidOnly) { %>
+                                        <div class="alert alert-danger mt-3 p-2" style="font-size: 13px;">
+                                            <i class="fa-solid fa-ban me-1"></i> <strong>Restricted Account:</strong> Due to past delivery issues, your account is restricted to Prepaid orders only.
+                                        </div>
                                     <% } %>
                                     
-                                    <div class="d-grid gap-2 mt-4" data-penalized="<%= (currUser && currUser.mandatoryOnlineOrdersCount > 0) ? 'true' : 'false' %>">
+                                    <div class="d-grid gap-2 mt-4" data-penalized="<%= (currUser && currUser.mandatoryOnlineOrdersCount > 0) ? 'true' : 'false' %>" data-prepaidonly="<%= (currUser && currUser.isPrepaidOnly) ? 'true' : 'false' %>">
                                         <div class="row g-2">
                                             <!-- COD / Pay at Shop -->
                                             <div class="col-12 col-sm-6 cod-btn-col">
@@ -806,6 +913,19 @@
                                     </div>
                                 </div>
                                 <% } %>
+            </div> <!-- End cart-main-content -->
+            
+            <!-- Recommendations Sidebar -->
+            <div class="cart-sidebar">
+                <div class="recommendations-container bg-light rounded-4 p-3" id="cart-recommendations" style="display: none;">
+                    <h5 class="fw-bold mb-3" style="font-size: 15px; color: #1e293b;"><i class="fa-solid fa-sparkles text-warning me-2"></i>You might also like</h5>
+                    <div id="rec-loading" class="text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <div class="small mt-2 text-muted">Finding recommendations...</div>
+                    </div>
+                    <div id="rec-list" class="d-flex flex-column gap-2"></div>
+                </div>
+            </div>
         </div>
 
         <script>
@@ -820,9 +940,16 @@
                 let addressEditTargetShop = null;
                 let tempSelectedAddress = null;
 
-                // --- Init all sections as SELF_PICKUP ---
+                // --- Init all sections based on active button ---
                 document.querySelectorAll('.shop-section').forEach(section => {
-                    section.dataset.deliveryType = 'SELF_PICKUP';
+                    const activeBtn = section.querySelector('.delivery-opt-btn.active');
+                    if (activeBtn) {
+                        section.dataset.deliveryType = activeBtn.dataset.type;
+                        // Trigger click after binding events (we'll defer it slightly)
+                        setTimeout(() => activeBtn.click(), 100);
+                    } else {
+                        section.dataset.deliveryType = 'SELF_PICKUP';
+                    }
                     section.dataset.deliveryOk = 'true';
                     const subtotalEl = section.querySelector('.summary-row span:last-child');
                     const subtotal = subtotalEl ? subtotalEl.innerText.replace('₹', '') : '0';
@@ -1159,14 +1286,89 @@
                                     handlingFeeAmt.innerHTML = `<span style="text-decoration: line-through; color: #94a3b8; margin-right: 5px;">₹5</span><span style="color: #059669; font-weight: 800;">FREE 🎉</span>`;
                                 }
                             } else {
-                                deliveryAmtEl.innerText = `₹${data.deliveryCharge}`;
+                                if (data.customerChargeOptions && data.customerChargeOptions.length > 1 && data.effectiveDeliveryCharge > 0) {
+                                    // Generate options UI
+                                    let optionsHtml = '<div class="d-flex flex-column gap-2 mt-2 w-100">';
+                                    optionsHtml += '<div style="font-size: 11px; color: #64748b;">Choose delivery priority:</div>';
+                                    
+                                    data.customerChargeOptions.forEach((opt, idx) => {
+                                        const isChecked = idx === 0 ? 'checked' : '';
+                                        const labelText = idx === 0 ? `Standard (₹${opt})` : `Priority (₹${opt})`;
+                                        
+                                        optionsHtml += `
+                                            <label class="d-flex align-items-center justify-content-between p-2 border rounded" style="cursor:pointer; font-size:13px; background: #f8fafc;">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <input type="radio" name="deliveryCharge-${shopId}" value="${opt}" ${isChecked} onchange="updateDeliveryOption('${shopId}', ${opt}, ${data.subtotal})" style="accent-color: #f97316;">
+                                                    <span class="fw-bold">${labelText}</span>
+                                                </div>
+                                            </label>
+                                        `;
+                                    });
+                                    optionsHtml += '</div>';
+                                    
+                                    // Make sure delivery option container exists
+                                    let optsContainer = subCard.querySelector('.delivery-options-container');
+                                    if (!optsContainer) {
+                                        optsContainer = document.createElement('div');
+                                        optsContainer.className = 'delivery-options-container w-100';
+                                        subCard.querySelector('.delivery-row').insertAdjacentElement('afterend', optsContainer);
+                                    }
+                                    optsContainer.innerHTML = optionsHtml;
+                                    optsContainer.style.display = 'block';
+                                    
+                                    // Hide standard amount since options are shown
+                                    deliveryAmtEl.style.display = 'none';
+                                } else {
+                                    deliveryAmtEl.innerText = `₹${data.deliveryCharge}`;
+                                    deliveryAmtEl.style.display = 'inline';
+                                    
+                                    let optsContainer = subCard.querySelector('.delivery-options-container');
+                                    if (optsContainer) optsContainer.style.display = 'none';
+                                }
+                                
                                 deliveryAmtEl.style.color = '';
                                 deliveryAmtEl.style.fontWeight = '';
                                 originalPriceEl.style.display = 'none';
                                 firstOrderBadge.style.display = 'none';
-                                if (handlingFeeRow && handlingFeeAmt) {
-                                    handlingFeeRow.style.display = 'flex';
-                                    handlingFeeAmt.innerHTML = `₹5`;
+
+                                // Platform fee logic: 0 if paying delivery charge, 5 if free delivery
+                                if (data.effectiveDeliveryCharge === 0 || data.deliveryCharge === 0) {
+                                    platformFee = 5;
+                                    if (handlingFeeRow && handlingFeeAmt) {
+                                        handlingFeeRow.style.display = 'flex';
+                                        handlingFeeAmt.innerHTML = `₹5`;
+                                    }
+                                } else {
+                                    platformFee = 0;
+                                    if (handlingFeeRow && handlingFeeAmt) {
+                                        handlingFeeRow.style.display = 'none';
+                                    }
+                                }
+                                
+                                // Free delivery upsell message
+                                let upsellContainer = subCard.querySelector('.free-delivery-upsell');
+                                if (!upsellContainer) {
+                                    upsellContainer = document.createElement('div');
+                                    upsellContainer.className = 'free-delivery-upsell mt-2 mb-2 p-2 rounded text-center';
+                                    upsellContainer.style.backgroundColor = '#ecfdf5';
+                                    upsellContainer.style.border = '1px dashed #10b981';
+                                    upsellContainer.style.color = '#047857';
+                                    upsellContainer.style.fontSize = '12px';
+                                    upsellContainer.style.fontWeight = '600';
+                                    let optsContainer = subCard.querySelector('.delivery-options-container');
+                                    if (optsContainer) {
+                                        optsContainer.insertAdjacentElement('afterend', upsellContainer);
+                                    } else {
+                                        subCard.querySelector('.delivery-row').insertAdjacentElement('afterend', upsellContainer);
+                                    }
+                                }
+                                
+                                if (data.freeDeliveryThreshold && data.subtotal < data.freeDeliveryThreshold) {
+                                    const amountNeeded = data.freeDeliveryThreshold - data.subtotal;
+                                    upsellContainer.innerHTML = `🛒 Add <span style="font-weight: 800; color: #059669;">₹${amountNeeded}</span> more to get FREE delivery!`;
+                                    upsellContainer.style.display = 'block';
+                                } else {
+                                    upsellContainer.style.display = 'none';
                                 }
                             }
 
@@ -1234,10 +1436,12 @@
                         // Show Pay Online button ONLY for HOME_DELIVERY or if Penalized
                         const codCol = section.querySelector('.cod-btn-col');
                         const rzpCol = section.querySelector('.razorpay-btn-col');
-                        const isPenalized = section.querySelector('.d-grid').getAttribute('data-penalized') === 'true';
+                        const actionsContainer = section.querySelector('.d-grid');
+                        const isPenalized = actionsContainer.getAttribute('data-penalized') === 'true';
+                        const isPrepaidOnly = actionsContainer.getAttribute('data-prepaidonly') === 'true';
 
                         if (codCol && rzpCol) {
-                            if (isPenalized) {
+                            if (isPenalized || isPrepaidOnly) {
                                 codCol.style.display = 'none';
                                 rzpCol.style.display = 'block';
                                 rzpCol.classList.replace('col-sm-6', 'col-12');
@@ -1320,12 +1524,19 @@
                     const loc = shopLocState[shopId];
                     const chk = document.getElementById(`useCoins-${shopId}`);
                     const useCoins = chk ? chk.checked : false;
+                    
+                    let selectedDeliveryCharge = null;
+                    const chargeRadio = document.querySelector(`input[name="deliveryCharge-${shopId}"]:checked`);
+                    if (chargeRadio) {
+                        selectedDeliveryCharge = Number(chargeRadio.value);
+                    }
 
                     const payload = {
                         paymentType,
                         shopId,
                         deliveryType,
                         useCoins,
+                        selectedDeliveryCharge,
                         lat: deliveryType === 'HOME_DELIVERY' ? loc.lat : undefined,
                         lng: deliveryType === 'HOME_DELIVERY' ? loc.lng : undefined
                     };
@@ -1451,6 +1662,15 @@
                 });
 
                 // --- Coin Discount UI Toggle ---
+                // --- Delivery Option Update ---
+                window.updateDeliveryOption = function(shopId, selectedCharge, subtotal) {
+                    const section = document.getElementById(`shop-section-${shopId}`);
+                    if (!section) return;
+                    
+                    section.dataset.total = subtotal + selectedCharge;
+                    updateSectionTotal(shopId);
+                };
+
                 function updateSectionTotal(shopId) {
                     const section = document.getElementById(`shop-section-${shopId}`);
                     if (!section) return;
@@ -1513,6 +1733,50 @@
                         updateSectionTotal(chk.dataset.shopid);
                     });
                 });
+
+                // Fetch recommendations
+                const shopIdsInCart = Array.from(document.querySelectorAll('.shop-section')).map(s => s.id.replace('shop-section-', ''));
+                if (shopIdsInCart.length > 0) {
+                    const recContainer = document.getElementById('cart-recommendations');
+                    if (recContainer) recContainer.style.display = 'block';
+                    fetch(`/api/cart/recommendations?shopIds=${shopIdsInCart.join(',')}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            const loading = document.getElementById('rec-loading');
+                            const list = document.getElementById('rec-list');
+                            if (loading) loading.style.display = 'none';
+                            
+                            if (data.success && data.items && data.items.length > 0) {
+                                let html = '';
+                                data.items.forEach(item => {
+                                    const imgUrl = (item.itemImage && item.itemImage.url) ? item.itemImage.url : 'https://placehold.co/100x100?text=No+Image';
+                                    const price = item.price;
+                                    html += `
+                                        <div class="recommendation-card">
+                                            <img src="${imgUrl}" alt="${item.name}" class="rec-img">
+                                            <div class="rec-info">
+                                                <div class="fw-bold" style="font-size: 13px; color: #1e293b; line-height: 1.2; margin-bottom: 4px;">${item.name}</div>
+                                                <div style="font-size: 13px; color: #10b981; font-weight: 700;">₹${price}</div>
+                                            </div>
+                                            <form action="/api/cart/add" method="POST" style="margin:0;">
+                                                <input type="hidden" name="itemId" value="${item._id}">
+                                                <input type="hidden" name="quantity" value="1">
+                                                <button type="submit" class="rec-add-btn">Add</button>
+                                            </form>
+                                        </div>
+                                    `;
+                                });
+                                if (list) list.innerHTML = html;
+                            } else {
+                                if (list) list.innerHTML = '<div class="text-muted small">No recommendations available right now.</div>';
+                            }
+                        })
+                        .catch(err => {
+                            console.error("Error fetching recommendations:", err);
+                            const loading = document.getElementById('rec-loading');
+                            if (loading) loading.style.display = 'none';
+                        });
+                }
 
             });
             window.initMap = function () {
