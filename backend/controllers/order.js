@@ -314,10 +314,6 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 effectiveDeliveryCharge = 0;
                 grantFreeDelivery = isFirstOrder; // Only track usage if they claimed the first order promo
             } else {
-                // Minimum bill amount of dynamic threshold for non-first orders if they don't get free delivery
-                if (subtotalAmount + effectiveDeliveryCharge < freeDeliveryThreshold) {
-                    effectiveDeliveryCharge = freeDeliveryThreshold - subtotalAmount;
-                }
                 grantFreeDelivery = false;
             }
 
