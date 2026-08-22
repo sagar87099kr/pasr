@@ -84,6 +84,15 @@ const adminBazaarController = require("../controllers/adminBazaar");
 router.get("/bazaars", isLogedin, isadmin, catchAsync(adminBazaarController.getBazaars));
 router.post("/bazaars", isLogedin, isadmin, catchAsync(adminBazaarController.createBazaar));
 
+const adminAdvertisementController = require("../controllers/adminAdvertisement");
+const { upload } = require("../cloud_con");
+
+// Admin - Advertisement Management
+router.get("/advertisements", isLogedin, isadmin, catchAsync(adminAdvertisementController.getAdvertisements));
+router.post("/advertisements", isLogedin, isadmin, upload.single('image'), catchAsync(adminAdvertisementController.createAdvertisement));
+router.post("/advertisements/:id/delete", isLogedin, isadmin, catchAsync(adminAdvertisementController.deleteAdvertisement));
+router.post("/advertisements/:id/toggle-active", isLogedin, isadmin, catchAsync(adminAdvertisementController.toggleActive));
+
 // Admin - Assign Bazaars to Shops and Providers
 router.post("/shops/:id/assign-bazaar", isLogedin, isadmin, catchAsync(adminBazaarController.assignBazaarToShop));
 router.post("/providers/:id/assign-bazaar", isLogedin, isadmin, catchAsync(adminBazaarController.assignBazaarToProvider));

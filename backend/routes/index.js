@@ -6,6 +6,7 @@ const Item = require("../data/item.js");
 const Customer = require("../data/customers.js");
 const Shop = require("../data/shops.js");
 const Provider = require("../data/serviceproviders.js");
+const Advertisement = require("../data/advertisement.js");
 const { isLogedin, isadmin } = require("../middeleware.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const itemController = require("../controllers/item.js");
@@ -454,6 +455,18 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
 
 // Route to fetch items for the homepage
 router.get("/api/home/items", itemController.getHomeItems);
+
+// Route to fetch active advertisements
+router.get("/api/advertisements/active", wrapAsync(async (req, res) => {
+    const now = new Date();
+    const ads = await Advertisement.find({
+        isActive: true,
+        startTime: { $lte: now },
+        endTime: { $gte: now }
+    }).sort({ createdAt: -1 }).lean();
+    
+    res.json({ success: true, advertisements: ads });
+}));
 
 // Sitemap generation route
 router.get("/sitemap.xml", wrapAsync(async (req, res) => {

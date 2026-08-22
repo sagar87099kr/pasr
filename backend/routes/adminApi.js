@@ -14,6 +14,8 @@ const Product = require('../data/product');
 const Item = require('../data/item');
 const MasterProduct = require('../data/masterProduct');
 const KeshanSabhaPost = require('../data/keshanSabhaPost');
+const Advertisement = require('../data/advertisement');
+const { cloudinary, upload } = require('../cloud_con');
 
 // Simple auth middleware for API routes
 const checkAdmin = (req, res, next) => {
@@ -347,6 +349,21 @@ router.get('/data', async (req, res) => {
                 }));
                 break;
             }
+            case 'advertisements': {
+                stats.pending = await Advertisement.countDocuments({ isActive: false });
+                stats.verified = await Advertisement.countDocuments({ isActive: true });
+                stats.rejected = 0;
+                const ads = await Advertisement.find({}).sort({ createdAt: -1 }).skip(Number(skip)).limit(Number(limit)).lean();
+                data = ads.map(d => ({
+                    id: d._id.toString(),
+                    status: d.isActive ? 'Verified' : 'Pending',
+                    time: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Recent',
+                    title: d.title || 'Advertisement',
+                    imageUrl: d.imageUrl,
+                    raw: d
+                }));
+                break;
+            }
             case 'dashboard': {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -446,6 +463,9 @@ router.post('/action', async (req, res) => {
                 case 'orders':
                     await Order.updateOne({ _id: payload.id }, { $set: { orderStatus: isVerified ? 'COMPLETED' : 'CANCELLED' } });
                     break;
+                case 'advertisements':
+                    await Advertisement.updateOne({ _id: payload.id }, { $set: { isActive: isVerified } });
+                    break;
                 case 'payouts':
                     await TransactionHistory.updateOne({ _id: payload.id }, { $set: { status: isVerified ? 'COMPLETED' : 'FAILED' } });
                     break;
@@ -460,6 +480,17 @@ router.post('/action', async (req, res) => {
                 case 'items': await Item.deleteOne({ _id: payload.id }); break;
                 case 'kisan-sabha': await KeshanSabhaPost.deleteOne({ _id: payload.id }); break;
                 case 'orders': await Order.deleteOne({ _id: payload.id }); break;
+                case 'advertisements': 
+                    const ad = await Advertisement.findById(payload.id);
+                    if (ad && ad.imageId) {
+                        try {
+                            await cloudinary.uploader.destroy(ad.imageId);
+                        } catch (err) {
+                            console.error('Error deleting Cloudinary image:', err);
+                        }
+                    }
+                    await Advertisement.deleteOne({ _id: payload.id });
+                    break;
             }
         } else if (action === 'ASSIGN_BAZAAR') {
             const Model = payload.type === 'shops' ? Shop : Provider;
@@ -509,6 +540,34 @@ router.get('/bazaars/active', async (req, res) => {
         res.json({ success: true, bazaars: bazaars.map(b => ({ id: b._id, name: b.name || b.bazaarName })) });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Create Advertisement
+router.post('/advertisements', upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'Image file is required' });
+        }
+
+        const { title, link, phoneNumber, startTime, endTime } = req.body;
+        
+        const ad = new Advertisement({
+            title,
+            imageUrl: req.file.path,
+            imageId: req.file.filename,
+            link: link || "",
+            phoneNumber: phoneNumber || "",
+            startTime: new Date(startTime),
+            endTime: new Date(endTime),
+            isActive: true
+        });
+
+        await ad.save();
+        res.json({ success: true, message: 'Advertisement created successfully', advertisement: ad });
+    } catch (error) {
+        console.error('Error creating advertisement:', error);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 });
 
