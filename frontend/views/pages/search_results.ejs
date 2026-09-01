@@ -113,13 +113,13 @@
                     <a href="/products/<%= product._id %>" class="search-avatar-card">
                         <div class="avatar-square-wrapper">
                             <% if(product.productImage && product.productImage.length> 0) { %>
-                                <img src="<%= product.productImage[0].url %>"
-                                    style="width: 100%; height: 100%; object-fit: cover;" alt="Product">
-                                <% } else { %>
-                                    <img src="https://via.placeholder.com/150?text=Product"
-                                        style="width: 100%; height: 100%; object-fit: cover;"
-                                        alt="No image">
-                                    <% } %>
+                                <img src="<%= typeof optimizeImage === 'function' ? optimizeImage(product.productImage[0].url, 300) : product.productImage[0].url %>"
+                                    style="width: 100%; height: 100%; object-fit: cover;" alt="Product" loading="lazy">
+                            <% } else { %>
+                                <img src="https://via.placeholder.com/150?text=Product"
+                                    style="width: 100%; height: 100%; object-fit: cover;"
+                                    alt="No image" loading="lazy">
+                                <% } %>
                         </div>
                         <div class="info-content-main">
                             <h5
@@ -153,11 +153,11 @@
                     <a href="/provider/<%= provider._id %>/profile" class="search-avatar-card">
                         <div class="avatar-circle-wrapper">
                             <% if(provider.personImage && provider.personImage.length> 0) { %>
-                                <img src="<%= provider.personImage[0].path %>"
-                                    style="width: 100%; height: 100%; object-fit: cover;" alt="Provider">
+                                <img src="<%= typeof optimizeImage === 'function' ? optimizeImage(provider.personImage[0].path || provider.personImage[0].url, 300) : (provider.personImage[0].path || provider.personImage[0].url) %>"
+                                    style="width: 100%; height: 100%; object-fit: cover;" alt="Provider" loading="lazy">
                                 <% } else { %>
                                     <img src="https://via.placeholder.com/150?text=Provider"
-                                        style="width: 100%; height: 100%; object-fit: cover;" alt="No image">
+                                        style="width: 100%; height: 100%; object-fit: cover;" alt="No image" loading="lazy">
                                     <% } %>
                         </div>
                         <div class="info-content-main">

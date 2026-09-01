@@ -39,7 +39,7 @@
                         <!-- Image -->
                         <div class="main-image-wrapper">
                             <% if(itemImg) { %>
-                                <img src="<%= itemImg %>" alt="<%= itemName %>" class="main-image" id="mainImage" />
+                                <img src="<%= typeof optimizeImage === 'function' ? optimizeImage(itemImg, 800) : itemImg %>" alt="<%= itemName %>" class="main-image" id="mainImage" />
                             <% } else { %>
                                 <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f3f4f6; color:#9ca3af;">
                                     <i class="fa-solid fa-image fa-4x mb-2"></i>
@@ -58,12 +58,12 @@
                         <% if (item.extraImages && item.extraImages.length > 0) { %>
                             <div class="product-gallery mt-3 px-3 px-md-0" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;">
                                 <!-- Main image as first thumb -->
-                                <div class="gallery-thumb active" onclick="changeMainImage('<%= itemImg %>', this)" style="flex: 0 0 60px; height: 60px; border-radius: 8px; border: 2px solid #3b82f6; cursor: pointer; overflow: hidden;">
-                                    <img src="<%= itemImg %>" style="width: 100%; height: 100%; object-fit: cover;">
+                                <div class="gallery-thumb active" onclick="changeMainImage('<%= typeof optimizeImage === 'function' ? optimizeImage(itemImg, 800) : itemImg %>', this)" style="flex: 0 0 60px; height: 60px; border-radius: 8px; border: 2px solid #3b82f6; cursor: pointer; overflow: hidden;">
+                                    <img src="<%= typeof optimizeImage === 'function' ? optimizeImage(itemImg, 150) : itemImg %>" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
                                 </div>
                                 <% item.extraImages.forEach(img => { %>
-                                    <div class="gallery-thumb" onclick="changeMainImage('<%= img.url %>', this)" style="flex: 0 0 60px; height: 60px; border-radius: 8px; border: 2px solid #e2e8f0; cursor: pointer; overflow: hidden;">
-                                        <img src="<%= img.url %>" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <div class="gallery-thumb" onclick="changeMainImage('<%= typeof optimizeImage === 'function' ? optimizeImage(img.url, 800) : img.url %>', this)" style="flex: 0 0 60px; height: 60px; border-radius: 8px; border: 2px solid #e2e8f0; cursor: pointer; overflow: hidden;">
+                                        <img src="<%= typeof optimizeImage === 'function' ? optimizeImage(img.url, 150) : img.url %>" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
                                     </div>
                                 <% }) %>
                             </div>

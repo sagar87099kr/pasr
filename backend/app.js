@@ -291,9 +291,12 @@ app.use(async (req, res, next) => {
   res.locals.useInsideCateCss = true;
   res.locals.useMaps = false;
 
-  res.locals.optimizeImage = (url) => {
-    if (!url || typeof url !== 'string' || !url.includes('cloudinary.com')) return url;
-    return url.replace('/upload/', '/upload/f_auto,q_auto/');
+  res.locals.optimizeImage = (url, width = 600) => {
+    if (!url || typeof url !== 'string' || !url.includes('cloudinary.com')) return url || '';
+    if (url.includes('/upload/f_auto') || url.includes('/upload/w_') || url.includes('/upload/c_limit')) {
+      return url;
+    }
+    return url.replace('/upload/', `/upload/w_${width},c_limit,f_auto,q_auto:good/`);
   };
 
   next();

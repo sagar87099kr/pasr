@@ -33,7 +33,7 @@
                             <div class="info">
                                 <a class="search-card" href="/provider/<%= provider._id %>/profile">
                                     <div class="search-avatar">
-                                        <img src="<%=provider.personImage[0].path %>" alt="Provider photo">
+                                        <img src="<%= optimizeImage(provider.personImage[0].path || provider.personImage[0].url, 300) %>" alt="Provider photo" loading="lazy">
                                     </div>
 
                                     <div class="search-info">

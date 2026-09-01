@@ -44,7 +44,7 @@
 
             <!-- Image 140x140 Round -->
             <div class="profile-img-container" onclick="openProfileImageModal()">
-              <img src="<%=providerData.personImage[0].path %>" alt="Profile" class="profile-img" id="mainProfileImg" />
+              <img src="<%= typeof optimizeImage === 'function' ? optimizeImage(providerData.personImage[0].path || providerData.personImage[0].url, 400) : (providerData.personImage[0].path || providerData.personImage[0].url) %>" alt="Profile" class="profile-img" id="mainProfileImg" loading="lazy" />
               <button class="btn-share" id="shareBtn" type="button" title="Share Profile"
                 onclick="event.stopPropagation()">
                 <i class="fa-solid fa-share-nodes"></i>

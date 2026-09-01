@@ -45,12 +45,18 @@ router.get("/search", wrapAsync(async (req, res) => {
         }
     }
 
-    const { q, loc } = req.query;
+    const { q, loc, bazaarId } = req.query;
     let query = q || "";
     let providerFilter = {};
     let shopFilter = {};
     let productFilter = {};
     let itemFilter = {};
+
+    if (bazaarId) {
+        providerFilter.bazaar = bazaarId;
+        shopFilter.bazaar = bazaarId;
+        productFilter.bazaar = bazaarId;
+    }
 
     let userLocation = req.session.location;
     if (loc && loc.trim() !== '') {
@@ -69,6 +75,12 @@ router.get("/search", wrapAsync(async (req, res) => {
     const hasValidLocation = userLocation && userLocation.coordinates && userLocation.coordinates.length === 2;
     let nearbyShopIds = [];
 
+    let bazaarShopIds = [];
+    if (bazaarId) {
+        const bazaarShops = await Shop.find({ bazaar: bazaarId }).select('_id');
+        bazaarShopIds = bazaarShops.map(s => s._id);
+    }
+
     if (hasValidLocation) {
         const maxDist = 10000; // 10km
         const geoFilter = {
@@ -83,7 +95,16 @@ router.get("/search", wrapAsync(async (req, res) => {
 
         const nearbyShops = await Shop.find({ geometry: geoFilter }).select('_id');
         nearbyShopIds = nearbyShops.map(s => s._id);
-        itemFilter.shop = { $in: nearbyShopIds };
+        
+        if (bazaarId) {
+            itemFilter.shop = { $in: nearbyShopIds.filter(id => bazaarShopIds.some(bId => bId.equals(id))) };
+            if (itemFilter.shop.$in.length === 0) itemFilter.shop.$in = [null];
+        } else {
+            itemFilter.shop = { $in: nearbyShopIds };
+        }
+    } else if (bazaarId) {
+        itemFilter.shop = { $in: bazaarShopIds };
+        if (itemFilter.shop.$in.length === 0) itemFilter.shop.$in = [null];
     }
 
     if (query) {

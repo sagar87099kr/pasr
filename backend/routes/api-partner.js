@@ -70,7 +70,11 @@ router.post("/partner/register-shop", verifyToken, async (req, res) => {
         });
         if (shopImage && typeof shopImage === 'string') {
             const { cloudinary } = require('../cloud_con');
-            const uploadRes = await cloudinary.uploader.upload(shopImage, { folder: 'pasr_DEV' });
+            const uploadRes = await cloudinary.uploader.upload(shopImage, {
+                folder: 'pasr_DEV',
+                transformation: [{ width: 1000, height: 1000, crop: "limit", quality: "auto:good" }],
+                format: 'webp'
+            });
             shop.shopImage = [{ url: uploadRes.secure_url, filename: uploadRes.public_id }];
         } else {
             shop.shopImage = [];
@@ -91,7 +95,11 @@ router.post("/partner/register-provider", verifyToken, async (req, res) => {
         });
         if (personImage && typeof personImage === 'string') {
             const { cloudinary } = require('../cloud_con');
-            const uploadRes = await cloudinary.uploader.upload(personImage, { folder: 'pasr_DEV' });
+            const uploadRes = await cloudinary.uploader.upload(personImage, {
+                folder: 'pasr_DEV',
+                transformation: [{ width: 1000, height: 1000, crop: "limit", quality: "auto:good" }],
+                format: 'webp'
+            });
             provider.personImage = [{ url: uploadRes.secure_url, path: uploadRes.secure_url, filename: uploadRes.public_id }];
         } else {
             provider.personImage = [];
@@ -134,7 +142,11 @@ router.post("/partner/register-farmer", verifyToken, async (req, res) => {
         });
         if (farmImage && typeof farmImage === 'string') {
             const { cloudinary } = require('../cloud_con');
-            const uploadRes = await cloudinary.uploader.upload(farmImage, { folder: 'pasr_DEV' });
+            const uploadRes = await cloudinary.uploader.upload(farmImage, {
+                folder: 'pasr_DEV',
+                transformation: [{ width: 1000, height: 1000, crop: "limit", quality: "auto:good" }],
+                format: 'webp'
+            });
             product.productImage = [{ url: uploadRes.secure_url, filename: uploadRes.public_id }];
         } else {
             product.productImage = [];
@@ -601,11 +613,16 @@ router.post("/shop/products", verifyToken, async (req, res) => {
         const { cloudinary } = require('../cloud_con');
         
         // Handle array of images
+        const itemUploadOptions = {
+            folder: 'pasr_items',
+            transformation: [{ width: 800, height: 800, crop: "limit", quality: "auto:good" }],
+            format: 'webp'
+        };
         if (images && Array.isArray(images) && images.length > 0) {
             for (let img of images) {
                 if (typeof img === 'string') {
                     if (img.startsWith('data:image')) {
-                        const uploadRes = await cloudinary.uploader.upload(img, { folder: 'pasr_DEV' });
+                        const uploadRes = await cloudinary.uploader.upload(img, itemUploadOptions);
                         uploadedImages.push({ url: uploadRes.secure_url, filename: uploadRes.public_id });
                     } else {
                         uploadedImages.push({ url: img });
@@ -614,7 +631,7 @@ router.post("/shop/products", verifyToken, async (req, res) => {
             }
         } else if (image && typeof image === 'string') {
             if (image.startsWith('data:image')) {
-                const uploadRes = await cloudinary.uploader.upload(image, { folder: 'pasr_DEV' });
+                const uploadRes = await cloudinary.uploader.upload(image, itemUploadOptions);
                 uploadedImages.push({ url: uploadRes.secure_url, filename: uploadRes.public_id });
             } else {
                 uploadedImages.push({ url: image });
@@ -668,11 +685,16 @@ router.put("/shop/products/:id", verifyToken, async (req, res) => {
             let uploadedImages = [];
             const { cloudinary } = require('../cloud_con');
 
+            const itemUploadOptions = {
+                folder: 'pasr_items',
+                transformation: [{ width: 800, height: 800, crop: "limit", quality: "auto:good" }],
+                format: 'webp'
+            };
             if (images && Array.isArray(images) && images.length > 0) {
                 for (let img of images) {
                     if (typeof img === 'string') {
                         if (img.startsWith('data:image')) {
-                            const uploadRes = await cloudinary.uploader.upload(img, { folder: 'pasr_DEV' });
+                            const uploadRes = await cloudinary.uploader.upload(img, itemUploadOptions);
                             uploadedImages.push({ url: uploadRes.secure_url, filename: uploadRes.public_id });
                         } else {
                             uploadedImages.push({ url: img });
@@ -681,7 +703,7 @@ router.put("/shop/products/:id", verifyToken, async (req, res) => {
                 }
             } else if (image && typeof image === 'string') {
                 if (image.startsWith('data:image')) {
-                    const uploadRes = await cloudinary.uploader.upload(image, { folder: 'pasr_DEV' });
+                    const uploadRes = await cloudinary.uploader.upload(image, itemUploadOptions);
                     uploadedImages.push({ url: uploadRes.secure_url, filename: uploadRes.public_id });
                 } else {
                     uploadedImages.push({ url: image });
@@ -750,52 +772,30 @@ router.post("/shop/request-payout", verifyToken, async (req, res) => {
             settlementStatus: { $in: ['PENDING', 'REQUESTED'] }
         });
 
-        const payoutOrders = unsettledOrders.filter(order => {
-            let earningsForShop = 0;
-            const isSelfPickup = order.deliveryType === 'Self Pickup' || order.deliveryType === 'SELF_PICKUP';
-            const actualItemPrice = order.subtotalAmount || Math.max(0, (order.totalAmount || 0) + (order.coinDiscount || 0) - (order.deliveryCharge || 0) - 5);
-
-            if (isSelfPickup) {
-                earningsForShop = order.coinDiscount || 0;
-            } else if (order.selfDelivery) {
-                if (order.paymentType === 'PREPAID') {
-                    earningsForShop = actualItemPrice + (order.deliveryCharge || 0);
-                } else {
-                    earningsForShop = order.coinDiscount || 0;
-                }
-            } else {
-                earningsForShop = actualItemPrice;
-            }
-            earningsForShop -= (order.shopCommission || 0);
-            return earningsForShop > 0;
-        });
-
-        if (payoutOrders.length === 0) {
+        if (unsettledOrders.length === 0) {
             return res.status(400).json({ success: false, message: "No eligible completed orders found for payout." });
         }
 
-        // Calculate total amount
-        const payoutAmount = payoutOrders.reduce((sum, order) => {
+        let payoutAmount = 0;
+        const processedOrders = [];
+
+        for (let order of unsettledOrders) {
             let earningsForShop = 0;
-            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup' || order.deliveryType === 'SELF_PICKUP';
+            const isSelfPickup = !!order.selfDelivery || order.deliveryType === 'Self Pickup' || order.deliveryType === 'SELF_PICKUP' || order.deliveryType === 'SHOP_PICKUP';
             const actualItemPrice = order.subtotalAmount || ((order.totalAmount || 0) + (order.coinDiscount || 0));
 
             if (isSelfPickup) {
-                if (order.paymentType === 'PREPAID') {
-                    earningsForShop = actualItemPrice;
-                    if (order.deliveryType === 'HOME_DELIVERY') {
-                        earningsForShop += (order.deliveryCharge || 0);
-                    }
-                    earningsForShop -= (order.pasrCommission || 0);
-                } else {
-                    earningsForShop = (order.coinDiscount || 0) - (order.pasrCommission || 0);
-                }
+                earningsForShop = order.coinDiscount || 0;
             } else {
                 earningsForShop = actualItemPrice;
             }
-            earningsForShop -= (order.shopCommission || 0);
-            return sum + earningsForShop;
-        }, 0);
+            payoutAmount += earningsForShop;
+            processedOrders.push(order);
+        }
+
+        if (payoutAmount <= 0) {
+            return res.status(400).json({ success: false, message: "Your net payout balance is zero or negative." });
+        }
 
         // Check if there is already a pending payout request
         const existingPending = await TransactionHistory.findOne({
@@ -808,7 +808,7 @@ router.post("/shop/request-payout", verifyToken, async (req, res) => {
             return res.status(400).json({ success: false, message: "You already have a pending payout request." });
         }
 
-        const orderIds = payoutOrders.map(o => o.orderId);
+        const orderIds = processedOrders.map(o => o.orderId);
 
         // 2. Create a PENDING Payout Transaction for manual approval
         await TransactionHistory.create({
@@ -823,9 +823,9 @@ router.post("/shop/request-payout", verifyToken, async (req, res) => {
             }
         });
 
-        // 3. Mark Orders as REQUESTED
+        // 3. Mark ALL processed Orders as REQUESTED so they don't stick around in PENDING
         await Order.updateMany(
-            { _id: { $in: payoutOrders.map(o => o._id) } },
+            { _id: { $in: processedOrders.map(o => o._id) } },
             { $set: { settlementStatus: 'REQUESTED' } }
         );
 
