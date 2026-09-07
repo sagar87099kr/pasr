@@ -303,15 +303,29 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
         const istDate = new Date(currentUtc.getTime() + istOffset);
         const istHour = istDate.getUTCHours();
         
-        if ((istHour < 9 || istHour >= 20) && req.user && String(req.user.username) !== '7979082525') {
+        if ((istHour < 9 || istHour >= 21) && req.user && String(req.user.username) !== '7979082525') {
             return res.status(400).json({ 
                 success: false, 
-                message: `Home Delivery is only available between 9 AM and 8 PM.` 
+                message: `Home Delivery is only available between 9 AM and 9 PM.` 
             });
         }
 
-        if (istHour >= 18 && istHour < 20) {
-            maxAllowedDistance = 3;
+        const bazaarName = (shop && shop.bazaar && shop.bazaar.name) ? shop.bazaar.name.toLowerCase() : '';
+        const shopLocation = (shop && shop.location) ? shop.location.toLowerCase() : '';
+        const shopNameStr = (shop && shop.shopName) ? shop.shopName.toLowerCase() : '';
+
+        const isDhanwar = bazaarName.includes('dhanwar') || shopLocation.includes('dhanwar') || shopNameStr.includes('dhanwar');
+        const isBarjo = bazaarName.includes('barjo') || shopLocation.includes('barjo') || shopNameStr.includes('barjo');
+
+        // After 7 PM (19:00 - 21:00 IST): Dhanwar max 4km, Barjo max 5km
+        if (istHour >= 19 && istHour < 21) {
+            if (isDhanwar) {
+                maxAllowedDistance = 4;
+            } else if (isBarjo) {
+                maxAllowedDistance = 5;
+            } else {
+                maxAllowedDistance = 4;
+            }
         }
 
         if (cart.items.length > 0) {
@@ -321,7 +335,7 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
         if (distanceInKm > maxAllowedDistance) {
             return res.status(400).json({ 
                 success: false, 
-                message: `Unable to deliver to your location for now. Max delivery radius is ${maxAllowedDistance} km.` 
+                message: `Unable to deliver to your location for now. Max delivery radius is ${maxAllowedDistance} km at this time.` 
             });
         }
 

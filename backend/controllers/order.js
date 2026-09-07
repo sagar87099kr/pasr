@@ -161,17 +161,17 @@ module.exports.checkoutOrder = async (req, res, next) => {
         } else {
             // HOME_DELIVERY: time, bazaar, location and distance logic
             
-            // 1. Time Restriction (9 AM to 6 PM IST)
+            // 1. Time Restriction (9 AM to 9 PM IST)
             const now = new Date();
             const istOffsetMs = 5.5 * 60 * 60 * 1000;
             const nowIST = new Date(now.getTime() + istOffsetMs);
             const istH = nowIST.getUTCHours();
             
-            if (istH < 9 || istH >= 20) {
+            if (istH < 9 || istH >= 21) {
                 for (let revert of inventoryUpdates) {
                     await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
                 }
-                return res.status(400).json({ success: false, message: "Sorry we can delivery product only in 9am to 8pm." });
+                return res.status(400).json({ success: false, message: "Sorry we can deliver products only between 9 AM and 9 PM." });
             }
 
             // 2. Removed Hardcoded Bazaar Restriction (Handled by Distance Radius now)
@@ -245,16 +245,31 @@ module.exports.checkoutOrder = async (req, res, next) => {
             const istDate = new Date(currentUtc.getTime() + istOffset);
             const istHour = istDate.getUTCHours();
             
-            if ((istHour < 9 || istHour >= 20) && req.user && String(req.user.username) !== '7979082525') {
+            if ((istHour < 9 || istHour >= 21) && req.user && String(req.user.username) !== '7979082525') {
                 for (let revert of inventoryUpdates) {
                     await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
                 }
-                return res.status(400).json({ success: false, message: "Home Delivery is only available between 9 AM and 8 PM." });
+                return res.status(400).json({ success: false, message: "Home Delivery is only available between 9 AM and 9 PM." });
             }
 
+            const bazaarName = (shop && shop.bazaar && shop.bazaar.name) ? shop.bazaar.name.toLowerCase() : '';
+            const shopLocation = (shop && shop.location) ? shop.location.toLowerCase() : '';
+            const shopNameStr = (shop && shop.shopName) ? shop.shopName.toLowerCase() : '';
+
+            const isDhanwar = bazaarName.includes('dhanwar') || shopLocation.includes('dhanwar') || shopNameStr.includes('dhanwar');
+            const isBarjo = bazaarName.includes('barjo') || shopLocation.includes('barjo') || shopNameStr.includes('barjo');
+
             let maxAllowedDistance = 5;
-            if (istHour >= 18 && istHour < 20) {
-                maxAllowedDistance = 3;
+
+            // After 7 PM (19:00 - 21:00 IST): Dhanwar < 4km, Barjo 5km
+            if (istHour >= 19 && istHour < 21) {
+                if (isDhanwar) {
+                    maxAllowedDistance = 4;
+                } else if (isBarjo) {
+                    maxAllowedDistance = 5;
+                } else {
+                    maxAllowedDistance = 4;
+                }
             }
 
             if (shopItems && shopItems.length > 0) {

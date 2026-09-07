@@ -4,7 +4,7 @@ require('dotenv').config({ path: __dirname + '/../.env' }); // Make sure dotenv 
 
 async function resetPenalties() {
     try {
-        await mongoose.connect(process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/pasr");
+        await mongoose.connect(process.env.ATLAS_DB_URL || process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/pasr");
         console.log("Connected to MongoDB.");
 
         const result = await Customer.updateMany(

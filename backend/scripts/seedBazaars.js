@@ -9,7 +9,8 @@ const bazaarsToSeed = [
     { name: 'Balhara', location: 'Giridih', coordinates: [85.9600, 24.3300] },
     { name: 'Ghorthamba', location: 'Giridih', coordinates: [85.9700, 24.3400] },
     { name: 'Khorimahua', location: 'Giridih', coordinates: [85.9800, 24.3500] },
-    { name: 'Dhanwar', location: 'Giridih', coordinates: [85.9822, 24.4106] },
+    { name: 'Dhanwar', location: 'Giridih', coordinates: [85.9822, 24.4106], radius: 5000 },
+    { name: 'Barjo', location: 'Giridih', coordinates: [85.9650, 24.4250], radius: 5000 },
     { name: 'Jamua', location: 'Giridih', coordinates: [86.1558, 24.3644] },
     { name: 'Kodambari', location: 'Giridih', coordinates: [86.0000, 24.3800] }
 ];
@@ -29,6 +30,7 @@ async function seedBazaars() {
                         type: 'Point',
                         coordinates: b.coordinates
                     },
+                    radius: b.radius || 5000,
                     isActive: true
                 });
                 await newBazaar.save();
