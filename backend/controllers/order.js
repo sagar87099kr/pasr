@@ -108,6 +108,32 @@ module.exports.checkoutOrder = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "No items found for this shop in your cart." });
         }
 
+        // Fetch Shop and validate operating status & hours
+        let shop = await Shop.findById(shopId).populate('bazaar');
+        if (shop) {
+            const isOwner = req.user && shop.owner && shop.owner.equals(req.user._id);
+            if (!isOwner) {
+                if (!shop.isActive || shop.isHoliday) {
+                    return res.status(400).json({ success: false, message: "This shop is currently closed and not accepting orders." });
+                }
+                if (shop.openingTime && shop.closingTime) {
+                    const now = new Date();
+                    const istOffsetMs = 5.5 * 60 * 60 * 1000;
+                    const nowIST = new Date(now.getTime() + istOffsetMs);
+                    const istH = nowIST.getUTCHours();
+                    const istM = nowIST.getUTCMinutes();
+                    const nowStr = (istH < 10 ? '0' : '') + istH + ':' + (istM < 10 ? '0' : '') + istM;
+
+                    if (!(nowStr >= shop.openingTime && nowStr <= shop.closingTime)) {
+                        return res.status(400).json({ 
+                            success: false, 
+                            message: `This shop is currently closed. It will open at ${shop.openingTime}.` 
+                        });
+                    }
+                }
+            }
+        }
+
         // 2. ATOMIC INVENTORY CHECK & UPDATE
         const Item = require("../data/item");
         const inventoryUpdates = [];
@@ -152,8 +178,6 @@ module.exports.checkoutOrder = async (req, res, next) => {
             if (!existing) isFirstOrder = true;
         }
 
-        let shop = null;
-
         if (deliveryType === 'SELF_PICKUP') {
             // Self-pickup: no delivery charge, no distance calculation needed
             deliveryCharge = 0;
@@ -196,9 +220,9 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 return res.status(400).json({ success: false, message: "Please select a valid delivery address to continue." });
             }
 
-            // Fetch Shop location
-            shop = await Shop.findById(shopId).populate('bazaar');
+            // Shop location
             let sLoc;
+
 
             if (shop && shop.bazaar && shop.bazaar.geometry && shop.bazaar.geometry.coordinates) {
                 sLoc = shop.bazaar.geometry.coordinates; // Use Bazaar's coordinates as the delivery hub
