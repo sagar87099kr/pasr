@@ -22,6 +22,7 @@
                 <tbody>
                     <% if(advertisements && advertisements.length > 0) { %>
                         <% advertisements.forEach(function(ad) { %>
+                            <% const isExpired = ad.endTime && new Date(ad.endTime) < new Date(); %>
                             <tr>
                                 <td>
                                     <img src="<%= ad.imageUrl %>" alt="<%= ad.title %>" class="rounded shadow-sm" style="width: 80px; height: 50px; object-fit: cover;">
@@ -33,14 +34,17 @@
                                     <small class="text-muted"><%= ad.phoneNumber ? "Phone: " + ad.phoneNumber : "" %></small>
                                 </td>
                                 <td>
-                                    <small class="text-muted d-block">Start: <%= new Date(ad.startTime).toLocaleString() %></small>
-                                    <small class="text-muted d-block">End: <%= new Date(ad.endTime).toLocaleString() %></small>
+                                    <small class="text-muted d-block">Start: <%= ad.startTime ? new Date(ad.startTime).toLocaleString() : 'Immediate' %></small>
+                                    <small class="text-muted d-block">End: <%= ad.endTime ? new Date(ad.endTime).toLocaleString() : 'Never expires' %></small>
                                 </td>
                                 <td>
                                     <% if(ad.isActive) { %>
                                         <span class="badge bg-success rounded-pill">Active</span>
                                     <% } else { %>
-                                        <span class="badge bg-danger rounded-pill">Inactive</span>
+                                        <span class="badge bg-secondary rounded-pill">Inactive</span>
+                                    <% } %>
+                                    <% if(isExpired) { %>
+                                        <span class="badge bg-danger rounded-pill mt-1 d-block" style="width: fit-content;">Expired</span>
                                     <% } %>
                                 </td>
                                 <td class="text-end">
@@ -49,7 +53,7 @@
                                             <i class="fa-solid fa-power-off"></i>
                                         </button>
                                     </form>
-                                    <form action="/admin/advertisements/<%= ad._id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to permanently delete this advertisement?');">
+                                    <form action="/admin/advertisements/<%= ad._id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to permanently delete this advertisement? The image will also be deleted from Cloudinary.');">
                                         <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle" title="Delete">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
@@ -88,12 +92,14 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Start Time *</label>
-                            <input type="datetime-local" name="startTime" class="form-control rounded-3" required>
+                            <label class="form-label fw-bold">Start Time (Optional)</label>
+                            <input type="datetime-local" name="startTime" class="form-control rounded-3">
+                            <small class="text-muted">Default: Starts immediately</small>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">End Time *</label>
-                            <input type="datetime-local" name="endTime" class="form-control rounded-3" required>
+                            <label class="form-label fw-bold">End Time (Optional)</label>
+                            <input type="datetime-local" name="endTime" class="form-control rounded-3">
+                            <small class="text-muted">Default: Never expires</small>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -113,3 +119,4 @@
         </div>
     </div>
 </div>
+

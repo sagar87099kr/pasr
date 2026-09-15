@@ -461,12 +461,27 @@ router.get("/api/advertisements/active", wrapAsync(async (req, res) => {
     const now = new Date();
     const ads = await Advertisement.find({
         isActive: true,
-        startTime: { $lte: now },
-        endTime: { $gte: now }
+        $and: [
+            {
+                $or: [
+                    { startTime: { $exists: false } },
+                    { startTime: null },
+                    { startTime: { $lte: now } }
+                ]
+            },
+            {
+                $or: [
+                    { endTime: { $exists: false } },
+                    { endTime: null },
+                    { endTime: { $gte: now } }
+                ]
+            }
+        ]
     }).sort({ createdAt: -1 }).lean();
     
     res.json({ success: true, advertisements: ads });
 }));
+
 
 // Sitemap generation route
 router.get("/sitemap.xml", wrapAsync(async (req, res) => {

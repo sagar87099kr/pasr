@@ -1,5 +1,19 @@
 const Advertisement = require("../data/advertisement");
-const cloudinary = require("../cloud_con").uploader;
+const { cloudinary } = require("../cloud_con");
+
+// Helper to extract Cloudinary public ID
+function getCloudinaryPublicId(ad) {
+    if (ad.imageId && typeof ad.imageId === 'string' && ad.imageId.trim().length > 0) {
+        return ad.imageId.trim();
+    }
+    if (ad.imageUrl && ad.imageUrl.includes('/upload/')) {
+        const afterUpload = ad.imageUrl.split('/upload/')[1];
+        const withoutVersion = afterUpload.replace(/^v\d+\//, '');
+        const publicId = withoutVersion.replace(/\.[^/.]+$/, '');
+        return publicId;
+    }
+    return null;
+}
 
 module.exports.getAdvertisements = async (req, res) => {
     try {
@@ -20,14 +34,24 @@ module.exports.createAdvertisement = async (req, res) => {
 
         const { title, link, phoneNumber, startTime, endTime } = req.body;
         
+        let start = new Date();
+        if (startTime && !isNaN(new Date(startTime).getTime())) {
+            start = new Date(startTime);
+        }
+
+        let end = null;
+        if (endTime && !isNaN(new Date(endTime).getTime())) {
+            end = new Date(endTime);
+        }
+
         const ad = new Advertisement({
-            title,
+            title: title || 'Special Offer',
             imageUrl: req.file.path,
             imageId: req.file.filename,
             link: link || "",
             phoneNumber: phoneNumber || "",
-            startTime: new Date(startTime),
-            endTime: new Date(endTime),
+            startTime: start,
+            endTime: end,
             isActive: true
         });
 
@@ -45,16 +69,22 @@ module.exports.deleteAdvertisement = async (req, res) => {
     try {
         const ad = await Advertisement.findById(req.params.id);
         if (ad) {
-            if (ad.imageId) {
-                await cloudinary.destroy(ad.imageId).catch(e => console.log(e));
+            const publicId = getCloudinaryPublicId(ad);
+            if (publicId) {
+                try {
+                    await cloudinary.uploader.destroy(publicId, { invalidate: true, resource_type: 'image' });
+                } catch (cErr) {
+                    console.error('Error deleting from Cloudinary:', cErr);
+                }
             }
             await Advertisement.findByIdAndDelete(req.params.id);
-            req.flash("success", "Advertisement deleted successfully");
+            req.flash("success", "Advertisement and image deleted successfully");
         } else {
             req.flash("error", "Advertisement not found");
         }
         res.redirect("/admin/advertisements");
     } catch (error) {
+        console.error('Error deleting advertisement:', error);
         req.flash("error", "Failed to delete advertisement");
         res.redirect("/admin/advertisements");
     }
@@ -76,3 +106,4 @@ module.exports.toggleActive = async (req, res) => {
         res.redirect("/admin/advertisements");
     }
 };
+

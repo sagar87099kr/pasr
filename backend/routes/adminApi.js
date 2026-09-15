@@ -480,17 +480,26 @@ router.post('/action', async (req, res) => {
                 case 'items': await Item.deleteOne({ _id: payload.id }); break;
                 case 'kisan-sabha': await KeshanSabhaPost.deleteOne({ _id: payload.id }); break;
                 case 'orders': await Order.deleteOne({ _id: payload.id }); break;
-                case 'advertisements': 
+                case 'advertisements': {
                     const ad = await Advertisement.findById(payload.id);
-                    if (ad && ad.imageId) {
-                        try {
-                            await cloudinary.uploader.destroy(ad.imageId);
-                        } catch (err) {
-                            console.error('Error deleting Cloudinary image:', err);
+                    if (ad) {
+                        let publicId = (ad.imageId && typeof ad.imageId === 'string') ? ad.imageId.trim() : null;
+                        if (!publicId && ad.imageUrl && ad.imageUrl.includes('/upload/')) {
+                            const afterUpload = ad.imageUrl.split('/upload/')[1];
+                            const withoutVersion = afterUpload.replace(/^v\d+\//, '');
+                            publicId = withoutVersion.replace(/\.[^/.]+$/, '');
                         }
+                        if (publicId) {
+                            try {
+                                await cloudinary.uploader.destroy(publicId, { invalidate: true, resource_type: 'image' });
+                            } catch (err) {
+                                console.error('Error deleting Cloudinary image:', err);
+                            }
+                        }
+                        await Advertisement.deleteOne({ _id: payload.id });
                     }
-                    await Advertisement.deleteOne({ _id: payload.id });
                     break;
+                }
             }
         } else if (action === 'ASSIGN_BAZAAR') {
             const Model = payload.type === 'shops' ? Shop : Provider;
@@ -552,14 +561,24 @@ router.post('/advertisements', upload.single('image'), async (req, res) => {
 
         const { title, link, phoneNumber, startTime, endTime } = req.body;
         
+        let start = new Date();
+        if (startTime && !isNaN(new Date(startTime).getTime())) {
+            start = new Date(startTime);
+        }
+
+        let end = null;
+        if (endTime && !isNaN(new Date(endTime).getTime())) {
+            end = new Date(endTime);
+        }
+
         const ad = new Advertisement({
-            title,
+            title: title || 'Special Offer',
             imageUrl: req.file.path,
             imageId: req.file.filename,
             link: link || "",
             phoneNumber: phoneNumber || "",
-            startTime: new Date(startTime),
-            endTime: new Date(endTime),
+            startTime: start,
+            endTime: end,
             isActive: true
         });
 
