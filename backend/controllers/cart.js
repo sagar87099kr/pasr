@@ -333,19 +333,18 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
             if (!existing) isFirstOrder = true;
         }
 
+        // Offers (first order free delivery, threshold free delivery) are ONLY available within 5 km
+        const isEligibleForOffers = distanceInKm <= 5.0;
+        const effectiveIsFirstOrder = isEligibleForOffers && isFirstOrder;
+
         let effectiveDeliveryCharge = deliveryCharge;
-        const freeDeliveryThreshold = pricing.freeDeliveryThreshold || 150;
+        const freeDeliveryThreshold = pricing.freeDeliveryThreshold;
         
-        if (isFirstOrder || shopSubtotal >= freeDeliveryThreshold) {
+        if (isEligibleForOffers && (isFirstOrder || (freeDeliveryThreshold && shopSubtotal >= freeDeliveryThreshold))) {
             effectiveDeliveryCharge = 0;
             customerChargeOptions = [0]; // Free delivery
-        } else {
-            // Check if they had a saved preference (this requires customer context, we can just return options for now)
-            if (shopSubtotal + effectiveDeliveryCharge < freeDeliveryThreshold && shopSubtotal < freeDeliveryThreshold) {
-                // Keep the logic if needed
-            }
         }
-        let platformFee = isFirstOrder ? 0 : 5;
+        let platformFee = effectiveIsFirstOrder ? 0 : 5;
 
         res.status(200).json({
             success: true,
@@ -354,9 +353,10 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
             effectiveDeliveryCharge,
             platformFee,
             customerChargeOptions,
-            isFirstOrder,
+            isFirstOrder: effectiveIsFirstOrder,
             subtotal: shopSubtotal,
             freeDeliveryThreshold,
+            isEligibleForOffers,
             total: shopSubtotal + effectiveDeliveryCharge + platformFee
         });
     } catch (e) {

@@ -318,12 +318,14 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 deliveryAddress = `Near ${cLoc[1].toFixed(4)}, ${cLoc[0].toFixed(4)}`;
             }
 
-            // Free Delivery Logic: First order is free, otherwise minimum subtotal based on dynamic threshold
+            // Free Delivery Logic: Offers only eligible within 5 km
+            const isEligibleForOffers = distanceInKm <= 5.0;
+            const effectiveIsFirstOrder = isEligibleForOffers && isFirstOrder;
 
             let effectiveDeliveryCharge = deliveryCharge;
-            if (isFirstOrder || subtotalAmount >= freeDeliveryThreshold) {
+            if (isEligibleForOffers && (isFirstOrder || (freeDeliveryThreshold && subtotalAmount >= freeDeliveryThreshold))) {
                 effectiveDeliveryCharge = 0;
-                grantFreeDelivery = isFirstOrder; // Only track usage if they claimed the first order promo
+                grantFreeDelivery = effectiveIsFirstOrder; // Only track usage if they claimed the first order promo
             } else {
                 grantFreeDelivery = false;
             }
@@ -333,8 +335,10 @@ module.exports.checkoutOrder = async (req, res, next) => {
         }
 
         let platformFee = 0;
-        if (deliveryType === 'HOME_DELIVERY' && !isFirstOrder) {
-            platformFee = 5;
+        if (deliveryType === 'HOME_DELIVERY') {
+            const isEligibleForOffers = distanceInKm <= 5.0;
+            const effectiveIsFirstOrder = isEligibleForOffers && isFirstOrder;
+            platformFee = effectiveIsFirstOrder ? 0 : 5;
         }
 
         let shopCommission = 0;

@@ -40,15 +40,15 @@ function calculateDeliveryPricing(distanceKm, selectedCharge = null) {
     // Partner Profit
     const partnerProfit = partnerEarning - estimatedFuelCost;
 
-    // Dynamic Free delivery threshold
-    const freeDeliveryThreshold = Math.max(150, 150 + (roundedDistance - 1) * 50);
+    // Dynamic Free delivery threshold (Only eligible for <= 5 km)
+    const freeDeliveryThreshold = roundedDistance <= 5 ? Math.max(150, 150 + (roundedDistance - 1) * 50) : null;
 
     return {
         distance: roundedDistance,        // The rounded distance used for calculation
         rawDistance: Number(distanceKm.toFixed(2)), // Original precise distance
         customerChargeOptions,            // Array of selectable delivery charges
         customerCharge,                   // The effective customer charge used
-        freeDeliveryThreshold,            // Threshold for free delivery
+        freeDeliveryThreshold,            // Threshold for free delivery (null if > 5km)
         pasrCommission,
         partnerEarning,
         estimatedFuelCost,
