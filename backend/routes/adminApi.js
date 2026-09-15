@@ -590,4 +590,62 @@ router.post('/advertisements', upload.single('image'), async (req, res) => {
     }
 });
 
+// Update Advertisement
+const handleUpdateAdApi = async (req, res) => {
+    try {
+        const ad = await Advertisement.findById(req.params.id);
+        if (!ad) {
+            return res.status(404).json({ success: false, message: 'Advertisement not found' });
+        }
+
+        const { title, link, phoneNumber, startTime, endTime, isActive } = req.body;
+
+        if (req.file) {
+            let publicId = (ad.imageId && typeof ad.imageId === 'string') ? ad.imageId.trim() : null;
+            if (!publicId && ad.imageUrl && ad.imageUrl.includes('/upload/')) {
+                const afterUpload = ad.imageUrl.split('/upload/')[1];
+                const withoutVersion = afterUpload.replace(/^v\d+\//, '');
+                publicId = withoutVersion.replace(/\.[^/.]+$/, '');
+            }
+            if (publicId) {
+                try {
+                    await cloudinary.uploader.destroy(publicId, { invalidate: true, resource_type: 'image' });
+                } catch (cErr) {
+                    console.error('Error deleting old Cloudinary image:', cErr);
+                }
+            }
+            ad.imageUrl = req.file.path;
+            ad.imageId = req.file.filename;
+        }
+
+        if (title !== undefined) ad.title = title || 'Special Offer';
+        if (link !== undefined) ad.link = link || '';
+        if (phoneNumber !== undefined) ad.phoneNumber = phoneNumber || '';
+        if (isActive !== undefined) ad.isActive = (isActive === 'true' || isActive === true);
+
+        if (startTime) {
+            const parsedStart = new Date(startTime);
+            if (!isNaN(parsedStart.getTime())) ad.startTime = parsedStart;
+        }
+
+        if (endTime) {
+            const parsedEnd = new Date(endTime);
+            if (!isNaN(parsedEnd.getTime())) ad.endTime = parsedEnd;
+            else ad.endTime = null;
+        } else {
+            ad.endTime = null;
+        }
+
+        await ad.save();
+        res.json({ success: true, message: 'Advertisement updated successfully', advertisement: ad });
+    } catch (error) {
+        console.error('Error updating advertisement:', error);
+        res.status(500).json({ success: false, message: 'Internal Server Error: ' + error.message });
+    }
+};
+
+router.put('/advertisements/:id', upload.single('image'), handleUpdateAdApi);
+router.post('/advertisements/:id/edit', upload.single('image'), handleUpdateAdApi);
+
 module.exports = router;
+

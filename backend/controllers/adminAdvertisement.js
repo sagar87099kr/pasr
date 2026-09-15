@@ -107,3 +107,54 @@ module.exports.toggleActive = async (req, res) => {
     }
 };
 
+module.exports.updateAdvertisement = async (req, res) => {
+    try {
+        const ad = await Advertisement.findById(req.params.id);
+        if (!ad) {
+            req.flash("error", "Advertisement not found");
+            return res.redirect("/admin/advertisements");
+        }
+
+        const { title, link, phoneNumber, startTime, endTime } = req.body;
+
+        if (req.file) {
+            const oldPublicId = getCloudinaryPublicId(ad);
+            if (oldPublicId) {
+                try {
+                    await cloudinary.uploader.destroy(oldPublicId, { invalidate: true, resource_type: 'image' });
+                } catch (cErr) {
+                    console.error('Error deleting old Cloudinary image:', cErr);
+                }
+            }
+            ad.imageUrl = req.file.path;
+            ad.imageId = req.file.filename;
+        }
+
+        if (title !== undefined) ad.title = title || 'Special Offer';
+        if (link !== undefined) ad.link = link || '';
+        if (phoneNumber !== undefined) ad.phoneNumber = phoneNumber || '';
+        
+        if (startTime) {
+            const parsedStart = new Date(startTime);
+            if (!isNaN(parsedStart.getTime())) ad.startTime = parsedStart;
+        }
+
+        if (endTime) {
+            const parsedEnd = new Date(endTime);
+            if (!isNaN(parsedEnd.getTime())) ad.endTime = parsedEnd;
+            else ad.endTime = null;
+        } else {
+            ad.endTime = null;
+        }
+
+        await ad.save();
+        req.flash("success", "Advertisement updated successfully");
+        res.redirect("/admin/advertisements");
+    } catch (error) {
+        console.error('Error updating advertisement:', error);
+        req.flash("error", "Failed to update advertisement");
+        res.redirect("/admin/advertisements");
+    }
+};
+
+

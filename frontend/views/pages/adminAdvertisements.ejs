@@ -48,6 +48,9 @@
                                     <% } %>
                                 </td>
                                 <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle me-1" title="Edit Advertisement" data-bs-toggle="modal" data-bs-target="#editAdModal_<%= ad._id %>">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
                                     <form action="/admin/advertisements/<%= ad._id %>/toggle-active" method="POST" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-outline-secondary rounded-circle me-1" title="Toggle Status">
                                             <i class="fa-solid fa-power-off"></i>
@@ -60,6 +63,58 @@
                                     </form>
                                 </td>
                             </tr>
+
+                            <!-- Edit Ad Modal for <%= ad._id %> -->
+                            <div class="modal fade text-start" id="editAdModal_<%= ad._id %>" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow-lg rounded-4">
+                                        <form action="/admin/advertisements/<%= ad._id %>/edit" method="POST" enctype="multipart/form-data">
+                                            <div class="modal-header border-bottom-0 pb-0">
+                                                <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-pen-to-square text-primary me-2"></i>Edit Advertisement</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body p-4">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Title *</label>
+                                                    <input type="text" name="title" class="form-control rounded-3" value="<%= ad.title %>" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Image</label>
+                                                    <div class="mb-2 d-flex align-items-center gap-2">
+                                                        <img src="<%= ad.imageUrl %>" alt="Current image" class="rounded" style="width: 60px; height: 40px; object-fit: cover;">
+                                                        <small class="text-muted">Current image (choose a new file to replace)</small>
+                                                    </div>
+                                                    <input type="file" name="image" class="form-control rounded-3" accept="image/*">
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-bold">Start Time</label>
+                                                        <input type="datetime-local" name="startTime" class="form-control rounded-3" value="<%= ad.startTime ? new Date(new Date(ad.startTime).getTime() - new Date(ad.startTime).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '' %>">
+                                                        <small class="text-muted">Default: Starts immediately</small>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-bold">End Time</label>
+                                                        <input type="datetime-local" name="endTime" class="form-control rounded-3" value="<%= ad.endTime ? new Date(new Date(ad.endTime).getTime() - new Date(ad.endTime).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '' %>">
+                                                        <small class="text-muted">Default: Never expires</small>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Link (Optional)</label>
+                                                    <input type="url" name="link" class="form-control rounded-3" placeholder="https://..." value="<%= ad.link || '' %>">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Phone Number (Optional)</label>
+                                                    <input type="tel" name="phoneNumber" class="form-control rounded-3" placeholder="9999999999" value="<%= ad.phoneNumber || '' %>">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-top-0 pt-0">
+                                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary rounded-pill px-4">Save Changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         <% }); %>
                     <% } else { %>
                         <tr>
@@ -119,4 +174,5 @@
         </div>
     </div>
 </div>
+
 
