@@ -273,38 +273,10 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 for (let revert of inventoryUpdates) {
                     await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
                 }
-                return res.status(400).json({ success: false, message: "Home Delivery is only available between 9 AM and 9 PM." });
-            }
-
-            const bazaarName = (shop && shop.bazaar && shop.bazaar.name) ? shop.bazaar.name.toLowerCase() : '';
-            const shopLocation = (shop && shop.location) ? shop.location.toLowerCase() : '';
-            const shopNameStr = (shop && shop.shopName) ? shop.shopName.toLowerCase() : '';
-
-            const isDhanwar = bazaarName.includes('dhanwar') || shopLocation.includes('dhanwar') || shopNameStr.includes('dhanwar');
-            const isBarjo = bazaarName.includes('barjo') || shopLocation.includes('barjo') || shopNameStr.includes('barjo');
-
-            let maxAllowedDistance = 5;
-
-            // After 7 PM (19:00 - 21:00 IST): Dhanwar < 4km, Barjo 5km
-            if (istHour >= 19 && istHour < 21) {
-                if (isDhanwar) {
-                    maxAllowedDistance = 4;
-                } else if (isBarjo) {
-                    maxAllowedDistance = 5;
-                } else {
-                    maxAllowedDistance = 4;
-                }
-            }
-
-            if (shopItems && shopItems.length > 0) {
-                maxAllowedDistance = Math.min(maxAllowedDistance, ...shopItems.map(i => i.maxDeliveryDistance !== undefined ? i.maxDeliveryDistance : maxAllowedDistance));
-            }
-
-            if (distanceInKm > maxAllowedDistance) {
-                for (let revert of inventoryUpdates) {
-                    await Item.updateOne({ _id: revert.id }, { $inc: { quantity: revert.qty } });
-                }
-                return res.status(400).json({ success: false, message: `Delivery not available beyond ${maxAllowedDistance} km at this time.` });
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "Home Delivery is available from 9 AM to 9 PM. For orders outside these hours, please contact the shop owner directly." 
+                });
             }
 
             let freeDeliveryThreshold = 150; // Fallback
@@ -397,7 +369,12 @@ module.exports.checkoutOrder = async (req, res, next) => {
             }
         }
 
-
+        // Apply 2% Razorpay Payment Gateway Fee for PREPAID online orders
+        let paymentGatewayFee = 0;
+        if (paymentType === 'PREPAID' && totalAmount > 0) {
+            paymentGatewayFee = Math.round(totalAmount * 0.02 * 100) / 100;
+            totalAmount = Math.round((totalAmount + paymentGatewayFee) * 100) / 100;
+        }
 
         // Calculate ETA
         let estimatedDeliveryTime = null;
@@ -436,6 +413,7 @@ module.exports.checkoutOrder = async (req, res, next) => {
             subtotalAmount,
             deliveryCharge,
             platformFee,
+            paymentGatewayFee,
             totalAmount,
             distanceInKm,
             deliveryType,

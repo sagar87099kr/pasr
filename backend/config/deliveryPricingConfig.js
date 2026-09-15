@@ -13,15 +13,17 @@ const PRICING_TIERS = [
 ];
 
 // Flat assumption for partner fuel cost per km (for a one-way trip).
-// Note: Final cost is usually multiplied by 2 to account for round-trip.
 // Given petrol is ~₹5/km average, one way is ₹2.5/km.
 const FUEL_COST_PER_KM_ONE_WAY = 2.5; // ₹2.5/km
 
-// Absolute maximum distance supported by the platform
-const MAX_DELIVERY_DISTANCE = 5; // km
+// Rate charged per km from the Bazaar hub
+const RATE_PER_KM = 5; // ₹5 per km
+
+// Absolute maximum distance supported by the platform (open/large)
+const MAX_DELIVERY_DISTANCE = 100; // km
 
 module.exports = {
-    PRICING_TIERS,
     FUEL_COST_PER_KM_ONE_WAY,
+    RATE_PER_KM,
     MAX_DELIVERY_DISTANCE
 };

@@ -1,13 +1,11 @@
-const { PRICING_TIERS, FUEL_COST_PER_KM_ONE_WAY, MAX_DELIVERY_DISTANCE } = require('../config/deliveryPricingConfig');
+const { FUEL_COST_PER_KM_ONE_WAY, RATE_PER_KM = 5, MAX_DELIVERY_DISTANCE = 100 } = require('../config/deliveryPricingConfig');
 
 /**
- * Calculates the delivery pricing breakdown based on distance in kilometers.
- * Distance is auto-rounded up to the nearest whole integer.
- * Maximum allowed distance is 5 km.
+ * Calculates delivery pricing breakdown at flat ₹5 per km from the Bazaar hub.
+ * Distance is rounded up to the nearest whole integer.
  * 
- * @param {number} distanceKm - The distance in kilometers between the shop and customer.
+ * @param {number} distanceKm - The distance in kilometers between the shop/bazaar hub and customer.
  * @returns {object} The pricing breakdown including customer charge, pasr commission, partner earning, and estimated fuel cost.
- * @throws {Error} If distance exceeds the maximum allowed distance.
  */
 function calculateDeliveryPricing(distanceKm, selectedCharge = null) {
     // 1. Validate inputs
@@ -18,49 +16,39 @@ function calculateDeliveryPricing(distanceKm, selectedCharge = null) {
     // Treat 0 distance (same location or very close) as 0.1 km minimum
     if (distanceKm === 0) distanceKm = 0.1;
 
-    if (distanceKm > MAX_DELIVERY_DISTANCE) {
-        throw new Error(`Delivery not available beyond ${MAX_DELIVERY_DISTANCE} km.`);
-    }
+    // 2. Auto-round distance up (e.g. 1.2 -> 2 km, minimum 1 km)
+    const roundedDistance = Math.max(1, Math.ceil(distanceKm));
 
-    // 2. Auto-round distance up (1.1 -> 2)
-    const roundedDistance = Math.ceil(distanceKm);
+    // 3. Flat ₹5 per km from bazaar
+    const standardCharge = roundedDistance * RATE_PER_KM;
+    const customerChargeOptions = [standardCharge];
 
-    // 3. Find matching pricing tier
-    const tier = PRICING_TIERS.find(t => t.maxDistance === roundedDistance);
-
-    // Fallback if somehow not found in array (should not happen due to validation)
-    if (!tier) {
-        throw new Error("Pricing tier not configured for the given distance.");
-    }
-
-    // 4. Calculate components
-    const customerChargeOptions = tier.customerChargeOptions || [];
-    
-    // Determine the active customer charge based on user selection or fallback to minimum
-    let customerCharge = customerChargeOptions[0]; // Default to lowest
-    
-    if (selectedCharge !== null && customerChargeOptions.includes(Number(selectedCharge))) {
+    let customerCharge = standardCharge;
+    if (selectedCharge !== null && Number(selectedCharge) >= standardCharge) {
         customerCharge = Number(selectedCharge);
     }
 
-    const pasrCommission = tier.pasrCommission;
+    // PASR Commission: ₹2 for 1km, ₹3 for 2km, flat ₹5 for >=3km
+    const pasrCommission = roundedDistance <= 1 ? 2 : (roundedDistance <= 2 ? 3 : 5);
 
     // Partner Earnings calculation
     const partnerEarning = customerCharge - pasrCommission;
 
     // Estimated Fuel Cost Calculation = (Distance x 2 (Round Trip)) x (Cost Per Km)
-    // Using rounded distance for fairness and predictable values as per rules.
     const estimatedFuelCost = roundedDistance * 2 * FUEL_COST_PER_KM_ONE_WAY;
 
     // Partner Profit
     const partnerProfit = partnerEarning - estimatedFuelCost;
+
+    // Dynamic Free delivery threshold
+    const freeDeliveryThreshold = Math.max(150, 150 + (roundedDistance - 1) * 50);
 
     return {
         distance: roundedDistance,        // The rounded distance used for calculation
         rawDistance: Number(distanceKm.toFixed(2)), // Original precise distance
         customerChargeOptions,            // Array of selectable delivery charges
         customerCharge,                   // The effective customer charge used
-        freeDeliveryThreshold: tier.freeDeliveryThreshold, // Threshold for free delivery
+        freeDeliveryThreshold,            // Threshold for free delivery
         pasrCommission,
         partnerEarning,
         estimatedFuelCost,

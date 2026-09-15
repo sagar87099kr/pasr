@@ -15,6 +15,7 @@ const orderSchema = new Schema({
     subtotalAmount: { type: Number, required: true },
     deliveryCharge: { type: Number, default: 0 },
     platformFee: { type: Number, default: 5 },
+    paymentGatewayFee: { type: Number, default: 0 }, // 2% Razorpay fee for online payments
     totalAmount: { type: Number, required: true },
     distanceInKm: { type: Number, default: 0 },
 
@@ -43,7 +44,7 @@ const orderSchema = new Schema({
 
     orderStatus: {
         type: String,
-        enum: ['CREATED', 'ORDER_SHARED', 'ACCEPTED', 'PACKED', 'READY_FOR_DELIVERY', 'BROADCAST', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED'],
+        enum: ['CREATED', 'PENDING_PAYMENT', 'ORDER_SHARED', 'ACCEPTED', 'PACKED', 'READY_FOR_DELIVERY', 'BROADCAST', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'COMPLETED', 'CANCELLED'],
         default: 'ORDER_SHARED'
     },
     

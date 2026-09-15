@@ -615,7 +615,7 @@
                                         const nowIST = new Date(now.getTime() + istOffsetMs);
                                         const istH = nowIST.getUTCHours();
                                         const isVIPUser = (typeof currUser !== 'undefined' && currUser && String(currUser.username) === '7979082525');
-                                        const canHomeDeliver = isVIPUser || (istH >= 9 && istH < 20);
+                                        const canHomeDeliver = isVIPUser || (istH >= 9 && istH < 21);
                                     %>
                                     <div class="delivery-type-toggle">
                                         <button class="delivery-opt-btn <%= !canHomeDeliver ? 'active' : '' %>" data-shopid="<%= shopId %>"
@@ -627,7 +627,7 @@
                                             data-type="HOME_DELIVERY" <% if (!canHomeDeliver) { %>disabled style="opacity: 0.6; cursor: not-allowed;"<% } %>>
                                             <span class="opt-icon">🚚</span> Home Delivery
                                             <% if (!canHomeDeliver) { %>
-                                                <div style="font-size: 10px; color: #dc2626; margin-top: 4px;">(Available 9 AM to 8 PM)</div>
+                                                <div style="font-size: 10px; color: #dc2626; margin-top: 4px;">(Available 9 AM to 9 PM)</div>
                                             <% } %>
                                         </button>
                                     </div>
@@ -709,7 +709,7 @@
                                         </div>
 
                                         <div class="alert alert-warning mt-2 p-2" style="font-size: 13px; background-color: #fffbeb; border-color: #fef3c7; color: #92400e; border-radius: 8px;">
-                                            <i class="fa-solid fa-truck-fast me-1"></i> <strong>Home Delivery Rules:</strong> Available up to <strong>5 km</strong> between <strong>9 AM - 6 PM</strong>, and up to <strong>3 km</strong> between <strong>6 PM - 8 PM</strong>.
+                                            <i class="fa-solid fa-truck-fast me-1"></i> <strong>Home Delivery:</strong> Available from <strong>9 AM - 9 PM</strong> at <strong>₹5 per km</strong> from the Bazaar hub. For orders outside delivery hours, please contact the shop owner directly.
                                         </div>
                                     </div>
 
@@ -1238,29 +1238,6 @@
                         const data = await res.json();
 
                         if (res.ok) {
-                            // MAX RADIUS GEOFENCE CHECK
-                            if (parseFloat(data.distance) > 10.0) {
-                                if (addrErrorEl) {
-                                    addrErrorEl.innerText = `⚠️ Delivery location is too far (${data.distance} km). Max delivery radius is 10 km.`;
-                                    addrErrorEl.style.display = 'block';
-                                    addrErrorEl.style.color = '#dc2626';
-                                    addrErrorEl.style.background = '#fef2f2';
-                                    addrErrorEl.style.padding = '8px';
-                                    addrErrorEl.style.borderRadius = '8px';
-                                }
-                                subCard.querySelector('.delivery-row').style.display = 'none';
-                                section.dataset.deliveryOk = 'false';
-                                section.dataset.platformFee = '5';
-                                const handlingFeeRow = subCard.querySelector('.handling-fee-row');
-                                const handlingFeeAmt = handlingFeeRow ? handlingFeeRow.querySelector('.handling-fee-amt, span:last-child') : null;
-                                if (handlingFeeRow && handlingFeeAmt) {
-                                    handlingFeeRow.style.display = 'flex';
-                                    handlingFeeAmt.innerHTML = `₹5`;
-                                }
-                                updateSectionTotal(shopId);
-                                return;
-                            }
-
                             subCard.querySelector('.delivery-dist').innerText = `(${data.distance} km)`;
 
                             const deliveryAmtEl = subCard.querySelector('.delivery-amt');
@@ -1721,6 +1698,11 @@
                             const summaryTotalLabel = section.querySelector('.summary-total span:first-child');
                             if (summaryTotalLabel) summaryTotalLabel.innerText = 'Order Total';
                         }
+                    }
+
+                    const rzpBtn = section.querySelector('.rzp-btn');
+                    if (rzpBtn) {
+                        rzpBtn.innerHTML = `<i class="fa-solid fa-credit-card me-1"></i> Pay Online`;
                     }
 
                     // Update COD eligibility based on original dataset total, not discounted total.
