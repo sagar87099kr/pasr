@@ -459,6 +459,9 @@ router.get("/api/home/items", itemController.getHomeItems);
 // Route to fetch active advertisements
 router.get("/api/advertisements/active", wrapAsync(async (req, res) => {
     const now = new Date();
+    // 5-minute buffer to guard against slight client/server clock drifts and timezone edges
+    const nowWithBuffer = new Date(Date.now() + 5 * 60 * 1000);
+
     const ads = await Advertisement.find({
         isActive: true,
         $and: [
@@ -466,7 +469,7 @@ router.get("/api/advertisements/active", wrapAsync(async (req, res) => {
                 $or: [
                     { startTime: { $exists: false } },
                     { startTime: null },
-                    { startTime: { $lte: now } }
+                    { startTime: { $lte: nowWithBuffer } }
                 ]
             },
             {
@@ -479,7 +482,13 @@ router.get("/api/advertisements/active", wrapAsync(async (req, res) => {
         ]
     }).sort({ createdAt: -1 }).lean();
     
-    res.json({ success: true, advertisements: ads });
+    // Ensure all image URLs are https
+    const sanitizedAds = ads.map(ad => ({
+        ...ad,
+        imageUrl: ad.imageUrl ? ad.imageUrl.replace('http://', 'https://') : ''
+    }));
+
+    res.json({ success: true, advertisements: sanitizedAds });
 }));
 
 

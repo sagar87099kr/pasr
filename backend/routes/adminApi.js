@@ -552,6 +552,26 @@ router.get('/bazaars/active', async (req, res) => {
     }
 });
 
+// Helper to parse datetime-local inputs considering Indian Standard Time (+05:30)
+function parseLocalDateTime(dateInput) {
+    if (!dateInput) return null;
+    if (dateInput instanceof Date) {
+        return isNaN(dateInput.getTime()) ? null : dateInput;
+    }
+    if (typeof dateInput === 'string') {
+        const trimmed = dateInput.trim();
+        if (!trimmed) return null;
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) {
+            const withOffset = `${trimmed.length === 16 ? trimmed + ':00' : trimmed}+05:30`;
+            const d = new Date(withOffset);
+            if (!isNaN(d.getTime())) return d;
+        }
+        const parsed = new Date(trimmed);
+        return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    return null;
+}
+
 // Create Advertisement
 router.post('/advertisements', upload.single('image'), async (req, res) => {
     try {
@@ -561,20 +581,14 @@ router.post('/advertisements', upload.single('image'), async (req, res) => {
 
         const { title, link, phoneNumber, startTime, endTime } = req.body;
         
-        let start = new Date();
-        if (startTime && !isNaN(new Date(startTime).getTime())) {
-            start = new Date(startTime);
-        }
-
-        let end = null;
-        if (endTime && !isNaN(new Date(endTime).getTime())) {
-            end = new Date(endTime);
-        }
+        const start = parseLocalDateTime(startTime) || new Date();
+        const end = parseLocalDateTime(endTime) || null;
+        const imageUrl = req.file.path ? req.file.path.replace('http://', 'https://') : '';
 
         const ad = new Advertisement({
             title: title || 'Special Offer',
-            imageUrl: req.file.path,
-            imageId: req.file.filename,
+            imageUrl: imageUrl,
+            imageId: req.file.filename || '',
             link: link || "",
             phoneNumber: phoneNumber || "",
             startTime: start,
@@ -614,8 +628,8 @@ const handleUpdateAdApi = async (req, res) => {
                     console.error('Error deleting old Cloudinary image:', cErr);
                 }
             }
-            ad.imageUrl = req.file.path;
-            ad.imageId = req.file.filename;
+            ad.imageUrl = req.file.path ? req.file.path.replace('http://', 'https://') : '';
+            ad.imageId = req.file.filename || '';
         }
 
         if (title !== undefined) ad.title = title || 'Special Offer';
@@ -623,17 +637,12 @@ const handleUpdateAdApi = async (req, res) => {
         if (phoneNumber !== undefined) ad.phoneNumber = phoneNumber || '';
         if (isActive !== undefined) ad.isActive = (isActive === 'true' || isActive === true);
 
-        if (startTime) {
-            const parsedStart = new Date(startTime);
-            if (!isNaN(parsedStart.getTime())) ad.startTime = parsedStart;
+        if (startTime !== undefined) {
+            ad.startTime = parseLocalDateTime(startTime) || ad.startTime || new Date();
         }
 
-        if (endTime) {
-            const parsedEnd = new Date(endTime);
-            if (!isNaN(parsedEnd.getTime())) ad.endTime = parsedEnd;
-            else ad.endTime = null;
-        } else {
-            ad.endTime = null;
+        if (endTime !== undefined) {
+            ad.endTime = parseLocalDateTime(endTime) || null;
         }
 
         await ad.save();

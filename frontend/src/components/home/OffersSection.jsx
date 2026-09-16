@@ -73,9 +73,9 @@ const OffersSection = ({ isLoggedIn }) => {
                 }}
             >
                 {/* Advertisements */}
-                {ads.map((ad, idx) => (
+                {ads && ads.filter(ad => ad && ad.imageUrl).map((ad, idx) => (
                     <div 
-                        key={idx} 
+                        key={ad._id || idx} 
                         onClick={(e) => handleAdClick(e, ad)}
                         style={{
                             position: 'relative',
@@ -100,8 +100,9 @@ const OffersSection = ({ isLoggedIn }) => {
                     >
                         <img 
                             src={ad.imageUrl} 
-                            alt={ad.title} 
+                            alt={ad.title || "Advertisement"} 
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
                         <div style={{
                             position: 'absolute',
