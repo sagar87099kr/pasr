@@ -155,18 +155,35 @@ router.get("/shops", wrapAsync(async (req, res) => {
     range = parseInt(range) || 5;
     if (range > 10) range = 10;
 
-    // Priority 1: Bazaar Location (from Mobile App headers)
-    // Priority 2: Bazaar Location (from Web App session)
-    // Priority 3: Query params (lat, lng from URL)
-    // Priority 4: Session location (from browser geolocation)
-    // Priority 5: User profile location
-    
-    let bazaarId = null;
+    const Bazaar = require("../data/bazaar.js");
+    let bazaarId = req.headers['x-bazaar-id'] || req.session.bazaarId || req.query.bazaarId || null;
+    let currentBazaar = null;
 
-    if (req.headers['x-bazaar-id']) {
-        bazaarId = req.headers['x-bazaar-id'];
-    } else if (req.session.bazaarId) {
-        bazaarId = req.session.bazaarId;
+    if (bazaarId) {
+        currentBazaar = await Bazaar.findById(bazaarId);
+    }
+    
+    if (!currentBazaar && req.session.bazaarName) {
+        currentBazaar = await Bazaar.findOne({ name: new RegExp(`^${req.session.bazaarName}$`, 'i') });
+        if (currentBazaar) bazaarId = currentBazaar._id;
+    }
+
+    // If still no bazaar selected and no explicit lat/lng in query, default to Dhanwar or first active bazaar
+    if (!currentBazaar && (!lat || !lng)) {
+        currentBazaar = await Bazaar.findOne({ name: /dhanwar/i, isActive: true }) || await Bazaar.findOne({ isActive: true });
+        if (currentBazaar) {
+            bazaarId = currentBazaar._id;
+            req.session.bazaarId = currentBazaar._id;
+            req.session.bazaarName = currentBazaar.name;
+            req.session.bazaarLocation = currentBazaar.geometry;
+        }
+    }
+
+    if (currentBazaar) {
+        if ((!lat || !lng) && currentBazaar.geometry && currentBazaar.geometry.coordinates) {
+            lng = currentBazaar.geometry.coordinates[0];
+            lat = currentBazaar.geometry.coordinates[1];
+        }
     } else if (req.headers['x-bazaar-lat'] && req.headers['x-bazaar-lng']) {
         lng = parseFloat(req.headers['x-bazaar-lng']);
         lat = parseFloat(req.headers['x-bazaar-lat']);
@@ -174,21 +191,23 @@ router.get("/shops", wrapAsync(async (req, res) => {
         lng = req.session.bazaarLocation.coordinates[0];
         lat = req.session.bazaarLocation.coordinates[1];
     } else if (!lat || !lng) {
-        // Check session location first
         if (req.session.location && req.session.location.coordinates && req.session.location.coordinates.length === 2) {
             lng = req.session.location.coordinates[0];
             lat = req.session.location.coordinates[1];
-        }
-        // Fall back to user's saved location
-        else if (req.user && req.user.geometry && req.user.geometry.coordinates) {
+        } else if (req.user && req.user.geometry && req.user.geometry.coordinates) {
             lng = req.user.geometry.coordinates[0];
             lat = req.user.geometry.coordinates[1];
         }
     }
 
     let query = { verified: true };
-    
-    if (bazaarId) {
+
+    if (currentBazaar) {
+        query.$or = [
+            { bazaar: currentBazaar._id },
+            { location: new RegExp(currentBazaar.name, 'i') }
+        ];
+    } else if (bazaarId) {
         query.bazaar = bazaarId;
     } else if (lat && lng) {
         query.geometry = {
@@ -216,53 +235,52 @@ router.get("/shops", wrapAsync(async (req, res) => {
         query.closingTime = { $gte: currentTime };
     }
 
-    // Check total verified shops first
-    const totalVerifiedShops = await Shop.countDocuments({ verified: true });
-
-    // Check if any shops have geometry
-    const shopsWithGeometry = await Shop.countDocuments({
-        verified: true,
-        'geometry.coordinates': { $exists: true, $ne: [] }
-    });
-
     shops = await Shop.find(query).sort({ isSponsored: -1 }).populate('owner').populate('reviews');
 
-        // Prioritize owned shop to the top
-        if (req.user) {
-            const Order = require("../data/order.js");
-            shops.sort((a, b) => {
-                const aIsOwner = a.owner && a.owner._id.equals(req.user._id);
-                const bIsOwner = b.owner && b.owner._id.equals(req.user._id);
-                if (aIsOwner && !bIsOwner) return -1;
-                if (!aIsOwner && bIsOwner) return 1;
-                return 0;
-            });
+    // Prioritize owned shop to the top
+    if (req.user) {
+        const Order = require("../data/order.js");
+        shops.sort((a, b) => {
+            const aIsOwner = a.owner && a.owner._id.equals(req.user._id);
+            const bIsOwner = b.owner && b.owner._id.equals(req.user._id);
+            if (aIsOwner && !bIsOwner) return -1;
+            if (!aIsOwner && bIsOwner) return 1;
+            return 0;
+        });
 
-            // For owned shops, check if they have pending orders
-            const pendingOrderShops = await Order.find({
-                shopId: { $in: shops.filter(s => s.owner && s.owner._id.equals(req.user._id)).map(s => s._id) },
-                orderStatus: 'CREATED'
-            }).distinct('shopId');
+        const pendingOrderShops = await Order.find({
+            shopId: { $in: shops.filter(s => s.owner && s.owner._id.equals(req.user._id)).map(s => s._id) },
+            orderStatus: 'CREATED'
+        }).distinct('shopId');
 
-            const pendingShopIds = pendingOrderShops.map(id => id.toString());
+        const pendingShopIds = pendingOrderShops.map(id => id.toString());
 
-            shops = shops.map(shop => {
-                const shopObj = shop.toObject();
-                if (req.user && shop.owner && shop.owner._id.equals(req.user._id)) {
-                    shopObj.hasPendingOrders = pendingShopIds.includes(shop._id.toString());
-                } else {
-                    shopObj.hasPendingOrders = false;
-                }
-                return shopObj;
-            });
-        }
+        shops = shops.map(shop => {
+            const shopObj = shop.toObject();
+            if (req.user && shop.owner && shop.owner._id.equals(req.user._id)) {
+                shopObj.hasPendingOrders = pendingShopIds.includes(shop._id.toString());
+            } else {
+                shopObj.hasPendingOrders = false;
+            }
+            return shopObj;
+        });
+    }
 
-
-    if (req.xhr || req.headers.accept.includes('application/json')) {
+    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
         return res.json({ success: true, shops });
     }
 
-    res.render("pages/shops.ejs", { shops, lat, lng, range, queryParams: req.query });
+    const activeBazaarName = currentBazaar ? currentBazaar.name : (req.session.bazaarName || null);
+
+    res.render("pages/shops.ejs", { 
+        shops, 
+        lat, 
+        lng, 
+        range, 
+        bazaar: currentBazaar,
+        bazaarName: activeBazaarName,
+        queryParams: req.query 
+    });
 }));
 
 // New Shop Form

@@ -1,4 +1,5 @@
 import React from 'react';
+import { saveViewedService } from '../../utils/tracking';
 
 const COLORS = {
     PRIMARY: '#1E3A8A',    // Deep Blue
@@ -28,6 +29,11 @@ const ServiceCard = ({ item }) => {
     };
 
     const handleClick = () => {
+        saveViewedService({
+            ...item,
+            id: item.id || item._id,
+            shopCategory: item.shopCategory || item.category || item.productCategory,
+        });
         const id = item.id || item._id;
         const isRealId = id && /^[a-f\d]{24}$/i.test(String(id));
 

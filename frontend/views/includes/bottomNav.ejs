@@ -1,0 +1,131 @@
+<!-- Universal Fixed Bottom Navigation Bar -->
+<style>
+    .pasr-bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.06);
+        z-index: 1020;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    }
+
+    .pasr-bottom-nav-inner {
+        width: 100%;
+        max-width: 600px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+    }
+
+    .pasr-bottom-nav-item {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        text-decoration: none !important;
+        color: #94a3b8;
+        transition: all 0.15s ease;
+        cursor: pointer;
+        border-radius: 8px;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .pasr-bottom-nav-item:hover {
+        color: #1e3a8a;
+    }
+
+    .pasr-bottom-nav-icon {
+        font-size: 18px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.15s ease;
+    }
+
+    .pasr-bottom-nav-label {
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: -0.2px;
+        line-height: 1.1;
+    }
+
+    .pasr-bottom-nav-item.active {
+        color: #1e3a8a !important;
+    }
+
+    .pasr-bottom-nav-item.active .pasr-bottom-nav-label {
+        font-weight: 700;
+    }
+
+    .pasr-bottom-nav-item.active .pasr-bottom-nav-icon {
+        transform: scale(1.1);
+    }
+</style>
+
+<nav class="pasr-bottom-nav" id="pasrBottomNav" aria-label="Bottom Navigation">
+    <div class="pasr-bottom-nav-inner">
+        <a href="/" class="pasr-bottom-nav-item" data-route="home" id="bottomNavHome">
+            <div class="pasr-bottom-nav-icon"><i class="fa-solid fa-house"></i></div>
+            <span class="pasr-bottom-nav-label">Home</span>
+        </a>
+        <a href="/shops" class="pasr-bottom-nav-item" data-route="shops" id="bottomNavShops">
+            <div class="pasr-bottom-nav-icon"><i class="fa-solid fa-store"></i></div>
+            <span class="pasr-bottom-nav-label">Shops</span>
+        </a>
+        <a href="/categories?cat=Grocery" class="pasr-bottom-nav-item" data-route="apnidukan" id="bottomNavApniDukan">
+            <div class="pasr-bottom-nav-icon"><i class="fa-solid fa-basket-shopping"></i></div>
+            <span class="pasr-bottom-nav-label">Apni Dukan</span>
+        </a>
+        <a href="/service" class="pasr-bottom-nav-item" data-route="services" id="bottomNavServices">
+            <div class="pasr-bottom-nav-icon"><i class="fa-solid fa-wrench"></i></div>
+            <span class="pasr-bottom-nav-label">Services</span>
+        </a>
+        <a href="/user" class="pasr-bottom-nav-item" data-route="profile" id="bottomNavProfile">
+            <div class="pasr-bottom-nav-icon"><i class="fa-solid fa-user"></i></div>
+            <span class="pasr-bottom-nav-label">Profile</span>
+        </a>
+    </div>
+</nav>
+
+<script>
+    (function() {
+        function updateActiveBottomNav() {
+            const path = window.location.pathname.toLowerCase();
+            const search = window.location.search.toLowerCase();
+            const items = document.querySelectorAll('.pasr-bottom-nav-item');
+            items.forEach(el => el.classList.remove('active'));
+
+            if (search.includes('cat=grocery') || path.includes('grocery')) {
+                document.getElementById('bottomNavApniDukan')?.classList.add('active');
+            } else if (path === '/' || path === '/home') {
+                document.getElementById('bottomNavHome')?.classList.add('active');
+            } else if (path.startsWith('/shops') || path.startsWith('/shop')) {
+                document.getElementById('bottomNavShops')?.classList.add('active');
+            } else if (path.startsWith('/service') || path.startsWith('/provider')) {
+                document.getElementById('bottomNavServices')?.classList.add('active');
+            } else if (path.startsWith('/user') || path.startsWith('/profile') || path.startsWith('/login') || path.startsWith('/signup')) {
+                document.getElementById('bottomNavProfile')?.classList.add('active');
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateActiveBottomNav);
+        } else {
+            updateActiveBottomNav();
+        }
+    })();
+</script>

@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "start": "cd backend && node app.js",
+    "dev": "npm run dev:backend",
     "dev:backend": "cd backend && node --watch app.js",
     "build:ui": "cd frontend && npm run build",
     "dev:ui": "cd frontend && npm run dev",

@@ -3,8 +3,15 @@ const router = express.Router();
 const paymentController = require("../controllers/payment");
 const { isLogedin } = require("../middeleware.js");
 
-// Verify payment initiated from the frontend widget
-router.post("/verify-payment", isLogedin, paymentController.verifyPayment);
+// Server-to-Server Webhook (Called by Razorpay on payment.captured / order.paid)
+router.post("/webhook", paymentController.handleWebhook);
+
+// Verify payment initiated from the frontend/mobile client
+router.post("/verify-payment", paymentController.verifyPayment);
+
+// Real-time order reconciliation endpoint
+router.post("/reconcile/:orderId", paymentController.reconcileOrder);
+
 // Payout and Commission Settlement
 router.post("/request-payout", isLogedin, paymentController.requestPayout);
 router.post("/pay-commission", isLogedin, paymentController.payCommission);

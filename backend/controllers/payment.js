@@ -71,6 +71,38 @@ module.exports.verifyPenaltyPayment = async (req, res, next) => {
     }
 };
 
+// Helper function to safely confirm and dispatch an order upon verified payment
+async function confirmAndShareOrder(order, paymentId, signature = null, req = null) {
+    if (order.paymentStatus === 'VERIFIED' && order.orderStatus !== 'PENDING_PAYMENT') {
+        return { alreadyVerified: true, order };
+    }
+
+    order.paymentStatus = 'VERIFIED';
+    order.orderStatus = 'ORDER_SHARED';
+    if (paymentId) order.razorpayPaymentId = paymentId;
+    if (signature) order.razorpaySignature = signature;
+
+    await order.save();
+
+    // Remove from session cart cache if available
+    if (req && req.session && req.session.cart) {
+        const cart = req.session.cart;
+        cart.items = cart.items.filter(item => String(item.shopId) !== String(order.shopId));
+        cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+        cart.shopId = cart.items.length === 0 ? null : cart.shopId;
+        req.session.save();
+    }
+
+    // Emit event bus signals to broadcast order to seller and delivery partners
+    orderBus.emit("PAYMENT_VERIFIED", order);
+    orderBus.emit("ORDER_CREATED", order);
+
+    console.log(`[Payment] Order ${order.orderId} successfully verified and shared with seller.`);
+    return { success: true, order };
+}
+
+module.exports.confirmAndShareOrder = confirmAndShareOrder;
+
 module.exports.verifyPayment = async (req, res, next) => {
     try {
         const {
@@ -80,72 +112,168 @@ module.exports.verifyPayment = async (req, res, next) => {
             orderId
         } = req.body;
 
-        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+        if (!razorpay_order_id || !razorpay_payment_id) {
             return res.status(400).json({ success: false, message: "Missing required payment details." });
         }
 
         // Verify the signature
         const secret = (process.env.RAZORPAY_KEY_SECRET || "").trim();
+        let isSignatureValid = false;
 
-        // Safety check: if secret is missing, fail fast with a clear error
-        if (!secret) {
-            console.error("[Payment] RAZORPAY_KEY_SECRET is not set in environment variables!");
-            return res.status(500).json({ success: false, message: "Payment configuration error. Please contact support." });
+        if (razorpay_signature && secret) {
+            const signatureInput = razorpay_order_id + "|" + razorpay_payment_id;
+            const generated_signature = crypto
+                .createHmac('sha256', secret)
+                .update(signatureInput)
+                .digest('hex');
+            isSignatureValid = (generated_signature === razorpay_signature);
         }
 
-        const signatureInput = razorpay_order_id + "|" + razorpay_payment_id;
-        const generated_signature = crypto
-            .createHmac('sha256', secret)
-            .update(signatureInput)
-            .digest('hex');
-
-        // Debug log — safe to keep in production (no full secret exposed)
-        console.log(`[Payment] Verifying: order=${razorpay_order_id}, payment=${razorpay_payment_id}`);
-        console.log(`[Payment] Secret key length=${secret.length}, ends_with=...${secret.slice(-4)}`);
-        console.log(`[Payment] Received sig (first 16): ${razorpay_signature.slice(0, 16)}...`);
-        console.log(`[Payment] Generated sig (first 16): ${generated_signature.slice(0, 16)}...`);
-        console.log(`[Payment] Signatures match: ${generated_signature === razorpay_signature}`);
-
-        if (generated_signature !== razorpay_signature) {
-            console.error(`[Payment] MISMATCH — Key ends with: ...${secret.slice(-4)}, full order: ${razorpay_order_id}`);
-            return res.status(400).json({ success: false, message: "Payment verification failed. Invalid signature." });
+        // Extra fallback: If signature check failed or was not provided, verify directly with Razorpay API
+        if (!isSignatureValid) {
+            try {
+                const Razorpay = require('razorpay');
+                const rzp = new Razorpay({
+                    key_id: process.env.RAZORPAY_KEY_ID,
+                    key_secret: process.env.RAZORPAY_KEY_SECRET
+                });
+                const payment = await rzp.payments.fetch(razorpay_payment_id);
+                if (payment && (payment.status === 'captured' || payment.captured === true) && payment.order_id === razorpay_order_id) {
+                    console.log(`[Payment] Verified via Razorpay API fallback: ${razorpay_payment_id}`);
+                    isSignatureValid = true;
+                }
+            } catch (apiErr) {
+                console.error("[Payment] Razorpay API verification error:", apiErr.message);
+            }
         }
 
-        if (!orderId) {
-             return res.status(400).json({ success: false, message: "Missing Order Database Mapping." });
+        if (!isSignatureValid) {
+            console.error(`[Payment] Verification failed for order=${razorpay_order_id}, payment=${razorpay_payment_id}`);
+            return res.status(400).json({ success: false, message: "Payment verification failed. Invalid signature or uncaptured payment." });
         }
 
-        const order = await Order.findById(orderId);
+        // Flexible Order Lookup (by Mongo _id, custom orderId string, or razorpayOrderId)
+        const mongoose = require("mongoose");
+        let order = null;
+        if (orderId && mongoose.Types.ObjectId.isValid(orderId)) {
+            order = await Order.findById(orderId);
+        }
+        if (!order && orderId) {
+            order = await Order.findOne({ orderId: orderId });
+        }
+        if (!order && razorpay_order_id) {
+            order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
+        }
+
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found in database." });
+            console.error(`[Payment] Order not found for orderId=${orderId}, razorpayOrderId=${razorpay_order_id}`);
+            return res.status(404).json({ success: false, message: "Order not found in database for this payment." });
         }
 
-        // Only update the existing database order
-        order.paymentStatus = 'VERIFIED';
-        order.orderStatus = 'ORDER_SHARED';
-        order.razorpayPaymentId = razorpay_payment_id;
-        order.razorpaySignature = razorpay_signature;
+        await confirmAndShareOrder(order, razorpay_payment_id, razorpay_signature, req);
 
-        await order.save();
-
-        // Remove from session cart cache so it resets cleanly
-        const cart = req.session.cart;
-        if (cart) {
-            cart.items = cart.items.filter(item => String(item.shopId) !== String(order.shopId));
-            cart.subtotal = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-            cart.shopId = cart.items.length === 0 ? null : cart.shopId;
-        }
-
-        // Ensure session save since we modified cart and pendingOrders
-        req.session.save(async () => {
-            orderBus.emit("PAYMENT_VERIFIED", order);
-            orderBus.emit("ORDER_CREATED", order); // Notify seller now that payment is confirmed
-            res.status(200).json({ success: true, message: "Payment verified successfully.", orderId: order.orderId });
-        });
+        res.status(200).json({ success: true, message: "Payment verified successfully.", orderId: order.orderId });
 
     } catch (error) {
         console.error("Payment Verification Error:", error);
         res.status(500).json({ success: false, message: "Internal server error during verification." });
+    }
+};
+
+// Razorpay Server-to-Server Webhook Handler
+module.exports.handleWebhook = async (req, res, next) => {
+    try {
+        const webhookSignature = req.headers['x-razorpay-signature'];
+        const webhookSecret = (process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET || "").trim();
+
+        if (webhookSignature && webhookSecret) {
+            const shasum = crypto.createHmac('sha256', webhookSecret);
+            shasum.update(JSON.stringify(req.body));
+            const digest = shasum.digest('hex');
+
+            if (digest !== webhookSignature) {
+                console.warn("[Razorpay Webhook] Webhook signature mismatch. Checking key secret...");
+                const shasum2 = crypto.createHmac('sha256', (process.env.RAZORPAY_KEY_SECRET || "").trim());
+                shasum2.update(JSON.stringify(req.body));
+                if (shasum2.digest('hex') !== webhookSignature) {
+                    console.error("[Razorpay Webhook] Invalid webhook signature rejected.");
+                    return res.status(400).json({ status: "invalid_signature" });
+                }
+            }
+        }
+
+        const event = req.body.event;
+        const payload = req.body.payload;
+
+        console.log(`[Razorpay Webhook] Event received: ${event}`);
+
+        if (event === 'payment.captured' || event === 'order.paid') {
+            const paymentEntity = payload.payment?.entity;
+            const orderEntity = payload.order?.entity;
+
+            const rzpOrderId = paymentEntity?.order_id || orderEntity?.id;
+            const rzpPaymentId = paymentEntity?.id;
+
+            if (rzpOrderId) {
+                const order = await Order.findOne({ razorpayOrderId: rzpOrderId });
+                if (order) {
+                    console.log(`[Razorpay Webhook] Auto-confirming order ${order.orderId} (${order._id})`);
+                    await confirmAndShareOrder(order, rzpPaymentId, null, req);
+                } else {
+                    console.log(`[Razorpay Webhook] Order with rzpOrderId ${rzpOrderId} not found in DB`);
+                }
+            }
+        }
+
+        return res.status(200).json({ status: "ok" });
+    } catch (err) {
+        console.error("[Razorpay Webhook Error]:", err);
+        return res.status(500).json({ status: "error", message: err.message });
+    }
+};
+
+// Reconcile an individual order directly with Razorpay API
+module.exports.reconcileOrder = async (req, res, next) => {
+    try {
+        const { orderId } = req.params;
+        const mongoose = require("mongoose");
+        let order = null;
+        if (mongoose.Types.ObjectId.isValid(orderId)) {
+            order = await Order.findById(orderId);
+        }
+        if (!order) {
+            order = await Order.findOne({ orderId: orderId });
+        }
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        if (order.paymentStatus === 'VERIFIED') {
+            return res.json({ success: true, verified: true, order });
+        }
+
+        if (!order.razorpayOrderId) {
+            return res.json({ success: false, message: "No Razorpay Order ID found on this order." });
+        }
+
+        const Razorpay = require('razorpay');
+        const rzp = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET
+        });
+
+        const payments = await rzp.orders.fetchPayments(order.razorpayOrderId);
+        const captured = payments.items?.find(p => p.status === 'captured' || p.captured === true);
+
+        if (captured) {
+            await confirmAndShareOrder(order, captured.id, null, req);
+            return res.json({ success: true, verified: true, message: "Payment verified and order placed successfully.", order });
+        }
+
+        return res.json({ success: false, verified: false, message: "Payment not captured on Razorpay." });
+    } catch (e) {
+        console.error("[Reconcile Order Error]:", e);
+        res.status(500).json({ success: false, message: e.message });
     }
 };
 

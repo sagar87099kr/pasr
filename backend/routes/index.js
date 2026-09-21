@@ -265,6 +265,7 @@ router.get("/action/whatsapp/:number", isLogedin, (req, res) => {
 router.get("/", (req, res) => {
     res.render("pages/reactHome.ejs", {
         containerClass: 'react-home-container',
+        hideNavbar: true,
         useMaps: false,
         useProfileCss: false,
         useInsideCateCss: false,
@@ -455,6 +456,16 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
 
 // Route to fetch items for the homepage
 router.get("/api/home/items", itemController.getHomeItems);
+
+// Dedicated PASR Store Dark Store API
+router.get("/api/pasr-store/items", itemController.getPasrStoreItems);
+router.post("/api/pasr-store/items", itemController.addPasrStoreItem);
+router.delete("/api/pasr-store/items/:id", itemController.deletePasrStoreItem);
+
+// Backward compatibility alias for /api/apna-store/items
+router.get("/api/apna-store/items", itemController.getPasrStoreItems);
+router.post("/api/apna-store/items", itemController.addPasrStoreItem);
+router.delete("/api/apna-store/items/:id", itemController.deletePasrStoreItem);
 
 // Route to fetch active advertisements
 router.get("/api/advertisements/active", wrapAsync(async (req, res) => {

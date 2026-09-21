@@ -29,22 +29,25 @@ const indexRouter = require("./routes/index.js");
 const localMarketRouter = require("./routes/localMarket.js");
 const kisanSabhaRouter = require("./routes/kisanSabha.js");
 
-// const dbUrl = "mongodb://127.0.0.1:27017/pasr";
-const dbUrl = process.env.ATLAS_DB_URL;
-if (!dbUrl) {
-  throw new Error("ATLAS_DB is missing in your .env file");
-}
+const dbUrl = process.env.ATLAS_DB_URL || "mongodb://127.0.0.1:27017/pasr";
 
-const clientPromise = mongoose.connect(dbUrl, { family: 4 })
-  .then(() => {
-    console.log("connected to databases");
-    return mongoose.connection.getClient();
-  })
-  .catch((err) => {
-    console.error("DATABASE CONNECTION ERROR:", err.message);
-    console.error("Check your ATLAS_DB_URL and IP whitelist settings.");
-    throw err; // Re-throw to prevent "undefined" being passed to MongoStore
-  });
+const clientPromise = (async () => {
+  try {
+    const conn = await mongoose.connect(dbUrl);
+    console.log("connected to databases (Atlas)");
+    return conn.connection.getClient();
+  } catch (err) {
+    console.warn("Atlas connection failed: " + err.message + ", trying local fallback...");
+    try {
+      const localConn = await mongoose.connect("mongodb://127.0.0.1:27017/pasr");
+      console.log("connected to databases (Local MongoDB)");
+      return localConn.connection.getClient();
+    } catch (localErr) {
+      console.error("Database connection error:", localErr.message);
+      throw localErr;
+    }
+  }
+})();
 
 const cookieParser = require("cookie-parser");
 
@@ -139,9 +142,9 @@ app.use(limiter);
 // We will apply it to sensitive POST routes.
 
 const store = MongoStore.create({
-  mongoUrl: dbUrl,
+  clientPromise,
   crypto: {
-    secret: process.env.SECRET, // encrypt session in DB
+    secret: process.env.SECRET || 'mysupersecretcode@87099', // encrypt session in DB
   },
   touchAfter: 7 * 24 * 3600, // reduce DB writes
 });
@@ -325,6 +328,7 @@ app.use("/api/fcm", require("./routes/fcm.js"));
 app.use("/api/payment", require("./routes/payment.js"));
 app.use("/api/bazaars", require("./routes/bazaar.js"));
 app.use("/api", require("./routes/api-partner.js"));
+app.use("/api/personalization", require("./routes/personalization.js"));
 app.use("/api/admin", require("./routes/adminApi.js"));
 app.use((req, res, next) => {
   next(new ExpressError(404, "Page not found!"));
@@ -352,4 +356,5 @@ require("./services/socketService")(io);
 // Initialize Services
 require("./services/notificationService");
 require("./utils/cronJobs");
+require("./services/paymentReconciler");
 

@@ -652,9 +652,39 @@ module.exports.getCustomerOrders = async (req, res, next) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Find if this user owns any shops
-        const ownedShops = await Shop.find({ owner: req.user._id }).select('_id');
-        const shopIds = ownedShops.map(s => s._id);
+        // Auto-reconcile any pending prepaid orders for this customer in real-time
+        try {
+            const pendingPrepaid = await Order.find({
+                customerId: req.user._id,
+                paymentType: 'PREPAID',
+                orderStatus: 'PENDING_PAYMENT',
+                razorpayOrderId: { $exists: true, $ne: null }
+            });
+
+            if (pendingPrepaid.length > 0 && process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+                const Razorpay = require('razorpay');
+                const { confirmAndShareOrder } = require('./payment');
+                const rzp = new Razorpay({
+                    key_id: process.env.RAZORPAY_KEY_ID,
+                    key_secret: process.env.RAZORPAY_KEY_SECRET
+                });
+
+                for (const pendingOrd of pendingPrepaid) {
+                    try {
+                        const payments = await rzp.orders.fetchPayments(pendingOrd.razorpayOrderId);
+                        const captured = payments.items?.find(p => p.status === 'captured' || p.captured === true);
+                        if (captured) {
+                            console.log(`[myOrders] Auto-reconciled captured order ${pendingOrd.orderId}`);
+                            await confirmAndShareOrder(pendingOrd, captured.id, null, req);
+                        }
+                    } catch (fetchErr) {
+                        console.error(`[myOrders] Reconcile error for ${pendingOrd.orderId}:`, fetchErr.message);
+                    }
+                }
+            }
+        } catch (recErr) {
+            console.error("[myOrders] Reconcile error:", recErr);
+        }
 
         const orders = await Order.find({
             customerId: req.user._id,

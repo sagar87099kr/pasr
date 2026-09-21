@@ -1,6 +1,7 @@
 const Item = require("../data/item");
 const Shop = require("../data/shops");
 const MasterProduct = require("../data/masterProduct");
+const Customer = require("../data/customers");
 const SHOP_CATEGORIES = require("../data/categories");
 
 module.exports.getHomeItems = async (req, res) => {
@@ -65,15 +66,23 @@ module.exports.getHomeItems = async (req, res) => {
             query.product = { $in: products.map(p => p._id) };
         }
 
-        if (shopCategory && shopCategory !== "All Shops") {
-            const categoryShops = await Shop.find({ category: new RegExp('^' + shopCategory + '$', 'i') }).select('_id');
+        if (shopCategory && shopCategory !== "All Shops" && shopCategory !== "For You" && shopCategory !== "All Products") {
+            const rawCategories = shopCategory.split(',').map(c => c.trim()).filter(Boolean);
+            const categoryRegexes = rawCategories.map(c => new RegExp('^' + c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i'));
+
+            const categoryShops = await Shop.find({
+                category: { $in: categoryRegexes },
+                verified: true,
+                isActive: true
+            }).select('_id');
             const categoryShopIds = categoryShops.map(s => s._id.toString());
-            
+
             if (query.shop && query.shop.$in) {
-                const intersection = query.shop.$in.filter(id => categoryShopIds.includes(id.toString()));
-                query.shop.$in = intersection;
+                const existingShopIds = query.shop.$in.map(id => id.toString());
+                const matchingShopIds = categoryShopIds.filter(id => existingShopIds.includes(id));
+                query.shop = { $in: matchingShopIds };
             } else {
-                query.shop = { $in: categoryShops.map(s => s._id) };
+                query.shop = { $in: categoryShopIds };
             }
         }
 
@@ -110,22 +119,111 @@ module.exports.getHomeItems = async (req, res) => {
             if (maxPrice) query.$expr.$and.push({ $lte: [computedPriceExpr, parseInt(maxPrice)] });
         }
 
-        let sortQuery = { createdAt: -1 };
+        let sortQuery = { discount: -1, createdAt: -1 };
         if (sort === 'discount_desc') {
             sortQuery = { discount: -1, createdAt: -1 };
         } else if (sort === 'price_asc' || sort === 'price_desc') {
             sortQuery = { price: sort === 'price_asc' ? 1 : -1 };
+        } else if (sort === 'newest') {
+            sortQuery = { createdAt: -1 };
         }
 
-        const items = await Item.find(query)
-            .populate({ path: "product", select: "name img category" })
-            .populate({ path: "shop", select: "shopName location category" })
-            .sort(sortQuery)
-            .skip(skipNum)
-            .limit(limitNum + 1); 
+        let items = [];
+        let hasMore = false;
 
-        const hasMore = items.length > limitNum;
-        if (hasMore) items.pop();
+        const isHomeFeed = (!shopCategory || shopCategory === "All Shops" || shopCategory === "For You" || shopCategory === "All Products") && !q && !category && !minPrice && !maxPrice && !minDiscount && pageNum === 1;
+
+        if (isHomeFeed) {
+            // 1. Fetch top discounted items across all shops (highest discount first)
+            const discountedItems = await Item.find({ ...query, discount: { $gt: 0 } })
+                .populate({ path: "product", select: "name img category" })
+                .populate({ path: "shop", select: "shopName location category bazaar" })
+                .sort({ discount: -1, createdAt: -1 })
+                .limit(60);
+
+            // 2. Fetch food category items (even if discount is 0) so Food segment is never empty
+            const foodShops = await Shop.find({
+                category: { $in: [/food/i, /restaurant/i, /dhaba/i, /bakery/i, /sweet/i, /cafe/i, /fast food/i, /dining/i] },
+                verified: true,
+                isActive: true
+            }).select('_id');
+            const foodShopIds = foodShops.map(s => s._id);
+
+            const foodItems = await Item.find({ 
+                isActive: true, 
+                quantity: { $gt: 0 },
+                shop: { $in: foodShopIds }
+            })
+                .populate({ path: "product", select: "name img category" })
+                .populate({ path: "shop", select: "shopName location category bazaar" })
+                .sort({ discount: -1, createdAt: -1 })
+                .limit(30);
+
+            // 3. Fetch Automobile items explicitly so Automobile segment is always populated
+            const autoShops = await Shop.find({
+                $or: [
+                    { category: { $in: [/auto/i, /garage/i, /bike/i, /motor/i, /cycle/i, /workshop/i, /lubricant/i] } },
+                    { shopName: { $in: [/auto/i, /garage/i, /bike/i, /motor/i, /cycle/i, /workshop/i, /lubricant/i] } }
+                ],
+                verified: true,
+                isActive: true
+            }).select('_id');
+            const autoShopIds = autoShops.map(s => s._id);
+
+            const autoItems = await Item.find({
+                isActive: true,
+                quantity: { $gt: 0 },
+                $or: [
+                    { shop: { $in: autoShopIds } },
+                    { itemCategory: { $in: [/parts/i, /lubricant/i, /oil/i, /auto/i, /bike/i, /car/i, /tyre/i, /tire/i] } }
+                ]
+            })
+                .populate({ path: "product", select: "name img category" })
+                .populate({ path: "shop", select: "shopName location category bazaar" })
+                .sort({ createdAt: -1 })
+                .limit(30);
+
+            // 4. Fetch regular items across all other active shops
+            const regularItems = await Item.find(query)
+                .populate({ path: "product", select: "name img category" })
+                .populate({ path: "shop", select: "shopName location category bazaar" })
+                .sort({ createdAt: -1 })
+                .limit(200);
+
+            const seenItemIds = new Set();
+            for (const it of [...discountedItems, ...foodItems, ...autoItems, ...regularItems]) {
+                const idStr = String(it._id);
+                if (!seenItemIds.has(idStr)) {
+                    seenItemIds.add(idStr);
+                    items.push(it);
+                }
+            }
+            hasMore = false;
+        } else {
+            items = await Item.find(query)
+                .populate({ path: "product", select: "name img category" })
+                .populate({ path: "shop", select: "shopName location category bazaar" })
+                .sort(sortQuery)
+                .skip(skipNum)
+                .limit(limitNum + 1); 
+
+            hasMore = items.length > limitNum;
+            if (hasMore) items.pop();
+        }
+
+        let orderCountMap = {};
+        try {
+            const Order = require("../data/order");
+            const orderCounts = await Order.aggregate([
+                { $unwind: "$items" },
+                { $group: { _id: "$items.itemId", totalBought: { $sum: { $ifNull: ["$items.quantity", 1] } } } }
+            ]);
+            for (const oc of orderCounts) {
+                if (oc._id) orderCountMap[String(oc._id)] = oc.totalBought;
+            }
+        } catch (e) {
+            console.error("Error aggregating order counts:", e);
+        }
 
         let allFormattedItems = items.map(item => {
             const productRef = item.product || {};
@@ -135,6 +233,9 @@ module.exports.getHomeItems = async (req, res) => {
             const actualPrice = item.price && item.discount > 0 
                 ? Math.round(item.price * (1 - item.discount / 100))
                 : item.price;
+
+            const itemIdStr = String(item._id);
+            const totalOrders = orderCountMap[itemIdStr] || 0;
 
             return {
                 id: item._id,
@@ -146,16 +247,63 @@ module.exports.getHomeItems = async (req, res) => {
                 actualPrice: actualPrice,
                 image: imgObj?.url || null,
                 category: productRef.category || item.itemCategory || "",
+                shopCategory: shopRef.category || "",
                 parentCategory: shopRef.category || "General",
                 location: shopRef.location || "Nearby",
+                salesCount: totalOrders,
+                orderCount: totalOrders,
                 createdAt: item.createdAt
             };
         });
+
+        if (shopCategory) {
+            const scLower = shopCategory.toLowerCase();
+            if (scLower.includes('grocery') && !scLower.includes('food') && !scLower.includes('restaurant')) {
+                const NON_GROCERY_RE = /\b(toy|bike|bicycle|bag|trolley|backpack|purse|frock|kurti|saree|shirt|pant|jeans|shoe|slipper|sandal|chasma|sunglass|spectacle|eraser|spinner|clock|watch|photo\s*frame|rakhi|party\s*popper|snow\s*spray|cosmetic|sringar|lipstick|bindi|earring|necklace|jewel|helmet|cloth\s*clip|engine\s*oil|mobil|castrol|fertilizer|pesticide|cement|pipe)\b/i;
+                allFormattedItems = allFormattedItems.filter(item => {
+                    const combined = `${item.productName} ${item.category} ${item.shopCategory}`.toLowerCase();
+                    return !NON_GROCERY_RE.test(combined);
+                });
+            } else if (scLower.includes('food') || scLower.includes('restaurant') || scLower.includes('dhaba') || scLower.includes('bakery') || scLower.includes('sweet')) {
+                const NON_FOOD_RE = /\b(bike|bicycle|tyre|tire|lubricant|engine\s*oil|castrol|mobil|clutch|brake\s*shoe|bearing|saree|kurti|shirt|pant|jeans|t-shirt|trouser|shoe|slipper|sandal|heel|boot|lipstick|kajal|makeup|cosmetic|shampoo|soap|detergent|surf|tablet|syrup|capsule|fertilizer|pesticide|seed|cement|paint|pipe|switch|wire|inverter|bulb)\b/i;
+                allFormattedItems = allFormattedItems.filter(item => {
+                    const combined = `${item.productName} ${item.category} ${item.shopCategory}`.toLowerCase();
+                    return !NON_FOOD_RE.test(combined);
+                });
+            } else if (scLower.includes('auto') || scLower.includes('garage') || scLower.includes('motor')) {
+                const NON_AUTO_RE = /\b(saree|kurti|shirt|pant|frock|dress|kurta|food|biryani|roll|pizza|burger|chowmein|momo|sweet|mithai|dosa|idli|fruits|apple|banana|mango|vegetables|potato|tomato|onion|atta|rice|dal|sugar|salt|mustard\s*oil|refined\s*oil|edible\s*oil|ghee|medicine|tablet|syrup|capsule)\b/i;
+                allFormattedItems = allFormattedItems.filter(item => {
+                    const combined = `${item.productName} ${item.category} ${item.shopCategory}`.toLowerCase();
+                    return !NON_AUTO_RE.test(combined);
+                });
+            } else if (scLower.includes('fashion') || scLower.includes('clothes') || scLower.includes('garments')) {
+                const NON_FASHION_RE = /\b(food|biryani|roll|pizza|burger|chowmein|momo|sweet|mithai|dosa|idli|fruits|vegetables|atta|rice|dal|oil|ghee|engine\s*oil|mobil|castrol|tyre|tube|helmet|medicine|tablet|syrup|capsule|fertilizer|pesticide|cement|paint|pipe|switch|wire)\b/i;
+                allFormattedItems = allFormattedItems.filter(item => {
+                    const combined = `${item.productName} ${item.category} ${item.shopCategory}`.toLowerCase();
+                    return !NON_FASHION_RE.test(combined);
+                });
+            } else if (scLower.includes('footwear') || scLower.includes('shoes')) {
+                const FOOTWEAR_RE = /\b(shoe|shoes|slipper|slippers|sandal|sandals|flip\s*flop|heels|flats|boots|sneaker|sneakers|mojari|jutti|crocs|chappal|socks)\b/i;
+                allFormattedItems = allFormattedItems.filter(item => {
+                    const combined = `${item.productName} ${item.category} ${item.shopCategory}`.toLowerCase();
+                    return FOOTWEAR_RE.test(combined);
+                });
+            } else if (scLower.includes('medical') || scLower.includes('pharmacy')) {
+                const NON_MED_RE = /\b(saree|kurti|shirt|pant|frock|shoe|slipper|bike|engine\s*oil|biryani|roll|pizza|burger|chowmein|momo|fruits|vegetables|fertilizer|pesticide|cement|pipe)\b/i;
+                allFormattedItems = allFormattedItems.filter(item => {
+                    const combined = `${item.productName} ${item.category} ${item.shopCategory}`.toLowerCase();
+                    return !NON_MED_RE.test(combined);
+                });
+            }
+        }
 
         if (sort === 'price_asc') {
             allFormattedItems.sort((a, b) => a.actualPrice - b.actualPrice);
         } else if (sort === 'price_desc') {
             allFormattedItems.sort((a, b) => b.actualPrice - a.actualPrice);
+        } else {
+            // Rank by salesCount (order history) descending, then discount descending
+            allFormattedItems.sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0) || (b.discount || 0) - (a.discount || 0));
         }
 
         const activeCategories = [...new Set(allFormattedItems.map(item => item.parentCategory))].filter(Boolean);
@@ -186,9 +334,317 @@ module.exports.getHomeItems = async (req, res) => {
             });
         });
 
-        res.status(200).json({ items: allFormattedItems, hasMore, categories: allSystemCategories, activeCategories });
+        // ── Time-Contextual Recommendations (Morning, Afternoon, Evening) ──
+        let timeContextualItems = [];
+        try {
+            // Calculate IST hour
+            const now = new Date();
+            const istHour = (now.getUTCHours() + 5 + Math.floor((now.getUTCMinutes() + 30) / 60)) % 24;
+
+            let timeFilter = {};
+            if (istHour >= 5 && istHour < 12) {
+                // Morning (5 AM - 12 PM): Strictly Fruits, Milk, Curd, Dahi, Butter, Bread
+                timeFilter = {
+                    $or: [
+                        { name: { $regex: 'fruit|apple|banana|mango|orange|grape|papaya|guava|pomegranate|anar|kela|seb|watermelon|pineapple|mosambi|milk|curd|dahi|butter|bread|toast|oats|tea|chai|coffee', $options: 'i' } },
+                        { itemCategory: { $regex: 'fruit|fruits|dairy|milk|curd|bread|breakfast', $options: 'i' } }
+                    ]
+                };
+            } else if (istHour >= 12 && istHour < 17) {
+                // Afternoon: Cakes, Ice cream, Cold drinks, Shakes, Pastries (Prefer JHUNU SANU, exclude Fuggi/Fuggy)
+                timeFilter = {
+                    $or: [
+                        { name: { $regex: 'cake|pastry|browni|ice cream|icecream|magnum|feast|cup|cadbury|cold drink|colddrink|coke|pepsi|sprite|thums up|frooti|maaza|juice|shake|cooler|lassi|kulfi|7up|red bull|hell|vanilla|butterscotch|chocolate', $options: 'i' } },
+                        { itemCategory: { $regex: 'cake|pastry|ice|bakery|beverage|cooler', $options: 'i' } }
+                    ]
+                };
+            } else {
+                // Evening: Biryani, Roll, Pizza, Burger, Fast Food, Momos, Snacks
+                timeFilter = {
+                    $or: [
+                        { name: { $regex: 'biryani|roll|pizza|burger|momo|noodle|chowmein|samosa|chaat|kachori|kebab|tikka|fast food|fried rice|fririce|snack', $options: 'i' } },
+                        { itemCategory: { $regex: 'chinese|fast food|non-veg|veg dishes|snacks', $options: 'i' } }
+                    ]
+                };
+            }
+
+            const rawTimeItems = await Item.find({ isActive: true, quantity: { $gt: 0 }, ...timeFilter })
+                .populate({ path: "product", select: "name img category" })
+                .populate({ path: "shop", select: "shopName location category" })
+                .limit(50);
+
+            let formattedTimeItems = rawTimeItems
+                .filter(item => {
+                    const shopName = (item.shop?.shopName || '').toLowerCase();
+                    const shopCat = (item.shop?.category || '').toLowerCase();
+                    const itemCat = (item.itemCategory || item.product?.category || '').toLowerCase();
+                    const name = (item.name || item.product?.name || '').toLowerCase();
+
+                    // Never include Fuggi/Fuggy
+                    if (shopName.includes('fuggi') || shopName.includes('fuggy')) return false;
+
+                    // Strictly exclude non-food categories
+                    const excludedCats = ['beauty', 'cosmetics', 'fashion', 'hardware', 'electronics', 'automobile', 'jewelers', 'footwear', 'printing', 'stationery', 'furniture'];
+                    if (excludedCats.some(ec => shopCat.includes(ec) || itemCat.includes(ec))) return false;
+
+                    // Exclude non-food keywords
+                    const excludedKeywords = ['lotion', 'oil', 'soap', 'shampoo', 'serum', 'facewash', 'face cream', 'iron', 'wire', 'pipe', 'shoe'];
+                    if (excludedKeywords.some(ek => name.includes(ek) && !name.includes('ice cream') && !name.includes('icecream') && !name.includes('cream swiss'))) return false;
+
+                    // MORNING STRICT RULES: NEVER allow rolls, chili, noodles, tikka, curries, fast foods, chocolates or spices
+                    if (istHour >= 5 && istHour < 12) {
+                        const morningExcluded = ['roll', 'rolls', 'chilly', 'chilli', 'chowmin', 'chowmein', 'noodle', 'noodles', 'tikka', 'kebab', 'kabab', 'biryani', 'fried rice', 'manchurian', 'burger', 'pizza', 'momo', 'curry', 'gravy', 'mirch', 'masala', 'powder', 'detergent', 'surf', 'maggi', 'biscuit', 'cookie', 'cookies', 'deggi', 'chocolate', 'silk', 'cadbury', 'naan', 'roti', 'vada', 'chaat', 'samosa', 'kachori', 'dal', 'oil', 'flour'];
+                        if (morningExcluded.some(me => name.includes(me) || itemCat.includes(me))) return false;
+
+                        // Only allow pure fruits, fresh milk, curd, dahi, butter, bread
+                        const morningAllowed = ['fruit', 'apple', 'banana', 'mango', 'orange', 'grape', 'papaya', 'guava', 'pomegranate', 'anar', 'kela', 'seb', 'watermelon', 'pineapple', 'mosambi', 'milk', 'curd', 'dahi', 'butter', 'bread', 'toast', 'oats', 'cornflakes', 'tea', 'chai', 'coffee'];
+                        const isAllowedMorning = morningAllowed.some(ma => name.includes(ma) || itemCat.includes(ma) || shopCat.includes('fruit') || shopCat.includes('dairy'));
+                        if (!isAllowedMorning) return false;
+                    }
+
+                    return true;
+                })
+                .map(item => {
+                    const productRef = item.product || {};
+                    const shopRef = item.shop || {};
+                    const imgObj = productRef.img?.url ? productRef.img : (item.img?.url ? item.img : null);
+                    const actualPrice = item.price && item.discount > 0 
+                        ? Math.round(item.price * (1 - item.discount / 100))
+                        : item.price;
+                    const itemIdStr = String(item._id);
+                    const totalOrders = orderCountMap[itemIdStr] || 0;
+
+                    return {
+                        id: item._id,
+                        productName: productRef.name || item.name || "Unknown Product",
+                        shopName: shopRef.shopName || "Unknown Shop",
+                        shopId: shopRef._id,
+                        price: item.price,
+                        discount: item.discount || 0,
+                        actualPrice: actualPrice,
+                        image: imgObj?.url || null,
+                        category: productRef.category || item.itemCategory || "",
+                        shopCategory: shopRef.category || "",
+                        parentCategory: shopRef.category || "General",
+                        location: shopRef.location || "Nearby",
+                        salesCount: totalOrders,
+                        orderCount: totalOrders,
+                        createdAt: item.createdAt
+                    };
+                });
+
+            // Priority sort:
+            if (istHour >= 5 && istHour < 12) {
+                // In morning: Prioritize Fruits first (apple, banana, fruits), then Milk & Curd/Dairy
+                formattedTimeItems.sort((a, b) => {
+                    const nameA = a.productName.toLowerCase();
+                    const nameB = b.productName.toLowerCase();
+                    const isFruitA = /fruit|apple|banana|mango|orange|grape|papaya|guava|seb|kela/i.test(nameA);
+                    const isFruitB = /fruit|apple|banana|mango|orange|grape|papaya|guava|seb|kela/i.test(nameB);
+                    if (isFruitA && !isFruitB) return -1;
+                    if (!isFruitA && isFruitB) return 1;
+                    return (b.salesCount || 0) - (a.salesCount || 0) || (b.discount || 0) - (a.discount || 0);
+                });
+            } else if (istHour >= 12 && istHour < 17) {
+                // In afternoon: Prioritize JHUNU SANU cakes/icecreams first
+                formattedTimeItems.sort((a, b) => {
+                    const isJhunuA = /jhunu|junnu|sanu/i.test(a.shopName);
+                    const isJhunuB = /jhunu|junnu|sanu/i.test(b.shopName);
+                    if (isJhunuA && !isJhunuB) return -1;
+                    if (!isJhunuA && isJhunuB) return 1;
+                    return (b.salesCount || 0) - (a.salesCount || 0) || (b.discount || 0) - (a.discount || 0);
+                });
+            } else {
+                formattedTimeItems.sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0) || (b.discount || 0) - (a.discount || 0));
+            }
+
+            timeContextualItems = formattedTimeItems.slice(0, 15);
+        } catch (err) {
+            console.error("Error generating timeContextualItems:", err);
+        }
+
+        res.status(200).json({ 
+            items: allFormattedItems, 
+            timeContextualItems,
+            hasMore, 
+            categories: allSystemCategories, 
+            activeCategories 
+        });
     } catch (error) {
         console.error("Error fetching homepage items:", error);
         res.status(500).json({ error: "Server Error" });
     }
 };
+
+module.exports.getPasrStoreItems = async (req, res) => {
+    try {
+        let { page, limit, subCategory, q, sort } = req.query;
+        const pageNum = parseInt(page) || 1;
+        const limitNum = parseInt(limit) || 10;
+        const skipNum = (pageNum - 1) * limitNum;
+
+        // 1. Locate or initialize PASR Store dark store shop
+        let pasrShop = await Shop.findOne({ $or: [{ shopName: /^PASR Store$/i }, { shopName: /^Apna Store$/i }, { isDarkStore: true }] });
+        if (!pasrShop) {
+            let adminUser = await Customer.findOne({ role: "admin" }) || await Customer.findOne();
+            if (!adminUser) {
+                adminUser = await Customer.create({ username: 9999999999, name: "PASR Store Admin" });
+            }
+            pasrShop = await Shop.create({
+                shopName: "PASR Store",
+                shopDescription: "Official PASR Store Dark Store • Direct Express Fulfillment",
+                category: "Grocery",
+                location: "PASR Store Dark Store Hub, Rajdhanwar",
+                geometry: { type: "Point", coordinates: [85.9868, 24.4124] },
+                shopImage: [{ url: "https://res.cloudinary.com/dkthfpcrb/image/upload/v1787841187/pasr_DEV/jbivkiaqv0ezyxn9kxhd.jpg", filename: "pasr_store_logo" }],
+                verified: true,
+                isActive: true,
+                isDarkStore: true,
+                owner: adminUser ? adminUser._id : null
+            });
+        } else if (pasrShop.shopName !== "PASR Store") {
+            pasrShop.shopName = "PASR Store";
+            await pasrShop.save();
+        }
+
+        const totalItems = await Item.countDocuments({ shop: pasrShop._id });
+
+        // Build query strictly scoped to PASR Store
+        let query = {
+            shop: pasrShop._id,
+            isActive: true,
+            quantity: { $gt: 0 }
+        };
+
+        if (subCategory && subCategory !== "All") {
+            const subCatRe = new RegExp(subCategory.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+            query.$or = [
+                { itemCategory: subCatRe },
+                { name: subCatRe },
+                { description: subCatRe }
+            ];
+        }
+
+        if (q) {
+            const qRe = new RegExp(q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+            query.$and = [
+                {
+                    $or: [
+                        { name: qRe },
+                        { itemCategory: qRe },
+                        { description: qRe }
+                    ]
+                }
+            ];
+        }
+
+        let sortQuery = { createdAt: -1 };
+        if (sort === 'price_asc') sortQuery = { price: 1 };
+        else if (sort === 'price_desc') sortQuery = { price: -1 };
+        else if (sort === 'discount_desc') sortQuery = { discount: -1, createdAt: -1 };
+
+        const items = await Item.find(query)
+            .populate({ path: "product", select: "name img category" })
+            .sort(sortQuery)
+            .skip(skipNum)
+            .limit(limitNum + 1);
+
+        const hasMore = items.length > limitNum;
+        if (hasMore) items.pop();
+
+        const formattedItems = items.map(item => {
+            const productRef = item.product || {};
+            const imgObj = item.img?.url ? item.img : (productRef.img?.url ? productRef.img : null);
+            const actualPrice = item.price && item.discount > 0 
+                ? Math.round(item.price * (1 - item.discount / 100))
+                : item.price;
+
+            return {
+                id: item._id,
+                _id: item._id,
+                productName: item.name || productRef.name || "PASR Store Product",
+                name: item.name || productRef.name || "PASR Store Product",
+                shopName: "PASR Store",
+                shopId: pasrShop._id,
+                price: item.price,
+                discount: item.discount || 0,
+                actualPrice: actualPrice,
+                image: imgObj?.url || null,
+                category: item.itemCategory || productRef.category || "Grocery",
+                unit: item.sizes && item.sizes.length > 0 ? item.sizes[0] : "",
+                isDarkStore: true,
+                salesCount: 10,
+                createdAt: item.createdAt
+            };
+        });
+
+        res.status(200).json({
+            success: true,
+            items: formattedItems,
+            hasMore,
+            totalCount: totalItems,
+            shop: {
+                id: pasrShop._id,
+                shopName: pasrShop.shopName,
+                location: pasrShop.location,
+                isDarkStore: true
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching PASR Store items:", error);
+        res.status(500).json({ success: false, message: "Error fetching PASR Store items", error: error.message });
+    }
+};
+
+module.exports.getApnaStoreItems = module.exports.getPasrStoreItems;
+
+module.exports.addPasrStoreItem = async (req, res) => {
+    try {
+        const { name, price, discount, itemCategory, description, quantity, imageUrl, unit, sizes } = req.body;
+        if (!name || !price) {
+            return res.status(400).json({ success: false, message: "Name and Price are required" });
+        }
+
+        let pasrShop = await Shop.findOne({ $or: [{ shopName: /^PASR Store$/i }, { shopName: /^Apna Store$/i }, { isDarkStore: true }] });
+        if (!pasrShop) {
+            return res.status(404).json({ success: false, message: "PASR Store shop not found" });
+        }
+
+        const newItem = await Item.create({
+            name,
+            price: parseFloat(price),
+            discount: parseInt(discount) || 0,
+            itemCategory: itemCategory || "Grocery",
+            description: description || "",
+            quantity: parseInt(quantity) || 50,
+            img: imageUrl ? { url: imageUrl } : undefined,
+            sizes: sizes || (unit ? [unit] : []),
+            shop: pasrShop._id,
+            isActive: true,
+            isDarkStore: true,
+            isVerified: true
+        });
+
+        res.status(201).json({ success: true, item: newItem, message: "Item listed in PASR Store successfully" });
+    } catch (error) {
+        console.error("Error adding PASR Store item:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+module.exports.addApnaStoreItem = module.exports.addPasrStoreItem;
+
+module.exports.deletePasrStoreItem = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await Item.findByIdAndDelete(id);
+        res.status(200).json({ success: true, message: "Item removed from PASR Store successfully" });
+    } catch (error) {
+        console.error("Error deleting PASR Store item:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+module.exports.deleteApnaStoreItem = module.exports.deletePasrStoreItem;
+
+

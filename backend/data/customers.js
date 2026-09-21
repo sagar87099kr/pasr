@@ -134,6 +134,32 @@ const customerSchema = new Schema({
   isPrepaidOnly: {
     type: Boolean,
     default: false
+  },
+  personalization: {
+    persona: {
+      type: String,
+      enum: ['GROCERY', 'SERVICES', 'KISAN', 'GENERAL'],
+      default: 'GENERAL'
+    },
+    categoryAffinities: {
+      type: Map,
+      of: Number,
+      default: {}
+    },
+    recentSearches: [{
+      query: { type: String, trim: true },
+      category: { type: String, trim: true },
+      timestamp: { type: Date, default: Date.now }
+    }],
+    recentlyViewed: [{
+      itemType: { type: String, enum: ['product', 'service', 'shop'], default: 'product' },
+      itemId: { type: Schema.Types.ObjectId },
+      title: { type: String },
+      price: { type: Number },
+      image: { type: String },
+      category: { type: String },
+      timestamp: { type: Date, default: Date.now }
+    }]
   }
 });
 
