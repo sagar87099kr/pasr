@@ -367,33 +367,78 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
 module.exports.getCartRecommendations = async (req, res, next) => {
     try {
         const { shopIds } = req.query;
-        if (!shopIds) {
-            return res.status(400).json({ success: false, message: "Missing shopIds" });
-        }
-
-        const shopIdArray = shopIds.split(",");
         const Item = require("../data/item");
 
         // Get current cart item IDs to exclude them from recommendations
         const currentCartItemIds = [];
         if (req.session.cart && req.session.cart.items) {
-            req.session.cart.items.forEach(item => currentCartItemIds.push(item.itemId.toString()));
+            req.session.cart.items.forEach(item => {
+                if (item.itemId) currentCartItemIds.push(item.itemId.toString());
+            });
         }
 
-        const recommendations = await Item.find({
-            owner: { $in: shopIdArray },
-            isAvailable: true,
+        let shopIdArray = [];
+        if (shopIds) {
+            shopIdArray = shopIds.split(",").map(id => id.trim()).filter(Boolean);
+        }
+
+        let query = {
+            isActive: true,
             quantity: { $gt: 0 },
             _id: { $nin: currentCartItemIds }
-        }).limit(15).lean();
+        };
 
-        // Optional: Randomize or sort by some popularity metric
-        const shuffled = recommendations.sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, 10);
+        if (shopIdArray.length > 0) {
+            query.$or = [
+                { shop: { $in: shopIdArray } },
+                { isAddon: true }
+            ];
+        }
+
+        const recommendations = await Item.find(query)
+            .populate('product')
+            .populate('shop', 'shopName location')
+            .limit(30)
+            .lean();
+
+        // Sort: isAddon: true first, then lowest price first (₹5 - ₹30 items prioritized)
+        recommendations.sort((a, b) => {
+            const isAddonA = a.isAddon ? 1 : 0;
+            const isAddonB = b.isAddon ? 1 : 0;
+            if (isAddonA !== isAddonB) return isAddonB - isAddonA;
+            return (a.price || 0) - (b.price || 0);
+        });
+
+        const selected = recommendations.slice(0, 12).map(item => {
+            const product = item.product || {};
+            const itemName = product.name || item.name || 'Essential Item';
+            const itemImg = (item.img && item.img.url) ? item.img.url : (product.img && product.img.url ? product.img.url : '');
+            const discount = item.discount || 0;
+            const price = item.price || 0;
+            const finalPrice = discount > 0 ? Math.round(price * (1 - discount / 100)) : price;
+            const unit = item.sizes && item.sizes.length > 0 ? item.sizes[0] : '';
+            const shopName = item.shop ? item.shop.shopName : 'Store';
+            const shopId = item.shop ? (item.shop._id ? item.shop._id.toString() : item.shop.toString()) : '';
+
+            return {
+                _id: item._id,
+                itemId: item._id,
+                name: itemName,
+                imgUrl: itemImg,
+                image: itemImg,
+                price: finalPrice,
+                originalPrice: price,
+                discount: discount,
+                unit: unit,
+                isAddon: !!item.isAddon,
+                shopId: shopId,
+                shopName: shopName
+            };
+        });
 
         res.status(200).json({ success: true, items: selected });
     } catch (error) {
-        console.error("Error fetching recommendations:", error);
+        console.error("Error fetching cart recommendations:", error);
         res.status(500).json({ success: false, message: "Server error" });
     }
 };

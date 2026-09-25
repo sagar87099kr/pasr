@@ -86,7 +86,7 @@
             <div class="pasr-bottom-nav-icon"><i class="fa-solid fa-store"></i></div>
             <span class="pasr-bottom-nav-label">Shops</span>
         </a>
-        <a href="/categories?cat=Grocery" class="pasr-bottom-nav-item" data-route="apnidukan" id="bottomNavApniDukan">
+        <a href="/apni-dukan" class="pasr-bottom-nav-item" data-route="apnidukan" id="bottomNavApniDukan">
             <div class="pasr-bottom-nav-icon"><i class="fa-solid fa-basket-shopping"></i></div>
             <span class="pasr-bottom-nav-label">Apni Dukan</span>
         </a>
@@ -109,7 +109,7 @@
             const items = document.querySelectorAll('.pasr-bottom-nav-item');
             items.forEach(el => el.classList.remove('active'));
 
-            if (search.includes('cat=grocery') || path.includes('grocery')) {
+            if (path.includes('apni-dukan') || path.includes('apnidukan') || path.includes('6ab128a35020dce6540c1cd9') || search.includes('cat=grocery') || (path.startsWith('/shops') && search.includes('grocery'))) {
                 document.getElementById('bottomNavApniDukan')?.classList.add('active');
             } else if (path === '/' || path === '/home') {
                 document.getElementById('bottomNavHome')?.classList.add('active');

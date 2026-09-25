@@ -916,16 +916,14 @@
             </div> <!-- End cart-main-content -->
             
             <!-- Recommendations Sidebar -->
-            <div class="cart-sidebar">
                 <div class="recommendations-container bg-light rounded-4 p-3" id="cart-recommendations" style="display: none;">
-                    <h5 class="fw-bold mb-3" style="font-size: 15px; color: #1e293b;"><i class="fa-solid fa-sparkles text-warning me-2"></i>You might also like</h5>
+                    <h5 class="fw-bold mb-3" style="font-size: 15px; color: #1e293b;"><i class="fa-solid fa-cart-plus text-success me-2"></i>Quick Add-on Essentials</h5>
                     <div id="rec-loading" class="text-center py-4">
                         <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                        <div class="small mt-2 text-muted">Finding recommendations...</div>
+                        <div class="small mt-2 text-muted">Finding quick add-ons...</div>
                     </div>
                     <div id="rec-list" class="d-flex flex-column gap-2"></div>
                 </div>
-            </div>
         </div>
 
         <script>
@@ -1731,20 +1729,19 @@
                             if (data.success && data.items && data.items.length > 0) {
                                 let html = '';
                                 data.items.forEach(item => {
-                                    const imgUrl = (item.itemImage && item.itemImage.url) ? item.itemImage.url : 'https://placehold.co/100x100?text=No+Image';
+                                    const imgUrl = item.image || item.imgUrl || ((item.itemImage && item.itemImage.url) ? item.itemImage.url : 'https://placehold.co/100x100?text=No+Image');
                                     const price = item.price;
+                                    const isAddonBadge = item.isAddon ? '<span class="badge bg-success-subtle text-success me-1" style="font-size: 9px; padding: 2px 5px;">Add-on</span>' : '';
                                     html += `
-                                        <div class="recommendation-card">
-                                            <img src="${imgUrl}" alt="${item.name}" class="rec-img">
-                                            <div class="rec-info">
-                                                <div class="fw-bold" style="font-size: 13px; color: #1e293b; line-height: 1.2; margin-bottom: 4px;">${item.name}</div>
-                                                <div style="font-size: 13px; color: #10b981; font-weight: 700;">₹${price}</div>
+                                        <div class="recommendation-card d-flex align-items-center justify-content-between p-2 mb-2 bg-white rounded-3 border">
+                                            <div class="d-flex align-items-center gap-2" style="min-width: 0; flex: 1;">
+                                                <img src="${imgUrl}" alt="${item.name}" class="rec-img rounded" style="width: 44px; height: 44px; object-fit: contain;">
+                                                <div class="rec-info" style="min-width: 0;">
+                                                    <div class="fw-bold text-truncate" style="font-size: 13px; color: #1e293b; line-height: 1.2;" title="${item.name}">${isAddonBadge}${item.name}</div>
+                                                    <div style="font-size: 13px; color: #0c831f; font-weight: 800;">₹${price} ${item.unit ? '<small class="text-muted fw-normal" style="font-size:10px;">(' + item.unit + ')</small>' : ''}</div>
+                                                </div>
                                             </div>
-                                            <form action="/api/cart/add" method="POST" style="margin:0;">
-                                                <input type="hidden" name="itemId" value="${item._id}">
-                                                <input type="hidden" name="quantity" value="1">
-                                                <button type="submit" class="rec-add-btn">Add</button>
-                                            </form>
+                                            <button type="button" class="rec-add-btn btn btn-sm btn-outline-success fw-bold px-3 ms-2" onclick="addRecItemToCart('${item._id}', '${(item.name || '').replace(/'/g, "\\'")}', ${price}, '${imgUrl}')">+ ADD</button>
                                         </div>
                                     `;
                                 });
@@ -1761,6 +1758,31 @@
                 }
 
             });
+
+            async function addRecItemToCart(itemId, itemName, price, itemImage) {
+                try {
+                    const res = await fetch('/api/cart/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            itemId: itemId,
+                            itemName: itemName,
+                            price: price,
+                            itemImage: itemImage,
+                            quantity: 1
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Could not add item to cart');
+                    }
+                } catch (e) {
+                    console.error("Error adding recommendation item:", e);
+                    window.location.reload();
+                }
+            }
             window.initMap = function () {
                 if (window.initPlacesForCart) window.initPlacesForCart();
             };

@@ -352,7 +352,9 @@ export default function HomePage({ isLoggedIn, initialLat, initialLon, initialBa
     const [searchQuery, setSearchQuery] = useState('');
     const [shops, setShops] = useState([]);
     const [currentItems, setCurrentItems] = useState([]);
+    const [timeContextualApiItems, setTimeContextualApiItems] = useState([]);
     const [discoveryData, setDiscoveryData] = useState(null);
+    const [greetingData, setGreetingData] = useState(null);
     const [buyAgainItems, setBuyAgainItems] = useState([]);
     const [recentItems, setRecentItems] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -393,8 +395,9 @@ export default function HomePage({ isLoggedIn, initialLat, initialLon, initialBa
                     setDiscoveryData(discRes.data);
                     if (discRes.data.shops) setShops(discRes.data.shops);
                 }
-                if (personRes.success && personRes.buyAgain) {
-                    setBuyAgainItems(personRes.buyAgain);
+                if (personRes.success) {
+                    if (personRes.buyAgain) setBuyAgainItems(personRes.buyAgain);
+                    if (personRes.greeting) setGreetingData(personRes.greeting);
                 }
                 if (bazaarRes.success && bazaarRes.bazaars) {
                     setBazaars(bazaarRes.bazaars);
@@ -442,6 +445,9 @@ export default function HomePage({ isLoggedIn, initialLat, initialLon, initialBa
                     setCurrentItems(prev => [...prev, ...data.items]);
                 } else {
                     setCurrentItems(data.items);
+                }
+                if (data.timeContextualItems && data.timeContextualItems.length > 0) {
+                    setTimeContextualApiItems(data.timeContextualItems);
                 }
                 setHasMore(data.hasMore || (data.items.length >= fetchLimit));
             } else if (!append) {
@@ -510,26 +516,176 @@ export default function HomePage({ isLoggedIn, initialLat, initialLon, initialBa
         return categoryScoped.filter(item => itemMatchesSubCategory(item, selectedSubCategory));
     }, [currentItems, selectedCategory, selectedSubCategory]);
 
-    // Time contextual items for For You
+    // Time contextual items for For You (Strictly matches Flutter App rules)
     const timeContextual = useMemo(() => {
         const hour = new Date().getHours();
-        let title = 'Evening Cravings & Snacks';
-        let subtitle = 'Biryani, rolls, pizzas & hot bites';
+        let title = 'Evening Fast Food & Cravings';
+        let subtitle = 'Biryani, rolls, pizzas, burgers & evening snacks';
         let emoji = '🍕';
+        let keywords = [
+            'biryani', 'roll', 'rolls', 'pizza', 'pizzas', 'burger', 'burgers',
+            'fast food', 'fastfood', 'momo', 'momos', 'noodle', 'noodles',
+            'chowmein', 'chow mein', 'samosa', 'chaat', 'kachori', 'kebab',
+            'kabab', 'tikka', 'wrap', 'fries', 'french fries', 'tandoori',
+            'chicken', 'paneer roll', 'egg roll', 'shawarma', 'pav bhaji',
+            'dosa', 'snack', 'snacks', 'namkeen', 'sweets', 'mithai'
+        ];
 
         if (hour >= 5 && hour < 12) {
             title = 'Morning Essentials & Fruits';
-            subtitle = 'Fresh fruits, milk, curd & healthy breakfast';
+            subtitle = 'Fresh fruits, milk, curd & healthy breakfast items';
             emoji = '🌅';
+            keywords = [
+                'fruit', 'fruits', 'apple', 'banana', 'seb', 'kela', 'orange', 'santra',
+                'mango', 'aam', 'grapes', 'angoor', 'papaya', 'guava', 'pomegranate',
+                'anar', 'watermelon', 'pineapple', 'mosambi', 'milk', 'doodh', 'curd',
+                'dahi', 'butter', 'bread', 'toast', 'oats', 'cornflakes', 'tea', 'chai', 'coffee'
+            ];
         } else if (hour >= 12 && hour < 17) {
-            title = 'Afternoon Coolers & Quick Bites';
-            subtitle = 'Cold drinks, ice creams & pastries';
+            title = 'Afternoon Coolers, Cakes & Drinks';
+            subtitle = 'Ice creams, cold drinks, cakes, pastries & quick bites';
             emoji = '🍧';
+            keywords = [
+                'ice cream', 'icecream', 'cold drink', 'colddrink', 'cake', 'pastry',
+                'pastries', 'coke', 'pepsi', 'sprite', 'thums up', 'frooti', 'maaza',
+                'fanta', 'limca', 'shake', 'beverage', 'juice', 'cooler', 'lassi',
+                'kulfi', 'cone', 'sundae', 'cornetto', 'snack', 'chips', 'lunch',
+                'rice', 'thali', 'curry', 'sandwich', 'burger', 'patty'
+            ];
         }
 
-        const items = currentItems.slice(0, 10);
+        const excludedKeywords = [
+            'lotion', 'oil', 'cream', 'soap', 'shampoo', 'serum', 'facewash',
+            'face wash', 'makeup', 'lipstick', 'nail', 'alta', 'kajal', 'cosmetics',
+            'perfume', 'deo', 'deodorant', 'shirt', 'pant', 'shoe', 'sandal',
+            'slipper', 'jewel', 'gold', 'silver', 'phone', 'mobile', 'charger',
+            'cable', 'iron', 'bulb', 'wire', 'pipe', 'hoe', 'cultivator',
+            'fertilizer', 'pesticide', 'seed', 'tool', 'motor', 'chair', 'table'
+        ];
+
+        const morningStrictExcluded = [
+            'dairy milk', 'kit kat', 'kitkat', 'candy', 'dosa', 'idli', 'chole', 'bhature', 'roll', 'rolls', 'chilly', 'chilli', 'chowmin', 'chowmein', 'noodle',
+            'noodles', 'tikka', 'kebab', 'kabab', 'biryani', 'fried rice', 'manchurian',
+            'burger', 'pizza', 'momo', 'curry', 'gravy', 'mirch', 'masala', 'mashala', 'powder',
+            'detergent', 'surf', 'maggi', 'biscuit', 'biskit', 'cookie', 'cookies', 'cake', 'pastry', 'chips', 'namkeen', 'paneer', 'chicken', 'mutton', 'egg', 'fish', 'deggi', 'chocolate', 'silk', 'cadbury', 'naan', 'nan', 'roti', 'paratha', 'scotch', 'vada', 'chaat', 'samosa', 'kachori', 'dal', 'oil', 'flour'
+        ];
+
+        const excludedCategories = [
+            'beauty', 'cosmetics', 'makeup', 'skincare', 'fashion', 'clothes',
+            'clothing', 'garments', 'wear', 'footwear', 'shoes', 'slippers',
+            'jewelers', 'jewelry', 'gold', 'silver', 'electronics', 'electrical',
+            'mobile', 'hardware', 'sanitary', 'tools', 'automobile', 'auto',
+            'garage', 'furniture', 'sports', 'gym', 'stationery', 'books',
+            'printing', 'salon', 'coaching', 'seeds & fertilizers'
+        ];
+
+        const isNonFoodItem = (item) => {
+            const nameLower = (item.productName || item.name || '').toLowerCase();
+            const catLower = (item.category || item.itemCategory || '').toLowerCase();
+            const shopCatLower = (item.shopCategory || '').toLowerCase();
+
+            if (excludedCategories.some(ec => catLower.includes(ec) || shopCatLower.includes(ec))) {
+                return true;
+            }
+
+            if (hour >= 5 && hour < 12) {
+                if (morningStrictExcluded.some(me => nameLower.includes(me) || catLower.includes(me))) {
+                    return true;
+                }
+            }
+
+            if (excludedKeywords.some(ek => {
+                if (nameLower.includes(ek)) {
+                    if (ek === 'cream' && (nameLower.includes('ice cream') || nameLower.includes('icecream') || nameLower.includes('biscuits') || nameLower.includes('cake'))) {
+                        return false;
+                    }
+                    return true;
+                }
+                return false;
+            })) {
+                return true;
+            }
+
+            return false;
+        };
+
+        const pool = [...(timeContextualApiItems || []), ...(currentItems || [])];
+        const seenIds = new Set();
+        const uniquePool = pool.filter(item => {
+            if (!item) return false;
+            const id = String(item.id || item._id || '');
+            if (!id || seenIds.has(id)) return false;
+            seenIds.add(id);
+            return true;
+        });
+
+        let matchedItems = uniquePool.filter(item => {
+            const shopName = (item.shopName || (item.shop && item.shop.shopName) || '').toLowerCase();
+            if (shopName.includes('fuggi') || shopName.includes('fuggy')) return false;
+            if (isNonFoodItem(item)) return false;
+
+            const nameLower = (item.productName || item.name || '').toLowerCase();
+            const catLower = (item.category || item.itemCategory || '').toLowerCase();
+            const shopCatLower = (item.shopCategory || '').toLowerCase();
+
+            if (hour >= 5 && hour < 12) {
+                const morningAllowed = [
+                    'fruit', 'apple', 'banana', 'seb', 'kela', 'orange', 'santra',
+                    'mango', 'aam', 'grape', 'grapes', 'angoor', 'papaya', 'guava',
+                    'pomegranate', 'anar', 'watermelon', 'pineapple', 'mosambi',
+                    'milk', 'doodh', 'curd', 'dahi', 'butter', 'bread', 'toast', 'oats', 'tea', 'chai', 'coffee'
+                ];
+                return morningAllowed.some(k => nameLower.includes(k) || catLower.includes(k) || shopCatLower.includes('fruit') || shopCatLower.includes('dairy'));
+            }
+
+            return keywords.some(k => nameLower.includes(k) || catLower.includes(k));
+        });
+
+        // Backfill for afternoon/evening if needed, never for morning
+        if (matchedItems.length < 10 && hour >= 12) {
+            const fallbackFoodItems = uniquePool.filter(item => {
+                const shopName = (item.shopName || (item.shop && item.shop.shopName) || '').toLowerCase();
+                if (shopName.includes('fuggi') || shopName.includes('fuggy')) return false;
+                if (isNonFoodItem(item)) return false;
+
+                const catLower = (item.category || item.itemCategory || '').toLowerCase();
+                const shopCatLower = (item.shopCategory || '').toLowerCase();
+                const validFoodCategories = ['food', 'restaurant', 'dhaba', 'bakery', 'sweet', 'grocery', 'vegetables', 'fruits', 'beverage', 'cafe'];
+                return validFoodCategories.some(fc => catLower.includes(fc) || shopCatLower.includes(fc));
+            });
+
+            for (const fb of fallbackFoodItems) {
+                const fbId = String(fb.id || fb._id || '');
+                if (!matchedItems.some(m => String(m.id || m._id || '') === fbId)) {
+                    matchedItems.push(fb);
+                }
+            }
+        }
+
+        matchedItems.sort((a, b) => {
+            const nameA = (a.productName || a.name || '').toLowerCase();
+            const nameB = (b.productName || b.name || '').toLowerCase();
+            const shopA = (a.shopName || (a.shop && a.shop.shopName) || '').toLowerCase();
+            const shopB = (b.shopName || (b.shop && b.shop.shopName) || '').toLowerCase();
+
+            if (hour >= 5 && hour < 12) {
+                const isFruitA = /fruit|apple|banana|mango|orange|grape|papaya|guava|seb|kela|anar|mosambi/.test(nameA);
+                const isFruitB = /fruit|apple|banana|mango|orange|grape|papaya|guava|seb|kela|anar|mosambi/.test(nameB);
+                if (isFruitA && !isFruitB) return -1;
+                if (!isFruitA && isFruitB) return 1;
+            } else if (hour >= 12 && hour < 17) {
+                const isJhunuA = shopA.includes('jhunu') || shopA.includes('junnu') || shopA.includes('sanu');
+                const isJhunuB = shopB.includes('jhunu') || shopB.includes('junnu') || shopB.includes('sanu');
+                if (isJhunuA && !isJhunuB) return -1;
+                if (!isJhunuA && isJhunuB) return 1;
+            }
+
+            return (b.salesCount || b.orderCount || 0) - (a.salesCount || a.orderCount || 0) || (b.discount || 0) - (a.discount || 0);
+        });
+
+        const items = matchedItems.slice(0, 15);
         return { title, subtitle, emoji, items };
-    }, [currentItems]);
+    }, [timeContextualApiItems, currentItems]);
 
     // Popular Picks for "For You"
     const forYouPicks = useMemo(() => {

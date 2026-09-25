@@ -26,7 +26,8 @@ module.exports.getHomeItems = async (req, res) => {
 
         let query = { 
             isActive: true, 
-            quantity: { $gt: 0 }
+            quantity: { $gt: 0 },
+            isAddon: { $ne: true }
         };
 
         let bazaarId = null;
@@ -341,37 +342,48 @@ module.exports.getHomeItems = async (req, res) => {
             const now = new Date();
             const istHour = (now.getUTCHours() + 5 + Math.floor((now.getUTCMinutes() + 30) / 60)) % 24;
 
-            let timeFilter = {};
+            let masterProductKeywords = [];
+            let masterProductCategories = [];
+
             if (istHour >= 5 && istHour < 12) {
                 // Morning (5 AM - 12 PM): Strictly Fruits, Milk, Curd, Dahi, Butter, Bread
-                timeFilter = {
-                    $or: [
-                        { name: { $regex: 'fruit|apple|banana|mango|orange|grape|papaya|guava|pomegranate|anar|kela|seb|watermelon|pineapple|mosambi|milk|curd|dahi|butter|bread|toast|oats|tea|chai|coffee', $options: 'i' } },
-                        { itemCategory: { $regex: 'fruit|fruits|dairy|milk|curd|bread|breakfast', $options: 'i' } }
-                    ]
-                };
+                masterProductKeywords = ['fruit', 'apple', 'banana', 'mango', 'orange', 'grape', 'papaya', 'guava', 'pomegranate', 'anar', 'kela', 'seb', 'watermelon', 'pineapple', 'mosambi', 'milk', 'curd', 'dahi', 'butter', 'bread', 'toast', 'oats', 'tea', 'chai', 'coffee'];
+                masterProductCategories = ['Fruit', 'Fruits', 'Dairy', 'Milk', 'Curd', 'Bread', 'Breakfast'];
             } else if (istHour >= 12 && istHour < 17) {
-                // Afternoon: Cakes, Ice cream, Cold drinks, Shakes, Pastries (Prefer JHUNU SANU, exclude Fuggi/Fuggy)
-                timeFilter = {
-                    $or: [
-                        { name: { $regex: 'cake|pastry|browni|ice cream|icecream|magnum|feast|cup|cadbury|cold drink|colddrink|coke|pepsi|sprite|thums up|frooti|maaza|juice|shake|cooler|lassi|kulfi|7up|red bull|hell|vanilla|butterscotch|chocolate', $options: 'i' } },
-                        { itemCategory: { $regex: 'cake|pastry|ice|bakery|beverage|cooler', $options: 'i' } }
-                    ]
-                };
+                // Afternoon: Cakes, Ice cream, Cold drinks, Shakes, Pastries, Sweets
+                masterProductKeywords = ['cake', 'pastry', 'browni', 'ice cream', 'icecream', 'magnum', 'feast', 'cup', 'cadbury', 'cold drink', 'colddrink', 'coke', 'pepsi', 'sprite', 'thums up', 'frooti', 'maaza', 'juice', 'shake', 'cooler', 'lassi', 'kulfi', '7up', 'red bull', 'hell', 'vanilla', 'butterscotch', 'chocolate', 'thali', 'rice', 'meal', 'lunch'];
+                masterProductCategories = ['Cake', 'Pastry', 'Ice Cream', 'Bakery', 'Beverage', 'Cooler', 'Food', 'Restaurant', 'Dhaba', 'Sweet Shop'];
             } else {
                 // Evening: Biryani, Roll, Pizza, Burger, Fast Food, Momos, Snacks
-                timeFilter = {
-                    $or: [
-                        { name: { $regex: 'biryani|roll|pizza|burger|momo|noodle|chowmein|samosa|chaat|kachori|kebab|tikka|fast food|fried rice|fririce|snack', $options: 'i' } },
-                        { itemCategory: { $regex: 'chinese|fast food|non-veg|veg dishes|snacks', $options: 'i' } }
-                    ]
-                };
+                masterProductKeywords = ['biryani', 'roll', 'pizza', 'burger', 'momo', 'noodle', 'chowmein', 'samosa', 'chaat', 'kachori', 'kebab', 'tikka', 'fast food', 'fried rice', 'snack', 'paneer', 'chicken'];
+                masterProductCategories = ['Chinese', 'Fast Food', 'Non-Veg', 'Veg Dishes', 'Snacks', 'Food', 'Restaurant'];
             }
 
-            const rawTimeItems = await Item.find({ isActive: true, quantity: { $gt: 0 }, ...timeFilter })
-                .populate({ path: "product", select: "name img category" })
-                .populate({ path: "shop", select: "shopName location category" })
-                .limit(50);
+            const regexPattern = masterProductKeywords.join('|');
+            const catPattern = masterProductCategories.join('|');
+
+            // Find matching MasterProducts
+            const matchedMasterProducts = await MasterProduct.find({
+                $or: [
+                    { name: { $regex: regexPattern, $options: 'i' } },
+                    { category: { $regex: catPattern, $options: 'i' } }
+                ]
+            }).select('_id').lean();
+
+            const matchedProductIds = matchedMasterProducts.map(p => p._id);
+
+            const rawTimeItems = await Item.find({
+                isActive: true,
+                quantity: { $gt: 0 },
+                $or: [
+                    { product: { $in: matchedProductIds } },
+                    { name: { $regex: regexPattern, $options: 'i' } },
+                    { itemCategory: { $regex: catPattern, $options: 'i' } }
+                ]
+            })
+            .populate({ path: "product", select: "name img category" })
+            .populate({ path: "shop", select: "shopName location category" })
+            .limit(100);
 
             let formattedTimeItems = rawTimeItems
                 .filter(item => {
@@ -391,9 +403,9 @@ module.exports.getHomeItems = async (req, res) => {
                     const excludedKeywords = ['lotion', 'oil', 'soap', 'shampoo', 'serum', 'facewash', 'face cream', 'iron', 'wire', 'pipe', 'shoe'];
                     if (excludedKeywords.some(ek => name.includes(ek) && !name.includes('ice cream') && !name.includes('icecream') && !name.includes('cream swiss'))) return false;
 
-                    // MORNING STRICT RULES: NEVER allow rolls, chili, noodles, tikka, curries, fast foods, chocolates or spices
+                    // MORNING STRICT RULES: NEVER allow rolls, chili, noodles, tikka, curries, fast foods, chocolates, biscuits, cakes, or spices
                     if (istHour >= 5 && istHour < 12) {
-                        const morningExcluded = ['roll', 'rolls', 'chilly', 'chilli', 'chowmin', 'chowmein', 'noodle', 'noodles', 'tikka', 'kebab', 'kabab', 'biryani', 'fried rice', 'manchurian', 'burger', 'pizza', 'momo', 'curry', 'gravy', 'mirch', 'masala', 'powder', 'detergent', 'surf', 'maggi', 'biscuit', 'cookie', 'cookies', 'deggi', 'chocolate', 'silk', 'cadbury', 'naan', 'roti', 'vada', 'chaat', 'samosa', 'kachori', 'dal', 'oil', 'flour'];
+                        const morningExcluded = ['dairy milk', 'kit kat', 'kitkat', 'candy', 'dosa', 'idli', 'chole', 'bhature', 'roll', 'rolls', 'chilly', 'chilli', 'chowmin', 'chowmein', 'noodle', 'noodles', 'tikka', 'kebab', 'kabab', 'biryani', 'fried rice', 'manchurian', 'burger', 'pizza', 'momo', 'curry', 'gravy', 'mirch', 'masala', 'mashala', 'powder', 'detergent', 'surf', 'maggi', 'biscuit', 'biskit', 'cookie', 'cookies', 'cake', 'pastry', 'chips', 'namkeen', 'paneer', 'chicken', 'mutton', 'egg', 'fish', 'deggi', 'chocolate', 'silk', 'cadbury', 'naan', 'nan', 'roti', 'paratha', 'scotch', 'vada', 'chaat', 'samosa', 'kachori', 'dal', 'oil', 'flour'];
                         if (morningExcluded.some(me => name.includes(me) || itemCat.includes(me))) return false;
 
                         // Only allow pure fruits, fresh milk, curd, dahi, butter, bread
@@ -483,33 +495,42 @@ module.exports.getPasrStoreItems = async (req, res) => {
         const limitNum = parseInt(limit) || 10;
         const skipNum = (pageNum - 1) * limitNum;
 
-        // 1. Locate or initialize PASR Store dark store shop
-        let pasrShop = await Shop.findOne({ $or: [{ shopName: /^PASR Store$/i }, { shopName: /^Apna Store$/i }, { isDarkStore: true }] });
+        // 1. Locate APNI DUKAN grocery store or registered dark store
+        let pasrShop = await Shop.findOne({
+            $or: [
+                { shopName: /^APNI DUKAN$/i },
+                { shopName: /APNI DUKAN/i },
+                { _id: "6ab128a35020dce6540c1cd9" },
+                { shopName: /^Apni Dukaan$/i },
+                { shopName: /^PASR Store$/i },
+                { isDarkStore: true }
+            ]
+        }).populate("owner", "username name phone");
+
         if (!pasrShop) {
             let adminUser = await Customer.findOne({ role: "admin" }) || await Customer.findOne();
             if (!adminUser) {
-                adminUser = await Customer.create({ username: 9999999999, name: "PASR Store Admin" });
+                adminUser = await Customer.create({ username: 9999999999, name: "Apni Dukan Admin" });
             }
             pasrShop = await Shop.create({
-                shopName: "PASR Store",
-                shopDescription: "Official PASR Store Dark Store • Direct Express Fulfillment",
+                shopName: "APNI DUKAN",
+                shopDescription: "Get all type of groceries in one place. Express Delivery & Direct Store Pickup.",
                 category: "Grocery",
-                location: "PASR Store Dark Store Hub, Rajdhanwar",
-                geometry: { type: "Point", coordinates: [85.9868, 24.4124] },
-                shopImage: [{ url: "https://res.cloudinary.com/dkthfpcrb/image/upload/v1787841187/pasr_DEV/jbivkiaqv0ezyxn9kxhd.jpg", filename: "pasr_store_logo" }],
+                location: "Near v2 mall raj Dhanwar",
+                geometry: { type: "Point", coordinates: [77.209, 28.6139] },
+                shopImage: [{ url: "https://res.cloudinary.com/dkthfpcrb/image/upload/v1789995171/pasr_DEV/exuoi9k6yaerioletdah.webp", filename: "apni_dukan_banner" }],
                 verified: true,
                 isActive: true,
                 isDarkStore: true,
+                openingTime: "06:15",
+                closingTime: "21:00",
                 owner: adminUser ? adminUser._id : null
             });
-        } else if (pasrShop.shopName !== "PASR Store") {
-            pasrShop.shopName = "PASR Store";
-            await pasrShop.save();
         }
 
         const totalItems = await Item.countDocuments({ shop: pasrShop._id });
 
-        // Build query strictly scoped to PASR Store
+        // Build query strictly scoped to this shop
         let query = {
             shop: pasrShop._id,
             isActive: true,
@@ -552,6 +573,7 @@ module.exports.getPasrStoreItems = async (req, res) => {
         const hasMore = items.length > limitNum;
         if (hasMore) items.pop();
 
+        const shopDisplayName = pasrShop.shopName || "APNI DUKAN";
         const formattedItems = items.map(item => {
             const productRef = item.product || {};
             const imgObj = item.img?.url ? item.img : (productRef.img?.url ? productRef.img : null);
@@ -562,9 +584,9 @@ module.exports.getPasrStoreItems = async (req, res) => {
             return {
                 id: item._id,
                 _id: item._id,
-                productName: item.name || productRef.name || "PASR Store Product",
-                name: item.name || productRef.name || "PASR Store Product",
-                shopName: "PASR Store",
+                productName: item.name || productRef.name || "Apni Dukan Product",
+                name: item.name || productRef.name || "Apni Dukan Product",
+                shopName: shopDisplayName,
                 shopId: pasrShop._id,
                 price: item.price,
                 discount: item.discount || 0,
@@ -585,18 +607,28 @@ module.exports.getPasrStoreItems = async (req, res) => {
             totalCount: totalItems,
             shop: {
                 id: pasrShop._id,
+                _id: pasrShop._id,
                 shopName: pasrShop.shopName,
-                location: pasrShop.location,
-                isDarkStore: true
+                shopDescription: pasrShop.shopDescription || "Get all type of groceries in one place.",
+                location: pasrShop.location || "Near v2 mall raj Dhanwar",
+                category: pasrShop.category || "Grocery",
+                openingTime: pasrShop.openingTime || "06:15",
+                closingTime: pasrShop.closingTime || "21:00",
+                shopImage: pasrShop.shopImage || [],
+                verified: pasrShop.verified !== false,
+                isActive: pasrShop.isActive !== false,
+                upiId: pasrShop.upiId || "",
+                ownerPhone: pasrShop.owner?.phone || pasrShop.owner?.username || ""
             }
         });
     } catch (error) {
-        console.error("Error fetching PASR Store items:", error);
-        res.status(500).json({ success: false, message: "Error fetching PASR Store items", error: error.message });
+        console.error("Error fetching Apni Dukan items:", error);
+        res.status(500).json({ success: false, message: "Error fetching Apni Dukan items", error: error.message });
     }
 };
 
 module.exports.getApnaStoreItems = module.exports.getPasrStoreItems;
+module.exports.getApniDukanItems = module.exports.getPasrStoreItems;
 
 module.exports.addPasrStoreItem = async (req, res) => {
     try {
@@ -605,9 +637,17 @@ module.exports.addPasrStoreItem = async (req, res) => {
             return res.status(400).json({ success: false, message: "Name and Price are required" });
         }
 
-        let pasrShop = await Shop.findOne({ $or: [{ shopName: /^PASR Store$/i }, { shopName: /^Apna Store$/i }, { isDarkStore: true }] });
+        let pasrShop = await Shop.findOne({
+            $or: [
+                { shopName: /^APNI DUKAN$/i },
+                { shopName: /APNI DUKAN/i },
+                { _id: "6ab128a35020dce6540c1cd9" },
+                { shopName: /^PASR Store$/i },
+                { isDarkStore: true }
+            ]
+        });
         if (!pasrShop) {
-            return res.status(404).json({ success: false, message: "PASR Store shop not found" });
+            return res.status(404).json({ success: false, message: "Apni Dukan shop not found" });
         }
 
         const newItem = await Item.create({
@@ -625,26 +665,28 @@ module.exports.addPasrStoreItem = async (req, res) => {
             isVerified: true
         });
 
-        res.status(201).json({ success: true, item: newItem, message: "Item listed in PASR Store successfully" });
+        res.status(201).json({ success: true, item: newItem, message: "Item listed in Apni Dukan successfully" });
     } catch (error) {
-        console.error("Error adding PASR Store item:", error);
-        res.status(500).json({ success: false, message: error.message });
+        console.error("Error adding Apni Dukan item:", error);
+        res.status(500).json({ success: false, message: "Error adding Apni Dukan item", error: error.message });
     }
 };
 
+module.exports.addApniDukanItem = module.exports.addPasrStoreItem;
 module.exports.addApnaStoreItem = module.exports.addPasrStoreItem;
 
 module.exports.deletePasrStoreItem = async (req, res) => {
     try {
         const { id } = req.params;
         await Item.findByIdAndDelete(id);
-        res.status(200).json({ success: true, message: "Item removed from PASR Store successfully" });
+        res.status(200).json({ success: true, message: "Item removed from Apni Dukan successfully" });
     } catch (error) {
-        console.error("Error deleting PASR Store item:", error);
+        console.error("Error deleting Apni Dukan item:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
+module.exports.deleteApniDukanItem = module.exports.deletePasrStoreItem;
 module.exports.deleteApnaStoreItem = module.exports.deletePasrStoreItem;
 
 

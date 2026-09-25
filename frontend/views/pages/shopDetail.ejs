@@ -1278,10 +1278,19 @@ const currentShopCats = getShopCategoryData(shop.category || '');
                                                     </div>
                                                     <% }) %>
                                                         <% } else { %>
-                                                            <p
-                                                                style="color:#6b7280; grid-column: 1 / -1; text-align:center;">
-                                                                No
-                                                                items added yet.</p>
+                                                            <div style="grid-column: 1 / -1; text-align:center; padding: 48px 20px; background: #ffffff; border-radius: 16px; border: 1px dashed #cbd5e1; margin: 12px 0;">
+                                                                <div style="width: 64px; height: 64px; border-radius: 50%; background: #dcfce7; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                                                                    <i class="fa-solid fa-basket-shopping" style="font-size: 28px; color: #16a34a;"></i>
+                                                                </div>
+                                                                <h4 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 8px;"><%= shop.shopName %> Products Coming Soon</h4>
+                                                                <p style="color: #64748b; font-size: 14px; max-width: 440px; margin: 0 auto 16px; line-height: 1.5;">
+                                                                    We are currently setting up our grocery & store inventory. New products will be listed here very soon!
+                                                                </p>
+                                                                <div style="display: inline-flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 700; color: #334155;">
+                                                                    <i class="fa-solid fa-bolt" style="color: #16a34a;"></i>
+                                                                    <span>Express Delivery & Store Pickup Active</span>
+                                                                </div>
+                                                            </div>
                                                             <% } %>
                                     </div>
 

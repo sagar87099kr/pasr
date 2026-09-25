@@ -519,12 +519,17 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             seo
         });
     } else {
-        // Customer View: Only items with quantity > 0 AND having an image
+        const isApniDukan = shop._id.toString() === '6ab128a35020dce6540c1cd9' || (shop.shopName && shop.shopName.toLowerCase().includes('apni dukan'));
+
+        // Customer View: Only items with quantity > 0 AND having an image.
+        // For Apni Dukan specifically: Hide low-value cart-only addons from the storefront catalog.
         const sellableItems = (shop.items || [])
             .map(item => item.toObject ? item.toObject() : item)
             .filter(item => {
                 const hasImg = (item.img && item.img.url) || (item.product && item.product.img && item.product.img.url);
-                return item.quantity > 0 && !!hasImg;
+                if (!hasImg || item.quantity <= 0) return false;
+                if (isApniDukan && item.isAddon === true) return false; // Exclusively for Apni Dukan
+                return true;
             })
             .sort((a, b) => a.price - b.price);
 
@@ -548,7 +553,9 @@ router.get("/shops/:id", wrapAsync(async (req, res) => {
             });
         }
 
-        res.render("pages/shopDetail.ejs", {
+        const templateToRender = isApniDukan ? "pages/apniDukanShop.ejs" : "pages/shopDetail.ejs";
+
+        res.render(templateToRender, {
             shop,
             displayItems: sellableItems,
             availableCategories,
@@ -786,7 +793,8 @@ router.put("/shops/:id/items/:itemId", isLogedin, isShopOwner, handleItemUpload,
         itemCategory,
         description,
         sizes,
-        discount
+        discount,
+        isAddon: req.body.item.isAddon === true || req.body.item.isAddon === 'true' || req.body.item.isAddon === 'on'
     };
 
     const item = await Item.findById(itemId);

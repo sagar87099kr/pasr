@@ -103,6 +103,11 @@ const itemSchema = new Schema({
         type: Boolean,
         default: false
     },
+    isAddon: {
+        type: Boolean,
+        default: false,
+        index: true
+    },
     reviews: [
         {
             type: Schema.Types.ObjectId,

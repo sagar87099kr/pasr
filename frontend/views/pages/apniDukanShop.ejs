@@ -1,0 +1,1186 @@
+<% layout("layoutes/boilerplate", { containerClass: 'qc-page-wrapper', hideNavbar: true }) %>
+<% containerClass = 'qc-page-wrapper'; hideNavbar = true; %>
+
+<!-- Apni Dukan Ultra-Modern Responsive Quick Commerce Storefront (Blinkit / Zepto Style) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    :root {
+        --qc-green: #0c831f;
+        --qc-green-dark: #075e15;
+        --qc-green-light: #e8f5e9;
+        --qc-green-subtle: #f0fdf4;
+        --qc-accent: #ff3269;
+        --qc-yellow: #ffc200;
+        --qc-bg: #f8fafc;
+        --qc-card-bg: #ffffff;
+        --qc-text-main: #0f172a;
+        --qc-text-muted: #64748b;
+        --qc-border: #e2e8f0;
+    }
+
+    /* Page Wrapper Override to prevent boilerplate .contain grid squishing */
+    .qc-page-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+        background-color: var(--qc-bg);
+    }
+
+    body {
+        background-color: var(--qc-bg) !important;
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: var(--qc-text-main);
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .qc-main-container {
+        width: 100%;
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 0 100px 0;
+    }
+
+    /* ── TOP HEADER / QUICK COMMERCE SEARCH BAR ── */
+    .qc-top-bar {
+        background: linear-gradient(135deg, #0c831f 0%, #085a15 100%);
+        color: #ffffff;
+        padding: 14px 16px 16px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 4px 20px rgba(12, 131, 31, 0.2);
+    }
+
+    .qc-top-inner {
+        max-width: 1240px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .qc-top-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .qc-top-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .qc-back-home-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        text-decoration: none;
+        flex-shrink: 0;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.2s ease;
+    }
+
+    .qc-back-home-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: #ffffff;
+        transform: translateX(-2px);
+    }
+
+    .qc-top-store-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .qc-eta-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(8px);
+        padding: 4px 10px;
+        border-radius: 99px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        width: fit-content;
+    }
+
+    .qc-pulsing-dot {
+        width: 7px;
+        height: 7px;
+        background-color: #4ade80;
+        border-radius: 50%;
+        box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+        animation: qcPulse 1.5s infinite;
+    }
+
+    @keyframes qcPulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+    }
+
+    .qc-store-name-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .qc-store-name {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: -0.3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0;
+        color: #ffffff;
+    }
+
+    .qc-location-sub {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .qc-top-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .qc-nav-link-btn {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 12px;
+        padding: 9px 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+    }
+
+    .qc-nav-link-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+    }
+
+    .qc-top-cart-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 12px;
+        padding: 9px 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+    }
+
+    .qc-top-cart-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: #ffffff;
+        transform: translateY(-1px);
+    }
+
+    .qc-search-box {
+        position: relative;
+        width: 100%;
+    }
+
+    .qc-search-box input {
+        width: 100%;
+        height: 44px;
+        padding: 0 16px 0 42px;
+        border-radius: 12px;
+        border: none;
+        background: #ffffff;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 500;
+        outline: none;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.2s ease;
+    }
+
+    .qc-search-box input:focus {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    }
+
+    .qc-search-box i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #0c831f;
+        font-size: 15px;
+    }
+
+    /* ── VALUE STRIP ── */
+    .qc-value-strip-wrapper {
+        background: #ffffff;
+        border-bottom: 1px solid var(--qc-border);
+    }
+
+    .qc-value-strip {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        gap: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #334155;
+        flex-wrap: wrap;
+    }
+
+    .qc-value-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .qc-value-item i {
+        color: var(--qc-green);
+        font-size: 13px;
+    }
+
+    /* ── LAYOUT STRUCTURE (DESKTOP 2-COLUMN, MOBILE STACKED) ── */
+    .qc-layout-body {
+        max-width: 1240px;
+        margin: 16px auto 0;
+        padding: 0 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* ── MOBILE HORIZONTAL CATEGORY STRIP ── */
+    .qc-category-mobile-strip {
+        display: block;
+        background: #ffffff;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--qc-border);
+    }
+
+    .qc-section-title {
+        font-size: 13px;
+        font-weight: 800;
+        color: #334155;
+        margin: 0 0 10px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .qc-cat-bubbles {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .qc-cat-bubbles::-webkit-scrollbar {
+        display: none;
+    }
+
+    .qc-bubble-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        min-width: 68px;
+        cursor: pointer;
+        text-align: center;
+        user-select: none;
+    }
+
+    .qc-bubble-circle {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        background: #f1f5f9;
+        border: 1.5px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        transition: all 0.15s ease;
+    }
+
+    .qc-bubble-item.active .qc-bubble-circle {
+        background: var(--qc-green-light);
+        border-color: var(--qc-green);
+        transform: scale(1.05);
+        box-shadow: 0 4px 10px rgba(12, 131, 31, 0.15);
+    }
+
+    .qc-bubble-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #475569;
+        line-height: 1.1;
+        max-width: 68px;
+    }
+
+    .qc-bubble-item.active .qc-bubble-label {
+        color: var(--qc-green);
+        font-weight: 800;
+    }
+
+    /* ── DESKTOP SIDEBAR CATEGORY (HIDDEN ON MOBILE) ── */
+    .qc-desktop-sidebar {
+        display: none;
+        width: 250px;
+        flex-shrink: 0;
+        background: #ffffff;
+        border: 1px solid var(--qc-border);
+        border-radius: 16px;
+        padding: 16px;
+        height: fit-content;
+        position: sticky;
+        top: 90px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    }
+
+    .qc-sidebar-header {
+        font-size: 14px;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--qc-border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .qc-sidebar-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .qc-sidebar-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #475569;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .qc-sidebar-item:hover {
+        background: #f1f5f9;
+        color: var(--qc-green);
+    }
+
+    .qc-sidebar-item.active {
+        background: var(--qc-green-light);
+        color: var(--qc-green);
+        font-weight: 800;
+    }
+
+    .qc-sidebar-icon {
+        font-size: 18px;
+        width: 24px;
+        text-align: center;
+    }
+
+    /* ── MAIN CONTENT AREA ── */
+    .qc-main-content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* ── STORE SHOWCASE / HERO CARD ── */
+    .qc-store-hero-box {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid var(--qc-border);
+        overflow: hidden;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+    }
+
+    .qc-store-banner-wrapper {
+        position: relative;
+        width: 100%;
+        height: 160px;
+        background: #dcfce7;
+    }
+
+    .qc-store-banner-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .qc-store-details-wrap {
+        padding: 16px 20px;
+    }
+
+    .qc-store-header-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .qc-store-badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #dcfce7;
+        color: #16a34a;
+        font-size: 11px;
+        font-weight: 800;
+        padding: 4px 12px;
+        border-radius: 99px;
+    }
+
+    .qc-store-main-title {
+        font-size: 22px;
+        font-weight: 800;
+        margin: 0;
+        color: #0f172a;
+    }
+
+    .qc-store-desc {
+        font-size: 13px;
+        color: #64748b;
+        margin: 0 0 14px 0;
+        line-height: 1.5;
+    }
+
+    .qc-store-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 16px;
+    }
+
+    .qc-meta-col small {
+        font-size: 10px;
+        color: #94a3b8;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .qc-meta-col span {
+        font-size: 12px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .qc-action-btns-row {
+        display: flex;
+        gap: 10px;
+    }
+
+    .qc-action-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 11px 16px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .qc-action-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .qc-action-btn.call {
+        background: #f0fdf4;
+        color: #16a34a;
+        border: 1px solid #bbf7d0;
+    }
+
+    .qc-action-btn.whatsapp {
+        background: #25d366;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
+    }
+
+    /* ── PRODUCTS SECTION ── */
+    .qc-products-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .qc-products-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .qc-products-title {
+        font-size: 16px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+    }
+
+    .qc-product-count-badge {
+        font-size: 12px;
+        font-weight: 700;
+        color: #64748b;
+        background: #f1f5f9;
+        padding: 3px 10px;
+        border-radius: 99px;
+    }
+
+    /* ── PRODUCT GRID (MOBILE 2-COLUMNS, DESKTOP 3/4-COLUMNS) ── */
+    .qc-product-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .qc-product-card {
+        background: #ffffff;
+        border-radius: 14px;
+        border: 1px solid var(--qc-border);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .qc-product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .qc-product-img-box {
+        width: 100%;
+        height: 120px;
+        background: #f8fafc;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        margin-bottom: 10px;
+        position: relative;
+    }
+
+    .qc-product-img-box img {
+        max-width: 85%;
+        max-height: 85%;
+        object-fit: contain;
+        transition: transform 0.2s ease;
+    }
+
+    .qc-product-card:hover .qc-product-img-box img {
+        transform: scale(1.06);
+    }
+
+    .qc-discount-tag {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        background: #0c831f;
+        color: #ffffff;
+        font-size: 9px;
+        font-weight: 800;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    .qc-item-unit {
+        font-size: 11px;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    .qc-item-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.3;
+        margin: 3px 0 8px 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        height: 34px;
+    }
+
+    .qc-card-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 6px;
+    }
+
+    .qc-price-block {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .qc-price-val {
+        font-size: 15px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .qc-mrp-val {
+        font-size: 11px;
+        color: #94a3b8;
+        text-decoration: line-through;
+    }
+
+    .qc-add-cart-btn {
+        background: #e8f5e9;
+        color: #0c831f;
+        border: 1px solid #0c831f;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 6px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .qc-add-cart-btn:hover {
+        background: #0c831f;
+        color: #ffffff;
+    }
+
+    .qc-empty-notice {
+        background: #ffffff;
+        border: 1px dashed var(--qc-border);
+        border-radius: 16px;
+        padding: 36px 20px;
+        text-align: center;
+        color: #64748b;
+    }
+
+    .qc-empty-notice i {
+        font-size: 40px;
+        color: #94a3b8;
+        margin-bottom: 12px;
+    }
+
+    /* ── FLOATING CART BAR (ABOVE BOTTOM NAV ON MOBILE) ── */
+    .qc-floating-cart-bar {
+        position: fixed;
+        bottom: 76px;
+        left: 16px;
+        right: 16px;
+        max-width: 500px;
+        margin: 0 auto;
+        background: #0c831f;
+        color: #ffffff;
+        border-radius: 14px;
+        padding: 12px 18px;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 8px 24px rgba(12, 131, 31, 0.45);
+        z-index: 1010;
+        font-weight: 700;
+        font-size: 14px;
+        animation: qcSlideUp 0.3s ease;
+    }
+
+    @keyframes qcSlideUp {
+        from { transform: translateY(100px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .qc-floating-cart-bar a {
+        color: #ffffff;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.22);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 800;
+        transition: background 0.15s ease;
+    }
+
+    .qc-floating-cart-bar a:hover {
+        background: rgba(255, 255, 255, 0.35);
+    }
+
+    /* ── DESKTOP RESPONSIVE BREAKPOINTS (>= 992px) ── */
+    @media (min-width: 992px) {
+        .qc-top-inner {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .qc-top-left {
+            gap: 16px;
+        }
+
+        .qc-search-box {
+            max-width: 440px;
+        }
+
+        .qc-layout-body {
+            flex-direction: row;
+            align-items: flex-start;
+            margin-top: 24px;
+            gap: 24px;
+        }
+
+        .qc-category-mobile-strip {
+            display: none;
+        }
+
+        .qc-desktop-sidebar {
+            display: block;
+        }
+
+        .qc-store-banner-wrapper {
+            height: 200px;
+        }
+
+        .qc-product-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .qc-product-img-box {
+            height: 140px;
+        }
+    }
+
+    @media (min-width: 1200px) {
+        .qc-product-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+        }
+    }
+</style>
+
+<div class="qc-main-container">
+    <!-- Standalone Quick Commerce Header (Upper Navbar Removed for Pure Clean Look) -->
+    <header class="qc-top-bar">
+        <div class="qc-top-inner">
+            <div class="qc-top-header">
+                <div class="qc-top-left">
+                    <a href="/" class="qc-back-home-btn" title="Back to Home / All Shops">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </a>
+                    <div class="qc-top-store-meta">
+                        <div class="qc-eta-badge">
+                            <div class="qc-pulsing-dot"></div>
+                            <span>10-15 MINS DELIVERY</span>
+                        </div>
+                        <div class="qc-store-name-row">
+                            <h1 class="qc-store-name"><%= shop.shopName || 'APNI DUKAN' %></h1>
+                            <i class="fa-solid fa-circle-check" style="color: #4ade80; font-size: 15px;" title="Verified Store"></i>
+                        </div>
+                        <div class="qc-location-sub">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span><%= shop.location || 'Near v2 mall raj Dhanwar' %></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qc-top-right">
+                    <a href="/" class="qc-nav-link-btn hidden md:flex" title="Home">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Home</span>
+                    </a>
+                    <a href="/cart" class="qc-top-cart-btn">
+                        <i class="fa-solid fa-basket-shopping"></i>
+                        <span>Cart</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Search Input -->
+            <div class="qc-search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="qcItemSearch" placeholder="Search in Apni Dukan (Atta, Oil, Ghee, Spices)..." oninput="qcFilterItems()">
+            </div>
+        </div>
+    </header>
+
+    <!-- Value Proposition Strip -->
+    <div class="qc-value-strip-wrapper">
+        <div class="qc-value-strip">
+            <div class="qc-value-item"><i class="fa-solid fa-bolt"></i> 15-Min Express Dispatch</div>
+            <div class="qc-value-item"><i class="fa-solid fa-shield-halved"></i> 100% Quality Guaranteed</div>
+            <div class="qc-value-item"><i class="fa-solid fa-tags"></i> Wholesale Prices</div>
+            <div class="qc-value-item"><i class="fa-solid fa-truck-fast"></i> Quick Home Delivery</div>
+        </div>
+    </div>
+
+    <!-- Main Layout Container (2 Columns on Desktop) -->
+    <div class="qc-layout-body">
+        <!-- Desktop Category Sidebar (Visible on screens >= 992px) -->
+        <aside class="qc-desktop-sidebar">
+            <div class="qc-sidebar-header">
+                <i class="fa-solid fa-layer-group" style="color: var(--qc-green);"></i>
+                <span>Categories</span>
+            </div>
+            <div class="qc-sidebar-list">
+                <div class="qc-sidebar-item active" onclick="qcSelectCat('All', this)">
+                    <span class="qc-sidebar-icon">🛒</span>
+                    <span>All Items</span>
+                </div>
+                <div class="qc-sidebar-item" onclick="qcSelectCat('Atta & Rice', this)">
+                    <span class="qc-sidebar-icon">🌾</span>
+                    <span>Atta & Rice</span>
+                </div>
+                <div class="qc-sidebar-item" onclick="qcSelectCat('Oil & Ghee', this)">
+                    <span class="qc-sidebar-icon">🛢️</span>
+                    <span>Oil & Ghee</span>
+                </div>
+                <div class="qc-sidebar-item" onclick="qcSelectCat('Dal & Pulses', this)">
+                    <span class="qc-sidebar-icon">🥣</span>
+                    <span>Dal & Pulses</span>
+                </div>
+                <div class="qc-sidebar-item" onclick="qcSelectCat('Spices & Salt', this)">
+                    <span class="qc-sidebar-icon">🧂</span>
+                    <span>Spices & Masala</span>
+                </div>
+                <div class="qc-sidebar-item" onclick="qcSelectCat('Dairy & Bakery', this)">
+                    <span class="qc-sidebar-icon">🥛</span>
+                    <span>Dairy & Milk</span>
+                </div>
+                <div class="qc-sidebar-item" onclick="qcSelectCat('Vegetables & Fruits', this)">
+                    <span class="qc-sidebar-icon">🥦</span>
+                    <span>Vegetables</span>
+                </div>
+                <div class="qc-sidebar-item" onclick="qcSelectCat('Snacks & Biscuits', this)">
+                    <span class="qc-sidebar-icon">🍪</span>
+                    <span>Snacks & Biscuits</span>
+                </div>
+                <div class="qc-sidebar-item" onclick="qcSelectCat('Tea & Drinks', this)">
+                    <span class="qc-sidebar-icon">☕</span>
+                    <span>Tea & Cold Drinks</span>
+                </div>
+                <div class="qc-sidebar-item" onclick="qcSelectCat('Cleaning & Household', this)">
+                    <span class="qc-sidebar-icon">🧼</span>
+                    <span>Cleaning & Home</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Column -->
+        <main class="qc-main-content">
+            <!-- Mobile Horizontal Category Bubbles (Visible on screens < 992px) -->
+            <div class="qc-category-mobile-strip">
+                <div class="qc-section-title">Shop by Category</div>
+                <div class="qc-cat-bubbles">
+                    <div class="qc-bubble-item active" onclick="qcSelectCat('All', this)">
+                        <div class="qc-bubble-circle">🛒</div>
+                        <div class="qc-bubble-label">All Items</div>
+                    </div>
+                    <div class="qc-bubble-item" onclick="qcSelectCat('Atta & Rice', this)">
+                        <div class="qc-bubble-circle">🌾</div>
+                        <div class="qc-bubble-label">Atta & Rice</div>
+                    </div>
+                    <div class="qc-bubble-item" onclick="qcSelectCat('Oil & Ghee', this)">
+                        <div class="qc-bubble-circle">🛢️</div>
+                        <div class="qc-bubble-label">Oil & Ghee</div>
+                    </div>
+                    <div class="qc-bubble-item" onclick="qcSelectCat('Dal & Pulses', this)">
+                        <div class="qc-bubble-circle">🥣</div>
+                        <div class="qc-bubble-label">Dal & Pulses</div>
+                    </div>
+                    <div class="qc-bubble-item" onclick="qcSelectCat('Spices & Salt', this)">
+                        <div class="qc-bubble-circle">🧂</div>
+                        <div class="qc-bubble-label">Spices</div>
+                    </div>
+                    <div class="qc-bubble-item" onclick="qcSelectCat('Dairy & Bakery', this)">
+                        <div class="qc-bubble-circle">🥛</div>
+                        <div class="qc-bubble-label">Dairy</div>
+                    </div>
+                    <div class="qc-bubble-item" onclick="qcSelectCat('Vegetables & Fruits', this)">
+                        <div class="qc-bubble-circle">🥦</div>
+                        <div class="qc-bubble-label">Vegetables</div>
+                    </div>
+                    <div class="qc-bubble-item" onclick="qcSelectCat('Snacks & Biscuits', this)">
+                        <div class="qc-bubble-circle">🍪</div>
+                        <div class="qc-bubble-label">Snacks</div>
+                    </div>
+                    <div class="qc-bubble-item" onclick="qcSelectCat('Tea & Drinks', this)">
+                        <div class="qc-bubble-circle">☕</div>
+                        <div class="qc-bubble-label">Tea & Drinks</div>
+                    </div>
+                    <div class="qc-bubble-item" onclick="qcSelectCat('Cleaning & Household', this)">
+                        <div class="qc-bubble-circle">🧼</div>
+                        <div class="qc-bubble-label">Cleaning</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Store Showcase / Info Card -->
+            <div class="qc-store-hero-box">
+                <% if (shop.shopImage && shop.shopImage.length > 0) { %>
+                    <div class="qc-store-banner-wrapper">
+                        <img src="<%= shop.shopImage[0].url %>" alt="<%= shop.shopName %>" class="qc-store-banner-img">
+                    </div>
+                <% } %>
+                <div class="qc-store-details-wrap">
+                    <div class="qc-store-header-row">
+                        <div class="qc-store-badge-pill">
+                            <i class="fa-solid fa-basket-shopping"></i> Official Grocery Store
+                        </div>
+                        <div class="text-xs font-semibold text-slate-500">
+                            <i class="fa-solid fa-clock text-green-600"></i> Open: <%= shop.openingTime || '06:15' %> - <%= shop.closingTime || '21:00' %>
+                        </div>
+                    </div>
+                    <h2 class="qc-store-main-title"><%= shop.shopName || 'Apni Dukan' %></h2>
+                    <p class="qc-store-desc"><%= shop.shopDescription || 'Get all type of groceries in one place. Express Delivery & Store Pickup available at wholesale rates.' %></p>
+
+                    <div class="qc-store-meta-grid">
+                        <div class="qc-meta-col">
+                            <small><i class="fa-solid fa-location-dot"></i> LOCATION</small>
+                            <span><%= shop.location || 'Near v2 mall raj Dhanwar' %></span>
+                        </div>
+                        <div class="qc-meta-col">
+                            <small><i class="fa-solid fa-truck-fast"></i> DELIVERY</small>
+                            <span>10-15 Min Express Delivery</span>
+                        </div>
+                        <div class="qc-meta-col">
+                            <small><i class="fa-solid fa-shield-halved"></i> QUALITY</small>
+                            <span>100% Fresh & Authentic</span>
+                        </div>
+                    </div>
+
+                    <% if (shop.owner && (shop.owner.phone || shop.owner.username)) { %>
+                        <% const phone = shop.owner.phone || shop.owner.username; %>
+                        <div class="qc-action-btns-row">
+                            <a href="tel:<%= phone %>" class="qc-action-btn call">
+                                <i class="fa-solid fa-phone"></i> Call Store
+                            </a>
+                            <a href="https://wa.me/91<%= phone %>?text=Hello%20Apni%20Dukan,%20I%20want%20to%20order%20grocery%20items." target="_blank" class="qc-action-btn whatsapp">
+                                <i class="fa-brands fa-whatsapp"></i> WhatsApp Order
+                            </a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Products Section -->
+            <div class="qc-products-container">
+                <div class="qc-products-header">
+                    <h3 class="qc-products-title" id="qcCategoryTitle">All Products</h3>
+                    <span class="qc-product-count-badge" id="qcProductCount"><%= typeof displayItems !== 'undefined' ? displayItems.length : 0 %> items</span>
+                </div>
+
+                <% if (typeof displayItems !== 'undefined' && displayItems.length > 0) { %>
+                    <div class="qc-product-grid" id="qcItemsGrid">
+                        <% displayItems.forEach(item => { %>
+                            <% 
+                                const product = item.product || item; 
+                                const itemName = product.name || item.name || 'Product';
+                                const itemImg = (product.img && product.img.url) ? product.img.url : (item.img && item.img.url ? item.img.url : '');
+                                const itemCat = product.category || item.itemCategory || 'Grocery';
+                                const price = item.price || 0;
+                                const discount = item.discount || 0;
+                                const actualPrice = discount > 0 ? Math.round(price * (1 - discount / 100)) : price;
+                                const unit = item.sizes && item.sizes.length > 0 ? item.sizes[0] : '';
+                            %>
+                            <div class="qc-product-card qc-item-card" data-category="<%= itemCat %>" data-name="<%= itemName.toLowerCase() %>">
+                                <div>
+                                    <div class="qc-product-img-box">
+                                        <% if (itemImg) { %>
+                                            <img src="<%= typeof optimizeImage === 'function' ? optimizeImage(itemImg, 300) : itemImg %>" alt="<%= itemName %>" loading="lazy">
+                                        <% } else { %>
+                                            <i class="fa-solid fa-basket-shopping" style="font-size: 32px; color: #cbd5e1;"></i>
+                                        <% } %>
+                                        <% if (discount > 0) { %>
+                                            <span class="qc-discount-tag"><%= discount %>% OFF</span>
+                                        <% } %>
+                                    </div>
+                                    <% if (unit) { %>
+                                        <div class="qc-item-unit"><%= unit %></div>
+                                    <% } %>
+                                    <div class="qc-item-title" title="<%= itemName %>"><%= itemName %></div>
+                                </div>
+
+                                <div class="qc-card-bottom">
+                                    <div class="qc-price-block">
+                                        <span class="qc-price-val">₹<%= actualPrice %></span>
+                                        <% if (discount > 0) { %>
+                                            <span class="qc-mrp-val">₹<%= price %></span>
+                                        <% } %>
+                                    </div>
+                                    <button class="qc-add-cart-btn" onclick="qcAddToCart('<%= item._id %>', '<%= itemName %>', <%= actualPrice %>, '<%= itemImg %>')">
+                                        ADD
+                                    </button>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <div class="qc-empty-notice">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                        <h4 style="font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0;">Catalog Upload in Progress</h4>
+                        <p style="font-size: 13px; margin: 0 0 16px 0;">Products are currently being added to Apni Dukan. In the meantime, you can place orders directly via WhatsApp or Phone call.</p>
+                        <% if (shop.owner && (shop.owner.phone || shop.owner.username)) { %>
+                            <% const phone = shop.owner.phone || shop.owner.username; %>
+                            <a href="https://wa.me/91<%= phone %>?text=Hello%20Apni%20Dukan,%20I%20want%20to%20order%20grocery%20items." target="_blank" class="qc-action-btn whatsapp" style="display: inline-flex; width: auto; padding: 10px 20px;">
+                                <i class="fa-brands fa-whatsapp"></i> Order on WhatsApp
+                            </a>
+                        <% } %>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Floating Cart Bar (Mobile Only) -->
+<div class="qc-floating-cart-bar" id="qcCartBar">
+    <div>
+        <span id="qcCartCount">Item Added</span> • <span id="qcCartTotal">₹0</span>
+    </div>
+    <a href="/cart">
+        <span>View Cart</span>
+        <i class="fa-solid fa-arrow-right"></i>
+    </a>
+</div>
+
+<script>
+    let currentSelectedCategory = 'All';
+
+    function qcSelectCat(category, element) {
+        currentSelectedCategory = category;
+        
+        // Sync active state in both mobile strip and desktop sidebar
+        document.querySelectorAll('.qc-bubble-item, .qc-sidebar-item').forEach(el => {
+            el.classList.remove('active');
+            if (el.innerText.toLowerCase().includes(category.toLowerCase()) || (category === 'All' && el.innerText.toLowerCase().includes('all'))) {
+                el.classList.add('active');
+            }
+        });
+
+        const titleEl = document.getElementById('qcCategoryTitle');
+        if (titleEl) {
+            titleEl.innerText = category === 'All' ? 'All Products' : category;
+        }
+
+        qcFilterItems();
+    }
+
+    function qcFilterItems() {
+        const query = (document.getElementById('qcItemSearch')?.value || '').toLowerCase().trim();
+        const cards = document.querySelectorAll('.qc-item-card');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name') || '';
+            const cat = card.getAttribute('data-category') || '';
+            
+            const matchesCat = (currentSelectedCategory === 'All') || cat.toLowerCase().includes(currentSelectedCategory.toLowerCase());
+            const matchesQuery = !query || name.includes(query) || cat.toLowerCase().includes(query);
+
+            if (matchesCat && matchesQuery) {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const countBadge = document.getElementById('qcProductCount');
+        if (countBadge) {
+            countBadge.innerText = visibleCount + ' items';
+        }
+    }
+
+    async function qcAddToCart(itemId, itemName, price, itemImage) {
+        try {
+            const res = await fetch('/api/cart/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    itemId: itemId,
+                    itemName: itemName,
+                    price: price,
+                    itemImage: itemImage,
+                    shopId: '<%= shop._id %>',
+                    shopName: '<%= shop.shopName || "Apni Dukan" %>',
+                    quantity: 1
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const bar = document.getElementById('qcCartBar');
+                if (bar) {
+                    bar.style.display = 'flex';
+                    document.getElementById('qcCartCount').innerText = 'Added to Cart ✓';
+                    document.getElementById('qcCartTotal').innerText = '₹' + price;
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+</script>

@@ -4,7 +4,10 @@ const catchAsync = require("../utils/wrapAsync");
 const cartController = require("../controllers/cart");
 const { isLogedin } = require("../middeleware");
 
-// Apply login protection to all cart routes
+// Get Cart Recommendations (accessible to guest & logged in users)
+router.get("/recommendations", catchAsync(cartController.getCartRecommendations));
+
+// Apply login protection to sensitive cart operations
 router.use(isLogedin);
 
 // View Cart
@@ -24,9 +27,5 @@ router.post("/clear", cartController.clearCart);
 
 // Calculate Delivery Fee Preview
 router.post("/delivery-fee", cartController.calculateDeliveryFee);
-
-// Get Cart Recommendations
-router.get("/recommendations", catchAsync(cartController.getCartRecommendations));
-
 
 module.exports = router;

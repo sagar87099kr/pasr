@@ -457,7 +457,24 @@ router.get("/api/discovery", wrapAsync(async (req, res) => {
 // Route to fetch items for the homepage
 router.get("/api/home/items", itemController.getHomeItems);
 
-// Dedicated PASR Store Dark Store API
+// Dedicated Apni Dukan (Grocery Store) Web Route
+router.get(["/apni-dukan", "/apnidukan"], wrapAsync(async (req, res) => {
+    let shop = await Shop.findOne({ shopName: /^APNI DUKAN$/i }) 
+        || await Shop.findOne({ shopName: /APNI DUKAN/i })
+        || await Shop.findById("6ab128a35020dce6540c1cd9")
+        || await Shop.findOne({ category: "Grocery" });
+    if (shop) {
+        return res.redirect(`/shops/${shop._id}`);
+    }
+    res.redirect("/shops?category=Grocery");
+}));
+
+// Dedicated Apni Dukan & PASR Store API
+router.get("/api/apni-dukan/items", itemController.getPasrStoreItems);
+router.post("/api/apni-dukan/items", itemController.addPasrStoreItem);
+router.delete("/api/apni-dukan/items/:id", itemController.deletePasrStoreItem);
+router.get("/api/apnidukan/items", itemController.getPasrStoreItems);
+
 router.get("/api/pasr-store/items", itemController.getPasrStoreItems);
 router.post("/api/pasr-store/items", itemController.addPasrStoreItem);
 router.delete("/api/pasr-store/items/:id", itemController.deletePasrStoreItem);
