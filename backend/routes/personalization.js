@@ -226,10 +226,13 @@ router.get("/home", catchAsync(async (req, res) => {
     // 3. Fetch Active Bazaar / Nearby Shops
     let shopQuery = { isVerified: true };
     if (bazaar && bazaar !== 'All Bazaars' && bazaar !== 'undefined') {
-        shopQuery.$or = [
-            { bazaar: bazaar },
-            { location: new RegExp(bazaar, 'i') }
-        ];
+        const Bazaar = require("../data/bazaar");
+        const mongoose = require("mongoose");
+        let bz = null;
+        try {
+            bz = await Bazaar.findOne({ $or: [{ _id: mongoose.isValidObjectId(bazaar) ? bazaar : null }, { name: new RegExp('^' + bazaar + '$', 'i') }] });
+        } catch (e) {}
+        shopQuery.bazaar = bz ? bz._id : bazaar;
     }
     const nearbyShops = await Shop.find(shopQuery)
         .select('shopName category location shopImage isVerified openingTime closingTime')
@@ -341,6 +344,21 @@ async function getLastPurchaseRecommendations(userId, currentBazaar = null) {
             isActive: true,
             quantity: { $gt: 0 }
         };
+
+        if (currentBazaar && currentBazaar !== 'All Bazaars' && currentBazaar !== 'undefined') {
+            const Bazaar = require("../data/bazaar");
+            const mongoose = require("mongoose");
+            let bz = null;
+            try {
+                bz = await Bazaar.findOne({ $or: [{ _id: mongoose.isValidObjectId(currentBazaar) ? currentBazaar : null }, { name: new RegExp('^' + currentBazaar + '$', 'i') }] });
+            } catch (e) {}
+            const bzId = bz ? bz._id : (mongoose.isValidObjectId(currentBazaar) ? currentBazaar : null);
+            if (bzId) {
+                const bShops = await Shop.find({ bazaar: bzId, isVerified: true }).select('_id').lean();
+                const bShopIds = bShops.map(s => s._id);
+                baseQuery.shop = { $in: bShopIds };
+            }
+        }
 
         let recommendedItems = [];
 

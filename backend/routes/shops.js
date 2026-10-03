@@ -203,10 +203,7 @@ router.get("/shops", wrapAsync(async (req, res) => {
     let query = { verified: true };
 
     if (currentBazaar) {
-        query.$or = [
-            { bazaar: currentBazaar._id },
-            { location: new RegExp(currentBazaar.name, 'i') }
-        ];
+        query.bazaar = currentBazaar._id;
     } else if (bazaarId) {
         query.bazaar = bazaarId;
     } else if (lat && lng) {

@@ -446,7 +446,9 @@ export default function HomePage({ isLoggedIn, initialLat, initialLon, initialBa
                 } else {
                     setCurrentItems(data.items);
                 }
-                if (data.timeContextualItems && data.timeContextualItems.length > 0) {
+                if (!append) {
+                    setTimeContextualApiItems(data.timeContextualItems || []);
+                } else if (data.timeContextualItems && data.timeContextualItems.length > 0) {
                     setTimeContextualApiItems(data.timeContextualItems);
                 }
                 setHasMore(data.hasMore || (data.items.length >= fetchLimit));

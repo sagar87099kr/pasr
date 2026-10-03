@@ -35,12 +35,18 @@ module.exports.getHomeItems = async (req, res) => {
             bazaarId = req.headers['x-bazaar-id'];
         } else if (req.session && req.session.bazaarId) {
             bazaarId = req.session.bazaarId;
+        } else if (req.query.bazaarId) {
+            bazaarId = req.query.bazaarId;
         }
 
         let shopIds = null;
 
         if (bazaarId) {
-            let bazaarShops = await Shop.find({ bazaar: bazaarId, verified: true, isActive: true }).select('_id');
+            let bazaarShops = await Shop.find({ 
+                bazaar: bazaarId, 
+                verified: true, 
+                isActive: { $ne: false } 
+            }).select('_id');
             shopIds = bazaarShops.map(s => s._id);
             query.shop = { $in: shopIds };
         } else if (userLocation && userLocation.coordinates && userLocation.coordinates.length === 2) {
@@ -52,7 +58,7 @@ module.exports.getHomeItems = async (req, res) => {
                     }
                 },
                 verified: true,
-                isActive: true
+                isActive: { $ne: false }
             }).select('_id');
             shopIds = nearbyShops.map(s => s._id);
             query.shop = { $in: shopIds };
@@ -71,26 +77,34 @@ module.exports.getHomeItems = async (req, res) => {
             const rawCategories = shopCategory.split(',').map(c => c.trim()).filter(Boolean);
             const categoryRegexes = rawCategories.map(c => new RegExp('^' + c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i'));
 
-            const categoryShops = await Shop.find({
+            const catShopQuery = {
                 category: { $in: categoryRegexes },
                 verified: true,
-                isActive: true
-            }).select('_id');
-            const categoryShopIds = categoryShops.map(s => s._id.toString());
-
-            if (query.shop && query.shop.$in) {
-                const existingShopIds = query.shop.$in.map(id => id.toString());
-                const matchingShopIds = categoryShopIds.filter(id => existingShopIds.includes(id));
-                query.shop = { $in: matchingShopIds };
-            } else {
-                query.shop = { $in: categoryShopIds };
+                isActive: { $ne: false }
+            };
+            if (shopIds !== null) {
+                catShopQuery._id = { $in: shopIds };
             }
+
+            const categoryShops = await Shop.find(catShopQuery).select('_id');
+            const categoryShopIds = categoryShops.map(s => s._id);
+
+            query.shop = { $in: categoryShopIds };
         }
 
         if (q) {
             const searchTerm = q.toLowerCase();
             const matchingProducts = await MasterProduct.find({ name: { $regex: searchTerm, $options: 'i' }, verified: true }).select('_id');
-            const matchingShops = await Shop.find({ shopName: { $regex: searchTerm, $options: 'i' }, verified: true, isActive: true }).select('_id');
+            
+            const shopSearchQuery = {
+                shopName: { $regex: searchTerm, $options: 'i' },
+                verified: true,
+                isActive: { $ne: false }
+            };
+            if (shopIds !== null) {
+                shopSearchQuery._id = { $in: shopIds };
+            }
+            const matchingShops = await Shop.find(shopSearchQuery).select('_id');
             
             query.$or = [
                 { name: { $regex: searchTerm, $options: 'i' } },
@@ -135,71 +149,90 @@ module.exports.getHomeItems = async (req, res) => {
         const isHomeFeed = (!shopCategory || shopCategory === "All Shops" || shopCategory === "For You" || shopCategory === "All Products") && !q && !category && !minPrice && !maxPrice && !minDiscount && pageNum === 1;
 
         if (isHomeFeed) {
-            // 1. Fetch top discounted items across all shops (highest discount first)
-            const discountedItems = await Item.find({ ...query, discount: { $gt: 0 } })
-                .populate({ path: "product", select: "name img category" })
-                .populate({ path: "shop", select: "shopName location category bazaar" })
-                .sort({ discount: -1, createdAt: -1 })
-                .limit(60);
+            if (shopIds !== null && shopIds.length === 0) {
+                items = [];
+                hasMore = false;
+            } else {
+                // 1. Fetch top discounted items across all shops in this bazaar (highest discount first)
+                const discountedItems = await Item.find({ ...query, discount: { $gt: 0 } })
+                    .populate({ path: "product", select: "name img category" })
+                    .populate({ path: "shop", select: "shopName location category bazaar" })
+                    .sort({ discount: -1, createdAt: -1 })
+                    .limit(60);
 
-            // 2. Fetch food category items (even if discount is 0) so Food segment is never empty
-            const foodShops = await Shop.find({
-                category: { $in: [/food/i, /restaurant/i, /dhaba/i, /bakery/i, /sweet/i, /cafe/i, /fast food/i, /dining/i] },
-                verified: true,
-                isActive: true
-            }).select('_id');
-            const foodShopIds = foodShops.map(s => s._id);
-
-            const foodItems = await Item.find({ 
-                isActive: true, 
-                quantity: { $gt: 0 },
-                shop: { $in: foodShopIds }
-            })
-                .populate({ path: "product", select: "name img category" })
-                .populate({ path: "shop", select: "shopName location category bazaar" })
-                .sort({ discount: -1, createdAt: -1 })
-                .limit(30);
-
-            // 3. Fetch Automobile items explicitly so Automobile segment is always populated
-            const autoShops = await Shop.find({
-                $or: [
-                    { category: { $in: [/auto/i, /garage/i, /bike/i, /motor/i, /cycle/i, /workshop/i, /lubricant/i] } },
-                    { shopName: { $in: [/auto/i, /garage/i, /bike/i, /motor/i, /cycle/i, /workshop/i, /lubricant/i] } }
-                ],
-                verified: true,
-                isActive: true
-            }).select('_id');
-            const autoShopIds = autoShops.map(s => s._id);
-
-            const autoItems = await Item.find({
-                isActive: true,
-                quantity: { $gt: 0 },
-                $or: [
-                    { shop: { $in: autoShopIds } },
-                    { itemCategory: { $in: [/parts/i, /lubricant/i, /oil/i, /auto/i, /bike/i, /car/i, /tyre/i, /tire/i] } }
-                ]
-            })
-                .populate({ path: "product", select: "name img category" })
-                .populate({ path: "shop", select: "shopName location category bazaar" })
-                .sort({ createdAt: -1 })
-                .limit(30);
-
-            // 4. Fetch regular items across all other active shops
-            const regularItems = await Item.find(query)
-                .populate({ path: "product", select: "name img category" })
-                .populate({ path: "shop", select: "shopName location category bazaar" })
-                .sort({ createdAt: -1 })
-                .limit(200);
-
-            const seenItemIds = new Set();
-            for (const it of [...discountedItems, ...foodItems, ...autoItems, ...regularItems]) {
-                const idStr = String(it._id);
-                if (!seenItemIds.has(idStr)) {
-                    seenItemIds.add(idStr);
-                    items.push(it);
+                // 2. Fetch food category items (even if discount is 0) so Food segment is never empty
+                const foodShopQuery = {
+                    category: { $in: [/food/i, /restaurant/i, /dhaba/i, /bakery/i, /sweet/i, /cafe/i, /fast food/i, /dining/i] },
+                    verified: true,
+                    isActive: { $ne: false }
+                };
+                if (shopIds !== null) {
+                    foodShopQuery._id = { $in: shopIds };
                 }
+                const foodShops = await Shop.find(foodShopQuery).select('_id');
+                const foodShopIds = foodShops.map(s => s._id);
+
+                const foodItems = (shopIds !== null && foodShopIds.length === 0) ? [] : await Item.find({ 
+                    isActive: true, 
+                    quantity: { $gt: 0 },
+                    shop: { $in: foodShopIds }
+                })
+                    .populate({ path: "product", select: "name img category" })
+                    .populate({ path: "shop", select: "shopName location category bazaar" })
+                    .sort({ discount: -1, createdAt: -1 })
+                    .limit(30);
+
+                // 3. Fetch Automobile items explicitly so Automobile segment is always populated
+                const autoShopQuery = {
+                    $or: [
+                        { category: { $in: [/auto/i, /garage/i, /bike/i, /motor/i, /cycle/i, /workshop/i, /lubricant/i] } },
+                        { shopName: { $in: [/auto/i, /garage/i, /bike/i, /motor/i, /cycle/i, /workshop/i, /lubricant/i] } }
+                    ],
+                    verified: true,
+                    isActive: { $ne: false }
+                };
+                if (shopIds !== null) {
+                    autoShopQuery._id = { $in: shopIds };
+                }
+                const autoShops = await Shop.find(autoShopQuery).select('_id');
+                const autoShopIds = autoShops.map(s => s._id);
+
+                const autoItemQuery = {
+                    isActive: true,
+                    quantity: { $gt: 0 }
+                };
+                if (shopIds !== null) {
+                    autoItemQuery.shop = { $in: autoShopIds };
+                } else {
+                    autoItemQuery.$or = [
+                        { shop: { $in: autoShopIds } },
+                        { itemCategory: { $in: [/parts/i, /lubricant/i, /oil/i, /auto/i, /bike/i, /car/i, /tyre/i, /tire/i] } }
+                    ];
+                }
+
+                const autoItems = (shopIds !== null && autoShopIds.length === 0) ? [] : await Item.find(autoItemQuery)
+                    .populate({ path: "product", select: "name img category" })
+                    .populate({ path: "shop", select: "shopName location category bazaar" })
+                    .sort({ createdAt: -1 })
+                    .limit(30);
+
+                // 4. Fetch regular items across all other active shops in this bazaar
+                const regularItems = await Item.find(query)
+                    .populate({ path: "product", select: "name img category" })
+                    .populate({ path: "shop", select: "shopName location category bazaar" })
+                    .sort({ createdAt: -1 })
+                    .limit(200);
+
+                const seenItemIds = new Set();
+                for (const it of [...discountedItems, ...foodItems, ...autoItems, ...regularItems]) {
+                    const idStr = String(it._id);
+                    if (!seenItemIds.has(idStr)) {
+                        seenItemIds.add(idStr);
+                        items.push(it);
+                    }
+                }
+                hasMore = false;
             }
-            hasMore = false;
         } else {
             items = await Item.find(query)
                 .populate({ path: "product", select: "name img category" })
@@ -372,18 +405,24 @@ module.exports.getHomeItems = async (req, res) => {
 
             const matchedProductIds = matchedMasterProducts.map(p => p._id);
 
-            const rawTimeItems = await Item.find({
+            const timeItemQuery = {
                 isActive: true,
                 quantity: { $gt: 0 },
+                isAddon: { $ne: true },
                 $or: [
                     { product: { $in: matchedProductIds } },
                     { name: { $regex: regexPattern, $options: 'i' } },
                     { itemCategory: { $regex: catPattern, $options: 'i' } }
                 ]
-            })
-            .populate({ path: "product", select: "name img category" })
-            .populate({ path: "shop", select: "shopName location category" })
-            .limit(100);
+            };
+            if (shopIds !== null) {
+                timeItemQuery.shop = { $in: shopIds };
+            }
+
+            const rawTimeItems = (shopIds !== null && shopIds.length === 0) ? [] : await Item.find(timeItemQuery)
+                .populate({ path: "product", select: "name img category" })
+                .populate({ path: "shop", select: "shopName location category bazaar" })
+                .limit(100);
 
             let formattedTimeItems = rawTimeItems
                 .filter(item => {
