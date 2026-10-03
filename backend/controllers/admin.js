@@ -125,7 +125,10 @@ module.exports.getAllOrders = async (req, res, next) => {
             .populate('customerId')
             .populate({
                 path: 'shopId',
-                populate: { path: 'owner' }
+                populate: [
+                    { path: 'owner' },
+                    { path: 'bazaar', select: 'name location' }
+                ]
             })
             .populate('deliveryPartnerId')
             .populate('items.itemId')

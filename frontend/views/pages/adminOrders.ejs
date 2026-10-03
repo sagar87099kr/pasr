@@ -193,85 +193,99 @@
 
                                         <td>
                                             <% if (order.shopId) { %>
-                                                <div class="fw-semibold text-truncate" style="max-width: 150px;"
+                                                <div class="fw-semibold text-truncate" style="max-width: 170px;"
                                                     title="<%= order.shopId.shopName %>">
                                                     <%= order.shopId.shopName %>
                                                 </div>
+                                                <% const bzName = (order.shopId.bazaar && order.shopId.bazaar.name) ? order.shopId.bazaar.name : ''; %>
+                                                <% if (bzName) { %>
+                                                    <div class="mt-1">
+                                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle small" title="Origin Bazaar">
+                                                            <i class="fa-solid fa-store me-1"></i><%= bzName %>
+                                                        </span>
+                                                    </div>
+                                                <% } %>
                                                 <% if (order.shopId.owner) { %>
-                                                    <div class="text-muted small"><i class="fa-solid fa-phone me-1"></i>
+                                                    <div class="text-muted small mt-1"><i class="fa-solid fa-phone me-1"></i>
                                                         <%= order.shopId.owner.username || "N/A" %>
                                                     </div>
-                                                    <% } %>
-                                                        <% } else { %>
-                                                            <span class="text-muted fst-italic">Deleted Shop</span>
-                                                            <% } %>
+                                                <% } %>
+                                            <% } else { %>
+                                                <span class="text-muted fst-italic">Deleted Shop</span>
+                                            <% } %>
                                         </td>
 
                                         <td>
                                             <% if (order.deliveryType==='SELF_PICKUP' ) { %>
                                                 <span class="badge bg-info text-dark mb-1"><i
                                                         class="fa-solid fa-person-walking me-1"></i>Self Pickup</span>
-                                                <% } else if (order.selfDelivery) { %>
-                                                    <span class="badge bg-secondary mb-1"><i
-                                                            class="fa-solid fa-shop me-1"></i>Shop Delivery</span>
-                                                    <% if (order.shopId && order.shopId.owner) { %>
-                                                        <div class="fw-semibold small">By: <%= order.shopId.owner.name
-                                                                || "Owner" %>
-                                                        </div>
-                                                        <div class="text-muted small"><i
-                                                                class="fa-solid fa-phone me-1"></i>
-                                                            <%= order.shopId.owner.username %>
-                                                        </div>
-                                                        <% } %>
-                                                            <% if (order.deliveryAddress) { %>
-                                                                <div class="small text-truncate text-muted mt-1"
-                                                                    style="max-width: 200px;"
-                                                                    title="<%= order.deliveryAddress %>">
-                                                                    📍 <%= order.deliveryAddress %>
-                                                                </div>
-                                                                <% } %>
-                                                                    <% } else if (order.deliveryPartnerId ||
-                                                                        order.partnerSnapshot) { %>
-                                                                        <span class="badge bg-dark mb-1"><i
-                                                                                class="fa-solid fa-motorcycle me-1"></i>Partner
-                                                                            Delivery</span>
-                                                                        <div class="fw-semibold small">
-                                                                            <%= order.partnerSnapshot ?
-                                                                                order.partnerSnapshot.name :
-                                                                                (order.deliveryPartnerId ?
-                                                                                order.deliveryPartnerId.name : 'Partner'
-                                                                                ) %>
-                                                                        </div>
-                                                                        <div class="text-muted small"><i
-                                                                                class="fa-solid fa-phone me-1"></i>
-                                                                            <%= order.partnerSnapshot ?
-                                                                                order.partnerSnapshot.phone :
-                                                                                (order.deliveryPartnerId ?
-                                                                                order.deliveryPartnerId.contactNumber ||
-                                                                                order.deliveryPartnerId.username : 'N/A'
-                                                                                ) %>
-                                                                        </div>
-                                                                        <% } else { %>
-                                                                            <span
-                                                                                class="badge bg-light text-dark border mb-1"><i
-                                                                                    class="fa-solid fa-truck me-1"></i>Pending
-                                                                                Assignment</span>
-                                                                            <% if (order.deliveryAddress) { %>
-                                                                                <div class="small text-truncate text-muted"
-                                                                                    style="max-width: 200px;"
-                                                                                    title="<%= order.deliveryAddress %>">
-                                                                                    <%= order.deliveryAddress %>
-                                                                                </div>
-                                                                                <% } %>
-                                                                                    <% } %>
+                                            <% } else if (order.selfDelivery) { %>
+                                                <span class="badge bg-secondary mb-1"><i
+                                                        class="fa-solid fa-shop me-1"></i>Shop Delivery</span>
+                                                <% if (order.shopId && order.shopId.owner) { %>
+                                                    <div class="fw-semibold small">By: <%= order.shopId.owner.name
+                                                            || "Owner" %>
+                                                    </div>
+                                                    <div class="text-muted small"><i
+                                                            class="fa-solid fa-phone me-1"></i>
+                                                        <%= order.shopId.owner.username %>
+                                                    </div>
+                                                <% } %>
+                                            <% } else if (order.deliveryPartnerId || order.partnerSnapshot) { %>
+                                                <span class="badge bg-dark mb-1"><i
+                                                        class="fa-solid fa-motorcycle me-1"></i>Partner Delivery</span>
+                                                <% 
+                                                    const partnerName = (order.deliveryPartnerId && order.deliveryPartnerId.fullName) 
+                                                        ? order.deliveryPartnerId.fullName 
+                                                        : (order.partnerSnapshot && order.partnerSnapshot.name 
+                                                            ? order.partnerSnapshot.name 
+                                                            : (order.deliveryPartnerId && order.deliveryPartnerId.name ? order.deliveryPartnerId.name : 'Assigned Partner'));
+                                                    const partnerPhone = (order.deliveryPartnerId && order.deliveryPartnerId.phoneNumber)
+                                                        ? order.deliveryPartnerId.phoneNumber
+                                                        : (order.partnerSnapshot && order.partnerSnapshot.phone
+                                                            ? order.partnerSnapshot.phone
+                                                            : (order.deliveryPartnerId && (order.deliveryPartnerId.contactNumber || order.deliveryPartnerId.username) ? (order.deliveryPartnerId.contactNumber || order.deliveryPartnerId.username) : ''));
+                                                %>
+                                                <div class="fw-semibold small text-success mt-1">
+                                                    <i class="fa-solid fa-person-biking me-1"></i><%= partnerName %>
+                                                </div>
+                                                <% if (partnerPhone) { %>
+                                                    <div class="text-muted small"><i
+                                                            class="fa-solid fa-phone me-1"></i>
+                                                        <%= partnerPhone %>
+                                                    </div>
+                                                <% } %>
+                                            <% } else { %>
+                                                <span class="badge bg-light text-dark border mb-1"><i
+                                                        class="fa-solid fa-truck me-1"></i>Pending Assignment</span>
+                                            <% } %>
+
+                                            <!-- Distance & Delivery Fee -->
+                                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                                <span class="badge bg-info bg-opacity-10 text-dark border small" title="Delivery Distance">
+                                                    <i class="fa-solid fa-route text-primary me-1"></i><%= (order.distanceInKm || order.deliveryDistance || 0) %> km
+                                                </span>
+                                                <span class="badge bg-success bg-opacity-10 text-dark border small" title="Delivery Charge Added">
+                                                    <i class="fa-solid fa-truck-fast text-success me-1"></i>₹<%= order.deliveryCharge || 0 %> fee
+                                                </span>
+                                            </div>
+
+                                            <% if (order.deliveryAddress) { %>
+                                                <div class="small text-truncate text-muted mt-1"
+                                                    style="max-width: 220px;"
+                                                    title="<%= order.deliveryAddress %>">
+                                                    📍 <%= order.deliveryAddress %>
+                                                </div>
+                                            <% } %>
                                         </td>
 
                                         <td>
-                                            <div class="fw-semibold">₹<%= order.totalAmount %>
+                                            <div class="fw-bold text-dark">₹<%= order.totalAmount %></div>
+                                            <div class="text-muted small">
+                                                ₹<%= order.subtotalAmount || (order.totalAmount - (order.deliveryCharge || 0) - (order.platformFee || 0)) %> items + ₹<%= order.deliveryCharge || 0 %> fee
                                             </div>
                                             <div class="text-muted small">
-                                                <%= order.items ? order.items.length : 0 %> items (<%= order.paymentType
-                                                        %>)
+                                                <%= order.items ? order.items.length : 0 %> items (<%= order.paymentType %>)
                                             </div>
                                             <% if (order.items && order.items.length > 0) { %>
                                                 <ul class="text-muted small mb-0 ps-3 mt-1" style="font-size: 0.8rem; list-style-type: circle;">
