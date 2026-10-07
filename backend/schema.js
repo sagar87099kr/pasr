@@ -96,10 +96,12 @@ module.exports.itemSchema = Joi.object({
         availableForDelivery: Joi.boolean().default(true).optional(),
         weight: Joi.number().min(0).optional(),
         offerPrice: Joi.number().min(0).optional(),
-        maxQuantityPerOrder: Joi.number().min(1).optional()
+        maxQuantityPerOrder: Joi.number().min(1).optional(),
+        barcode: Joi.string().allow("", null).optional()
     }).required(),
     imageId: Joi.string().allow(""),
     productId: Joi.string().allow(""),
+    barcode: Joi.string().allow("", null).optional()
 });
 
 module.exports.deliveryPartnerSchema = Joi.object({

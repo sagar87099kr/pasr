@@ -778,14 +778,14 @@ router.post("/shop/billing", verifyToken, async (req, res) => {
 // POST /api/shop/products
 router.post("/shop/products", verifyToken, async (req, res) => {
     try {
-        const { shopId, productId, price, originalPrice, stock, discountPercent, offerName, quantity, inStock, status, deliveryType, maxDeliveryDistance, availableForDelivery, canDeliverByBike, name, category, description, image, images } = req.body;
+        const { shopId, productId, price, originalPrice, stock, discountPercent, offerName, quantity, inStock, status, deliveryType, maxDeliveryDistance, availableForDelivery, canDeliverByBike, name, category, description, image, images, barcode } = req.body;
         if (!shopId) return res.status(400).json({ success: false, message: "Missing shopId" });
         if (!productId && !name) return res.status(400).json({ success: false, message: "Missing productId or name" });
 
         const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
         if (!shop) return res.status(403).json({ success: false, message: "Forbidden" });
 
-        // Item model fields: shop, product, price, quantity (number), discount, isActive
+        // Item model fields: shop, product, price, quantity (number), discount, isActive, barcode
         const newItem = new Item({
             shop: shopId,
             price: price || 0,
@@ -798,7 +798,8 @@ router.post("/shop/products", verifyToken, async (req, res) => {
             canDeliverByBike: canDeliverByBike !== false,
             name: name,
             itemCategory: category,
-            description: description
+            description: description,
+            barcode: barcode ? String(barcode).trim() : ''
         });
 
         if (productId) {
@@ -981,7 +982,7 @@ router.get("/shop/products/search", verifyToken, async (req, res) => {
 // PUT /api/shop/products/:id
 router.put("/shop/products/:id", verifyToken, async (req, res) => {
     try {
-        const { shopId, price, stock, discountPercent, name, category, description, image, images, deliveryType, maxDeliveryDistance, availableForDelivery, canDeliverByBike } = req.body;
+        const { shopId, price, stock, discountPercent, name, category, description, image, images, deliveryType, maxDeliveryDistance, availableForDelivery, canDeliverByBike, barcode } = req.body;
         if (!shopId) return res.status(400).json({ success: false, message: "Missing shopId" });
 
         const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
@@ -993,6 +994,7 @@ router.put("/shop/products/:id", verifyToken, async (req, res) => {
         if (name !== undefined) item.name = name;
         if (category !== undefined) item.itemCategory = category;
         if (description !== undefined) item.description = description;
+        if (barcode !== undefined) item.barcode = String(barcode).trim();
         if (image !== undefined || images !== undefined) {
             let uploadedImages = [];
             const { cloudinary } = require('../cloud_con');

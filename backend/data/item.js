@@ -12,6 +12,12 @@ const itemSchema = new Schema({
         type: String,
         required: false // Now optional if product ref exists
     },
+    barcode: {
+        type: String,
+        trim: true,
+        index: true,
+        default: ""
+    },
     img: {
         url: String,
         filename: String

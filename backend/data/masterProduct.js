@@ -32,6 +32,12 @@ const masterProductSchema = new Schema({
         url: String,
         filename: String
     },
+    barcode: {
+        type: String,
+        trim: true,
+        index: true,
+        default: ""
+    },
     isActive: {
         type: Boolean,
         default: true
