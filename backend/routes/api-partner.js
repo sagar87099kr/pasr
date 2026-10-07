@@ -570,34 +570,55 @@ router.post("/shop/calculate-delivery", verifyToken, async (req, res) => {
         const shop = await Shop.findById(shopId).populate('bazaar');
         if (!shop) return res.status(404).json({ success: false, message: "Shop not found" });
 
-        let hubCoords = null;
+        // Helper to accurately extract { lat, lng } regardless of [lng, lat] vs [lat, lng]
+        function parseLatLng(coords) {
+            if (!coords || !Array.isArray(coords) || coords.length < 2) return null;
+            let c0 = Number(coords[0]);
+            let c1 = Number(coords[1]);
+            if (isNaN(c0) || isNaN(c1)) return null;
+
+            // In India: Latitude is ~6° to 38° N, Longitude is ~68° to 98° E
+            if (c0 > 50 && c1 < 45) {
+                return { lat: c1, lng: c0 }; // [lng, lat]
+            }
+            if (c0 < 45 && c1 > 50) {
+                return { lat: c0, lng: c1 }; // [lat, lng]
+            }
+            // Default fallback: GeoJSON is [lng, lat]
+            return { lat: c1, lng: c0 };
+        }
+
+        let rawHubCoords = null;
         let hubName = "Bazaar Hub";
         if (shop.bazaar && shop.bazaar.geometry && shop.bazaar.geometry.coordinates && shop.bazaar.geometry.coordinates.length === 2) {
-            hubCoords = shop.bazaar.geometry.coordinates;
+            rawHubCoords = shop.bazaar.geometry.coordinates;
             hubName = shop.bazaar.name || "Bazaar Hub";
         } else if (shop.geometry && shop.geometry.coordinates && shop.geometry.coordinates.length === 2) {
-            hubCoords = shop.geometry.coordinates;
+            rawHubCoords = shop.geometry.coordinates;
             hubName = shop.shopName || "Shop";
         }
 
-        let targetCoords = customerCoordinates;
-        if ((!targetCoords || !targetCoords.length) && customerAddress && customerAddress.trim().length > 2) {
+        const hubPoint = parseLatLng(rawHubCoords);
+
+        let targetPoint = parseLatLng(customerCoordinates);
+
+        // If coordinates not found or invalid, try forward geocoding the address
+        if (!targetPoint && customerAddress && customerAddress.trim().length > 2) {
             const { forwardGeocode } = require("../utils/geocoder");
             try {
-                // Scope search query to the local Bazaar region for accurate geocoding
                 const queryText = customerAddress.toLowerCase().includes(hubName.toLowerCase()) 
                     ? customerAddress 
-                    : `${customerAddress}, ${hubName}, Jharkhand, India`;
+                    : `${customerAddress}, ${hubName}, Giridih, Jharkhand, India`;
                 const geo = await forwardGeocode(queryText);
                 if (geo && geo.body && geo.body.features && geo.body.features.length > 0) {
-                    targetCoords = geo.body.features[0].geometry.coordinates; // [lng, lat]
+                    targetPoint = parseLatLng(geo.body.features[0].geometry.coordinates);
                 }
             } catch (geoErr) {
                 console.warn("Geocoding lookup fallback:", geoErr.message);
             }
         }
 
-        if (!hubCoords || !targetCoords || !targetCoords.length) {
+        if (!hubPoint || !targetPoint) {
             // Default 1.0 km tier fallback if coordinates unavailable
             const isFree = subtotal >= 150 || isFirstOrder;
             return res.json({
@@ -615,14 +636,23 @@ router.post("/shop/calculate-delivery", verifyToken, async (req, res) => {
         const { calculateDistance } = require("../utils/distance");
         const { calculateDeliveryPricing } = require("../utils/deliveryPricing");
 
-        // Hub: [lng, lat] -> calculateDistance(lat1, lon1, lat2, lon2, useGoogle)
-        const distanceKm = await calculateDistance(
-            hubCoords[1], hubCoords[0],
-            targetCoords[1], targetCoords[0],
+        let distanceKm = await calculateDistance(
+            hubPoint.lat, hubPoint.lng,
+            targetPoint.lat, targetPoint.lng,
             true
         );
-        const pricing = calculateDeliveryPricing(distanceKm);
 
+        // Sanity check: If distance calculation returned an unreasonable number (> 50 km) for a local shop order, fall back to Haversine or 2.0 km
+        if (distanceKm > 50) {
+            const fallbackDist = await calculateDistance(
+                hubPoint.lat, hubPoint.lng,
+                targetPoint.lat, targetPoint.lng,
+                false
+            );
+            distanceKm = fallbackDist <= 50 ? fallbackDist : 2.0;
+        }
+
+        const pricing = calculateDeliveryPricing(distanceKm);
         const isFree = isFirstOrder || (pricing.freeDeliveryThreshold && subtotal >= pricing.freeDeliveryThreshold);
 
         res.json({
