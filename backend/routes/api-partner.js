@@ -6,6 +6,8 @@ const Shop = require("../data/shops");
 const Product = require("../data/product");
 const Item = require("../data/item");
 const MasterProduct = require("../data/masterProduct");
+const ItemImageRegistry = require("../data/itemImageRegistry");
+const { normalizeItemName } = require("../utils/normalization");
 const Provider = require("../data/serviceproviders");
 const DeliveryPartner = require("../data/deliveryPartner");
 const Customer = require("../data/customers");
@@ -648,6 +650,34 @@ router.post("/shop/products", verifyToken, async (req, res) => {
         await newItem.save();
         shop.items.push(newItem._id);
         await shop.save();
+
+        // Auto-sync uploaded/selected image to community registry
+        if (uploadedImages.length > 0 && name) {
+            try {
+                const canonical = normalizeItemName(name);
+                const existing = await ItemImageRegistry.findOne({
+                    $or: [{ imageUrl: uploadedImages[0].url }, { canonicalName: canonical }]
+                });
+                if (existing) {
+                    existing.usageCount = (existing.usageCount || 1) + 1;
+                    await existing.save();
+                } else {
+                    await ItemImageRegistry.create({
+                        canonicalName: canonical,
+                        displayName: name,
+                        description: description || "",
+                        imageUrl: uploadedImages[0].url,
+                        publicId: uploadedImages[0].filename || `item_${Date.now()}`,
+                        itemCategory: category || shop.category || 'General',
+                        usageCount: 1,
+                        locked: false
+                    });
+                }
+            } catch (regErr) {
+                console.warn("ItemImageRegistry auto-sync error:", regErr.message);
+            }
+        }
+
         res.json({ success: true, product: newItem });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
@@ -657,12 +687,100 @@ router.post("/shop/products", verifyToken, async (req, res) => {
 // GET /api/shop/products/search
 router.get("/shop/products/search", verifyToken, async (req, res) => {
     try {
-        const { q } = req.query;
-        if (!q) return res.json({ success: true, suggestions: [] });
+        const { q, category } = req.query;
+        if (!q || q.trim().length < 2) return res.json({ success: true, suggestions: [] });
 
-        const suggestions = await MasterProduct.find({ name: new RegExp(q, "i"), verified: true }).limit(20);
-        res.json({ success: true, suggestions });
+        const searchRegex = new RegExp(q.trim(), "i");
+        const canonicalQuery = normalizeItemName(q.trim());
+        const canonicalRegex = new RegExp("^" + canonicalQuery, "i");
+
+        // 1. Search Master Products
+        const masterProducts = await MasterProduct.find({
+            $or: [
+                { name: searchRegex },
+                { brand: searchRegex }
+            ]
+        }).limit(20).lean();
+
+        // 2. Search Item Image Registry (shared images from other shops)
+        const registryQuery = {
+            $or: [
+                { displayName: searchRegex },
+                { canonicalName: canonicalRegex }
+            ]
+        };
+        if (category && category !== 'All') {
+            registryQuery.itemCategory = new RegExp(category, "i");
+        }
+        const registryItems = await ItemImageRegistry.find(registryQuery).sort({ usageCount: -1 }).limit(25).lean();
+
+        // 3. Search Items from other shops (with valid images)
+        const otherShopItems = await Item.find({
+            name: searchRegex,
+            "img.url": { $exists: true, $ne: "" }
+        }).limit(20).lean();
+
+        // Merge and deduplicate by image URL and name
+        const seenUrls = new Set();
+        const suggestions = [];
+
+        // Add Master Products
+        for (const mp of masterProducts) {
+            const imgUrl = mp.img?.url || mp.image;
+            if (imgUrl && !seenUrls.has(imgUrl)) {
+                seenUrls.add(imgUrl);
+                suggestions.push({
+                    _id: mp._id,
+                    name: mp.name,
+                    brand: mp.brand || '',
+                    category: mp.category || '',
+                    description: mp.description || '',
+                    image: imgUrl,
+                    img: { url: imgUrl, filename: mp.img?.filename || '' },
+                    source: 'catalog'
+                });
+            }
+        }
+
+        // Add Community Image Registry
+        for (const reg of registryItems) {
+            if (reg.imageUrl && !seenUrls.has(reg.imageUrl)) {
+                seenUrls.add(reg.imageUrl);
+                suggestions.push({
+                    _id: reg._id,
+                    name: reg.displayName,
+                    brand: '',
+                    category: reg.itemCategory || '',
+                    description: reg.description || '',
+                    image: reg.imageUrl,
+                    img: { url: reg.imageUrl, filename: reg.publicId },
+                    source: 'community',
+                    usageCount: reg.usageCount || 1
+                });
+            }
+        }
+
+        // Add items from other shops
+        for (const it of otherShopItems) {
+            const imgUrl = it.img?.url;
+            if (imgUrl && !seenUrls.has(imgUrl)) {
+                seenUrls.add(imgUrl);
+                suggestions.push({
+                    _id: it._id,
+                    name: it.name,
+                    brand: '',
+                    category: it.itemCategory || '',
+                    description: it.description || '',
+                    image: imgUrl,
+                    img: { url: imgUrl, filename: it.img?.filename || '' },
+                    source: 'other_shops'
+                });
+            }
+        }
+
+        res.json({ success: true, suggestions: suggestions.slice(0, 30) });
     } catch (e) {
+        console.error("Product search error:", e);
         res.status(500).json({ success: false, message: e.message });
     }
 });
