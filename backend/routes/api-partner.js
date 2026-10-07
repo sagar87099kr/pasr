@@ -893,7 +893,8 @@ router.get("/shop/products/search", verifyToken, async (req, res) => {
         const masterProducts = await MasterProduct.find({
             $or: [
                 { name: searchRegex },
-                { brand: searchRegex }
+                { brand: searchRegex },
+                { barcode: q.trim() }
             ]
         }).limit(20).lean();
 
@@ -911,7 +912,10 @@ router.get("/shop/products/search", verifyToken, async (req, res) => {
 
         // 3. Search Items from other shops (with valid images)
         const otherShopItems = await Item.find({
-            name: searchRegex,
+            $or: [
+                { name: searchRegex },
+                { barcode: q.trim() }
+            ],
             "img.url": { $exists: true, $ne: "" }
         }).limit(20).lean();
 
