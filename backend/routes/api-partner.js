@@ -778,7 +778,7 @@ router.get("/shop/products/search", verifyToken, async (req, res) => {
             }
         }
 
-        res.json({ success: true, suggestions: suggestions.slice(0, 30) });
+        res.json({ success: true, suggestions: suggestions.slice(0, 10) });
     } catch (e) {
         console.error("Product search error:", e);
         res.status(500).json({ success: false, message: e.message });
