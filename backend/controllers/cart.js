@@ -333,12 +333,13 @@ module.exports.calculateDeliveryFee = async (req, res, next) => {
             if (!existing) isFirstOrder = true;
         }
 
-        // Offers (first order free delivery, threshold free delivery) are ONLY available within 5 km
-        const isEligibleForOffers = distanceInKm <= 5.0;
+        // Offers (first order free delivery, threshold free delivery) are ONLY available within 5 km AND if shop allows free delivery
+        const shopAllowsFreeDelivery = !shop || shop.allowFreeDelivery !== false;
+        const isEligibleForOffers = distanceInKm <= 5.0 && shopAllowsFreeDelivery;
         const effectiveIsFirstOrder = isEligibleForOffers && isFirstOrder;
 
         let effectiveDeliveryCharge = deliveryCharge;
-        const freeDeliveryThreshold = pricing.freeDeliveryThreshold;
+        const freeDeliveryThreshold = shopAllowsFreeDelivery ? pricing.freeDeliveryThreshold : null;
         
         if (isEligibleForOffers && (isFirstOrder || (freeDeliveryThreshold && shopSubtotal >= freeDeliveryThreshold))) {
             effectiveDeliveryCharge = 0;

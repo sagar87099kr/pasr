@@ -111,4 +111,19 @@ router.post("/shops/:id/toggle-sponsor", isLogedin, isadmin, catchAsync(async (r
     res.redirect("/shops/verify");
 }));
 
+// Admin - Toggle Individual Free Delivery Status for Shop
+router.post("/shops/:id/toggle-free-delivery", isLogedin, isadmin, catchAsync(async (req, res) => {
+    const Shop = require("../data/shops");
+    const shop = await Shop.findById(req.params.id);
+    if (shop) {
+        shop.allowFreeDelivery = req.body.allowFreeDelivery === 'on' || req.body.allowFreeDelivery === 'true' || req.body.allowFreeDelivery === true;
+        await shop.save();
+        req.flash("success", `Free delivery for "${shop.shopName}" is now ${shop.allowFreeDelivery ? 'ENABLED (Promos Active)' : 'DISABLED (Customer Always Pays Delivery)'}!`);
+    }
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+        return res.json({ success: true, allowFreeDelivery: shop ? shop.allowFreeDelivery : false });
+    }
+    res.redirect("/shops/verify");
+}));
+
 module.exports = router;

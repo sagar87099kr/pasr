@@ -511,6 +511,17 @@
                                                         </form>
                                                     </div>
                                                 </div>
+                                                <div class="row">
+                                                    <div class="label">Free Delivery</div>
+                                                    <div class="value">
+                                                        <form method="POST" action="/admin/shops/<%= shop._id %>/toggle-free-delivery" style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                                                            <input type="checkbox" name="allowFreeDelivery" onchange="this.form.submit()" <%= shop.allowFreeDelivery !== false ? 'checked' : '' %> style="width: 16px; height: 16px; cursor: pointer;">
+                                                            <span style="font-size: 13px; font-weight: 600; color: <%= shop.allowFreeDelivery !== false ? '#059669' : '#dc2626' %>;">
+                                                                <%= shop.allowFreeDelivery !== false ? 'Enabled (Promos Active)' : 'Disabled (Delivery Always Charged)' %>
+                                                            </span>
+                                                        </form>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </aside>
                                     </div>

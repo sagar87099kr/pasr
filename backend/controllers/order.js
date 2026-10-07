@@ -318,8 +318,9 @@ module.exports.checkoutOrder = async (req, res, next) => {
                 deliveryAddress = `Near ${cLoc[1].toFixed(4)}, ${cLoc[0].toFixed(4)}`;
             }
 
-            // Free Delivery Logic: Offers only eligible within 5 km
-            const isEligibleForOffers = distanceInKm <= 5.0;
+            // Free Delivery Logic: Offers only eligible within 5 km AND if shop allows free delivery
+            const shopAllowsFreeDelivery = !shop || shop.allowFreeDelivery !== false;
+            const isEligibleForOffers = distanceInKm <= 5.0 && shopAllowsFreeDelivery;
             const effectiveIsFirstOrder = isEligibleForOffers && isFirstOrder;
 
             let effectiveDeliveryCharge = deliveryCharge;
@@ -336,7 +337,8 @@ module.exports.checkoutOrder = async (req, res, next) => {
 
         let platformFee = 0;
         if (deliveryType === 'HOME_DELIVERY') {
-            const isEligibleForOffers = distanceInKm <= 5.0;
+            const shopAllowsFreeDelivery = !shop || shop.allowFreeDelivery !== false;
+            const isEligibleForOffers = distanceInKm <= 5.0 && shopAllowsFreeDelivery;
             const effectiveIsFirstOrder = isEligibleForOffers && isFirstOrder;
             platformFee = effectiveIsFirstOrder ? 0 : 5;
         }

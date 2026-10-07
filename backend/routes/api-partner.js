@@ -656,10 +656,11 @@ router.post("/shop/calculate-delivery", verifyToken, async (req, res) => {
 
         const pricing = calculateDeliveryPricing(distanceKm);
         
-        // Offers (first order free delivery, threshold free delivery) are ONLY available within 5 km (same as cart.js)
-        const isEligibleForOffers = distanceKm <= 5.0;
+        // Offers (first order free delivery, threshold free delivery) are ONLY available within 5 km AND if shop allows free delivery
+        const shopAllowsFreeDelivery = !shop || shop.allowFreeDelivery !== false;
+        const isEligibleForOffers = distanceKm <= 5.0 && shopAllowsFreeDelivery;
         const effectiveIsFirstOrder = isEligibleForOffers && isFirstOrder;
-        const freeDeliveryThreshold = pricing.freeDeliveryThreshold;
+        const freeDeliveryThreshold = shopAllowsFreeDelivery ? pricing.freeDeliveryThreshold : null;
 
         let isFree = false;
         let finalCharge = pricing.customerCharge;
@@ -676,7 +677,7 @@ router.post("/shop/calculate-delivery", verifyToken, async (req, res) => {
             roundedDistance: pricing.distance,
             deliveryCharge: finalCharge,
             standardCharge: pricing.customerCharge,
-            freeDeliveryThreshold: pricing.freeDeliveryThreshold,
+            freeDeliveryThreshold,
             isFreeDelivery: isFree,
             isEligibleForOffers
         });

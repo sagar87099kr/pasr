@@ -87,6 +87,7 @@ const shopSchema = new Schema({
     upiId: { type: String, default: "" },
     isActive: { type: Boolean, default: true },   // Owner manually sets shop open/closed
     isHoliday: { type: Boolean, default: false },  // Owner sets holiday today
+    allowFreeDelivery: { type: Boolean, default: true }, // Admin controls whether shop participates in free delivery promos
     gstNumber: { type: String, default: "" },
     deliveryEnabled: { type: Boolean, default: false },
     serviceAreaRadius: { type: Number, default: 10 },
