@@ -570,61 +570,60 @@ router.post("/shop/calculate-delivery", verifyToken, async (req, res) => {
         const shop = await Shop.findById(shopId).populate('bazaar');
         if (!shop) return res.status(404).json({ success: false, message: "Shop not found" });
 
-        // Helper to accurately extract { lat, lng } regardless of [lng, lat] vs [lat, lng]
-        function parseLatLng(coords) {
-            if (!coords || !Array.isArray(coords) || coords.length < 2) return null;
-            let c0 = Number(coords[0]);
-            let c1 = Number(coords[1]);
-            if (isNaN(c0) || isNaN(c1)) return null;
-
-            // In India: Latitude is ~6° to 38° N, Longitude is ~68° to 98° E
-            if (c0 > 50 && c1 < 45) {
-                return { lat: c1, lng: c0 }; // [lng, lat]
-            }
-            if (c0 < 45 && c1 > 50) {
-                return { lat: c0, lng: c1 }; // [lat, lng]
-            }
-            // Default fallback: GeoJSON is [lng, lat]
-            return { lat: c1, lng: c0 };
-        }
-
-        let rawHubCoords = null;
+        // Extract Shop Bazaar Hub coordinates [lng, lat] (GeoJSON)
+        let sLoc = null;
         let hubName = "Bazaar Hub";
         if (shop.bazaar && shop.bazaar.geometry && shop.bazaar.geometry.coordinates && shop.bazaar.geometry.coordinates.length === 2) {
-            rawHubCoords = shop.bazaar.geometry.coordinates;
-            hubName = shop.bazaar.name || "Bazaar Hub";
+            sLoc = shop.bazaar.geometry.coordinates; // [lng, lat]
+            hubName = shop.bazaar.bazaarName || shop.bazaar.name || "Bazaar Hub";
         } else if (shop.geometry && shop.geometry.coordinates && shop.geometry.coordinates.length === 2) {
-            rawHubCoords = shop.geometry.coordinates;
+            sLoc = shop.geometry.coordinates; // [lng, lat]
             hubName = shop.shopName || "Shop";
         }
 
-        const hubPoint = parseLatLng(rawHubCoords);
+        // Helper to accurately extract [lng, lat] from diverse coord formats
+        function parseToLngLat(coords) {
+            if (!coords) return null;
+            if (Array.isArray(coords) && coords.length >= 2) {
+                let c0 = Number(coords[0]);
+                let c1 = Number(coords[1]);
+                if (isNaN(c0) || isNaN(c1)) return null;
+                // In India: Latitude is ~6° to 38° N, Longitude is ~68° to 98° E
+                if (c0 > 50 && c1 < 45) return [c0, c1]; // [lng, lat]
+                if (c0 < 45 && c1 > 50) return [c1, c0]; // [lat, lng] -> convert to [lng, lat]
+                return [c0, c1];
+            }
+            if (typeof coords === 'object' && coords.lat && coords.lng) {
+                return [Number(coords.lng), Number(coords.lat)];
+            }
+            return null;
+        }
 
-        let targetPoint = null;
+        let cLoc = null; // Customer [lng, lat]
 
         // 1. If customerAddress is provided, forward geocode it for exact real-time address coordinates
-        if (customerAddress && customerAddress.trim().length > 2) {
+        if (customerAddress && customerAddress.trim().length > 1) {
             const { forwardGeocode } = require("../utils/geocoder");
             try {
-                // Ensure regional context for Plus Codes and local areas in Jharkhand
-                const queryText = (customerAddress.toLowerCase().includes("jharkhand") || customerAddress.toLowerCase().includes("india"))
-                    ? customerAddress 
-                    : `${customerAddress}, ${hubName}, Giridih, Jharkhand, India`;
+                const cleanAddr = customerAddress.trim();
+                const queryText = (cleanAddr.toLowerCase().includes("jharkhand") || cleanAddr.toLowerCase().includes("india"))
+                    ? cleanAddr 
+                    : `${cleanAddr}, Jharkhand, India`;
                 const geo = await forwardGeocode(queryText);
                 if (geo && geo.body && geo.body.features && geo.body.features.length > 0) {
-                    targetPoint = parseLatLng(geo.body.features[0].geometry.coordinates);
+                    cLoc = geo.body.features[0].geometry.coordinates; // [lng, lat]
                 }
             } catch (geoErr) {
-                console.warn("Geocoding lookup fallback:", geoErr.message);
+                console.warn("[calculate-delivery] Forward geocode error:", geoErr.message);
             }
         }
 
         // 2. Fallback to customerCoordinates if address geocoding yielded nothing
-        if (!targetPoint && customerCoordinates) {
-            targetPoint = parseLatLng(customerCoordinates);
+        if (!cLoc && customerCoordinates) {
+            cLoc = parseToLngLat(customerCoordinates);
         }
 
-        if (!hubPoint || !targetPoint) {
+        if (!sLoc || !cLoc) {
             // Default 1.0 km tier fallback if coordinates unavailable
             const isFree = subtotal >= 150 || isFirstOrder;
             return res.json({
@@ -639,37 +638,47 @@ router.post("/shop/calculate-delivery", verifyToken, async (req, res) => {
             });
         }
 
-        const { calculateDistance } = require("../utils/distance");
+        const distanceUtil = require("../utils/distance");
         const { calculateDeliveryPricing } = require("../utils/deliveryPricing");
 
-        let distanceKm = await calculateDistance(
-            hubPoint.lat, hubPoint.lng,
-            targetPoint.lat, targetPoint.lng,
+        // calculateDistance expects (lat1, lon1, lat2, lon2, useGoogle)
+        // cLoc is [lng, lat] -> cLoc[1] is lat, cLoc[0] is lng
+        // sLoc is [lng, lat] -> sLoc[1] is lat, sLoc[0] is lng
+        let distanceKm = await distanceUtil.calculateDistance(
+            cLoc[1], cLoc[0],
+            sLoc[1], sLoc[0],
             true
         );
 
-        // Sanity check: If road matrix failed or returned invalid (> 100 km), use Haversine
-        if (distanceKm > 100) {
-            const fallbackDist = await calculateDistance(
-                hubPoint.lat, hubPoint.lng,
-                targetPoint.lat, targetPoint.lng,
-                false
-            );
-            distanceKm = fallbackDist <= 100 ? fallbackDist : 1.0;
+        if (!isFinite(distanceKm) || isNaN(distanceKm) || distanceKm <= 0) {
+            distanceKm = 0.5;
         }
 
         const pricing = calculateDeliveryPricing(distanceKm);
-        const isFree = isFirstOrder || (pricing.freeDeliveryThreshold && subtotal >= pricing.freeDeliveryThreshold);
+        
+        // Offers (first order free delivery, threshold free delivery) are ONLY available within 5 km (same as cart.js)
+        const isEligibleForOffers = distanceKm <= 5.0;
+        const effectiveIsFirstOrder = isEligibleForOffers && isFirstOrder;
+        const freeDeliveryThreshold = pricing.freeDeliveryThreshold;
+
+        let isFree = false;
+        let finalCharge = pricing.customerCharge;
+
+        if (isEligibleForOffers && (effectiveIsFirstOrder || (freeDeliveryThreshold && subtotal >= freeDeliveryThreshold))) {
+            finalCharge = 0;
+            isFree = true;
+        }
 
         res.json({
             success: true,
             hubName,
             distanceKm: pricing.rawDistance,
             roundedDistance: pricing.distance,
-            deliveryCharge: isFree ? 0 : pricing.customerCharge,
+            deliveryCharge: finalCharge,
             standardCharge: pricing.customerCharge,
             freeDeliveryThreshold: pricing.freeDeliveryThreshold,
-            isFreeDelivery: isFree
+            isFreeDelivery: isFree,
+            isEligibleForOffers
         });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
