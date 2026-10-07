@@ -518,15 +518,136 @@ router.get("/shop/products", verifyToken, async (req, res) => {
     }
 });
 
-// POST /api/shop/billing
+// GET /api/shop/customers/lookup
+router.get("/shop/customers/lookup", verifyToken, async (req, res) => {
+    try {
+        const { phone } = req.query;
+        if (!phone || String(phone).trim().length < 10) {
+            return res.status(400).json({ success: false, message: "Valid 10-digit mobile number required" });
+        }
+        
+        const cleanPhone = String(phone).trim().replace(/\D/g, '').slice(-10);
+        const customer = await Customer.findOne({ username: Number(cleanPhone) }).select('name username address pincode geometry coins').lean();
+
+        if (!customer) {
+            return res.json({
+                success: true,
+                registered: false,
+                customer: null
+            });
+        }
+
+        // Check if first order (for free delivery eligibility)
+        const FreeDeliveryUsage = require("../data/freeDeliveryUsage.js");
+        const alreadyUsedFirstOrder = await FreeDeliveryUsage.findOne({ mobile: cleanPhone });
+        const isFirstOrder = !alreadyUsedFirstOrder;
+
+        res.json({
+            success: true,
+            registered: true,
+            customer: {
+                _id: customer._id,
+                name: customer.name,
+                phone: customer.username,
+                address: customer.address || '',
+                pincode: customer.pincode || '',
+                geometry: customer.geometry || null,
+                coins: customer.coins || 0,
+                isFirstOrder
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// POST /api/shop/calculate-delivery (Calculates from Shop's assigned Bazaar Hub)
+router.post("/shop/calculate-delivery", verifyToken, async (req, res) => {
+    try {
+        const { shopId, customerCoordinates, customerAddress, subtotal = 0, isFirstOrder = false } = req.body;
+        if (!shopId) return res.status(400).json({ success: false, message: "Shop ID is required" });
+
+        const shop = await Shop.findById(shopId).populate('bazaar');
+        if (!shop) return res.status(404).json({ success: false, message: "Shop not found" });
+
+        let hubCoords = null;
+        let hubName = "Bazaar Hub";
+        if (shop.bazaar && shop.bazaar.geometry && shop.bazaar.geometry.coordinates && shop.bazaar.geometry.coordinates.length === 2) {
+            hubCoords = shop.bazaar.geometry.coordinates;
+            hubName = shop.bazaar.name || "Bazaar Hub";
+        } else if (shop.geometry && shop.geometry.coordinates && shop.geometry.coordinates.length === 2) {
+            hubCoords = shop.geometry.coordinates;
+            hubName = shop.shopName || "Shop";
+        }
+
+        let targetCoords = customerCoordinates;
+        if ((!targetCoords || !targetCoords.length) && customerAddress) {
+            const { forwardGeocode } = require("../utils/geocoder");
+            const geo = await forwardGeocode(customerAddress);
+            if (geo && geo.coordinates) {
+                targetCoords = geo.coordinates;
+            }
+        }
+
+        if (!hubCoords || !targetCoords || !targetCoords.length) {
+            // Default 1.0 km tier fallback if coordinates unavailable
+            const isFree = subtotal >= 150 || isFirstOrder;
+            return res.json({
+                success: true,
+                hubName,
+                distanceKm: 1.0,
+                roundedDistance: 1,
+                deliveryCharge: isFree ? 0 : 5,
+                standardCharge: 5,
+                freeDeliveryThreshold: 150,
+                isFreeDelivery: isFree
+            });
+        }
+
+        const { calculateDistance } = require("../utils/distance");
+        const { calculateDeliveryPricing } = require("../utils/deliveryPricing");
+
+        // Hub: [lng, lat] -> calculateDistance(lat1, lon1, lat2, lon2)
+        const distanceKm = await calculateDistance(hubCoords[1], hubCoords[0], targetCoords[1], targetCoords[0], false);
+        const pricing = calculateDeliveryPricing(distanceKm);
+
+        const isFree = isFirstOrder || (pricing.freeDeliveryThreshold && subtotal >= pricing.freeDeliveryThreshold);
+
+        res.json({
+            success: true,
+            hubName,
+            distanceKm: pricing.rawDistance,
+            roundedDistance: pricing.distance,
+            deliveryCharge: isFree ? 0 : pricing.customerCharge,
+            standardCharge: pricing.customerCharge,
+            freeDeliveryThreshold: pricing.freeDeliveryThreshold,
+            isFreeDelivery: isFree
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// POST /api/shop/billing (Supports both Counter Pickup & Home Delivery from Bazaar)
 router.post("/shop/billing", verifyToken, async (req, res) => {
     try {
-        const { shopId, customerName, items, totalAmount } = req.body;
+        const { 
+            shopId, 
+            customerName, 
+            customerPhone,
+            customerAddress,
+            deliveryType = "SHOP_PICKUP",
+            deliveryCharge = 0,
+            distanceKm = 0,
+            items, 
+            totalAmount 
+        } = req.body;
+
         if (!shopId || !items || items.length === 0) {
             return res.status(400).json({ success: false, message: "Missing required fields or empty cart" });
         }
 
-        const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
+        const shop = await Shop.findOne({ _id: shopId, owner: req.user._id }).populate('bazaar');
         if (!shop) return res.status(403).json({ success: false, message: "Forbidden" });
 
         // Verify and deduct stock
@@ -555,27 +676,42 @@ router.post("/shop/billing", verifyToken, async (req, res) => {
             });
         }
 
-        // Create the POS Order
+        const isHomeDelivery = deliveryType === "HOME_DELIVERY";
+        const finalDeliveryCharge = isHomeDelivery ? Number(deliveryCharge || 0) : 0;
+        const finalTotal = subtotal + finalDeliveryCharge;
+
+        // Create the POS / Home Delivery Order
         const newOrder = new Order({
-            orderId: `PASR-POS-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            orderId: isHomeDelivery 
+                ? `PASR-HD-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`
+                : `PASR-POS-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`,
             shopId: shop._id,
-            customerName: customerName || "Guest",
+            bazaar: shop.bazaar ? shop.bazaar._id : undefined,
+            customerName: customerName || "Customer",
+            customerPhone: customerPhone ? String(customerPhone).trim() : undefined,
+            deliveryAddress: isHomeDelivery ? (customerAddress || "Home Delivery Address") : undefined,
             items: processedItems,
             subtotalAmount: subtotal,
-            totalAmount: subtotal,
-            deliveryType: "SHOP_PICKUP",
+            totalAmount: finalTotal,
+            deliveryType: isHomeDelivery ? "HOME_DELIVERY" : "SHOP_PICKUP",
+            deliveryCharge: finalDeliveryCharge,
             paymentType: "COD",
-            paymentStatus: "COLLECTED",
-            orderStatus: "COMPLETED",
+            paymentStatus: isHomeDelivery ? "PENDING" : "COLLECTED",
+            orderStatus: isHomeDelivery ? "PLACED" : "COMPLETED",
             selfDelivery: false,
             settlementStatus: "PENDING",
-            coinDiscount: 0,
-            deliveryCharge: 0
+            coinDiscount: 0
         });
 
         await newOrder.save();
 
-        res.json({ success: true, message: "Bill generated successfully", order: newOrder });
+        res.json({ 
+            success: true, 
+            message: isHomeDelivery ? "Home delivery order placed & assigned to PASR delivery fleet!" : "Bill generated successfully", 
+            order: newOrder,
+            shopName: shop.shopName,
+            shopLocation: shop.location || (shop.bazaar ? shop.bazaar.name : "Local Bazaar")
+        });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
     }
