@@ -581,11 +581,19 @@ router.post("/shop/calculate-delivery", verifyToken, async (req, res) => {
         }
 
         let targetCoords = customerCoordinates;
-        if ((!targetCoords || !targetCoords.length) && customerAddress) {
+        if ((!targetCoords || !targetCoords.length) && customerAddress && customerAddress.trim().length > 2) {
             const { forwardGeocode } = require("../utils/geocoder");
-            const geo = await forwardGeocode(customerAddress);
-            if (geo && geo.coordinates) {
-                targetCoords = geo.coordinates;
+            try {
+                // Scope search query to the local Bazaar region for accurate geocoding
+                const queryText = customerAddress.toLowerCase().includes(hubName.toLowerCase()) 
+                    ? customerAddress 
+                    : `${customerAddress}, ${hubName}, Jharkhand, India`;
+                const geo = await forwardGeocode(queryText);
+                if (geo && geo.body && geo.body.features && geo.body.features.length > 0) {
+                    targetCoords = geo.body.features[0].geometry.coordinates; // [lng, lat]
+                }
+            } catch (geoErr) {
+                console.warn("Geocoding lookup fallback:", geoErr.message);
             }
         }
 
@@ -607,8 +615,12 @@ router.post("/shop/calculate-delivery", verifyToken, async (req, res) => {
         const { calculateDistance } = require("../utils/distance");
         const { calculateDeliveryPricing } = require("../utils/deliveryPricing");
 
-        // Hub: [lng, lat] -> calculateDistance(lat1, lon1, lat2, lon2)
-        const distanceKm = await calculateDistance(hubCoords[1], hubCoords[0], targetCoords[1], targetCoords[0], false);
+        // Hub: [lng, lat] -> calculateDistance(lat1, lon1, lat2, lon2, useGoogle)
+        const distanceKm = await calculateDistance(
+            hubCoords[1], hubCoords[0],
+            targetCoords[1], targetCoords[0],
+            true
+        );
         const pricing = calculateDeliveryPricing(distanceKm);
 
         const isFree = isFirstOrder || (pricing.freeDeliveryThreshold && subtotal >= pricing.freeDeliveryThreshold);
