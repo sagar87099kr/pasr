@@ -934,6 +934,7 @@ router.get("/shop/products/search", verifyToken, async (req, res) => {
                     brand: mp.brand || '',
                     category: mp.category || '',
                     description: mp.description || '',
+                    barcode: mp.barcode || '',
                     image: imgUrl,
                     img: { url: imgUrl, filename: mp.img?.filename || '' },
                     source: 'catalog'
@@ -970,6 +971,7 @@ router.get("/shop/products/search", verifyToken, async (req, res) => {
                     brand: '',
                     category: it.itemCategory || '',
                     description: it.description || '',
+                    barcode: it.barcode || '',
                     image: imgUrl,
                     img: { url: imgUrl, filename: it.img?.filename || '' },
                     source: 'other_shops'
