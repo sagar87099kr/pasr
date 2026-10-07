@@ -11,47 +11,47 @@
   }
 
   body {
-    background-color: #F9FAFB !important;
+    background-color: #F8FAFC !important;
     font-family: 'Outfit', system-ui, -apple-system, sans-serif !important;
   }
 
-  .app-profile-wrapper {
-    max-width: 600px;
-    margin: 0 auto;
-    padding-bottom: 90px;
+  .app-profile-container {
+    max-width: 1100px;
+    margin: 24px auto 80px auto;
+    padding: 0 16px;
   }
 
   /* 1. Header matching Flutter App */
   .app-profile-header {
     background: var(--primary-blue-gradient);
-    padding: 40px 20px 28px 20px;
+    padding: 36px 20px 28px 20px;
     color: #ffffff;
     text-align: center;
-    border-radius: 0 0 24px 24px;
+    border-radius: 24px;
     box-shadow: 0 10px 25px rgba(30, 58, 138, 0.15);
-    margin-bottom: 16px;
+    margin-bottom: 20px;
   }
 
   .app-avatar {
-    width: 72px;
-    height: 72px;
+    width: 76px;
+    height: 76px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 800;
     color: #ffffff;
     margin: 0 auto 12px auto;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 3px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   }
 
   .app-user-name {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 800;
-    margin: 0 0 4px 0;
+    margin: 0 0 6px 0;
     color: #ffffff;
     letter-spacing: -0.3px;
   }
@@ -59,13 +59,13 @@
   .app-verified-badge {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 4px 12px;
+    gap: 6px;
+    padding: 5px 14px;
     background: rgba(255, 255, 255, 0.15);
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
     margin-bottom: 14px;
   }
 
@@ -73,9 +73,9 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 18px;
-    background: rgba(245, 158, 11, 0.2);
-    border: 1px solid rgba(245, 158, 11, 0.4);
+    padding: 8px 20px;
+    background: rgba(245, 158, 11, 0.22);
+    border: 1px solid rgba(245, 158, 11, 0.45);
     border-radius: 24px;
     color: #FBBF24;
     font-size: 14px;
@@ -85,11 +85,11 @@
   /* App Card Container */
   .app-card {
     background: #ffffff;
-    border-radius: 18px;
+    border-radius: 20px;
     border: 1px solid #E2E8F0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-    padding: 18px 20px;
-    margin: 0 16px 14px 16px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
 
@@ -100,19 +100,21 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   }
 
   /* Refer Code Box */
   .app-referral-box {
     background: #F0F4FF;
-    border-radius: 12px;
-    padding: 14px 16px;
+    border-radius: 14px;
+    padding: 14px 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     border: 1px solid #DBEAFE;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   .app-referral-code {
@@ -123,10 +125,46 @@
     font-family: monospace;
   }
 
+  .app-btn-copy {
+    padding: 6px 14px;
+    background: #1E3A8A;
+    color: #ffffff !important;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s ease;
+  }
+  .app-btn-copy:hover {
+    background: #1e293b;
+  }
+
+  .app-btn-share {
+    padding: 6px 14px;
+    background: #10B981;
+    color: #ffffff !important;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s ease;
+  }
+  .app-btn-share:hover {
+    background: #059669;
+  }
+
   .app-detail-row {
     display: flex;
     align-items: flex-start;
-    padding: 10px 0;
+    padding: 12px 0;
     border-bottom: 1px solid #F1F5F9;
   }
 
@@ -136,11 +174,12 @@
   }
 
   .app-detail-icon {
-    width: 20px;
+    width: 24px;
     color: var(--primary-blue);
     margin-right: 12px;
     margin-top: 2px;
     font-size: 16px;
+    flex-shrink: 0;
   }
 
   .app-detail-content {
@@ -149,11 +188,11 @@
 
   .app-detail-label {
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     color: #64748B;
     margin-bottom: 2px;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
   }
 
   .app-detail-value {
@@ -192,8 +231,8 @@
   }
 
   .app-action-icon {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -214,350 +253,344 @@
     color: #64748B;
     font-weight: 500;
   }
-
-  /* Post Cards in Profile */
-  .post-card {
-    background: #fff;
-    border-radius: 16px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    overflow: hidden;
-    border: 1px solid #E2E8F0;
-  }
-
-  .post-media {
-    width: 100%;
-    background: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .post-media img,
-  .post-media video {
-    width: 100% !important;
-    max-height: 500px;
-    object-fit: contain !important;
-    display: block;
-  }
 </style>
 
-<div class="app-profile-wrapper">
+<div class="app-profile-container">
 
-  <!-- ── 1. Header Section matching Flutter ProfilePage ── -->
-  <header class="app-profile-header">
-    <div class="app-avatar">
-      <%= currUser.name && currUser.name.trim() ? currUser.name.trim()[0].toUpperCase() : 'U' %>
-    </div>
-    <h1 class="app-user-name"><%= currUser.name || 'User' %></h1>
-    
-    <div>
-      <span class="app-verified-badge">
-        <i class="fa-solid fa-circle-check text-emerald-400"></i> Verified Customer
-      </span>
-    </div>
+  <!-- Desktop & Mobile 2-Column Responsive Layout -->
+  <div class="row g-4">
 
-    <div>
-      <div class="app-coins-pill">
-        <i class="fa-solid fa-coins"></i>
-        <span><%= currUser.coins || 0 %> PaSr Coins</span>
-      </div>
-    </div>
-
-    <% if (currUser.pendingPenalty && currUser.pendingPenalty > 0) { %>
-      <div class="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/20 border border-red-500/40 text-red-100 text-xs font-bold">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        <span>Pending Penalty: ₹<%= currUser.pendingPenalty %></span>
-      </div>
-    <% } %>
-  </header>
-
-  <!-- ── 2. Refer & Earn Card ── -->
-  <section class="app-card">
-    <div class="app-card-title">
-      <i class="fa-solid fa-gift" style="color: #6366F1;"></i>
-      <span>Refer & Earn</span>
-    </div>
-
-    <div class="app-referral-box">
-      <span class="app-referral-code" id="referralCodeText"><%= currUser.referralCode || 'NOT_SET' %></span>
-      <div class="flex gap-2">
-        <button onclick="copyReferralCode()" class="px-3 py-1.5 bg-blue-900 text-white rounded-lg text-xs font-bold hover:bg-blue-800 transition-colors flex items-center gap-1">
-          <i class="fa-solid fa-copy"></i> Copy
-        </button>
-        <button onclick="shareReferralCode()" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors flex items-center gap-1">
-          <i class="fa-solid fa-share-nodes"></i> Share
-        </button>
-      </div>
-    </div>
-
-    <div class="flex items-center justify-between text-xs text-gray-500 pt-1">
-      <span>Total Friends Referred: <strong class="text-gray-900"><%= currUser.referralCount || 0 %></strong></span>
-      <button type="button" class="text-indigo-600 font-bold hover:underline" data-bs-toggle="modal" data-bs-target="#referralsModal">
-        View Leaderboard & Referrals
-      </button>
-    </div>
-  </section>
-
-  <!-- ── 3. Profile Details Card ── -->
-  <section class="app-card">
-    <div class="app-card-title">
-      <i class="fa-regular fa-user"></i>
-      <span>Profile Details</span>
-    </div>
-
-    <div class="app-detail-row">
-      <div class="app-detail-icon"><i class="fa-solid fa-id-badge"></i></div>
-      <div class="app-detail-content">
-        <div class="app-detail-label">Name</div>
-        <div class="app-detail-value"><%= currUser.name %></div>
-      </div>
-    </div>
-
-    <div class="app-detail-row">
-      <div class="app-detail-icon"><i class="fa-brands fa-whatsapp"></i></div>
-      <div class="app-detail-content">
-        <div class="app-detail-label">WhatsApp / Phone</div>
-        <div class="app-detail-value"><%= currUser.username %></div>
-      </div>
-    </div>
-
-    <div class="app-detail-row">
-      <div class="app-detail-icon"><i class="fa-solid fa-location-dot"></i></div>
-      <div class="app-detail-content">
-        <div class="flex items-center justify-between">
-          <div class="app-detail-label">Address</div>
-          <button type="button" class="text-indigo-600 font-bold text-xs hover:underline" data-bs-toggle="collapse" data-bs-target="#changeLocationCollapse">
-            Change
-          </button>
+    <!-- ── LEFT COLUMN: Profile Header + Refer & Earn + Help + Logout ── -->
+    <div class="col-lg-5 col-md-6 col-12">
+      
+      <!-- 1. Header Section matching Flutter ProfilePage -->
+      <header class="app-profile-header">
+        <div class="app-avatar">
+          <%= currUser.name && currUser.name.trim() ? currUser.name.trim()[0].toUpperCase() : 'U' %>
         </div>
-        <div class="app-detail-value"><%= currUser.address || 'Not set' %></div>
-      </div>
-    </div>
-
-    <!-- Collapsible Location Update -->
-    <div class="collapse mt-3 pt-3 border-t border-gray-100" id="changeLocationCollapse">
-      <form action="/customer/update/<%= currUser._id %>?_method=PUT" method="POST" class="space-y-3">
+        <h1 class="app-user-name"><%= currUser.name || 'User' %></h1>
+        
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">New Location / Address</label>
-          <input type="text" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500" id="addressInput" required name="customer[address]" value="<%= currUser.address%>">
+          <span class="app-verified-badge">
+            <i class="fa-solid fa-circle-check text-success"></i> Verified Customer
+          </span>
         </div>
+
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">Pincode</label>
-          <input type="text" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500" id="exampleInputpincode" required name="customer[pincode]" value="<%= currUser.pincode%>">
+          <div class="app-coins-pill">
+            <i class="fa-solid fa-coins"></i>
+            <span><%= currUser.coins || 0 %> PaSr Coins</span>
+          </div>
         </div>
-        <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-lg text-xs hover:bg-indigo-700 transition-colors">
-          Update Location
-        </button>
-      </form>
-    </div>
-  </section>
 
-  <!-- ── 4. Saved Address Book ── -->
-  <section class="app-card">
-    <div class="flex items-center justify-between mb-3">
-      <div class="app-card-title mb-0">
-        <i class="fa-solid fa-book-bookmark text-indigo-600"></i>
-        <span>Saved Addresses</span>
-      </div>
-      <button class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 transition-colors" data-bs-toggle="modal" data-bs-target="#addAddressModal">
-        <i class="fa-solid fa-plus me-1"></i> Add New
-      </button>
-    </div>
+        <% if (currUser.pendingPenalty && currUser.pendingPenalty > 0) { %>
+          <div class="mt-3 d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill bg-danger bg-opacity-25 border border-danger text-white fs-7 fw-bold">
+            <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+            <span>Pending Penalty: ₹<%= currUser.pendingPenalty %></span>
+          </div>
+        <% } %>
+      </header>
 
-    <div class="space-y-2.5" id="addressBookContainer">
-      <% if (currUser.savedAddresses && currUser.savedAddresses.length > 0) { %>
-        <% currUser.savedAddresses.forEach(addr => { %>
-          <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-start justify-between gap-3 address-card" id="address-card-<%= addr._id %>">
-            <div class="min-w-0 flex-1">
-              <span class="inline-block px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[10px] font-extrabold rounded-md uppercase mb-1">
-                <%= addr.label || 'Home' %>
-              </span>
-              <p class="text-xs text-gray-700 font-medium leading-relaxed m-0"><%= addr.addressStr %></p>
-            </div>
-            <button onclick="deleteSavedAddress('<%= addr._id %>')" class="text-red-400 hover:text-red-600 p-1" title="Delete Address">
-              <i class="fa-solid fa-trash-can text-sm"></i>
+      <!-- 2. Refer & Earn Card -->
+      <section class="app-card">
+        <div class="app-card-title">
+          <i class="fa-solid fa-gift" style="color: #6366F1;"></i>
+          <span>Refer & Earn</span>
+        </div>
+
+        <div class="app-referral-box">
+          <span class="app-referral-code" id="referralCodeText"><%= currUser.referralCode || 'NOT_SET' %></span>
+          <div class="d-flex align-items-center gap-2">
+            <button onclick="copyReferralCode()" class="app-btn-copy">
+              <i class="fa-solid fa-copy"></i> Copy
+            </button>
+            <button onclick="shareReferralCode()" class="app-btn-share">
+              <i class="fa-solid fa-share-nodes"></i> Share
             </button>
           </div>
-        <% }) %>
-      <% } else { %>
-        <div class="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-center text-xs text-gray-500">
-          No saved addresses yet. Add home or work address for faster delivery checkout!
         </div>
-      <% } %>
+
+        <div class="d-flex align-items-center justify-content-between text-muted fs-7 pt-1">
+          <span>Total Referred: <strong class="text-dark"><%= currUser.referralCount || 0 %></strong></span>
+          <button type="button" class="btn btn-link p-0 text-decoration-none fw-bold fs-7 text-primary" data-bs-toggle="modal" data-bs-target="#referralsModal">
+            View Leaderboard & List
+          </button>
+        </div>
+      </section>
+
+      <!-- 3. Need Help? Card -->
+      <section class="app-card">
+        <a href="/help" class="app-action-tile border-0">
+          <div class="app-action-left">
+            <div class="app-action-icon" style="background: #ECFDF5; color: #059669;">
+              <i class="fa-solid fa-headset"></i>
+            </div>
+            <div>
+              <div class="app-action-title text-success">Need Help?</div>
+              <div class="app-action-sub">Contact 24/7 customer support & FAQs</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right fs-7 text-success"></i>
+        </a>
+      </section>
+
+      <!-- 4. Log Out Card -->
+      <section class="app-card">
+        <a href="/logout" class="app-action-tile border-0">
+          <div class="app-action-left">
+            <div class="app-action-icon" style="background: #FEF2F2; color: #DC2626;">
+              <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
+            <div>
+              <div class="app-action-title text-danger">Log Out</div>
+              <div class="app-action-sub">Sign out of your account</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right fs-7 text-danger opacity-75"></i>
+        </a>
+      </section>
+
     </div>
-  </section>
 
-  <!-- ── 5. Quick Actions (Orders, Cart, Notifications, Partner) ── -->
-  <section class="app-card">
-    <a href="/myorders" class="app-action-tile">
-      <div class="app-action-left">
-        <div class="app-action-icon bg-blue-50 text-blue-700">
-          <i class="fa-solid fa-bag-shopping"></i>
-        </div>
-        <div>
-          <div class="app-action-title">My Orders</div>
-          <div class="app-action-sub">View all your orders & deliveries</div>
-        </div>
-      </div>
-      <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
-    </a>
+    <!-- ── RIGHT COLUMN: Profile Details + Saved Addresses + Quick Actions + Businesses ── -->
+    <div class="col-lg-7 col-md-6 col-12">
 
-    <a href="/cart" class="app-action-tile">
-      <div class="app-action-left">
-        <div class="app-action-icon bg-indigo-50 text-indigo-700">
-          <i class="fa-solid fa-cart-shopping"></i>
+      <!-- 1. Profile Details Card -->
+      <section class="app-card">
+        <div class="app-card-title">
+          <i class="fa-regular fa-user"></i>
+          <span>Profile Details</span>
         </div>
-        <div>
-          <div class="app-action-title">My Cart</div>
-          <div class="app-action-sub">Items ready for checkout</div>
-        </div>
-      </div>
-      <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
-    </a>
 
-    <a href="/notifications" class="app-action-tile">
-      <div class="app-action-left">
-        <div class="app-action-icon bg-amber-50 text-amber-600">
-          <i class="fa-solid fa-bell"></i>
-        </div>
-        <div>
-          <div class="app-action-title">Notifications</div>
-          <div class="app-action-sub">Updates on orders & offers</div>
-        </div>
-      </div>
-      <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
-    </a>
-
-    <a href="https://pasr.shop" target="_blank" class="app-action-tile">
-      <div class="app-action-left">
-        <div class="app-action-icon bg-purple-50 text-purple-700">
-          <i class="fa-solid fa-handshake"></i>
-        </div>
-        <div>
-          <div class="app-action-title">Partner With Us</div>
-          <div class="app-action-sub">Register your shop, service, or delivery</div>
-        </div>
-      </div>
-      <i class="fa-solid fa-arrow-up-right-from-square text-xs text-gray-400"></i>
-    </a>
-  </section>
-
-  <!-- ── 6. My Businesses / Listings (If Provider or Shopkeeper) ── -->
-  <% if ((typeof shops !== 'undefined' && shops.length > 0) || (typeof listings !== 'undefined' && listings.length > 0) || (typeof kisanPosts !== 'undefined' && kisanPosts.length > 0)) { %>
-    <section class="app-card">
-      <div class="app-card-title">
-        <i class="fa-solid fa-briefcase text-indigo-600"></i>
-        <span>My Services & Shops</span>
-      </div>
-
-      <% if (typeof shops !== 'undefined' && shops.length > 0) { %>
-        <div class="mb-3">
-          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">My Shops</p>
-          <div class="space-y-2">
-            <% shops.forEach(shop => { %>
-              <a href="/shops/<%= shop._id %>" class="p-3 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 flex items-center justify-between text-decoration-none">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
-                    <i class="fa-solid fa-store"></i>
-                  </div>
-                  <div>
-                    <p class="text-sm font-bold text-gray-900 m-0"><%= shop.shopName %></p>
-                    <p class="text-xs text-gray-500 m-0"><%= shop.category || 'Shop' %></p>
-                  </div>
-                </div>
-                <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
-              </a>
-            <% }) %>
+        <div class="app-detail-row">
+          <div class="app-detail-icon"><i class="fa-solid fa-id-badge"></i></div>
+          <div class="app-detail-content">
+            <div class="app-detail-label">Name</div>
+            <div class="app-detail-value"><%= currUser.name %></div>
           </div>
         </div>
-      <% } %>
 
-      <% if (typeof listings !== 'undefined' && listings.length > 0) { %>
-        <div>
-          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">My Service Listings</p>
-          <div class="space-y-2">
-            <% listings.forEach(service => { %>
-              <a href="/service/<%= service._id %>" class="p-3 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 flex items-center justify-between text-decoration-none">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
-                    <i class="fa-solid fa-screwdriver-wrench"></i>
-                  </div>
-                  <div>
-                    <p class="text-sm font-bold text-gray-900 m-0"><%= service.serviceType || service.title || 'Service' %></p>
-                    <p class="text-xs text-gray-500 m-0"><%= service.area || 'Active' %></p>
-                  </div>
-                </div>
-                <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
-              </a>
-            <% }) %>
+        <div class="app-detail-row">
+          <div class="app-detail-icon"><i class="fa-brands fa-whatsapp"></i></div>
+          <div class="app-detail-content">
+            <div class="app-detail-label">WhatsApp / Phone</div>
+            <div class="app-detail-value"><%= currUser.username %></div>
           </div>
         </div>
+
+        <div class="app-detail-row">
+          <div class="app-detail-icon"><i class="fa-solid fa-location-dot"></i></div>
+          <div class="app-detail-content">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="app-detail-label">Address</div>
+              <button type="button" class="btn btn-link p-0 text-decoration-none fw-bold fs-7 text-primary" data-bs-toggle="collapse" data-bs-target="#changeLocationCollapse">
+                Change
+              </button>
+            </div>
+            <div class="app-detail-value"><%= currUser.address || 'Not set' %></div>
+          </div>
+        </div>
+
+        <!-- Collapsible Location Update -->
+        <div class="collapse mt-3 pt-3 border-top" id="changeLocationCollapse">
+          <form action="/customer/update/<%= currUser._id %>?_method=PUT" method="POST" class="d-flex flex-column gap-3">
+            <div>
+              <label class="form-label fs-7 fw-bold text-dark mb-1">New Location / Address</label>
+              <input type="text" class="form-control form-control-sm rounded-3 bg-light" id="addressInput" required name="customer[address]" value="<%= currUser.address%>">
+            </div>
+            <div>
+              <label class="form-label fs-7 fw-bold text-dark mb-1">Pincode</label>
+              <input type="text" class="form-control form-control-sm rounded-3 bg-light" id="exampleInputpincode" required name="customer[pincode]" value="<%= currUser.pincode%>">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm rounded-3 fw-bold py-2">
+              Update Location
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- 2. Saved Addresses Card -->
+      <section class="app-card">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="app-card-title mb-0">
+            <i class="fa-solid fa-book-bookmark text-primary"></i>
+            <span>Saved Addresses</span>
+          </div>
+          <button class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 fw-bold fs-7" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+            <i class="fa-solid fa-plus me-1"></i> Add New
+          </button>
+        </div>
+
+        <div class="d-flex flex-column gap-2" id="addressBookContainer">
+          <% if (currUser.savedAddresses && currUser.savedAddresses.length > 0) { %>
+            <% currUser.savedAddresses.forEach(addr => { %>
+              <div class="p-3 bg-light rounded-3 border d-flex align-items-start justify-content-between gap-3 address-card" id="address-card-<%= addr._id %>">
+                <div class="min-w-0 flex-grow-1">
+                  <span class="badge bg-primary bg-opacity-10 text-primary fw-bold text-uppercase px-2 py-1 mb-1">
+                    <%= addr.label || 'Home' %>
+                  </span>
+                  <p class="fs-7 text-dark fw-semibold mb-0 lh-base"><%= addr.addressStr %></p>
+                </div>
+                <button onclick="deleteSavedAddress('<%= addr._id %>')" class="btn btn-link text-danger p-1" title="Delete Address">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <div class="p-4 bg-light rounded-3 border border-dashed text-center text-muted fs-7">
+              No saved addresses yet. Add home or work address for faster delivery checkout!
+            </div>
+          <% } %>
+        </div>
+      </section>
+
+      <!-- 3. Quick Actions (Orders, Cart, Notifications, Partner) -->
+      <section class="app-card">
+        <div class="app-card-title">
+          <i class="fa-solid fa-bolt" style="color: #F59E0B;"></i>
+          <span>Quick Actions</span>
+        </div>
+
+        <a href="/myorders" class="app-action-tile">
+          <div class="app-action-left">
+            <div class="app-action-icon" style="background: #EFF6FF; color: #1D4ED8;">
+              <i class="fa-solid fa-bag-shopping"></i>
+            </div>
+            <div>
+              <div class="app-action-title">My Orders</div>
+              <div class="app-action-sub">View all your orders & deliveries</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right fs-7 text-muted"></i>
+        </a>
+
+        <a href="/cart" class="app-action-tile">
+          <div class="app-action-left">
+            <div class="app-action-icon" style="background: #EEF2FF; color: #4F46E5;">
+              <i class="fa-solid fa-cart-shopping"></i>
+            </div>
+            <div>
+              <div class="app-action-title">My Cart</div>
+              <div class="app-action-sub">Items ready for checkout</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right fs-7 text-muted"></i>
+        </a>
+
+        <a href="/notifications" class="app-action-tile">
+          <div class="app-action-left">
+            <div class="app-action-icon" style="background: #FFFBEB; color: #D97706;">
+              <i class="fa-solid fa-bell"></i>
+            </div>
+            <div>
+              <div class="app-action-title">Notifications</div>
+              <div class="app-action-sub">Updates on orders & offers</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right fs-7 text-muted"></i>
+        </a>
+
+        <a href="https://pasr.shop" target="_blank" class="app-action-tile">
+          <div class="app-action-left">
+            <div class="app-action-icon" style="background: #FAF5FF; color: #7E22CE;">
+              <i class="fa-solid fa-handshake"></i>
+            </div>
+            <div>
+              <div class="app-action-title">Partner With Us</div>
+              <div class="app-action-sub">Register your shop, service, or delivery</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-arrow-up-right-from-square fs-7 text-muted"></i>
+        </a>
+      </section>
+
+      <!-- 4. My Businesses / Listings (If Provider or Shopkeeper) -->
+      <% if ((typeof shops !== 'undefined' && shops.length > 0) || (typeof listings !== 'undefined' && listings.length > 0) || (typeof kisanPosts !== 'undefined' && kisanPosts.length > 0)) { %>
+        <section class="app-card">
+          <div class="app-card-title">
+            <i class="fa-solid fa-briefcase text-primary"></i>
+            <span>My Services & Shops</span>
+          </div>
+
+          <% if (typeof shops !== 'undefined' && shops.length > 0) { %>
+            <div class="mb-3">
+              <p class="fs-7 fw-bold text-muted text-uppercase tracking-wider mb-2">My Shops</p>
+              <div class="d-flex flex-column gap-2">
+                <% shops.forEach(shop => { %>
+                  <a href="/shops/<%= shop._id %>" class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between text-decoration-none">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
+                        <i class="fa-solid fa-store"></i>
+                      </div>
+                      <div>
+                        <p class="fs-7 fw-bold text-dark mb-0"><%= shop.shopName %></p>
+                        <p class="fs-8 text-muted mb-0"><%= shop.category || 'Shop' %></p>
+                      </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right fs-7 text-muted"></i>
+                  </a>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+
+          <% if (typeof listings !== 'undefined' && listings.length > 0) { %>
+            <div>
+              <p class="fs-7 fw-bold text-muted text-uppercase tracking-wider mb-2">My Service Listings</p>
+              <div class="d-flex flex-column gap-2">
+                <% listings.forEach(service => { %>
+                  <a href="/service/<%= service._id %>" class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between text-decoration-none">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="rounded-3 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                      </div>
+                      <div>
+                        <p class="fs-7 fw-bold text-dark mb-0"><%= service.serviceType || service.title || 'Service' %></p>
+                        <p class="fs-8 text-muted mb-0"><%= service.area || 'Active' %></p>
+                      </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right fs-7 text-muted"></i>
+                  </a>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+        </section>
       <% } %>
-    </section>
-  <% } %>
 
-  <!-- ── 7. Need Help? ── -->
-  <section class="app-card">
-    <a href="/help" class="app-action-tile border-none">
-      <div class="app-action-left">
-        <div class="app-action-icon bg-emerald-50 text-emerald-600">
-          <i class="fa-solid fa-headset"></i>
-        </div>
-        <div>
-          <div class="app-action-title text-emerald-800">Need Help?</div>
-          <div class="app-action-sub">Contact 24/7 customer support & FAQs</div>
-        </div>
-      </div>
-      <i class="fa-solid fa-chevron-right text-xs text-emerald-600"></i>
-    </a>
-  </section>
+    </div>
 
-  <!-- ── 8. Log Out & Danger Zone ── -->
-  <section class="app-card">
-    <a href="/logout" class="app-action-tile border-none">
-      <div class="app-action-left">
-        <div class="app-action-icon bg-red-50 text-red-600">
-          <i class="fa-solid fa-right-from-bracket"></i>
-        </div>
-        <div>
-          <div class="app-action-title text-red-600">Log Out</div>
-          <div class="app-action-sub">Sign out of your account</div>
-        </div>
-      </div>
-      <i class="fa-solid fa-chevron-right text-xs text-red-400"></i>
-    </a>
-  </section>
+  </div>
 
 </div>
 
 <!-- ── Leaderboard & Referrals Modal ── -->
 <div class="modal fade" id="referralsModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content rounded-3xl border-0 shadow-2xl overflow-hidden">
-      <div class="modal-header border-b border-gray-100 bg-gray-50 p-4">
-        <h5 class="modal-title text-base font-bold text-gray-900 flex items-center gap-2">
-          <i class="fa-solid fa-trophy text-amber-500"></i> Referrals & Leaderboard
+    <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+      <div class="modal-header border-bottom bg-light p-3">
+        <h5 class="modal-title fs-6 fw-bold text-dark d-flex align-items-center gap-2 mb-0">
+          <i class="fa-solid fa-trophy text-warning"></i> Referrals & Leaderboard
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body p-4 space-y-4">
+      <div class="modal-body p-4 d-flex flex-column gap-4">
         <div>
-          <h6 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Top Referrers</h6>
+          <h6 class="fs-7 fw-bold text-muted text-uppercase mb-2">Top Referrers</h6>
           <% if (typeof top3Referrals !== 'undefined' && top3Referrals.length > 0) { %>
-            <div class="space-y-2">
+            <div class="d-flex flex-column gap-2">
               <% top3Referrals.forEach((user, index) => { %>
-                <div class="flex items-center justify-between p-3 rounded-xl border <%= index === 0 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200' %>">
-                  <div class="flex items-center gap-3">
-                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold <%= index === 0 ? 'bg-amber-500 text-white' : 'bg-gray-300 text-gray-800' %>">
+                <div class="d-flex align-items-center justify-content-between p-3 rounded-3 border <%= index === 0 ? 'bg-warning bg-opacity-10 border-warning' : 'bg-light' %>">
+                  <div class="d-flex align-items-center gap-3">
+                    <span class="rounded-circle d-flex align-items-center justify-content-center fs-7 fw-bold text-white <%= index === 0 ? 'bg-warning' : 'bg-secondary' %>" style="width: 28px; height: 28px;">
                       <%= index + 1 %>
                     </span>
                     <div>
-                      <p class="text-xs font-bold text-gray-900 m-0"><%= user.name || 'User' %></p>
-                      <p class="text-[10px] text-gray-500 m-0">Joined <%= new Date(user.createdAt).toLocaleDateString() %></p>
+                      <p class="fs-7 fw-bold text-dark mb-0"><%= user.name || 'User' %></p>
+                      <p class="fs-8 text-muted mb-0">Joined <%= new Date(user.createdAt).toLocaleDateString() %></p>
                     </div>
                   </div>
-                  <span class="text-xs font-bold text-indigo-700"><%= user.referralCount %> referrals</span>
+                  <span class="fs-7 fw-bold text-primary"><%= user.referralCount %> referrals</span>
                 </div>
               <% }) %>
             </div>
@@ -565,23 +598,23 @@
         </div>
 
         <div>
-          <h6 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Recent Referrals</h6>
+          <h6 class="fs-7 fw-bold text-muted text-uppercase mb-2">Recent Referrals</h6>
           <% if (typeof referredFriends !== 'undefined' && referredFriends.length > 0) { %>
-            <div class="space-y-2 max-h-48 overflow-y-auto">
+            <div class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto;">
               <% referredFriends.forEach(friend => { %>
-                <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg text-xs">
-                  <span class="font-semibold text-gray-800"><%= friend.name || 'Friend' %></span>
-                  <span class="text-emerald-600 font-bold">+10 Coins</span>
+                <div class="d-flex align-items-center justify-content-between p-2.5 bg-light rounded-3 fs-7">
+                  <span class="fw-semibold text-dark"><%= friend.name || 'Friend' %></span>
+                  <span class="text-success fw-bold">+10 Coins</span>
                 </div>
               <% }) %>
             </div>
           <% } else { %>
-            <p class="text-xs text-gray-500 text-center py-4 bg-gray-50 rounded-xl">No referrals yet. Share your code to earn 10 coins per friend!</p>
+            <p class="fs-7 text-muted text-center py-3 bg-light rounded-3 mb-0">No referrals yet. Share your code to earn 10 coins per friend!</p>
           <% } %>
         </div>
       </div>
-      <div class="modal-footer border-t border-gray-100 p-3">
-        <button type="button" class="w-full py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl text-xs transition-colors" data-bs-dismiss="modal">Close</button>
+      <div class="modal-footer border-top p-2">
+        <button type="button" class="btn btn-secondary btn-sm w-100 rounded-3 fw-bold" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -590,35 +623,37 @@
 <!-- ── Add Address Modal ── -->
 <div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-3xl border-0 shadow-2xl overflow-hidden">
-      <div class="modal-header border-b border-gray-100 bg-gray-50 p-4">
-        <h5 class="modal-title text-base font-bold text-gray-900">Add New Saved Address</h5>
+    <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+      <div class="modal-header border-bottom bg-light p-3">
+        <h5 class="modal-title fs-6 fw-bold text-dark mb-0">Add New Saved Address</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
-        <form id="addAddressForm" class="space-y-4">
+        <form id="addAddressForm" class="d-flex flex-column gap-3">
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-2">Label</label>
-            <div class="flex gap-2">
-              <label class="flex-1 text-center py-2 border rounded-xl cursor-pointer has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:border-indigo-600 text-xs font-bold text-gray-700 transition-colors">
-                <input type="radio" name="addrLabel" value="Home" checked class="hidden">
+            <label class="form-label fs-7 fw-bold text-dark mb-2">Label</label>
+            <div class="d-flex gap-2">
+              <input type="radio" class="btn-check" name="addrLabel" id="labelHome" value="Home" checked>
+              <label class="btn btn-outline-primary btn-sm flex-fill rounded-pill fw-bold" for="labelHome">
                 <i class="fa-solid fa-house me-1"></i> Home
               </label>
-              <label class="flex-1 text-center py-2 border rounded-xl cursor-pointer has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:border-indigo-600 text-xs font-bold text-gray-700 transition-colors">
-                <input type="radio" name="addrLabel" value="Work" class="hidden">
+
+              <input type="radio" class="btn-check" name="addrLabel" id="labelWork" value="Work">
+              <label class="btn btn-outline-primary btn-sm flex-fill rounded-pill fw-bold" for="labelWork">
                 <i class="fa-solid fa-briefcase me-1"></i> Work
               </label>
-              <label class="flex-1 text-center py-2 border rounded-xl cursor-pointer has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:border-indigo-600 text-xs font-bold text-gray-700 transition-colors">
-                <input type="radio" name="addrLabel" value="Other" class="hidden">
+
+              <input type="radio" class="btn-check" name="addrLabel" id="labelOther" value="Other">
+              <label class="btn btn-outline-primary btn-sm flex-fill rounded-pill fw-bold" for="labelOther">
                 <i class="fa-solid fa-location-dot me-1"></i> Other
               </label>
             </div>
           </div>
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">Full Address</label>
-            <input type="text" id="newAddressInput" required placeholder="Apartment, Street, Area, Landmark" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500">
+            <label class="form-label fs-7 fw-bold text-dark mb-1">Full Address</label>
+            <input type="text" id="newAddressInput" required placeholder="Apartment, Street, Area, Landmark" class="form-control rounded-3 bg-light fs-7">
           </div>
-          <button type="submit" id="saveAddrBtn" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-colors">
+          <button type="submit" id="saveAddrBtn" class="btn btn-primary rounded-3 fw-bold py-2 fs-7 mt-2">
             Save Address
           </button>
         </form>
