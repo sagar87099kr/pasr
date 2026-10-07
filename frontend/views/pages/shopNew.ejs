@@ -125,25 +125,159 @@
                         </div>
                     </div>
 
-                    <!-- Image Upload -->
-                    <div class="form-group mt-4">
-                        <label class="form-label">Shop Image (Single Photo) *</label>
-                        <div class="p-3 border rounded bg-light text-center">
-                            <img src="/images/shop_front_example.png" alt="Example Shop Front"
-                                class="img-fluid rounded mb-3" style="max-height: 150px; opacity: 0.9;">
-                            <input type="file" name="shopImage" id="shopImage" class="form-control" required>
-                            <div class="form-text mt-2"><i class="fa-solid fa-lightbulb text-warning"></i> Tip: Upload a
-                                clear photo of your shop front.</div>
+                    <!-- Formal Merchant Agreement & Terms of Service with Scroll Lock -->
+                    <div class="form-group mt-4 pt-3 border-top">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="form-label mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-file-contract text-primary"></i> 
+                                <span>Merchant Terms, Conditions & Subscription Agreement *</span>
+                            </label>
+                            <span id="scroll-status-badge" class="badge bg-secondary rounded-pill fs-8 fw-semibold px-2 py-1">
+                                <i class="fa-solid fa-arrows-up-down me-1"></i> Scroll to review
+                            </span>
                         </div>
-                        <div class="invalid-feedback">Please upload at least one image.</div>
+
+                        <!-- Agreement Scroll Container -->
+                        <div id="termsScrollContainer" class="terms-scroll-box p-3 bg-light rounded-3 border" style="max-height: 280px; overflow-y: auto; font-size: 13px; line-height: 1.6; color: #334155; border: 1.5px solid #cbd5e1; box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);">
+                            
+                            <!-- Key Highlights Summary Grid -->
+                            <div class="mb-3 p-3 bg-white rounded-3 border shadow-sm">
+                                <h6 class="fw-bold text-primary mb-2 d-flex align-items-center gap-2 fs-7">
+                                    <i class="fa-solid fa-table-columns"></i> Key Policy & Subscription Highlights
+                                </h6>
+                                <div class="row g-2 text-dark fs-8">
+                                    <div class="col-sm-6">
+                                        <div class="p-2 bg-light rounded border">
+                                            <span class="text-muted d-block fw-bold">Platform Plan & Subscription</span>
+                                            <strong class="text-primary">Monthly Storefront Maintenance</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="p-2 bg-light rounded border">
+                                            <span class="text-muted d-block fw-bold">Billing Cycle & Invoicing</span>
+                                            <strong>Monthly Recurring / Auto-Deducted</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="p-2 bg-light rounded border">
+                                            <span class="text-muted d-block fw-bold">Payouts & Settlement</span>
+                                            <strong>Direct UPI (T+1 / Regular Cycles)</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="p-2 bg-light rounded border">
+                                            <span class="text-muted d-block fw-bold">Order Preparation SLA</span>
+                                            <strong>15 – 25 Minutes Maximum</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="legal-text">
+                                <h6 class="fw-bold text-dark mb-2">1. PREAMBLE & APPLICABILITY</h6>
+                                <p>This Merchant Listing and Service Level Agreement ("Agreement") constitutes a legally binding contract entered into between <strong>PASR Platform (Perfectly Assured Service and Rentals)</strong> and the registered merchant ("Merchant", "Shop Owner", or "You"). By registering your shop storefront on the PASR platform, you unconditionally agree to adhere to all terms, policies, operational guidelines, and legal requirements set forth herein.</p>
+
+                                <h6 class="fw-bold text-dark mt-3 mb-2">2. STOREFRONT SUBSCRIPTION & MONTHLY SERVICE FEES</h6>
+                                <p><strong>2.1 Monthly Platform Subscription:</strong> To maintain an active, verified digital storefront, index product inventory, and receive local online customer orders through the PASR ecosystem, the Merchant agrees to pay a monthly recurring platform subscription fee as defined by PASR's commercial rate card.</p>
+                                <p><strong>2.2 Billing & Invoicing:</strong> Monthly subscription charges are billed in advance at the start of each monthly billing cycle. Invoices will be generated automatically and made accessible in the Merchant Dashboard. Fees may be paid directly or adjusted against the Merchant's accumulated platform settlement credits.</p>
+                                <p><strong>2.3 Grace Period & Status Modification:</strong> A grace period of 5 calendar days is provided for renewal payment. Failure to remit the monthly platform subscription fee after the grace period will result in automated temporary deactivation of the storefront and listing hideout until payment is cleared.</p>
+
+                                <h6 class="fw-bold text-dark mt-3 mb-2">3. PRODUCT LISTING, QUALITY & FAIR PRICING INTEGRITY</h6>
+                                <p><strong>3.1 Authenticity & Legality:</strong> The Merchant warrants that all listed goods are 100% genuine, unexpired, legally acquired, and comply with all applicable standards under the Consumer Protection Act, Food Safety and Standards Act (FSSAI), and Legal Metrology (Packaged Commodities) Rules.</p>
+                                <p><strong>3.2 Price Transparency:</strong> The selling price listed on PASR shall never exceed the Maximum Retail Price (MRP). Any discounts, offers, or price updates must reflect real-time store pricing.</p>
+                                <p><strong>3.3 Prohibited Goods:</strong> Listing of banned substances, counterfeit products, expired consumables, hazardous materials, prescription-only drugs without license, adult content, or any illegal contraband is strictly prohibited and shall result in instant permanent blacklisting and legal referral.</p>
+
+                                <h6 class="fw-bold text-dark mt-3 mb-2">4. ORDER FULFILLMENT, PACKAGING & DELIVERY HANDOVER</h6>
+                                <p><strong>4.1 Acceptance & SLA:</strong> Upon receipt of an incoming customer order, the Merchant agrees to acknowledge the order within 5 minutes and prepare/pack items within 15–25 minutes.</p>
+                                <p><strong>4.2 Packaging Quality:</strong> All items must be securely packed in hygienic, tamper-evident packaging to prevent spillage, damage, or contamination during transit.</p>
+                                <p><strong>4.3 Handover to PASR Delivery Partners:</strong> Goods must be handed over exclusively to verified PASR delivery executives after validating the order ID and delivery verification pin.</p>
+
+                                <h6 class="fw-bold text-dark mt-3 mb-2">5. FINANCIAL RECONCILIATION & UPI SETTLEMENTS</h6>
+                                <p><strong>5.1 Payout Account:</strong> Payouts for completed orders will be transferred electronically to the Merchant's verified UPI ID or bank account as registered during onboarding.</p>
+                                <p><strong>5.2 Deductions & Reconciliations:</strong> PASR reserves the right to adjust or offset amounts for customer refunds resulting from missing items, spoiled goods, merchant cancellation penalties, or applicable platform service fees.</p>
+
+                                <h6 class="fw-bold text-dark mt-3 mb-2">6. INTELLECTUAL PROPERTY & SHARED CATALOG ASSETS</h6>
+                                <p><strong>6.1 Media Rights:</strong> Merchant grants PASR a non-exclusive, royalty-free license to display shop names, brand marks, and uploaded product images across digital marketing channels and web platforms.</p>
+                                <p><strong>6.2 Master Catalog Usage:</strong> Merchants may utilize PASR's central barcode and shared image repository solely for cataloging goods on the PASR platform.</p>
+
+                                <h6 class="fw-bold text-dark mt-3 mb-2">7. CODE OF CONDUCT, REVIEWS & ZERO-TOLERANCE POLICY</h6>
+                                <p>Merchants must maintain professional courtesy with customers and delivery staff. Any abusive behavior, price gouging, off-platform cash extortion, or fraudulent transactions will lead to immediate account termination.</p>
+
+                                <h6 class="fw-bold text-dark mt-3 mb-2">8. GOVERNING LAW & LEGAL JURISDICTION</h6>
+                                <p class="mb-0">This Agreement is governed by the laws of India. Any legal dispute or claim arising hereunder shall be subject to the exclusive jurisdiction of the competent courts in Giridih / Jharkhand, India.</p>
+                            </div>
+                        </div>
+
+                        <!-- Scroll Progress Bar -->
+                        <div class="progress mt-2" style="height: 6px;">
+                            <div id="termsProgressBar" class="progress-bar bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+
+                        <!-- Agreement Checkbox (Locked until scrolled to bottom) -->
+                        <div class="form-check mt-3 d-flex align-items-start gap-2">
+                            <input class="form-check-input mt-1" type="checkbox" id="agreeTermsCheckbox" required disabled>
+                            <label class="form-check-label fs-7 text-dark fw-semibold" for="agreeTermsCheckbox" id="agreeTermsLabel" style="cursor: not-allowed; opacity: 0.65;">
+                                I have completely scrolled, read, understood, and formally agree to the PASR Merchant Terms of Service, Monthly Platform Subscription Agreement, and Operating Guidelines.
+                            </label>
+                        </div>
+                        <div class="invalid-feedback d-block" id="terms-validation-msg" style="display: none !important;">
+                            Please scroll to the bottom of the terms and check the box to proceed.
+                        </div>
                     </div>
 
-                    <button class="btn-submit">
+                    <button class="btn-submit mt-3" id="submitShopBtn" disabled style="opacity: 0.6; cursor: not-allowed;">
                         <i class="fa-solid fa-check-circle"></i> List Your Shop
                     </button>
                 </form>
             </div>
         </div>
+
+        <script>
+            // Terms and Conditions Scroll-to-Accept Logic
+            document.addEventListener('DOMContentLoaded', () => {
+                const termsBox = document.getElementById('termsScrollContainer');
+                const progressBar = document.getElementById('termsProgressBar');
+                const badge = document.getElementById('scroll-status-badge');
+                const checkbox = document.getElementById('agreeTermsCheckbox');
+                const label = document.getElementById('agreeTermsLabel');
+                const submitBtn = document.getElementById('submitShopBtn');
+
+                let hasScrolledToBottom = false;
+
+                termsBox.addEventListener('scroll', () => {
+                    const scrollTop = termsBox.scrollTop;
+                    const scrollHeight = termsBox.scrollHeight - termsBox.clientHeight;
+                    const progress = scrollHeight > 0 ? Math.min(100, Math.round((scrollTop / scrollHeight) * 100)) : 100;
+
+                    progressBar.style.width = progress + '%';
+
+                    if (progress >= 95 && !hasScrolledToBottom) {
+                        hasScrolledToBottom = true;
+                        progressBar.classList.remove('bg-primary');
+                        progressBar.classList.add('bg-success');
+                        
+                        badge.className = 'badge bg-success rounded-pill fs-8 fw-semibold px-2 py-1';
+                        badge.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Agreement Reviewed';
+
+                        checkbox.disabled = false;
+                        label.style.cursor = 'pointer';
+                        label.style.opacity = '1';
+                    }
+                });
+
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                        submitBtn.style.cursor = 'pointer';
+                    } else {
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.6';
+                        submitBtn.style.cursor = 'not-allowed';
+                    }
+                });
+            });
+        </script>
 
         <script>
             function initAutocomplete() {
