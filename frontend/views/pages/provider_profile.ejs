@@ -1,931 +1,707 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
-  <link rel="stylesheet" href="/css/provider_profile.css">
+<link rel="stylesheet" href="/css/provider_profile.css">
 
-  <style>
-    .post-card {
-      background: #fff;
-      border-radius: 12px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      overflow: hidden;
-      border: 1px solid #e9ecef;
-      max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
-    }
+<style>
+  :root {
+    --primary-blue: #1E3A8A;
+    --primary-blue-gradient: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 100%);
+    --card-bg: #ffffff;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+  }
 
-    .post-media {
-      width: 100%;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  body {
+    background-color: #F9FAFB !important;
+    font-family: 'Outfit', system-ui, -apple-system, sans-serif !important;
+  }
 
-    .post-media img,
-    .post-media video {
-      width: 100% !important;
-      max-width: 100%;
-      height: auto !important;
-      max-height: 600px;
-      object-fit: contain !important;
-      display: block;
-    }
+  .app-profile-wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+    padding-bottom: 90px;
+  }
 
-    .video-wrapper {
-      position: relative;
-      display: inline-block;
-      width: 100%;
-    }
+  /* 1. Header matching Flutter App */
+  .app-profile-header {
+    background: var(--primary-blue-gradient);
+    padding: 40px 20px 28px 20px;
+    color: #ffffff;
+    text-align: center;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 10px 25px rgba(30, 58, 138, 0.15);
+    margin-bottom: 16px;
+  }
 
-    .play-overlay {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 3rem;
-      color: rgba(255, 255, 255, 0.85);
-      pointer-events: none;
-      text-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
-      transition: opacity 0.2s ease;
-    }
-  </style>
+  .app-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 auto 12px auto;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
 
-  <body>
-    <div class="profile-container">
+  .app-user-name {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+  }
 
-      <!-- Refer & Earn Section -->
-      <section class="profile-card"
-        style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 1px solid #ddd6fe; margin-bottom: 24px;">
-        <div class="card-header"
-          style="border-bottom: 1px solid #ddd6fe; display: flex; justify-content: space-between; align-items: center;">
-          <div class="user-info">
-            <h2 style="color: #5b21b6; margin: 0;"><i class="fa-solid fa-gift me-2"></i>Refer & Earn</h2>
-            <span class="user-type" style="color: #7c3aed;">Share PaSr and earn rewards</span>
-          </div>
-          <div class="coin-balance"
-            style="background: #fff; padding: 8px 16px; border-radius: 24px; border: 1px solid #ddd6fe; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <i class="fa-solid fa-coins" style="color: #f59e0b; font-size: 1.2rem;"></i>
-            <span style="font-weight: 800; color: #1e293b; font-size: 1.1rem;">
-              <%= currUser.coins || 0 %>
-            </span>
-          </div>
+  .app-verified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 14px;
+  }
+
+  .app-coins-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 24px;
+    color: #FBBF24;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  /* App Card Container */
+  .app-card {
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    padding: 18px 20px;
+    margin: 0 16px 14px 16px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .app-card-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--primary-blue);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  /* Refer Code Box */
+  .app-referral-box {
+    background: #F0F4FF;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    border: 1px solid #DBEAFE;
+  }
+
+  .app-referral-code {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: var(--primary-blue);
+    font-family: monospace;
+  }
+
+  .app-detail-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid #F1F5F9;
+  }
+
+  .app-detail-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .app-detail-icon {
+    width: 20px;
+    color: var(--primary-blue);
+    margin-right: 12px;
+    margin-top: 2px;
+    font-size: 16px;
+  }
+
+  .app-detail-content {
+    flex: 1;
+  }
+
+  .app-detail-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748B;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .app-detail-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1E293B;
+    word-break: break-word;
+  }
+
+  /* Action Tiles matching Flutter _actionTile */
+  .app-action-tile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    text-decoration: none !important;
+    color: inherit;
+    border-bottom: 1px solid #F1F5F9;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .app-action-tile:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .app-action-tile:first-child {
+    padding-top: 0;
+  }
+
+  .app-action-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .app-action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .app-action-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 2px;
+  }
+
+  .app-action-sub {
+    font-size: 12px;
+    color: #64748B;
+    font-weight: 500;
+  }
+
+  /* Post Cards in Profile */
+  .post-card {
+    background: #fff;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    border: 1px solid #E2E8F0;
+  }
+
+  .post-media {
+    width: 100%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .post-media img,
+  .post-media video {
+    width: 100% !important;
+    max-height: 500px;
+    object-fit: contain !important;
+    display: block;
+  }
+</style>
+
+<div class="app-profile-wrapper">
+
+  <!-- ── 1. Header Section matching Flutter ProfilePage ── -->
+  <header class="app-profile-header">
+    <div class="app-avatar">
+      <%= currUser.name && currUser.name.trim() ? currUser.name.trim()[0].toUpperCase() : 'U' %>
+    </div>
+    <h1 class="app-user-name"><%= currUser.name || 'User' %></h1>
+    
+    <div>
+      <span class="app-verified-badge">
+        <i class="fa-solid fa-circle-check text-emerald-400"></i> Verified Customer
+      </span>
+    </div>
+
+    <div>
+      <div class="app-coins-pill">
+        <i class="fa-solid fa-coins"></i>
+        <span><%= currUser.coins || 0 %> PaSr Coins</span>
+      </div>
+    </div>
+
+    <% if (currUser.pendingPenalty && currUser.pendingPenalty > 0) { %>
+      <div class="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/20 border border-red-500/40 text-red-100 text-xs font-bold">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>Pending Penalty: ₹<%= currUser.pendingPenalty %></span>
+      </div>
+    <% } %>
+  </header>
+
+  <!-- ── 2. Refer & Earn Card ── -->
+  <section class="app-card">
+    <div class="app-card-title">
+      <i class="fa-solid fa-gift" style="color: #6366F1;"></i>
+      <span>Refer & Earn</span>
+    </div>
+
+    <div class="app-referral-box">
+      <span class="app-referral-code" id="referralCodeText"><%= currUser.referralCode || 'NOT_SET' %></span>
+      <div class="flex gap-2">
+        <button onclick="copyReferralCode()" class="px-3 py-1.5 bg-blue-900 text-white rounded-lg text-xs font-bold hover:bg-blue-800 transition-colors flex items-center gap-1">
+          <i class="fa-solid fa-copy"></i> Copy
+        </button>
+        <button onclick="shareReferralCode()" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors flex items-center gap-1">
+          <i class="fa-solid fa-share-nodes"></i> Share
+        </button>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between text-xs text-gray-500 pt-1">
+      <span>Total Friends Referred: <strong class="text-gray-900"><%= currUser.referralCount || 0 %></strong></span>
+      <button type="button" class="text-indigo-600 font-bold hover:underline" data-bs-toggle="modal" data-bs-target="#referralsModal">
+        View Leaderboard & Referrals
+      </button>
+    </div>
+  </section>
+
+  <!-- ── 3. Profile Details Card ── -->
+  <section class="app-card">
+    <div class="app-card-title">
+      <i class="fa-regular fa-user"></i>
+      <span>Profile Details</span>
+    </div>
+
+    <div class="app-detail-row">
+      <div class="app-detail-icon"><i class="fa-solid fa-id-badge"></i></div>
+      <div class="app-detail-content">
+        <div class="app-detail-label">Name</div>
+        <div class="app-detail-value"><%= currUser.name %></div>
+      </div>
+    </div>
+
+    <div class="app-detail-row">
+      <div class="app-detail-icon"><i class="fa-brands fa-whatsapp"></i></div>
+      <div class="app-detail-content">
+        <div class="app-detail-label">WhatsApp / Phone</div>
+        <div class="app-detail-value"><%= currUser.username %></div>
+      </div>
+    </div>
+
+    <div class="app-detail-row">
+      <div class="app-detail-icon"><i class="fa-solid fa-location-dot"></i></div>
+      <div class="app-detail-content">
+        <div class="flex items-center justify-between">
+          <div class="app-detail-label">Address</div>
+          <button type="button" class="text-indigo-600 font-bold text-xs hover:underline" data-bs-toggle="collapse" data-bs-target="#changeLocationCollapse">
+            Change
+          </button>
         </div>
+        <div class="app-detail-value"><%= currUser.address || 'Not set' %></div>
+      </div>
+    </div>
 
-        <div class="referral-content" style="padding: 20px;">
-          <p style="font-size: 0.95rem; line-height: 1.5; color: #4b5563; margin-bottom: 20px;">
-            Get <strong>10 coins</strong> for every friend who joins using your code. They'll get <strong>5 coins</strong> too!
-          </p>
+    <!-- Collapsible Location Update -->
+    <div class="collapse mt-3 pt-3 border-t border-gray-100" id="changeLocationCollapse">
+      <form action="/customer/update/<%= currUser._id %>?_method=PUT" method="POST" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">New Location / Address</label>
+          <input type="text" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500" id="addressInput" required name="customer[address]" value="<%= currUser.address%>">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Pincode</label>
+          <input type="text" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500" id="exampleInputpincode" required name="customer[pincode]" value="<%= currUser.pincode%>">
+        </div>
+        <button type="submit" class="w-full py-2 bg-indigo-600 text-white font-bold rounded-lg text-xs hover:bg-indigo-700 transition-colors">
+          Update Location
+        </button>
+      </form>
+    </div>
+  </section>
 
-          <div class="referral-code-box"
-            style="background: #fff; padding: 15px; border-radius: 12px; border: 2px dashed #c084fc; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <div>
-              <span
-                style="display: block; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Your
-                Referral Code</span>
-              <span id="referralCodeText"
-                style="font-size: 1.4rem; font-weight: 800; color: #1e293b; letter-spacing: 2px;">
-                <%= currUser.referralCode || 'NOT_SET' %>
+  <!-- ── 4. Saved Address Book ── -->
+  <section class="app-card">
+    <div class="flex items-center justify-between mb-3">
+      <div class="app-card-title mb-0">
+        <i class="fa-solid fa-book-bookmark text-indigo-600"></i>
+        <span>Saved Addresses</span>
+      </div>
+      <button class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 transition-colors" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+        <i class="fa-solid fa-plus me-1"></i> Add New
+      </button>
+    </div>
+
+    <div class="space-y-2.5" id="addressBookContainer">
+      <% if (currUser.savedAddresses && currUser.savedAddresses.length > 0) { %>
+        <% currUser.savedAddresses.forEach(addr => { %>
+          <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-start justify-between gap-3 address-card" id="address-card-<%= addr._id %>">
+            <div class="min-w-0 flex-1">
+              <span class="inline-block px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[10px] font-extrabold rounded-md uppercase mb-1">
+                <%= addr.label || 'Home' %>
               </span>
+              <p class="text-xs text-gray-700 font-medium leading-relaxed m-0"><%= addr.addressStr %></p>
             </div>
-            <button onclick="copyReferralCode()" class="btn btn-sm btn-outline-primary"
-              style="border-radius: 8px; font-weight: 600;">
-              <i class="fa-solid fa-copy me-1"></i> Copy
+            <button onclick="deleteSavedAddress('<%= addr._id %>')" class="text-red-400 hover:text-red-600 p-1" title="Delete Address">
+              <i class="fa-solid fa-trash-can text-sm"></i>
             </button>
           </div>
+        <% }) %>
+      <% } else { %>
+        <div class="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-center text-xs text-gray-500">
+          No saved addresses yet. Add home or work address for faster delivery checkout!
+        </div>
+      <% } %>
+    </div>
+  </section>
 
+  <!-- ── 5. Quick Actions (Orders, Cart, Notifications, Partner) ── -->
+  <section class="app-card">
+    <a href="/myorders" class="app-action-tile">
+      <div class="app-action-left">
+        <div class="app-action-icon bg-blue-50 text-blue-700">
+          <i class="fa-solid fa-bag-shopping"></i>
+        </div>
+        <div>
+          <div class="app-action-title">My Orders</div>
+          <div class="app-action-sub">View all your orders & deliveries</div>
+        </div>
+      </div>
+      <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
+    </a>
 
-          <div style="margin-top: 16px; text-align: center;">
-            <span style="font-size: 0.85rem; color: #6b7280;">Total Friends Referred: <strong>
-                <%= currUser.referralCount || 0 %>
-              </strong></span>
+    <a href="/cart" class="app-action-tile">
+      <div class="app-action-left">
+        <div class="app-action-icon bg-indigo-50 text-indigo-700">
+          <i class="fa-solid fa-cart-shopping"></i>
+        </div>
+        <div>
+          <div class="app-action-title">My Cart</div>
+          <div class="app-action-sub">Items ready for checkout</div>
+        </div>
+      </div>
+      <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
+    </a>
+
+    <a href="/notifications" class="app-action-tile">
+      <div class="app-action-left">
+        <div class="app-action-icon bg-amber-50 text-amber-600">
+          <i class="fa-solid fa-bell"></i>
+        </div>
+        <div>
+          <div class="app-action-title">Notifications</div>
+          <div class="app-action-sub">Updates on orders & offers</div>
+        </div>
+      </div>
+      <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
+    </a>
+
+    <a href="https://pasr.shop" target="_blank" class="app-action-tile">
+      <div class="app-action-left">
+        <div class="app-action-icon bg-purple-50 text-purple-700">
+          <i class="fa-solid fa-handshake"></i>
+        </div>
+        <div>
+          <div class="app-action-title">Partner With Us</div>
+          <div class="app-action-sub">Register your shop, service, or delivery</div>
+        </div>
+      </div>
+      <i class="fa-solid fa-arrow-up-right-from-square text-xs text-gray-400"></i>
+    </a>
+  </section>
+
+  <!-- ── 6. My Businesses / Listings (If Provider or Shopkeeper) ── -->
+  <% if ((typeof shops !== 'undefined' && shops.length > 0) || (typeof listings !== 'undefined' && listings.length > 0) || (typeof kisanPosts !== 'undefined' && kisanPosts.length > 0)) { %>
+    <section class="app-card">
+      <div class="app-card-title">
+        <i class="fa-solid fa-briefcase text-indigo-600"></i>
+        <span>My Services & Shops</span>
+      </div>
+
+      <% if (typeof shops !== 'undefined' && shops.length > 0) { %>
+        <div class="mb-3">
+          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">My Shops</p>
+          <div class="space-y-2">
+            <% shops.forEach(shop => { %>
+              <a href="/shops/<%= shop._id %>" class="p-3 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 flex items-center justify-between text-decoration-none">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+                    <i class="fa-solid fa-store"></i>
+                  </div>
+                  <div>
+                    <p class="text-sm font-bold text-gray-900 m-0"><%= shop.shopName %></p>
+                    <p class="text-xs text-gray-500 m-0"><%= shop.category || 'Shop' %></p>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
+              </a>
+            <% }) %>
           </div>
         </div>
-      </section>
+      <% } %>
 
-      <!-- Referral Leaderboard Section -->
-      <section class="profile-card" style="margin-bottom: 24px;">
-        <div class="card-header" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; margin-bottom: 16px;">
-          <div class="user-info">
-            <h2><i class="fa-solid fa-trophy" style="color: #fbbf24; margin-right: 8px;"></i>Top Referrers</h2>
-            <span class="user-type">See who's inviting the most friends</span>
+      <% if (typeof listings !== 'undefined' && listings.length > 0) { %>
+        <div>
+          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">My Service Listings</p>
+          <div class="space-y-2">
+            <% listings.forEach(service => { %>
+              <a href="/service/<%= service._id %>" class="p-3 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 flex items-center justify-between text-decoration-none">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                  </div>
+                  <div>
+                    <p class="text-sm font-bold text-gray-900 m-0"><%= service.serviceType || service.title || 'Service' %></p>
+                    <p class="text-xs text-gray-500 m-0"><%= service.area || 'Active' %></p>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
+              </a>
+            <% }) %>
           </div>
         </div>
+      <% } %>
+    </section>
+  <% } %>
 
-        <div class="leaderboard-content">
+  <!-- ── 7. Need Help? ── -->
+  <section class="app-card">
+    <a href="/help" class="app-action-tile border-none">
+      <div class="app-action-left">
+        <div class="app-action-icon bg-emerald-50 text-emerald-600">
+          <i class="fa-solid fa-headset"></i>
+        </div>
+        <div>
+          <div class="app-action-title text-emerald-800">Need Help?</div>
+          <div class="app-action-sub">Contact 24/7 customer support & FAQs</div>
+        </div>
+      </div>
+      <i class="fa-solid fa-chevron-right text-xs text-emerald-600"></i>
+    </a>
+  </section>
+
+  <!-- ── 8. Log Out & Danger Zone ── -->
+  <section class="app-card">
+    <a href="/logout" class="app-action-tile border-none">
+      <div class="app-action-left">
+        <div class="app-action-icon bg-red-50 text-red-600">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </div>
+        <div>
+          <div class="app-action-title text-red-600">Log Out</div>
+          <div class="app-action-sub">Sign out of your account</div>
+        </div>
+      </div>
+      <i class="fa-solid fa-chevron-right text-xs text-red-400"></i>
+    </a>
+  </section>
+
+</div>
+
+<!-- ── Leaderboard & Referrals Modal ── -->
+<div class="modal fade" id="referralsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content rounded-3xl border-0 shadow-2xl overflow-hidden">
+      <div class="modal-header border-b border-gray-100 bg-gray-50 p-4">
+        <h5 class="modal-title text-base font-bold text-gray-900 flex items-center gap-2">
+          <i class="fa-solid fa-trophy text-amber-500"></i> Referrals & Leaderboard
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 space-y-4">
+        <div>
+          <h6 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Top Referrers</h6>
           <% if (typeof top3Referrals !== 'undefined' && top3Referrals.length > 0) { %>
-            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+            <div class="space-y-2">
               <% top3Referrals.forEach((user, index) => { %>
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 12px; background: <%= index === 0 ? 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' : index === 1 ? 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)' : index === 2 ? 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)' : '#fff' %>; border: 1px solid <%= index === 0 ? '#fde68a' : index === 1 ? '#d1d5db' : index === 2 ? '#fecaca' : '#e5e7eb' %>;">
-                  <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; background: <%= index === 0 ? '#fbbf24' : index === 1 ? '#9ca3af' : '#b91c1c' %>; color: white; flex-shrink: 0;">
+                <div class="flex items-center justify-between p-3 rounded-xl border <%= index === 0 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200' %>">
+                  <div class="flex items-center gap-3">
+                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold <%= index === 0 ? 'bg-amber-500 text-white' : 'bg-gray-300 text-gray-800' %>">
                       <%= index + 1 %>
-                    </div>
+                    </span>
                     <div>
-                      <div style="font-weight: 600; color: #1f2937; word-break: break-word;"><%= user.name || 'Anonymous' %></div>
-                      <div style="font-size: 0.8rem; color: #6b7280;">Joined <%= new Date(user.createdAt).toLocaleDateString() %></div>
+                      <p class="text-xs font-bold text-gray-900 m-0"><%= user.name || 'User' %></p>
+                      <p class="text-[10px] text-gray-500 m-0">Joined <%= new Date(user.createdAt).toLocaleDateString() %></p>
                     </div>
                   </div>
-                  <div style="font-weight: 700; color: #4b5563; text-align: right;">
-                    <%= user.referralCount %> <span style="font-size: 0.8rem; font-weight: 400; display: block;">referrals</span>
-                  </div>
+                  <span class="text-xs font-bold text-indigo-700"><%= user.referralCount %> referrals</span>
                 </div>
               <% }) %>
             </div>
-            
-            <div style="border-top: 1px dashed #d1d5db; padding-top: 16px; display: flex; justify-content: space-between; align-items: center; background: #f9fafb; padding: 12px 16px; border-radius: 8px;">
-              <div style="font-weight: 600; color: #374151;">Your Rank</div>
-              <div style="font-weight: 800; color: #4f46e5; font-size: 1.1rem;">
-                <% if (currentUserRank !== '-') { %>
-                  #<%= currentUserRank %>
-                <% } else { %>
-                  -
-                <% } %>
-              </div>
-            </div>
-          <% } else { %>
-            <div style="text-align: center; padding: 20px; color: #6b7280;">
-              No referrals yet. Be the first to invite your friends!
-            </div>
           <% } %>
         </div>
-      </section>
 
-      <!-- My Referrals List Section -->
-      <section class="profile-card" style="margin-bottom: 24px;">
-        <div class="card-header" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; margin-bottom: 16px;">
-          <div class="user-info">
-            <h2><i class="fa-solid fa-users" style="color: #6366f1; margin-right: 8px;"></i>My Recent Referrals</h2>
-            <span class="user-type">Track your recently referred friends and rewards</span>
-          </div>
-        </div>
-
-        <div class="referrals-list-summary text-center">
-          <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 16px;">View your most recent referrals (limit 20).</p>
-          <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#referralsModal" style="border-radius: 8px; font-weight: 600;">
-            <i class="fa-solid fa-list-ul me-1"></i> View My Referrals
-          </button>
-        </div>
-      </section>
-
-      <!-- Referrals Modal -->
-      <div class="modal fade" id="referralsModal" tabindex="-1" aria-labelledby="referralsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-          <div class="modal-content" style="border-radius: 12px; border: none;">
-            <div class="modal-header" style="border-bottom: 1px solid #e5e7eb; background: #f8fafc; border-radius: 12px 12px 0 0;">
-              <h5 class="modal-title" id="referralsModalLabel" style="font-weight: 700; color: #1e293b;">
-                <i class="fa-solid fa-users" style="color: #6366f1; margin-right: 8px;"></i> Recent Referrals
-              </h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" style="padding: 20px;">
-              <% if (typeof referredFriends !== 'undefined' && referredFriends.length > 0) { %>
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                  <% referredFriends.forEach((friend) => { %>
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 12px; background: #fff; border: 1px solid #e5e7eb;">
-                      <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; background: #e0e7ff; color: #4f46e5; flex-shrink: 0;">
-                          <i class="fa-solid fa-user"></i>
-                        </div>
-                        <div>
-                          <div style="font-weight: 600; color: #1f2937; word-break: break-word;"><%= friend.name || 'Friend' %></div>
-                          <div style="font-size: 0.8rem; color: #6b7280;">Joined <%= new Date(friend.createdAt).toLocaleDateString() %></div>
-                        </div>
-                      </div>
-                      <div style="text-align: right;">
-                        <% if (friend.referralRewardClaimed) { %>
-                          <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; background: #dcfce7; color: #166534; font-size: 0.75rem; font-weight: 600;">
-                            <i class="fa-solid fa-check-circle"></i> +10 Coins
-                          </span>
-                        <% } else { %>
-                          <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; background: #fef9c3; color: #854d0e; font-size: 0.75rem; font-weight: 600;">
-                            <i class="fa-solid fa-clock"></i> Pending
-                          </span>
-                        <% } %>
-                      </div>
-                    </div>
-                  <% }) %>
+        <div>
+          <h6 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Recent Referrals</h6>
+          <% if (typeof referredFriends !== 'undefined' && referredFriends.length > 0) { %>
+            <div class="space-y-2 max-h-48 overflow-y-auto">
+              <% referredFriends.forEach(friend => { %>
+                <div class="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg text-xs">
+                  <span class="font-semibold text-gray-800"><%= friend.name || 'Friend' %></span>
+                  <span class="text-emerald-600 font-bold">+10 Coins</span>
                 </div>
-              <% } else { %>
-                <div style="text-align: center; padding: 30px 20px; color: #6b7280;">
-                  <i class="fa-solid fa-user-plus mb-3" style="font-size: 2rem; color: #d1d5db;"></i>
-                  <p class="mb-0">You haven't referred anyone recently.</p>
-                  <p style="font-size: 0.85rem;">Share your code to earn coins!</p>
-                </div>
-              <% } %>
+              <% }) %>
             </div>
-            <div class="modal-footer" style="border-top: 1px solid #e5e7eb; padding: 12px 20px;">
-              <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: 600;">Close</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- User Profile Card -->
-      <section class="profile-card">
-        <div class="card-header">
-          <div class="user-info">
-            <h2>
-              <%= currUser.name %>
-            </h2>
-            <span class="user-type">Customer / Provider Profile</span>
-          </div>
-
-          <span class="status-badge <%= currUser.verified %>">
-            <span class="status-dot"></span>
-            <%= currUser.verified ? 'Verified' : 'Not Verified' %>
-          </span>
-        </div>
-
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">Contact Number</span>
-            <span class="info-value">
-              <%= currUser.username %>
-            </span>
-          </div>
-
-          <div class="info-item">
-            <span class="info-label">Current Address</span>
-            <span class="info-value">
-              <%= currUser.address %>
-            </span>
-          </div>
-
-          <div class="info-item">
-            <span class="info-label">Pincode</span>
-            <span class="info-value">
-              <%= currUser.pincode %>
-            </span>
-          </div>
-        </div>
-
-        <!-- Update Location Form -->
-        <div class="form-section">
-          <h3 class="section-title">
-            <i class="fa-solid fa-map-location-dot"></i> Update Location
-          </h3>
-
-          <form action="/customer/update/<%= currUser._id %>?_method=PUT" method="POST">
-            <div class="form-group">
-              <label for="addressInput" class="form-label">Change Your Location</label>
-              <input type="text" class="form-control" id="addressInput" required name="customer[address]"
-                value="<%= currUser.address%>">
-              <div class="invalid-feedback">You need to enter your location.</div>
-            </div>
-
-            <div class="form-group">
-              <label for="exampleInputpincode" class="form-label">Pincode</label>
-              <input type="text" class="form-control" id="exampleInputpincode" required name="customer[pincode]"
-                value="<%= currUser.pincode%>">
-              <div class="invalid-feedback">You need to enter your pincode.</div>
-            </div>
-
-            <button class="btn btn-primary" style="width: 100%;">
-              Update Location
-            </button>
-          </form>
-        </div>
-
-
-      </section>
-
-      <!-- Address Book Section -->
-      <section class="profile-card">
-        <div class="card-header" style="border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; margin-bottom: 16px; flex-wrap: wrap;">
-          <div class="user-info mb-2 mb-md-0">
-            <h2><i class="fa-solid fa-book-bookmark text-primary me-2"></i>My Saved Addresses</h2>
-            <span class="user-type">Manage your delivery locations</span>
-          </div>
-          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addAddressModal">
-            <i class="fa-solid fa-plus me-1"></i> Add New
-          </button>
-        </div>
-        
-        <div class="address-grid" id="addressBookContainer" style="display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
-          <% if (currUser.savedAddresses && currUser.savedAddresses.length > 0) { %>
-            <% currUser.savedAddresses.forEach(addr => { %>
-              <div class="address-card" id="address-card-<%= addr._id %>" style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; position: relative; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                  <span class="badge" style="background: #eef2ff; color: #4f46e5; border-radius: 6px; padding: 6px 10px; font-weight: 700; font-size: 0.8rem;"><i class="fa-solid <%= addr.label === 'Home' ? 'fa-house' : addr.label === 'Work' ? 'fa-briefcase' : 'fa-location-dot' %> me-1"></i><%= addr.label %></span>
-                  <button onclick="deleteSavedAddress('<%= addr._id %>')" class="btn btn-sm btn-outline-danger" style="padding: 2px 8px; border: none; border-radius: 6px;" title="Delete Address"><i class="fa-solid fa-trash"></i></button>
-                </div>
-                <p style="color: #4b5563; font-size: 0.95rem; margin: 0; line-height: 1.5;"><%= addr.addressStr %></p>
-              </div>
-            <% }) %>
           <% } else { %>
-            <div id="emptyAddressState" style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: #6b7280; background: #f9fafb; border-radius: 12px; border: 2px dashed #e5e7eb;">
-              <i class="fa-solid fa-map-location-dot" style="font-size: 2.5rem; color: #9ca3af; margin-bottom: 16px; display: block;"></i>
-              <p style="margin: 0; font-weight: 600; font-size: 1.1rem; color: #4b5563;">No saved addresses yet</p>
-              <p style="font-size: 0.95rem; margin-top: 4px;">Add your home or work address for faster checkout!</p>
-            </div>
+            <p class="text-xs text-gray-500 text-center py-4 bg-gray-50 rounded-xl">No referrals yet. Share your code to earn 10 coins per friend!</p>
           <% } %>
         </div>
-      </section>
-
-      <!-- Add Address Modal -->
-      <div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-            <div class="modal-header" style="border-bottom: 1px solid #f3f4f6;">
-              <h5 class="modal-title fw-bold" style="color: #111827;">Add New Address</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-              <form id="addAddressForm">
-                <div class="mb-4">
-                  <label class="form-label fw-bold" style="color: #374151;">Label</label>
-                  <div class="d-flex gap-2">
-                    <input type="radio" class="btn-check" name="addrLabel" id="labelHome" value="Home" autocomplete="off" checked>
-                    <label class="btn btn-outline-primary rounded-pill px-3 py-2 fw-semibold" for="labelHome"><i class="fa-solid fa-house me-1"></i>Home</label>
-
-                    <input type="radio" class="btn-check" name="addrLabel" id="labelWork" value="Work" autocomplete="off">
-                    <label class="btn btn-outline-primary rounded-pill px-3 py-2 fw-semibold" for="labelWork"><i class="fa-solid fa-briefcase me-1"></i>Work</label>
-
-                    <input type="radio" class="btn-check" name="addrLabel" id="labelOther" value="Other" autocomplete="off">
-                    <label class="btn btn-outline-primary rounded-pill px-3 py-2 fw-semibold" for="labelOther"><i class="fa-solid fa-location-dot me-1"></i>Other</label>
-                  </div>
-                </div>
-                <div class="mb-4">
-                  <label class="form-label fw-bold" style="color: #374151;">Search Your Location</label>
-                  <input type="text" id="newAddressInput" class="form-control form-control-lg" name="addressStr" placeholder="Type building, street or area..." required autocomplete="off" style="font-size: 1rem; border-radius: 8px;">
-                </div>
-                <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm" id="saveAddrBtn" style="border-radius: 8px; font-size: 1.05rem;">Save Address</button>
-              </form>
-            </div>
-          </div>
-        </div>
       </div>
-
-      <!-- Need Help Section -->
-      <section class="profile-card" style="margin-top: 24px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0;">
-        <div class="card-header" style="border-bottom: 1px solid #bbf7d0; padding-bottom: 16px; margin-bottom: 16px;">
-          <div class="user-info">
-            <h2 style="color: #166534;"><i class="fa-solid fa-headset me-2"></i>Need Help?</h2>
-            <span class="user-type" style="color: #15803d;">Get support or donate to keep PaSr running</span>
-          </div>
-        </div>
-        <div style="text-align: center; padding: 10px 0;">
-          <p style="color: #166534; font-size: 0.95rem; margin-bottom: 20px;">Have questions, facing issues, or want to support our platform?</p>
-          <a href="/help" class="btn" style="background: #16a34a; color: white; font-weight: bold; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(22, 163, 74, 0.2);">
-            <i class="fa-solid fa-circle-info"></i> Visit Help Center
-          </a>
-        </div>
-      </section>
-
-      <!-- Danger Zone Section -->
-      <section class="profile-card" style="border: 1px solid #fee2e2; background: #fffafb; margin-top: 40px;">
-        <div class="card-header" style="border-bottom: 1px solid #fecaca; padding-bottom: 16px; margin-bottom: 16px;">
-          <div class="user-info">
-            <h2 style="color: #dc2626;"><i class="fa-solid fa-circle-exclamation me-2"></i>Danger Zone</h2>
-            <span class="user-type">Irreversible account actions</span>
-          </div>
-        </div>
-        <div style="padding: 10px 0;">
-          <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 20px;">
-            Once you delete your account, there is no going back. All your data including shops, reviews, and coins will be permanently removed.
-          </p>
-          <button class="btn btn-outline-danger w-100" disabled style="border-radius: 12px; padding: 12px; font-weight: 700; border-width: 2px; pointer-events: none; opacity: 0.6; cursor: not-allowed;">
-            <i class="fa-solid fa-user-minus me-2"></i> Delete My PaSr Account (Disabled)
-          </button>
-        </div>
-      </section>
-
-      <!-- Account Deletion Modal -->
-      <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 50px rgba(220, 38, 38, 0.15);">
-            <div class="modal-header" style="border-bottom: 1px solid #fee2e2; padding: 25px;">
-              <h5 class="modal-title fw-bold" style="color: #dc2626;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Delete Permanent Account</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-0">
-              <!-- Step 1: Warning -->
-              <div id="deleteWarningStep" class="p-4">
-                <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
-                  <h6 style="color: #991b1b; font-weight: 800; margin-bottom: 12px; font-size: 1rem;">
-                    <i class="fa-solid fa-circle-exclamation me-2"></i>Critical: Action is Permanent
-                  </h6>
-                  <p style="color: #b91c1c; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5;">
-                    Deleting <span class="fw-bold"><%= currUser.username %></span> will result in the total destruction of:
-                  </p>
-                  <ul style="color: #b91c1c; font-size: 0.85rem; margin-bottom: 0; padding-left: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <li><i class="fa-solid fa-check-circle me-1 opacity-50"></i> Reviews & Ratings</li>
-                    <li><i class="fa-solid fa-check-circle me-1 opacity-50"></i> Shop Inventory</li>
-                    <li><i class="fa-solid fa-check-circle me-1 opacity-50"></i> Provider Listings</li>
-                    <li><i class="fa-solid fa-check-circle me-1 opacity-50"></i> Bazaar Products</li>
-                    <li><i class="fa-solid fa-check-circle me-1 opacity-50"></i> Referral Coins</li>
-                    <li><i class="fa-solid fa-check-circle me-1 opacity-50"></i> Kisan Sabha Posts</li>
-                    <li><i class="fa-solid fa-check-circle me-1 opacity-50"></i> Delivery Status</li>
-                    <li><i class="fa-solid fa-check-circle me-1 opacity-50"></i> Order History</li>
-                  </ul>
-                </div>
-
-                <div class="text-center mb-4">
-                  <p class="fw-bold text-dark mb-2">Are you sure you want to proceed?</p>
-                  <p class="text-muted small">There is no way to recover these items once deleted.</p>
-                </div>
-
-                <button type="button" class="btn btn-danger w-100 py-3 fw-bold mb-2 shadow-sm" onclick="showDeleteConfirmForm()" style="border-radius: 12px; background: #dc2626;">
-                  Yes, I Want to Delete My Account
-                </button>
-                <button type="button" class="btn btn-light w-100 py-2 border-0" data-bs-dismiss="modal" style="border-radius: 12px; color: #6b7280;">
-                  Cancel and Stay
-                </button>
-              </div>
-
-              <!-- Step 2: Verification Form -->
-              <div id="deleteFormStep" class="p-4" style="display: none;">
-                <p class="text-muted mb-4" style="font-size: 0.9rem;">To continue, please verify your identity by entering your phone and password.</p>
-                <form action="/account/remove/permanent" method="POST" id="deleteAccountForm" class="delete-form">
-                  <div class="mb-3">
-                    <label for="delUsername" class="form-label fw-bold text-dark" style="font-size: 0.85rem;">Registered Mobile Number</label>
-                    <input type="tel" class="form-control form-control-lg bg-light" id="delUsername" name="username" placeholder="10-digit number" pattern="[0-9]{10}" required style="border-radius: 12px; border: 1px solid #e5e7eb; font-size: 1rem;">
-                  </div>
-                  <div class="mb-4">
-                    <label for="delPassword" class="form-label fw-bold text-dark" style="font-size: 0.85rem;">Account Password</label>
-                    <input type="password" class="form-control form-control-lg bg-light" id="delPassword" name="password" placeholder="••••••••" required style="border-radius: 12px; border: 1px solid #e5e7eb; font-size: 1rem;">
-                  </div>
-                  
-                  <div class="form-check mb-4 p-0" style="margin-left: 25px;">
-                    <input class="form-check-input" type="checkbox" id="irreversibleCheck" required style="float: left; margin-left: -25px;">
-                    <label class="form-check-label text-muted" for="irreversibleCheck" style="font-size: 0.8rem;">
-                      I understand that this action is irreversible and I will lose all my data forever.
-                    </label>
-                  </div>
-
-                  <button type="submit" class="btn btn-danger w-100 py-3 fw-bold shadow-sm" style="border-radius: 12px; font-size: 1.1rem; background: #dc2626;">
-                    <i class="fa-solid fa-trash-can me-2"></i> Permanently Delete Now
-                  </button>
-                  <button type="button" class="btn btn-link w-100 text-decoration-none mt-2" onclick="showDeleteWarning()" style="color: #6b7280; font-size: 0.9rem;">
-                    <i class="fa-solid fa-arrow-left me-1"></i> Back to warning
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="modal-footer border-t border-gray-100 p-3">
+        <button type="button" class="w-full py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl text-xs transition-colors" data-bs-dismiss="modal">Close</button>
       </div>
-
-
-      <!-- Delivery Partner Section -->
-      <% if (typeof deliveryPartner !=='undefined' && deliveryPartner) { %>
-        <section class="profile-card" style="border-left: 4px solid #6366f1;">
-          <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 16px;">
-            <div class="user-info">
-              <h2>🛵 Delivery Partner</h2>
-              <span class="user-type">Your delivery partner profile</span>
-            </div>
-            <% if (deliveryPartner.isApproved) { %>
-              <span class="status-badge"
-                style="background:#d1fae5;color:#065f46;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;">✅
-                Approved</span>
-              <% } else { %>
-                <span class="status-badge"
-                  style="background:#fef3c7;color:#92400e;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700;">⏳
-                  Pending Approval</span>
-                <% } %>
-          </div>
-
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="info-label">Partner ID</span>
-              <span class="info-value" style="font-family:monospace;font-size:12px;color:#6366f1;word-break:break-all;">
-                <%= deliveryPartner._id %>
-              </span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Full Name</span>
-              <span class="info-value">
-                <%= deliveryPartner.fullName %>
-              </span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Phone</span>
-              <span class="info-value">📱 <%= deliveryPartner.phoneNumber %></span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Vehicle</span>
-              <span class="info-value">🏍 <%= deliveryPartner.vehicleType %> (<%= deliveryPartner.vehicleNumber %>
-                    )</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Status</span>
-              <span class="info-value">
-                <% if (deliveryPartner.isBlocked) { %>
-                  <span style="color:#dc2626;font-weight:700;">🚫 Blocked</span>
-                  <% } else if (deliveryPartner.isActive) { %>
-                    <span style="color:#059669;font-weight:700;">🟢 Online</span>
-                    <% } else { %>
-                      <span style="color:#6b7280;font-weight:700;">⚫ Offline</span>
-                      <% } %>
-              </span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Rating / Deliveries</span>
-              <span class="info-value">⭐ <%= deliveryPartner.rating.toFixed(1) %> &nbsp;·&nbsp; 📦 <%=
-                    deliveryPartner.totalDeliveries %> completed</span>
-            </div>
-          </div>
-
-          <div style="margin-top: 16px;">
-            <a href="/delivery/dashboard" class="btn btn-primary" style="border-radius:10px;font-weight:700;">
-              <i class="fa-solid fa-motorcycle me-1"></i> Go to Delivery Dashboard
-            </a>
-          </div>
-        </section>
-        <% } %>
-
-          <!-- Listings Section -->
-          <% if (listings && listings.length> 0) { %>
-
-            <section class="profile-card">
-              <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
-                <div class="user-info">
-                  <h2>My Listings</h2>
-                  <span class="user-type">Manage your services</span>
-                </div>
-              </div>
-
-              <div class="listings-grid">
-                <% listings.forEach(listing=> { %>
-                  <div class="listing-card">
-                    <div class="listing-info">
-                      <img src="<%= listing.personImage[0].path %>" alt="Service Image" class="listing-img">
-                      <div class="listing-details">
-                        <h4>
-                          <%= listing.company %>
-                        </h4>
-                        <p class="listing-cat">
-                          <%= listing.categories %>
-                        </p>
-                      </div>
-                    </div>
-                    <a href="/provider/<%= listing._id %>/profile" class="btn btn-view">
-                      View Profile <i class="fa-solid fa-arrow-right"></i>
-                    </a>
-                  </div>
-                  <% }) %>
-              </div>
-            </section>
-            </section>
-            <% } %>
-
-              <!-- Products Section -->
-              <% if (products && products.length> 0) { %>
-                <section class="profile-card">
-                  <div class="card-header d-flex flex-wrap justify-content-between align-items-center"
-                    style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
-                    <div class="user-info mb-2 mb-md-0">
-                      <h2>My Products</h2>
-                      <span class="user-type">Manage your local bazzar inventory</span>
-                    </div>
-                    <div class="d-flex gap-2">
-                      <a href="/api/orders/my-shop-orders" class="btn btn-outline-primary"
-                        style="border-radius: 8px; font-weight: 600;">
-                        <i class="fa-solid fa-box-open"></i> Manage Orders
-                      </a>
-                      <a href="/product/seller" class="btn btn-success" style="border-radius: 8px; font-weight: 600;">
-                        <i class="fa-solid fa-plus"></i> Add Product
-                      </a>
-                    </div>
-                  </div>
-
-                  <div class="listings-grid">
-                    <% products.forEach(product=> { %>
-                      <div class="listing-card">
-                        <div class="listing-info">
-                          <img src="<%= optimizeImage(product.productImage[0].url) %>" alt="Product Image"
-                            class="listing-img">
-                          <div class="listing-details">
-                            <h4>
-                              <%= product.productName %>
-                            </h4>
-                            <p class="listing-cat">
-                              <%= product.categories %>
-                            </p>
-                            <p class="listing-cat" style="color: #6b7280; font-size: 12px;">Qty: <%= product.quantity %>
-                            </p>
-                          </div>
-                        </div>
-                        <div class="d-flex gap-2 mt-3 p-2">
-                          <a href="/products/<%= product._id %>" class="btn btn-view flex-grow-1">
-                            <i class="fa-solid fa-eye"></i> View
-                          </a>
-                          <button type="button" class="btn btn-secondary flex-grow-0" style="padding: 0.5rem 0.8rem;"
-                            onclick="window.location.href='/products/<%= product._id %>?edit=true'">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                          </button>
-                          <form method="POST" action="/products/<%= product._id %>/delete?_method=DELETE"
-                            style="margin: 0;"
-                            onsubmit="return confirm('Are you sure you want to delete this product?');">
-                            <button type="submit" class="btn btn-danger flex-grow-0"
-                              style="padding: 0.5rem 0.8rem; border-radius: 8px;">
-                              <i class="fa-solid fa-trash"></i>
-                            </button>
-                          </form>
-                        </div>
-                      </div>
-                      <% }) %>
-                  </div>
-                </section>
-                <% } %>
-
-                  <!-- Shops Section -->
-                  <% if (shops && shops.length> 0) { %>
-                    <section class="profile-card">
-                      <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
-                        <div class="user-info">
-                          <h2>My Shops</h2>
-                          <span class="user-type">Manage your shops</span>
-                        </div>
-                      </div>
-
-                      <div class="listings-grid">
-                        <% shops.forEach(shop=> { %>
-                          <div class="listing-card">
-                            <div class="listing-info">
-                              <img src="<%= optimizeImage(shop.shopImage[0].url) %>" alt="Shop Image"
-                                class="listing-img">
-                              <div class="listing-details">
-                                <h4>
-                                  <%= shop.shopName %>
-                                </h4>
-                                <p class="listing-cat">
-                                  <%= shop.category %>
-                                </p>
-                                <p class="listing-cat" style="color: #6b7280; font-size: 12px;">
-                                  <%= shop.location %>
-                                </p>
-                              </div>
-                            </div>
-                            <div class="d-flex gap-2 mt-3">
-                              <a href="/shops/<%= shop._id %>" class="btn btn-view flex-grow-1">
-                                View Shop
-                              </a>
-                              <a href="/shops/<%= shop._id %>/edit" class="btn btn-secondary flex-grow-0"
-                                style="padding: 0.5rem 0.8rem;">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                              </a>
-                            </div>
-                          </div>
-                          <% }) %>
-                      </div>
-                    </section>
-                    <% } %>
-
-                      <!-- Kisan Sabha Posts Section -->
-                      <% if (typeof kisanPosts !=='undefined' && kisanPosts.length> 0) { %>
-                        <section class="profile-card"
-                          style="background: transparent; box-shadow: none; border: none; padding: 0;">
-                          <div class="card-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px;">
-                            <div class="user-info text-center w-100">
-                              <h2>My Kisan Sabha Posts</h2>
-                              <span class="user-type">Updates from your region</span>
-                            </div>
-                          </div>
-
-                          <div>
-                            <% kisanPosts.forEach(post=> { %>
-                              <div class="post-card mb-3 p-3 d-flex align-items-center justify-content-between"
-                                style="border-radius: 8px;">
-                                <div class="d-flex align-items-center">
-                                  <div class="me-3" style="width: 40px; height: 40px; flex-shrink: 0;">
-                                    <% if(post.media && post.media.length> 0) { %>
-                                      <% if(post.media[0].type==='video' ) { %>
-                                        <video src="<%= optimizeImage(post.media[0].url) %>"
-                                          class="rounded-circle w-100 h-100"
-                                          style="object-fit: cover; background: #000;" muted playsinline></video>
-                                        <% } else { %>
-                                          <img src="<%= optimizeImage(post.media[0].url) %>" alt="Post thumbnail"
-                                            class="rounded-circle w-100 h-100"
-                                            style="object-fit: cover; background: #f8f9fa;">
-                                          <% } %>
-                                            <% } else { %>
-                                              <div
-                                                class="bg-light text-primary d-flex justify-content-center align-items-center w-100 h-100 rounded-circle">
-                                                <i class="fa-solid fa-location-dot"></i>
-                                              </div>
-                                              <% } %>
-                                  </div>
-                                  <div>
-                                    <span class="fw-bold d-block text-dark">Local Post</span>
-                                    <span class="text-muted" style="font-size: 0.85rem;">
-                                      <%= new Date(post.createdAt).toLocaleDateString() %> • <%= new
-                                          Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit' ,
-                                          minute: '2-digit' }) %>
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div class="d-flex align-items-center gap-3">
-                                  <div>
-                                    <% if(post.status==='approved' ) { %>
-                                      <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Live</span>
-                                      <% } else if(post.status==='rejected' ) { %>
-                                        <span class="badge bg-danger"><i
-                                            class="fa-solid fa-xmark me-1"></i>Rejected</span>
-                                        <% } else { %>
-                                          <span class="badge bg-warning text-dark"><i
-                                              class="fa-solid fa-hourglass-half me-1"></i>Pending</span>
-                                          <% } %>
-                                  </div>
-
-                                  <a href="/kisan-sabha/<%= post._id %>" class="btn btn-sm btn-primary fw-bold px-3">
-                                    View Post
-                                  </a>
-
-                                  <form action="/kisan-sabha/<%= post._id %>?_method=DELETE" method="POST"
-                                    class="m-0 p-0"
-                                    onsubmit="return confirm('Are you sure you want to delete this post?');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger px-2"><i
-                                        class="fa-solid fa-trash"></i></button>
-                                  </form>
-                                </div>
-                              </div>
-                              <% }) %>
-                          </div>
-                        </section>
-                        <% } %>
-
     </div>
+  </div>
+</div>
 
-    <script>
+<!-- ── Add Address Modal ── -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-3xl border-0 shadow-2xl overflow-hidden">
+      <div class="modal-header border-b border-gray-100 bg-gray-50 p-4">
+        <h5 class="modal-title text-base font-bold text-gray-900">Add New Saved Address</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="addAddressForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-2">Label</label>
+            <div class="flex gap-2">
+              <label class="flex-1 text-center py-2 border rounded-xl cursor-pointer has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:border-indigo-600 text-xs font-bold text-gray-700 transition-colors">
+                <input type="radio" name="addrLabel" value="Home" checked class="hidden">
+                <i class="fa-solid fa-house me-1"></i> Home
+              </label>
+              <label class="flex-1 text-center py-2 border rounded-xl cursor-pointer has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:border-indigo-600 text-xs font-bold text-gray-700 transition-colors">
+                <input type="radio" name="addrLabel" value="Work" class="hidden">
+                <i class="fa-solid fa-briefcase me-1"></i> Work
+              </label>
+              <label class="flex-1 text-center py-2 border rounded-xl cursor-pointer has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:border-indigo-600 text-xs font-bold text-gray-700 transition-colors">
+                <input type="radio" name="addrLabel" value="Other" class="hidden">
+                <i class="fa-solid fa-location-dot me-1"></i> Other
+              </label>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Full Address</label>
+            <input type="text" id="newAddressInput" required placeholder="Apartment, Street, Area, Landmark" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500">
+          </div>
+          <button type="submit" id="saveAddrBtn" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-colors">
+            Save Address
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
-    </script>
+<script>
+  function copyReferralCode() {
+    const code = document.getElementById('referralCodeText').innerText.trim();
+    navigator.clipboard.writeText(code).then(() => {
+      alert('Referral code copied to clipboard!');
+    });
+  }
 
-    <script>
-      function copyReferralCode() {
-        const codeText = document.getElementById('referralCodeText').innerText.trim();
-        if (codeText === 'NOT_SET') {
-          alert('Referral code not generated yet.');
-          return;
-        }
-        navigator.clipboard.writeText(codeText).then(() => {
-          alert('Referral code copied to clipboard!');
-        }).catch(err => {
-          console.error('Failed to copy: ', err);
-          // Fallback for older browsers
-          const textArea = document.createElement("textarea");
-          textArea.value = codeText;
-          document.body.appendChild(textArea);
-          textArea.select();
-          document.execCommand("copy");
-          document.body.removeChild(textArea);
-          alert('Referral code copied to clipboard!');
-        });
-      }
-    </script>
-    <script>
-      // Account deletion UI logic
-      function showDeleteConfirmForm() {
-        document.getElementById("deleteWarningStep").style.display = "none";
-        document.getElementById("deleteFormStep").style.display = "block";
-      }
+  function shareReferralCode() {
+    const code = document.getElementById('referralCodeText').innerText.trim();
+    const text = `Install the PASR app and use my referral code ${code} to get a signup bonus! Link: https://pasr.in/`;
+    if (navigator.share) {
+      navigator.share({ title: 'Join PASR', text: text, url: 'https://pasr.in/' }).catch(() => {});
+    } else {
+      copyReferralCode();
+    }
+  }
 
-      function showDeleteWarning() {
-        document.getElementById("deleteFormStep").style.display = "none";
-        document.getElementById("deleteWarningStep").style.display = "block";
-      }
+  // Address Save and Delete
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("addAddressForm");
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById("saveAddrBtn");
+        btn.innerHTML = 'Saving...';
+        btn.disabled = true;
 
-      document.addEventListener("DOMContentLoaded", () => {
-        const deleteForm = document.getElementById("deleteAccountForm");
-        const loader = document.getElementById('global-loader');
-        const loaderText = loader ? loader.querySelector('.loader-text') : null;
-
-        // Reset modal on close
-        const deleteModal = document.getElementById('deleteAccountModal');
-        if (deleteModal) {
-          deleteModal.addEventListener('hidden.bs.modal', function () {
-            showDeleteWarning();
-            if (deleteForm) deleteForm.reset();
-          });
-        }
-
-        if (deleteForm) {
-          deleteForm.addEventListener("submit", (e) => {
-            if (!deleteForm.checkValidity()) return;
-            
-            console.log("Submitting account deletion form...");
-
-            // Show loader with custom text
-            if (loader && loaderText) {
-              loaderText.innerText = "Deleting your account and all associated data, please wait...";
-              loader.style.display = 'flex';
-            }
-
-            // Disable button with a slight delay to ensure form is dispatched
-            const btn = deleteForm.querySelector('button[type="submit"]');
-            if (btn) {
-              setTimeout(() => {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Deleting Account...';
-              }, 10);
-            }
-          });
-        }
-      });
-    </script>
-
-    <script>
-      function initAutocomplete() {
-        const input = document.getElementById("addressInput");
-        if (!input) return;
-
-        const options = {
-          fields: ["formatted_address", "geometry", "name"],
-          strictBounds: false,
-        };
-
-        const autocomplete = new google.maps.places.Autocomplete(input, options);
-        
-        // Add listener to the new Add Address modal input
-        const newAddressInput = document.getElementById("newAddressInput");
-        if (newAddressInput) {
-            new google.maps.places.Autocomplete(newAddressInput, options);
-        }
-
-        autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-          if (!place.geometry || !place.geometry.location) {
-            return;
-          }
-          // The input value is auto-updated by Google Maps
-        });
-      }
-
-      // Address Book Handlers
-      document.addEventListener("DOMContentLoaded", () => {
-        const form = document.getElementById("addAddressForm");
-        if (form) {
-          form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById("saveAddrBtn");
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin border-0 bg-transparent"></i> Saving...';
-            btn.disabled = true;
-
-            const addressStr = document.getElementById("newAddressInput").value;
-            const labelNode = document.querySelector('input[name="addrLabel"]:checked');
-            const label = labelNode ? labelNode.value : 'Other';
-
-            try {
-              const response = await fetch('/api/user/saved-addresses', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ label, addressStr })
-              });
-              const data = await response.json();
-              if (data.success) {
-                location.reload(); // Reload to show new address card
-              } else {
-                alert(data.message || "Failed to save address");
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-              }
-            } catch (err) {
-              console.error(err);
-              alert("Server error. Please try again.");
-              btn.innerHTML = originalText;
-              btn.disabled = false;
-            }
-          });
-        }
-      });
-
-      async function deleteSavedAddress(addressId) {
-        if (!confirm("Are you sure you want to delete this address?")) return;
-        
-        const card = document.getElementById('address-card-' + addressId);
-        if (card) card.style.opacity = '0.5';
+        const addressStr = document.getElementById("newAddressInput").value;
+        const labelNode = document.querySelector('input[name="addrLabel"]:checked');
+        const label = labelNode ? labelNode.value : 'Other';
 
         try {
-          const response = await fetch(`/api/user/saved-addresses/${addressId}`, {
-            method: 'DELETE',
-            headers: { 'Accept': 'application/json' }
+          const response = await fetch('/api/user/saved-addresses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ label, addressStr })
           });
           const data = await response.json();
           if (data.success) {
-            if (card) card.remove();
-            // Check if last element was deleted
-            const container = document.getElementById("addressBookContainer");
-            if (container && container.querySelectorAll('.address-card').length === 0) {
-              // Should show empty state, but reloading is safer
-              location.reload(); 
-            }
+            location.reload();
           } else {
-            alert(data.message || "Failed to delete address");
-            if (card) card.style.opacity = '1';
+            alert(data.message || "Failed to save address");
+            btn.innerHTML = 'Save Address';
+            btn.disabled = false;
           }
         } catch (err) {
-          console.error(err);
-          alert("Server error.");
-          if (card) card.style.opacity = '1';
+          alert("Server error. Please try again.");
+          btn.innerHTML = 'Save Address';
+          btn.disabled = false;
         }
+      });
+    }
+  });
+
+  async function deleteSavedAddress(addressId) {
+    if (!confirm("Are you sure you want to delete this address?")) return;
+    const card = document.getElementById('address-card-' + addressId);
+    if (card) card.style.opacity = '0.5';
+
+    try {
+      const response = await fetch(`/api/user/saved-addresses/${addressId}`, {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' }
+      });
+      const data = await response.json();
+      if (data.success) {
+        if (card) card.remove();
+      } else {
+        alert(data.message || "Failed to delete address");
+        if (card) card.style.opacity = '1';
       }
-    </script>
-    <script
-      src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAP_API_KEY %>&libraries=places&callback=initAutocomplete"
-      async defer>
-      </script>
-  </body>
+    } catch (err) {
+      alert("Server error.");
+      if (card) card.style.opacity = '1';
+    }
+  }
+</script>
