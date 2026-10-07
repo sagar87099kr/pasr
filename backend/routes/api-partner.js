@@ -600,13 +600,14 @@ router.post("/shop/calculate-delivery", verifyToken, async (req, res) => {
 
         const hubPoint = parseLatLng(rawHubCoords);
 
-        let targetPoint = parseLatLng(customerCoordinates);
+        let targetPoint = null;
 
-        // If coordinates not found or invalid, try forward geocoding the address
-        if (!targetPoint && customerAddress && customerAddress.trim().length > 2) {
+        // 1. If customerAddress is provided, forward geocode it for exact real-time address coordinates
+        if (customerAddress && customerAddress.trim().length > 2) {
             const { forwardGeocode } = require("../utils/geocoder");
             try {
-                const queryText = customerAddress.toLowerCase().includes(hubName.toLowerCase()) 
+                // Ensure regional context for Plus Codes and local areas in Jharkhand
+                const queryText = (customerAddress.toLowerCase().includes("jharkhand") || customerAddress.toLowerCase().includes("india"))
                     ? customerAddress 
                     : `${customerAddress}, ${hubName}, Giridih, Jharkhand, India`;
                 const geo = await forwardGeocode(queryText);
@@ -616,6 +617,11 @@ router.post("/shop/calculate-delivery", verifyToken, async (req, res) => {
             } catch (geoErr) {
                 console.warn("Geocoding lookup fallback:", geoErr.message);
             }
+        }
+
+        // 2. Fallback to customerCoordinates if address geocoding yielded nothing
+        if (!targetPoint && customerCoordinates) {
+            targetPoint = parseLatLng(customerCoordinates);
         }
 
         if (!hubPoint || !targetPoint) {
@@ -642,14 +648,14 @@ router.post("/shop/calculate-delivery", verifyToken, async (req, res) => {
             true
         );
 
-        // Sanity check: If distance calculation returned an unreasonable number (> 50 km) for a local shop order, fall back to Haversine or 2.0 km
-        if (distanceKm > 50) {
+        // Sanity check: If road matrix failed or returned invalid (> 100 km), use Haversine
+        if (distanceKm > 100) {
             const fallbackDist = await calculateDistance(
                 hubPoint.lat, hubPoint.lng,
                 targetPoint.lat, targetPoint.lng,
                 false
             );
-            distanceKm = fallbackDist <= 50 ? fallbackDist : 2.0;
+            distanceKm = fallbackDist <= 100 ? fallbackDist : 1.0;
         }
 
         const pricing = calculateDeliveryPricing(distanceKm);
