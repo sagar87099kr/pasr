@@ -1,5 +1,4 @@
 <% layout('./layoutes/boilerplate.ejs') -%>
-<link rel="stylesheet" href="/css/provider_profile.css">
 
 <style>
   :root {
@@ -15,10 +14,47 @@
     font-family: 'Outfit', system-ui, -apple-system, sans-serif !important;
   }
 
+  /* Break out of boilerplate .contain grid completely */
+  .contain:has(.app-profile-container) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 1120px !important;
+    margin: 20px auto 80px auto !important;
+    padding: 0 16px !important;
+  }
+
   .app-profile-container {
-    max-width: 1100px;
-    margin: 24px auto 80px auto;
-    padding: 0 16px;
+    width: 100% !important;
+    max-width: 1120px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Dedicated CSS Grid - immune to .row / .col overrides */
+  .app-profile-grid {
+    display: grid !important;
+    grid-template-columns: 380px minmax(0, 1fr) !important;
+    gap: 24px !important;
+    align-items: start !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-profile-col {
+    min-width: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    box-sizing: border-box !important;
+  }
+
+  @media (max-width: 920px) {
+    .app-profile-grid {
+      grid-template-columns: 100% !important;
+      gap: 20px !important;
+    }
   }
 
   /* 1. Header matching Flutter App */
@@ -29,7 +65,8 @@
     text-align: center;
     border-radius: 24px;
     box-shadow: 0 10px 25px rgba(30, 58, 138, 0.15);
-    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .app-avatar {
@@ -54,6 +91,7 @@
     margin: 0 0 6px 0;
     color: #ffffff;
     letter-spacing: -0.3px;
+    word-break: break-word;
   }
 
   .app-verified-badge {
@@ -89,7 +127,8 @@
     border: 1px solid #E2E8F0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     padding: 22px 24px;
-    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
 
@@ -118,9 +157,9 @@
   }
 
   .app-referral-code {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 800;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     color: var(--primary-blue);
     font-family: monospace;
   }
@@ -184,6 +223,7 @@
 
   .app-detail-content {
     flex: 1;
+    min-width: 0;
   }
 
   .app-detail-label {
@@ -200,6 +240,7 @@
     font-weight: 700;
     color: #1E293B;
     word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   /* Action Tiles matching Flutter _actionTile */
@@ -228,6 +269,7 @@
     display: flex;
     align-items: center;
     gap: 14px;
+    min-width: 0;
   }
 
   .app-action-icon {
@@ -258,10 +300,10 @@
 <div class="app-profile-container">
 
   <!-- Desktop & Mobile 2-Column Responsive Layout -->
-  <div class="row g-4">
+  <div class="app-profile-grid">
 
     <!-- ── LEFT COLUMN: Profile Header + Refer & Earn + Help + Logout ── -->
-    <div class="col-lg-5 col-md-6 col-12">
+    <div class="app-profile-col">
       
       <!-- 1. Header Section matching Flutter ProfilePage -->
       <header class="app-profile-header">
@@ -313,7 +355,7 @@
         <div class="d-flex align-items-center justify-content-between text-muted fs-7 pt-1">
           <span>Total Referred: <strong class="text-dark"><%= currUser.referralCount || 0 %></strong></span>
           <button type="button" class="btn btn-link p-0 text-decoration-none fw-bold fs-7 text-primary" data-bs-toggle="modal" data-bs-target="#referralsModal">
-            View Leaderboard & List
+            Leaderboard
           </button>
         </div>
       </section>
@@ -353,7 +395,7 @@
     </div>
 
     <!-- ── RIGHT COLUMN: Profile Details + Saved Addresses + Quick Actions + Businesses ── -->
-    <div class="col-lg-7 col-md-6 col-12">
+    <div class="app-profile-col">
 
       <!-- 1. Profile Details Card -->
       <section class="app-card">
@@ -451,7 +493,7 @@
           <span>Quick Actions</span>
         </div>
 
-        <a href="/myorders" class="app-action-tile">
+        <a href="/api/orders/my-orders" class="app-action-tile">
           <div class="app-action-left">
             <div class="app-action-icon" style="background: #EFF6FF; color: #1D4ED8;">
               <i class="fa-solid fa-bag-shopping"></i>
@@ -464,7 +506,7 @@
           <i class="fa-solid fa-chevron-right fs-7 text-muted"></i>
         </a>
 
-        <a href="/cart" class="app-action-tile">
+        <a href="/api/cart" class="app-action-tile">
           <div class="app-action-left">
             <div class="app-action-icon" style="background: #EEF2FF; color: #4F46E5;">
               <i class="fa-solid fa-cart-shopping"></i>
