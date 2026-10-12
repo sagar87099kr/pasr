@@ -527,7 +527,7 @@ router.get("/shop/customers/lookup", verifyToken, async (req, res) => {
         }
         
         const cleanPhone = String(phone).trim().replace(/\D/g, '').slice(-10);
-        const customer = await Customer.findOne({ username: Number(cleanPhone) }).select('name username address pincode geometry coins').lean();
+        const customer = await Customer.findOne({ username: Number(cleanPhone) }).select('name username address pincode geometry').lean();
 
         if (!customer) {
             return res.json({
@@ -552,7 +552,6 @@ router.get("/shop/customers/lookup", verifyToken, async (req, res) => {
                 address: customer.address || '',
                 pincode: customer.pincode || '',
                 geometry: customer.geometry || null,
-                coins: customer.coins || 0,
                 isFirstOrder
             }
         });
@@ -705,6 +704,17 @@ router.post("/shop/billing", verifyToken, async (req, res) => {
             return res.status(400).json({ success: false, message: "Missing required fields or empty cart" });
         }
 
+        const cleanPhone = customerPhone ? String(customerPhone).trim().replace(/\D/g, '').slice(-10) : '';
+        if (!cleanPhone || cleanPhone.length !== 10) {
+            return res.status(400).json({ success: false, message: "Valid 10-digit customer mobile number is mandatory" });
+        }
+        if (!customerName || !String(customerName).trim()) {
+            return res.status(400).json({ success: false, message: "Customer name is mandatory" });
+        }
+        if (!customerAddress || !String(customerAddress).trim()) {
+            return res.status(400).json({ success: false, message: "Customer address is mandatory" });
+        }
+
         const shop = await Shop.findOne({ _id: shopId, owner: req.user._id }).populate('bazaar');
         if (!shop) return res.status(403).json({ success: false, message: "Forbidden" });
 
@@ -745,9 +755,9 @@ router.post("/shop/billing", verifyToken, async (req, res) => {
                 : `PASR-POS-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`,
             shopId: shop._id,
             bazaar: shop.bazaar ? shop.bazaar._id : undefined,
-            customerName: customerName || "Customer",
-            customerPhone: customerPhone ? String(customerPhone).trim() : undefined,
-            deliveryAddress: isHomeDelivery ? (customerAddress || "Home Delivery Address") : undefined,
+            customerName: String(customerName).trim(),
+            customerPhone: cleanPhone,
+            deliveryAddress: String(customerAddress).trim(),
             items: processedItems,
             subtotalAmount: subtotal,
             totalAmount: finalTotal,
@@ -768,7 +778,8 @@ router.post("/shop/billing", verifyToken, async (req, res) => {
             message: isHomeDelivery ? "Home delivery order placed & assigned to PASR delivery fleet!" : "Bill generated successfully", 
             order: newOrder,
             shopName: shop.shopName,
-            shopLocation: shop.location || (shop.bazaar ? shop.bazaar.name : "Local Bazaar")
+            shopLocation: shop.location || (shop.bazaar ? shop.bazaar.name : "Local Bazaar"),
+            shopPhone: shop.phone || shop.contactNumber || shop.ownerPhone || (req.user?.username ? String(req.user.username) : '')
         });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
@@ -785,6 +796,33 @@ router.post("/shop/products", verifyToken, async (req, res) => {
         const shop = await Shop.findOne({ _id: shopId, owner: req.user._id });
         if (!shop) return res.status(403).json({ success: false, message: "Forbidden" });
 
+        const cleanBarcode = barcode ? String(barcode).trim() : '';
+
+        // Prevent duplicate registration: check if product with this barcode or productId already exists in this shop
+        let existingItem = null;
+        if (cleanBarcode) {
+            existingItem = await Item.findOne({
+                shop: shopId,
+                barcode: cleanBarcode
+            }).populate("product");
+        }
+        if (!existingItem && productId) {
+            existingItem = await Item.findOne({
+                shop: shopId,
+                product: productId
+            }).populate("product");
+        }
+
+        if (existingItem) {
+            const existingName = existingItem.name || existingItem.product?.name || "this item";
+            return res.status(409).json({
+                success: false,
+                alreadyRegistered: true,
+                message: `Product "${existingName}" is already registered in your shop catalogue. Please update the existing product instead of creating a duplicate.`,
+                existingProduct: existingItem
+            });
+        }
+
         // Item model fields: shop, product, price, quantity (number), discount, isActive, barcode
         const newItem = new Item({
             shop: shopId,
@@ -799,7 +837,7 @@ router.post("/shop/products", verifyToken, async (req, res) => {
             name: name,
             itemCategory: category,
             description: description,
-            barcode: barcode ? String(barcode).trim() : ''
+            barcode: cleanBarcode
         });
 
         if (productId) {
@@ -879,6 +917,85 @@ router.post("/shop/products", verifyToken, async (req, res) => {
     }
 });
 
+// GET /api/shop/products/barcode
+router.get("/shop/products/barcode", verifyToken, async (req, res) => {
+    try {
+        const barcodeRaw = req.query.barcode || req.query.code || "";
+        const barcode = String(barcodeRaw).trim();
+        if (!barcode) return res.status(400).json({ success: false, message: "Missing barcode" });
+
+        const cleanStr = barcode.replace(/^\][a-z0-9]{2}/i, '').replace(/[^a-zA-Z0-9]/g, '');
+        const cleanNoZeros = cleanStr.replace(/^0+/, '');
+        const padded13 = cleanNoZeros.padStart(13, '0');
+
+        const searchCodes = [barcode, cleanStr, cleanNoZeros, padded13].filter((v, i, a) => v && v.length >= 3 && a.indexOf(v) === i);
+
+        // 1. Look for products registered by ANY shop in PASR platform (Shop A, etc.)
+        const existingShopItem = await Item.findOne({
+            barcode: { $in: searchCodes },
+            $or: [
+                { name: { $exists: true, $ne: "" } },
+                { product: { $exists: true, $ne: null } }
+            ]
+        }).populate("product").sort({ updatedAt: -1, createdAt: -1 });
+
+        if (existingShopItem) {
+            const name = existingShopItem.name || existingShopItem.product?.name || "";
+            const imgUrl = existingShopItem.img?.url || existingShopItem.product?.img?.url || existingShopItem.product?.image || "";
+            const extra = (existingShopItem.extraImages || []).map(i => i.url).filter(Boolean);
+            const allImages = [imgUrl, ...extra].filter(Boolean);
+
+            if (name) {
+                return res.json({
+                    success: true,
+                    found: true,
+                    source: "pasr_community",
+                    product: {
+                        barcode: barcode,
+                        productId: existingShopItem.product?._id || existingShopItem._id,
+                        name: name,
+                        brand: existingShopItem.product?.brand || "",
+                        category: existingShopItem.itemCategory || existingShopItem.product?.category || "",
+                        description: existingShopItem.description || existingShopItem.product?.description || "",
+                        image: imgUrl,
+                        images: allImages,
+                        registeredByShop: existingShopItem.shop
+                    }
+                });
+            }
+        }
+
+        // 2. Look in MasterProduct catalog
+        const masterProd = await MasterProduct.findOne({
+            barcode: { $in: searchCodes }
+        });
+
+        if (masterProd) {
+            const imgUrl = masterProd.img?.url || masterProd.image || "";
+            return res.json({
+                success: true,
+                found: true,
+                source: "pasr_catalog",
+                product: {
+                    barcode: barcode,
+                    productId: masterProd._id,
+                    name: masterProd.name,
+                    brand: masterProd.brand || "",
+                    category: masterProd.category || "",
+                    description: masterProd.description || "",
+                    image: imgUrl,
+                    images: imgUrl ? [imgUrl] : []
+                }
+            });
+        }
+
+        return res.json({ success: true, found: false });
+    } catch (e) {
+        console.error("Barcode lookup error:", e);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
 // GET /api/shop/products/search
 router.get("/shop/products/search", verifyToken, async (req, res) => {
     try {
@@ -910,14 +1027,13 @@ router.get("/shop/products/search", verifyToken, async (req, res) => {
         }
         const registryItems = await ItemImageRegistry.find(registryQuery).sort({ usageCount: -1 }).limit(25).lean();
 
-        // 3. Search Items from other shops (with valid images)
+        // 3. Search Items from other shops (populated with product)
         const otherShopItems = await Item.find({
             $or: [
                 { name: searchRegex },
                 { barcode: q.trim() }
-            ],
-            "img.url": { $exists: true, $ne: "" }
-        }).limit(20).lean();
+            ]
+        }).populate("product").limit(20).lean();
 
         // Merge and deduplicate by image URL and name
         const seenUrls = new Set();
@@ -962,16 +1078,17 @@ router.get("/shop/products/search", verifyToken, async (req, res) => {
 
         // Add items from other shops
         for (const it of otherShopItems) {
-            const imgUrl = it.img?.url;
-            if (imgUrl && !seenUrls.has(imgUrl)) {
-                seenUrls.add(imgUrl);
+            const itName = it.name || it.product?.name || '';
+            const imgUrl = it.img?.url || it.product?.img?.url || it.product?.image || '';
+            if (itName && (!seenUrls.has(imgUrl) || !imgUrl)) {
+                if (imgUrl) seenUrls.add(imgUrl);
                 suggestions.push({
-                    _id: it._id,
-                    name: it.name,
-                    brand: '',
-                    category: it.itemCategory || '',
-                    description: it.description || '',
-                    barcode: it.barcode || '',
+                    _id: it.product?._id || it._id,
+                    name: itName,
+                    brand: it.product?.brand || '',
+                    category: it.itemCategory || it.product?.category || '',
+                    description: it.description || it.product?.description || '',
+                    barcode: it.barcode || it.product?.barcode || '',
                     image: imgUrl,
                     img: { url: imgUrl, filename: it.img?.filename || '' },
                     source: 'other_shops'
@@ -1000,7 +1117,23 @@ router.put("/shop/products/:id", verifyToken, async (req, res) => {
         if (name !== undefined) item.name = name;
         if (category !== undefined) item.itemCategory = category;
         if (description !== undefined) item.description = description;
-        if (barcode !== undefined) item.barcode = String(barcode).trim();
+        if (barcode !== undefined && String(barcode).trim() !== '') {
+            const cleanBc = String(barcode).trim();
+            const existingOther = await Item.findOne({
+                shop: shopId,
+                barcode: cleanBc,
+                _id: { $ne: req.params.id }
+            });
+            if (existingOther) {
+                return res.status(409).json({
+                    success: false,
+                    message: `Barcode ${cleanBc} is already assigned to another product ("${existingOther.name || 'Item'}").`
+                });
+            }
+            item.barcode = cleanBc;
+        } else if (barcode !== undefined) {
+            item.barcode = '';
+        }
         if (image !== undefined || images !== undefined) {
             let uploadedImages = [];
             const { cloudinary } = require('../cloud_con');
